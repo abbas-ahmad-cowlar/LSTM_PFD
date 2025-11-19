@@ -29,6 +29,11 @@ from .training_config import (
     MixedPrecisionConfig,
     RegularizationConfig
 )
+from .experiment_config import (
+    ExperimentConfig,
+    MLflowConfig,
+    LoggingConfig
+)
 
 __all__ = [
     # Base
@@ -58,5 +63,9 @@ __all__ = [
     'SchedulerConfig',
     'CallbackConfig',
     'MixedPrecisionConfig',
-    'RegularizationConfig'
+    'RegularizationConfig',
+    # Experiment
+    'ExperimentConfig',
+    'MLflowConfig',
+    'LoggingConfig'
 ]
