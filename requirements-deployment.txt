@@ -1,0 +1,29 @@
+# Deployment requirements for LSTM_PFD
+# Install with: pip install -r requirements-deployment.txt
+
+# FastAPI and web server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+python-multipart==0.0.6
+
+# ONNX and optimization
+onnx==1.15.0
+onnxruntime==1.16.3
+onnxruntime-gpu==1.16.3  # Optional, for GPU inference
+
+# Model quantization and optimization
+torch>=2.0.0  # Already in main requirements
+torchvision>=0.15.0
+
+# Profiling
+torchprofile==0.0.4
+
+# Monitoring and logging
+python-json-logger==2.0.7
+prometheus-client==0.19.0
+
+# Utilities
+python-dotenv==1.0.0
+requests==2.31.0

@@ -1,0 +1,57 @@
+# Docker Compose configuration for LSTM_PFD API
+
+version: '3.8'
+
+services:
+  # API service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lstm_pfd_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DEVICE=cpu  # Change to 'cuda' if GPU available
+      - MODEL_PATH=/app/checkpoints/best_model.pth
+      - MODEL_TYPE=torch
+      - LOG_LEVEL=INFO
+      - WORKERS=4
+    volumes:
+      - ./checkpoints:/app/checkpoints:ro  # Mount checkpoints (read-only)
+      - ./logs:/app/logs  # Mount logs directory
+      - ./models:/app/models:ro  # Mount ONNX models (read-only)
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - lstm_pfd_network
+
+  # Optional: NGINX reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: lstm_pfd_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro  # SSL certificates
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - lstm_pfd_network
+
+networks:
+  lstm_pfd_network:
+    driver: bridge
+
+volumes:
+  checkpoints:
+  logs:
+  models:
