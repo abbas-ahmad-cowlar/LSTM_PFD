@@ -1,40 +1,39 @@
 """
-Transformer Architectures Module
+Advanced Transformer Architectures Module
 
-This module provides comprehensive implementations of transformer architectures
-for both computer vision and natural language processing.
+This module provides comprehensive implementations of state-of-the-art transformer
+architectures for both computer vision and natural language processing.
 
-Organization:
-    - Basic transformer: Standard encoder-decoder architecture
-    - Advanced transformers: State-of-the-art models (ViT, BERT, GPT, T5, Swin, etc.)
+Includes:
+    - Vision Transformers: ViT, Swin Transformer
+    - Language Models: BERT, GPT/GPT-2, T5
+    - Attention Mechanisms: Linear, Cross, MQA, GQA, Sliding Window, RoPE
 
 Quick Start:
-    # Basic Transformer
-    >>> from transformers import Transformer
-    >>> model = Transformer(d_model=512, nhead=8)
-
-    # Advanced Models
-    >>> from transformers.advanced import vit_base_patch16_224, bert_base, gpt2_small
+    # Vision Models
+    >>> from transformers.advanced import vit_base_patch16_224, swin_tiny_patch4_window7_224
     >>> vit_model = vit_base_patch16_224(num_classes=1000)
+    >>> swin_model = swin_tiny_patch4_window7_224(num_classes=1000)
+
+    # Language Models
+    >>> from transformers.advanced import bert_base, gpt2_small, t5_base
     >>> bert_model = bert_base()
     >>> gpt_model = gpt2_small()
+    >>> t5_model = t5_base()
+
+    # Attention Mechanisms
+    >>> from transformers.advanced import MultiQueryAttention, GroupedQueryAttention
+    >>> mqa = MultiQueryAttention(dim=512, num_heads=8)
+    >>> gqa = GroupedQueryAttention(dim=512, num_heads=8, num_kv_heads=2)
 
 For detailed documentation, see transformers/README.md
+
+Note: A basic transformer implementation is available in models/transformer.py
 """
 
-# Basic Transformer
-from .transformer import Transformer
-
 # Advanced architectures are available through the advanced submodule
-# Import them explicitly: from transformers.advanced import ...
+from . import advanced
 
 __version__ = "1.0.0"
 
-__all__ = [
-    'Transformer',
-]
-
-# Provide easy access to advanced module
-from . import advanced
-
-__all__.append('advanced')
+__all__ = ['advanced']
