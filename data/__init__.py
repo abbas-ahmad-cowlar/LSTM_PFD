@@ -19,6 +19,23 @@ from .dataloader import (
     InfiniteDataLoader,
     prefetch_to_device
 )
+from .transforms import (
+    Compose,
+    Normalize,
+    Resample,
+    BandpassFilter,
+    LowpassFilter,
+    HighpassFilter,
+    ToTensor,
+    Unsqueeze,
+    Detrend,
+    get_default_transform
+)
+from .cache_manager import (
+    CacheManager,
+    cache_dataset_simple,
+    load_cached_dataset_simple
+)
 
 __all__ = [
     # Generation
@@ -47,5 +64,20 @@ __all__ = [
     'worker_init_fn_seed',
     'compute_class_weights',
     'InfiniteDataLoader',
-    'prefetch_to_device'
+    'prefetch_to_device',
+    # Transforms
+    'Compose',
+    'Normalize',
+    'Resample',
+    'BandpassFilter',
+    'LowpassFilter',
+    'HighpassFilter',
+    'ToTensor',
+    'Unsqueeze',
+    'Detrend',
+    'get_default_transform',
+    # Caching
+    'CacheManager',
+    'cache_dataset_simple',
+    'load_cached_dataset_simple'
 ]
