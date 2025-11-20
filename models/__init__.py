@@ -5,7 +5,7 @@ from .cnn_1d import CNN1D, create_cnn1d
 from .resnet_1d import ResNet1D, create_resnet18_1d, create_resnet34_1d
 from .transformer import SignalTransformer, create_transformer
 from .hybrid_pinn import HybridPINN, create_hybrid_pinn
-from .ensemble import (
+from .legacy_ensemble import (
     EnsembleModel,
     VotingEnsemble,
     StackedEnsemble,
