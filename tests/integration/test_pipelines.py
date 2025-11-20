@@ -72,7 +72,7 @@ class TestDeepLearningPipeline:
     """Test deep learning pipeline integration."""
 
     @pytest.mark.slow
-    def test_cnn_training_pipeline(self, sample_batch_signals, temp_checkpoint_dir):
+    def test_cnn_training_pipeline(self, sample_batch_signals, temp_checkpoint_dir, simple_cnn_model):
         """Test CNN training pipeline."""
         import torch
         from torch.utils.data import TensorDataset, DataLoader
@@ -86,9 +86,8 @@ class TestDeepLearningPipeline:
         dataset = TensorDataset(signals_tensor, labels_tensor)
         train_loader = DataLoader(dataset, batch_size=8, shuffle=True)
 
-        # Create simple model
-        from conftest import simple_cnn_model
-        model = simple_cnn_model()
+        # Use simple model fixture
+        model = simple_cnn_model
 
         # Train for a few steps
         optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
