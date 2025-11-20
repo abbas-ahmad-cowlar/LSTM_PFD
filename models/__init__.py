@@ -24,6 +24,48 @@ from .model_factory import (
     print_model_summary
 )
 
+# Phase 8: Advanced Ensemble Methods
+from .ensemble.voting_ensemble import (
+    VotingEnsemble as VotingEnsembleV2,
+    optimize_ensemble_weights,
+    soft_voting,
+    hard_voting
+)
+from .ensemble.stacking_ensemble import (
+    StackingEnsemble as StackingEnsembleV2,
+    train_stacking,
+    create_meta_features
+)
+from .ensemble.boosting_ensemble import (
+    BoostingEnsemble,
+    AdaptiveBoosting,
+    train_boosting
+)
+from .ensemble.mixture_of_experts import (
+    MixtureOfExperts,
+    GatingNetwork,
+    ExpertModel,
+    create_specialized_experts
+)
+
+# Phase 8: Multi-Modal Fusion
+from .fusion.early_fusion import (
+    EarlyFusion,
+    SimpleEarlyFusion,
+    MultiModalFeatureExtractor,
+    create_early_fusion,
+    extract_and_concatenate_features
+)
+from .fusion.late_fusion import (
+    LateFusion,
+    create_late_fusion,
+    train_late_fusion_weights,
+    late_fusion_weighted_average,
+    late_fusion_max,
+    late_fusion_product,
+    late_fusion_borda_count
+)
+
 __all__ = [
     # Base
     'BaseModel',
@@ -45,12 +87,42 @@ __all__ = [
     'HybridPINN',
     'create_hybrid_pinn',
 
-    # Ensemble
+    # Ensemble (Legacy)
     'EnsembleModel',
     'VotingEnsemble',
     'StackedEnsemble',
     'create_voting_ensemble',
     'create_stacked_ensemble',
+
+    # Phase 8: Advanced Ensemble Methods
+    'VotingEnsembleV2',
+    'optimize_ensemble_weights',
+    'soft_voting',
+    'hard_voting',
+    'StackingEnsembleV2',
+    'train_stacking',
+    'create_meta_features',
+    'BoostingEnsemble',
+    'AdaptiveBoosting',
+    'train_boosting',
+    'MixtureOfExperts',
+    'GatingNetwork',
+    'ExpertModel',
+    'create_specialized_experts',
+
+    # Phase 8: Multi-Modal Fusion
+    'EarlyFusion',
+    'SimpleEarlyFusion',
+    'MultiModalFeatureExtractor',
+    'create_early_fusion',
+    'extract_and_concatenate_features',
+    'LateFusion',
+    'create_late_fusion',
+    'train_late_fusion_weights',
+    'late_fusion_weighted_average',
+    'late_fusion_max',
+    'late_fusion_product',
+    'late_fusion_borda_count',
 
     # Factory functions
     'create_model',
