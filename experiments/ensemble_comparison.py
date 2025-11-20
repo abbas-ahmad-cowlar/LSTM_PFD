@@ -31,8 +31,9 @@ import seaborn as sns
 import sys
 sys.path.append('/home/user/LSTM_PFD')
 
+from models.legacy_ensemble import VotingEnsemble, StackingEnsemble
 from models.ensemble import (
-    VotingEnsemble, StackingEnsemble, BoostingEnsemble, MixtureOfExperts,
+    BoostingEnsemble, MixtureOfExperts,
     train_stacking, train_boosting
 )
 from models.fusion import EarlyFusion, LateFusion, create_late_fusion
