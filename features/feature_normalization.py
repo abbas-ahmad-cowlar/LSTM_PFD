@@ -33,10 +33,12 @@ class FeatureNormalizer(BaseEstimator, TransformerMixin):
         Initialize normalizer.
 
         Args:
-            method: Normalization method ('standard' or 'minmax')
+            method: Normalization method ('standard', 'zscore', or 'minmax')
+                   Note: 'zscore' is an alias for 'standard'
         """
         self.method = method
-        if method == 'standard':
+        # Support 'zscore' as alias for 'standard'
+        if method == 'standard' or method == 'zscore':
             self.scaler = StandardScaler()
         elif method == 'minmax':
             self.scaler = MinMaxScaler()
