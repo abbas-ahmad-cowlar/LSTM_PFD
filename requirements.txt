@@ -1,0 +1,47 @@
+# Core requirements for LSTM_PFD
+# Install with: pip install -r requirements.txt
+
+# Deep Learning Framework
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Scientific Computing
+numpy>=1.24.0
+scipy>=1.10.0
+pandas>=2.0.0
+
+# Machine Learning
+scikit-learn>=1.3.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+
+# Data Storage and Processing
+h5py>=3.8.0
+
+# Signal Processing
+pywavelets>=1.4.0
+
+# Progress Bars
+tqdm>=4.65.0
+
+# Hyperparameter Optimization
+optuna>=3.1.0
+
+# Explainable AI
+shap>=0.41.0
+lime>=0.2.0.1
+captum>=0.6.0
+
+# Interactive Dashboard
+streamlit>=1.22.0
+
+# File and Environment Management
+python-dotenv>=1.0.0
+
+# Additional utilities
+joblib>=1.3.0  # For parallel processing
+pillow>=10.0.0  # For image handling (spectrograms)
