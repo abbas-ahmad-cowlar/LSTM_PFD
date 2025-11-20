@@ -6,7 +6,8 @@ This module contains state-of-the-art transformer architectures including:
 - BERT: Bidirectional encoder for NLP
 - GPT: Autoregressive decoder for language modeling
 - T5: Text-to-text transformer for seq2seq tasks
-- Swin Transformer: Hierarchical vision transformer
+- Swin Transformer: Hierarchical vision transformer with shifted windows
+- Advanced Attention Mechanisms: Linear, Cross, MQA, GQA, and more
 """
 
 from .vision_transformer import (
@@ -47,6 +48,25 @@ from .t5 import (
     t5_xl
 )
 
+from .swin_transformer import (
+    SwinTransformer,
+    swin_tiny_patch4_window7_224,
+    swin_small_patch4_window7_224,
+    swin_base_patch4_window7_224,
+    swin_large_patch4_window7_224
+)
+
+from .attention_mechanisms import (
+    LinearAttention,
+    CrossAttention,
+    MultiQueryAttention,
+    GroupedQueryAttention,
+    SlidingWindowAttention,
+    FlashAttention,
+    RotaryPositionalEmbedding,
+    apply_rotary_pos_emb
+)
+
 __all__ = [
     # Vision Transformer
     'VisionTransformer',
@@ -78,4 +98,19 @@ __all__ = [
     't5_base',
     't5_large',
     't5_xl',
+    # Swin Transformer
+    'SwinTransformer',
+    'swin_tiny_patch4_window7_224',
+    'swin_small_patch4_window7_224',
+    'swin_base_patch4_window7_224',
+    'swin_large_patch4_window7_224',
+    # Attention Mechanisms
+    'LinearAttention',
+    'CrossAttention',
+    'MultiQueryAttention',
+    'GroupedQueryAttention',
+    'SlidingWindowAttention',
+    'FlashAttention',
+    'RotaryPositionalEmbedding',
+    'apply_rotary_pos_emb',
 ]
