@@ -1,1 +1,1 @@
-"""Test suite for LSTM_PFD pipeline."""
+"""LSTM_PFD Test Suite"""

@@ -35,8 +35,8 @@ def load_experiments(experiment_ids: List[str]) -> pd.DataFrame:
                 data.append({
                     'experiment_id': exp_id,
                     'run_id': run['run_id'],
-                    'metrics': run.filter(regex='^metrics\.').to_dict(),
-                    'params': run.filter(regex='^params\.').to_dict()
+                    'metrics': run.filter(regex=r'^metrics\.').to_dict(),
+                    'params': run.filter(regex=r'^params\.').to_dict()
                 })
 
         return pd.DataFrame(data)

@@ -20,46 +20,62 @@ from sklearn.base import BaseEstimator, TransformerMixin
 
 class FeatureSelector(BaseEstimator, TransformerMixin):
     """
-    MRMR-based feature selector for post-split feature selection.
+    Feature selector supporting multiple selection methods.
 
-    Selects features that maximize relevance to the target while
-    minimizing redundancy among selected features.
+    Supports:
+    - 'mrmr': Minimum Redundancy Maximum Relevance
+    - 'variance': Variance threshold selection
 
     Example:
-        >>> selector = FeatureSelector(n_features=15)
+        >>> selector = FeatureSelector(method='mrmr', n_features=15)
         >>> selector.fit(X_train, y_train)
         >>> X_train_selected = selector.transform(X_train)
         >>> X_test_selected = selector.transform(X_test)
     """
 
-    def __init__(self, n_features: int = 15, random_state: int = 42):
+    def __init__(
+        self,
+        method: str = 'mrmr',
+        n_features: int = 15,
+        threshold: float = 0.01,
+        random_state: int = 42
+    ):
         """
         Initialize feature selector.
 
         Args:
-            n_features: Number of features to select (default: 15)
+            method: Selection method ('mrmr' or 'variance')
+            n_features: Number of features to select (for MRMR)
+            threshold: Variance threshold (for variance method)
             random_state: Random seed for reproducibility
         """
+        self.method = method
         self.n_features = n_features
+        self.threshold = threshold
         self.random_state = random_state
         self.selected_indices_: Optional[List[int]] = None
         self.feature_names_: Optional[List[str]] = None
         self.relevance_scores_: Optional[np.ndarray] = None
+        self.variances_: Optional[np.ndarray] = None
 
-    def fit(self, X: np.ndarray, y: np.ndarray,
+    def fit(self, X: np.ndarray, y: Optional[np.ndarray] = None,
             feature_names: Optional[List[str]] = None):
         """
-        Fit the feature selector using MRMR algorithm.
+        Fit the feature selector using the specified method.
 
-        Algorithm:
+        For MRMR:
         1. Compute relevance: I(feature; target) for all features
         2. Select feature with max relevance
         3. Iteratively select features maximizing:
            MRMR = Relevance - (1/|S|) * sum(Redundancy with selected)
 
+        For variance threshold:
+        1. Compute variance for each feature
+        2. Select features with variance >= threshold
+
         Args:
             X: Feature matrix (n_samples, n_features)
-            y: Target labels (n_samples,)
+            y: Target labels (n_samples,) - required for 'mrmr', optional for 'variance'
             feature_names: Optional list of feature names
 
         Returns:
@@ -67,6 +83,23 @@ class FeatureSelector(BaseEstimator, TransformerMixin):
         """
         n_samples, n_total_features = X.shape
 
+        if self.method == 'mrmr':
+            if y is None:
+                raise ValueError("Target labels y required for MRMR method")
+            self._fit_mrmr(X, y, n_total_features)
+        elif self.method == 'variance':
+            self._fit_variance(X, n_total_features)
+        else:
+            raise ValueError(f"Unknown method: {self.method}")
+
+        # Store feature names if provided
+        if feature_names is not None:
+            self.feature_names_ = [feature_names[i] for i in self.selected_indices_]
+
+        return self
+
+    def _fit_mrmr(self, X: np.ndarray, y: np.ndarray, n_total_features: int):
+        """Fit using MRMR method."""
         if self.n_features > n_total_features:
             self.n_features = n_total_features
 
@@ -117,11 +150,12 @@ class FeatureSelector(BaseEstimator, TransformerMixin):
 
         self.selected_indices_ = selected
 
-        # Store feature names if provided
-        if feature_names is not None:
-            self.feature_names_ = [feature_names[i] for i in selected]
-
-        return self
+    def _fit_variance(self, X: np.ndarray, n_total_features: int):
+        """Fit using variance threshold method."""
+        self.variances_ = np.var(X, axis=0)
+        self.selected_indices_ = [
+            i for i, var in enumerate(self.variances_) if var >= self.threshold
+        ]
 
     def transform(self, X: np.ndarray) -> np.ndarray:
         """
