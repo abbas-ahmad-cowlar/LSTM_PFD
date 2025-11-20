@@ -6,6 +6,9 @@ This package provides comprehensive explainability methods for neural networks:
 - SHAP: SHapley Additive exPlanations
 - LIME: Local Interpretable Model-agnostic Explanations
 - Uncertainty Quantification: Monte Carlo Dropout, calibration
+- Concept Activation Vectors (CAVs): Concept-based explanations
+- Partial Dependence: Feature effect analysis
+- Anchors: Rule-based explanations
 
 All methods work with time-series bearing fault diagnosis models.
 """
@@ -21,7 +24,31 @@ from .uncertainty_quantification import (
     plot_prediction_with_uncertainty
 )
 
+# Advanced XAI methods (Priority 3)
+from .concept_activation_vectors import (
+    ConceptActivationVector,
+    CAVGenerator,
+    TCAVAnalyzer,
+    plot_tcav_results,
+    plot_cav_comparison
+)
+from .partial_dependence import (
+    PartialDependenceAnalyzer,
+    plot_partial_dependence,
+    plot_ice_curves,
+    plot_partial_dependence_2d,
+    detect_interactions
+)
+from .anchors import (
+    Predicate,
+    Anchor,
+    AnchorExplainer,
+    plot_anchor_explanation,
+    compare_anchors
+)
+
 __all__ = [
+    # Core XAI methods
     'IntegratedGradientsExplainer',
     'plot_attribution_map',
     'SHAPExplainer',
@@ -33,5 +60,21 @@ __all__ = [
     'calibrate_model',
     'plot_calibration_curve',
     'plot_uncertainty_distribution',
-    'plot_prediction_with_uncertainty'
+    'plot_prediction_with_uncertainty',
+    # Advanced XAI methods
+    'ConceptActivationVector',
+    'CAVGenerator',
+    'TCAVAnalyzer',
+    'plot_tcav_results',
+    'plot_cav_comparison',
+    'PartialDependenceAnalyzer',
+    'plot_partial_dependence',
+    'plot_ice_curves',
+    'plot_partial_dependence_2d',
+    'detect_interactions',
+    'Predicate',
+    'Anchor',
+    'AnchorExplainer',
+    'plot_anchor_explanation',
+    'compare_anchors'
 ]
