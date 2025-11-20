@@ -27,7 +27,8 @@ def prune_model(
     model: nn.Module,
     pruning_amount: float = 0.3,
     pruning_type: str = 'l1_unstructured',
-    layers_to_prune: Optional[List[str]] = None
+    layers_to_prune: Optional[List[str]] = None,
+    inplace: bool = True
 ) -> nn.Module:
     """
     Prune model weights to reduce size and improve speed.
@@ -37,6 +38,7 @@ def prune_model(
         pruning_amount: Fraction of weights to prune (0.0 to 1.0)
         pruning_type: 'l1_unstructured', 'l1_structured', 'random'
         layers_to_prune: List of layer names (default: all Conv/Linear layers)
+        inplace: If False, creates a deep copy before pruning
 
     Returns:
         Pruned model
@@ -47,6 +49,11 @@ def prune_model(
         >>> # Model now has 30% of weights set to zero
     """
     logger.info(f"Pruning model: {pruning_amount*100}% ({pruning_type})")
+
+    # Make a copy if not inplace
+    if not inplace:
+        import copy
+        model = copy.deepcopy(model)
 
     # Find layers to prune
     if layers_to_prune is None:

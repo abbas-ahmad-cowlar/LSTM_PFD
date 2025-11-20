@@ -173,6 +173,7 @@ class TestAPIEndpoints:
 
 
 @pytest.mark.unit
+@pytest.mark.skipif(not FASTAPI_AVAILABLE, reason="FastAPI not installed")
 class TestAPIConfig:
     """Test API configuration."""
 
