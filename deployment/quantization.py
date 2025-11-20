@@ -289,32 +289,48 @@ def compare_model_sizes(
     """
     # Save models to temporary files to measure size
     import tempfile
+    import os
 
-    with tempfile.NamedTemporaryFile(delete=True) as f1:
+    # Use delete=False to avoid Windows file locking issues
+    f1 = tempfile.NamedTemporaryFile(delete=False, suffix='.pth')
+    f1.close()
+    f2 = tempfile.NamedTemporaryFile(delete=False, suffix='.pth')
+    f2.close()
+
+    try:
         torch.save(original_model.state_dict(), f1.name)
         original_size = Path(f1.name).stat().st_size
 
-    with tempfile.NamedTemporaryFile(delete=True) as f2:
         torch.save(quantized_model.state_dict(), f2.name)
         quantized_size = Path(f2.name).stat().st_size
 
-    compression_ratio = original_size / quantized_size
-    size_reduction_mb = (original_size - quantized_size) / (1024 * 1024)
+        compression_ratio = original_size / quantized_size
+        size_reduction_mb = (original_size - quantized_size) / (1024 * 1024)
 
-    stats = {
-        'original_size_mb': original_size / (1024 * 1024),
-        'quantized_size_mb': quantized_size / (1024 * 1024),
-        'compression_ratio': compression_ratio,
-        'size_reduction_mb': size_reduction_mb,
-        'size_reduction_percent': (1 - quantized_size / original_size) * 100
-    }
+        stats = {
+            'original_size_mb': original_size / (1024 * 1024),
+            'quantized_size_mb': quantized_size / (1024 * 1024),
+            'compression_ratio': compression_ratio,
+            'size_reduction_mb': size_reduction_mb,
+            'size_reduction_percent': (1 - quantized_size / original_size) * 100
+        }
 
-    logger.info(f"Original model size: {stats['original_size_mb']:.2f} MB")
-    logger.info(f"Quantized model size: {stats['quantized_size_mb']:.2f} MB")
-    logger.info(f"Compression ratio: {stats['compression_ratio']:.2f}x")
-    logger.info(f"Size reduction: {stats['size_reduction_percent']:.1f}%")
+        logger.info(f"Original model size: {stats['original_size_mb']:.2f} MB")
+        logger.info(f"Quantized model size: {stats['quantized_size_mb']:.2f} MB")
+        logger.info(f"Compression ratio: {stats['compression_ratio']:.2f}x")
+        logger.info(f"Size reduction: {stats['size_reduction_percent']:.1f}%")
 
-    return stats
+        return stats
+    finally:
+        # Clean up temporary files
+        try:
+            os.unlink(f1.name)
+        except Exception:
+            pass
+        try:
+            os.unlink(f2.name)
+        except Exception:
+            pass
 
 
 def benchmark_quantized_model(
