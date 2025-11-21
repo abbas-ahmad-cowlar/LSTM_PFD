@@ -21,6 +21,7 @@
 - [Model Performance](#-model-performance)
 - [Advanced Features](#-advanced-features)
 - [Deployment](#-deployment)
+- [Enterprise Dashboard Application](#️-enterprise-dashboard-application)
 - [Documentation](#-documentation)
 - [Contributing](#-contributing)
 - [Citation](#-citation)
@@ -676,6 +677,195 @@ spec:
 
 ---
 
+## 🖥️ Enterprise Dashboard Application
+
+### Web-Based ML Operations Platform
+
+Phase 11 delivers a **production-ready enterprise dashboard** built with Plotly Dash that provides a complete web interface for the entire LSTM PFD system. No coding required!
+
+**📍 Location**: [`dash_app/`](dash_app/)
+
+### Why Use the Dashboard?
+
+- **🚫 No Coding Required**: Run experiments, monitor training, and analyze results through an intuitive web UI
+- **📊 Real-time Monitoring**: Live training progress with loss/accuracy curves updating every 2 seconds
+- **🔍 Explainable AI**: Interactive SHAP, LIME, Integrated Gradients, and Grad-CAM visualizations
+- **🎯 HPO Campaigns**: Automated hyperparameter optimization with Bayesian optimization
+- **📈 Model Comparison**: Side-by-side statistical comparison of multiple experiments
+- **🔐 Enterprise Security**: JWT authentication, rate limiting, security headers
+- **📡 Production Monitoring**: Real-time system health, alerts, and performance metrics
+
+### Key Features
+
+#### 1. Interactive Data Exploration
+- **Dataset Browser**: Filter by fault type, severity, operating conditions
+- **Signal Viewer**: Time-domain, frequency-domain, and spectrogram analysis
+- **t-SNE Visualization**: 2D embeddings of signal features
+- **Export Options**: Download filtered datasets in multiple formats
+
+#### 2. ML Experiment Management
+- **Configuration Wizard**: Multi-step wizard for 20+ model architectures
+  - Classical ML (SVM, Random Forest, XGBoost)
+  - 1D CNNs (Multi-scale, ResNet, EfficientNet)
+  - Transformers (Self-attention, hybrid architectures)
+  - Physics-Informed Neural Networks (PINN)
+  - Ensemble Models (Voting, stacking, mixture of experts)
+
+- **Real-time Training Monitoring**:
+  - Progress bars with ETA
+  - Live loss and accuracy curves
+  - Learning rate schedule visualization
+  - Training logs with auto-scroll
+  - Pause/resume/stop controls
+
+- **Results Dashboard**:
+  - Confusion matrix heatmap
+  - Per-class precision, recall, F1-score
+  - Training history plots
+  - Export PDF reports and model weights
+
+#### 3. Explainable AI (XAI) Dashboard
+- **SHAP Explanations**: Feature attribution using game theory
+- **LIME Explanations**: Local interpretable model-agnostic explanations
+- **Integrated Gradients**: Neural network attribution
+- **Grad-CAM**: CNN activation heatmaps
+
+#### 4. Hyperparameter Optimization
+- **Multiple Strategies**: Bayesian optimization, random search, grid search, Hyperband
+- **Real-time Monitoring**: Track trial progress and best scores
+- **Results Analysis**: Parallel coordinates plot, parameter importance
+- **Export**: Save optimal hyperparameters as JSON/YAML
+
+#### 5. Production Features
+- **JWT Authentication**: Secure user management with role-based access
+- **Rate Limiting**: 60 requests/minute per IP (customizable)
+- **Security Headers**: XSS, CSP, HSTS protection
+- **System Monitoring**: CPU, memory, disk usage with threshold alerts
+- **Health Check API**: `/api/health` endpoint for load balancers
+- **90%+ Test Coverage**: Comprehensive unit and integration tests
+
+### Quick Start
+
+```bash
+# Option 1: Docker Compose (Recommended)
+cd dash_app
+cp .env.example .env
+docker-compose up
+
+# Access at: http://localhost:8050
+
+# Option 2: Local Development
+cd dash_app
+pip install -r requirements.txt
+# (Start PostgreSQL and Redis separately)
+python app.py
+```
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Dash Frontend (UI)                        │
+│  Multi-page navigation | Real-time updates | Dashboards     │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────────┐
+│                  Flask Backend (Server)                      │
+│  REST API | Authentication | Rate limiting | Security        │
+└─────────────────────────────────────────────────────────────┘
+                          ↓
+┌──────────────┬──────────────────┬──────────────┬────────────┐
+│  PostgreSQL  │  Redis (Cache)   │    Celery    │  Phase 0-10│
+│  (Metadata)  │  (Performance)   │  (Training)  │(Integration)│
+└──────────────┴──────────────────┴──────────────┴────────────┘
+```
+
+### Pages & Functionality
+
+| Page | URL | Description |
+|------|-----|-------------|
+| **Home** | `/` | System overview, quick stats, recent experiments, health gauges |
+| **Data Explorer** | `/data-explorer` | Dataset browser, filtering, t-SNE visualization, export |
+| **Signal Viewer** | `/signal-viewer` | Time/frequency/spectrogram analysis with interactive plots |
+| **Experiments** | `/experiments` | Experiment list, search, filter, comparison |
+| **New Experiment** | `/experiment/new` | Configuration wizard for training |
+| **Monitor Training** | `/experiment/<id>/monitor` | Real-time training progress |
+| **View Results** | `/experiment/<id>/results` | Post-training analysis and export |
+| **XAI Dashboard** | `/xai` | SHAP, LIME, IG, Grad-CAM explanations |
+| **HPO Campaigns** | `/hpo` | Hyperparameter optimization campaigns |
+| **System Health** | `/health` | Resource monitoring and alerts |
+
+### Use Cases
+
+**For Data Scientists:**
+- Rapid experimentation with 20+ models without writing code
+- Automated hyperparameter tuning with Bayesian optimization
+- Model interpretation with SHAP and LIME
+- Complete experiment tracking and reproducibility
+
+**For ML Engineers:**
+- Production-ready deployment with Docker and docker-compose
+- Horizontal scaling with load balancers
+- Real-time monitoring and alerting
+- REST API for programmatic access
+
+**For Domain Experts:**
+- No coding required - full web UI
+- Understand model predictions with explainable AI
+- Interactive signal analysis tools
+- Generate PDF reports for stakeholders
+
+**For Researchers:**
+- Full experiment configuration tracking
+- Statistical significance testing across models
+- Publication-ready visualizations
+- Export results in CSV/JSON/PDF
+
+### Performance Targets
+
+✅ **Page load**: < 2 seconds
+✅ **Filter response**: < 500ms
+✅ **Signal load**: < 1 second
+✅ **Training task spawn**: < 1 second
+✅ **XAI generation**: < 30 seconds (SHAP)
+
+### Documentation
+
+- **[Dashboard README](dash_app/README.md)** - Comprehensive dashboard documentation
+- **[Phase 11 Complete Usage Guide](PHASE_11_USAGE_GUIDE.md)** - 800+ line step-by-step guide covering:
+  - Detailed setup for all deployment scenarios
+  - Complete walkthrough of every feature
+  - Authentication and security configuration
+  - HPO and XAI tutorials
+  - Production deployment best practices
+  - Troubleshooting and optimization
+
+### Technology Stack
+
+- **Frontend**: Plotly Dash, Dash Bootstrap Components
+- **Backend**: Flask, SQLAlchemy, Celery
+- **Database**: PostgreSQL 15+
+- **Cache**: Redis 7+
+- **Task Queue**: Celery with Redis broker
+- **Containerization**: Docker, docker-compose
+- **Authentication**: JWT (JSON Web Tokens)
+- **Testing**: pytest (90%+ coverage)
+
+### Getting Started
+
+**New to the dashboard?** Follow these steps:
+
+1. **[Read the Dashboard README](dash_app/README.md)** - Get an overview
+2. **[Follow the Complete Usage Guide](PHASE_11_USAGE_GUIDE.md)** - Step-by-step instructions
+3. **Start the application** - Use Docker Compose or local setup
+4. **Explore the home page** - Familiarize yourself with the UI
+5. **Run your first experiment** - Use the configuration wizard
+6. **Monitor training** - Watch real-time progress
+7. **Analyze results** - View confusion matrix and metrics
+8. **Try XAI** - Generate SHAP explanations
+
+---
+
 ## 📚 Documentation
 
 ### Phase-Specific Guides
@@ -691,6 +881,7 @@ spec:
 - [`PHASE_8_USAGE_GUIDE.md`](PHASE_8_USAGE_GUIDE.md) - Ensemble
 - [`Phase_9_DEPLOYMENT_GUIDE.md`](Phase_9_DEPLOYMENT_GUIDE.md) - Deployment
 - [`Phase_10_QA_INTEGRATION_GUIDE.md`](Phase_10_QA_INTEGRATION_GUIDE.md) - QA
+- [`PHASE_11_USAGE_GUIDE.md`](PHASE_11_USAGE_GUIDE.md) - **Enterprise Dashboard** ⭐
 
 **Architecture Documents** (Technical details):
 - [`phase_0.md`](phase_0.md) - Foundation design
