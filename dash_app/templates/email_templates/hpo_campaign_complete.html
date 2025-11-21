@@ -1,0 +1,59 @@
+{% extends "email_templates/base.html" %}
+
+{% block title %}HPO Campaign Complete - {{ campaign_name }}{% endblock %}
+
+{% block content %}
+<h2 class="content-title">🏆 HPO Campaign Complete!</h2>
+
+<p class="content-text">
+    Hi{% if user_first_name %} {{ user_first_name }}{% endif %},
+</p>
+
+<p class="content-text">
+    Your hyperparameter optimization campaign <strong>{{ campaign_name }}</strong> has completed all {{ total_trials }} trials.
+</p>
+
+<div class="metrics-box" style="border-left-color: #2ca02c;">
+    <div style="margin-bottom: 20px;">
+        <strong style="font-size: 18px; color: #2ca02c;">Best Configuration Found:</strong>
+    </div>
+
+    <div class="metric-row">
+        <span class="metric-label">Best Accuracy:</span>
+        <span class="metric-value">{{ best_accuracy }}%</span>
+    </div>
+    <div class="metric-row">
+        <span class="metric-label">Total Trials:</span>
+        <span class="metric-value">{{ total_trials }}</span>
+    </div>
+    <div class="metric-row">
+        <span class="metric-label">Campaign Duration:</span>
+        <span class="metric-value">{{ duration }}</span>
+    </div>
+
+    {% if best_hyperparameters %}
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e0e0e0;">
+        <strong>Best Hyperparameters:</strong>
+        <div style="margin-top: 10px; font-size: 14px; font-family: 'Courier New', monospace; color: #333;">
+            {% for key, value in best_hyperparameters.items() %}
+            <div style="padding: 4px 0;">{{ key }}: <span style="color: #2ca02c; font-weight: 600;">{{ value }}</span></div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ results_url }}" class="button" style="background-color: #2ca02c;">View Campaign Results →</a>
+</p>
+
+<p class="content-text" style="margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 20px;">
+    <strong>Next steps:</strong>
+</p>
+<ul style="color: #4a4a4a; line-height: 1.8;">
+    <li>Review optimization history and trial results</li>
+    <li>Train a full model with the best hyperparameters</li>
+    <li>Compare with your baseline experiments</li>
+    <li>Save the configuration for future use</li>
+</ul>
+{% endblock %}

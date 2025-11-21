@@ -88,3 +88,21 @@ API_KEY_RATE_LIMIT_DEFAULT = int(os.getenv("API_KEY_RATE_LIMIT_DEFAULT", "1000")
 API_KEY_RATE_LIMIT_WINDOW = 3600  # 1 hour in seconds
 API_KEY_EXPIRY_REDIS = 7200  # 2 hours (for cleanup)
 RATE_LIMIT_FAIL_OPEN = os.getenv("RATE_LIMIT_FAIL_OPEN", "True").lower() == "true"  # Allow requests if Redis down
+
+# Email Notification Configuration (Feature #3)
+EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "False").lower() == "true"
+EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "sendgrid")  # 'sendgrid', 'smtp'
+EMAIL_FROM = os.getenv("EMAIL_FROM", "noreply@lstm-dashboard.com")
+EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "LSTM Bearing Fault Diagnosis")
+
+# SendGrid Configuration
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+
+# SMTP Configuration (alternative to SendGrid)
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+
+# Email Rate Limiting
+EMAIL_RATE_LIMIT = int(os.getenv("EMAIL_RATE_LIMIT", "100"))  # Max emails per minute

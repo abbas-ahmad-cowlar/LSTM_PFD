@@ -7,7 +7,10 @@ from utils.logger import setup_logger
 from database.connection import get_db_session
 from models.experiment import Experiment, ExperimentStatus
 from models.training_run import TrainingRun
+from services.notification_service import NotificationService, get_error_suggestion
+from models.notification_preference import EventType
 import time
+import traceback
 
 logger = setup_logger(__name__)
 
@@ -89,6 +92,32 @@ def train_model_task(self, config: dict):
                     experiment.total_epochs = results.get("total_epochs", config.get("num_epochs", 1))
                     experiment.best_epoch = results.get("best_epoch", 1)
                     experiment.duration_seconds = results.get("training_time", 0)
+
+                    # EMIT EMAIL NOTIFICATION: Training Complete
+                    try:
+                        duration_mins = int(experiment.duration_seconds // 60)
+                        duration_secs = int(experiment.duration_seconds % 60)
+                        duration_str = f"{duration_mins}m {duration_secs}s" if duration_mins > 0 else f"{duration_secs}s"
+
+                        NotificationService.emit_event(
+                            event_type=EventType.TRAINING_COMPLETE,
+                            user_id=experiment.created_by or 1,  # Default to user 1 if not set
+                            data={
+                                'experiment_id': experiment_id,
+                                'experiment_name': experiment.name,
+                                'accuracy': experiment.metrics.get('test_accuracy', 0),
+                                'precision': results.get('precision', 0),
+                                'recall': results.get('recall', 0),
+                                'f1_score': results.get('f1_score', 0),
+                                'duration': duration_str,
+                                'total_epochs': experiment.total_epochs,
+                                'results_url': f"http://localhost:8050/experiments/{experiment_id}/results",
+                                'dashboard_url': 'http://localhost:8050'
+                            }
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to send training complete notification: {e}")
+
                 else:
                     experiment.status = ExperimentStatus.FAILED
                 session.commit()
@@ -106,8 +135,31 @@ def train_model_task(self, config: dict):
                 if experiment:
                     experiment.status = ExperimentStatus.FAILED
                     session.commit()
-        except:
-            pass
+
+                    # EMIT EMAIL NOTIFICATION: Training Failed
+                    try:
+                        error_msg = str(e)
+                        suggestion = get_error_suggestion(error_msg)
+
+                        NotificationService.emit_event(
+                            event_type=EventType.TRAINING_FAILED,
+                            user_id=experiment.created_by or 1,
+                            data={
+                                'experiment_id': experiment_id,
+                                'experiment_name': experiment.name,
+                                'error_message': error_msg,
+                                'error_suggestion': suggestion,
+                                'error_details_url': f"http://localhost:8050/experiments/{experiment_id}/logs",
+                                'new_training_url': 'http://localhost:8050/training/new',
+                                'troubleshooting_url': 'http://localhost:8050/help/troubleshooting',
+                                'dashboard_url': 'http://localhost:8050'
+                            }
+                        )
+                    except Exception as notif_error:
+                        logger.error(f"Failed to send training failed notification: {notif_error}")
+
+        except Exception as update_error:
+            logger.error(f"Failed to update experiment status: {update_error}")
 
         self.update_state(state='FAILURE', meta={'error': str(e)})
         raise
