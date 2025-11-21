@@ -16,6 +16,7 @@ Date: 2025-11-19
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Optional
 from config.base_config import BaseConfig
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 @dataclass
@@ -28,15 +29,15 @@ class CNN1DConfig(BaseConfig):
 
     Example:
         >>> config = CNN1DConfig(
-        ...     input_length=102400,
-        ...     num_classes=11,
+        ...     input_length=SIGNAL_LENGTH,
+        ...     num_classes=NUM_CLASSES,
         ...     conv_channels=[32, 64, 128],
         ...     kernel_sizes=[15, 11, 7]
         ... )
     """
     # Input/Output
-    input_length: int = 102400
-    num_classes: int = 11
+    input_length: int = SIGNAL_LENGTH
+    num_classes: int = NUM_CLASSES
 
     # Convolutional layers
     conv_channels: List[int] = field(default_factory=lambda: [32, 64, 128, 256])
@@ -79,15 +80,15 @@ class ResNet1DConfig(BaseConfig):
 
     Example:
         >>> config = ResNet1DConfig(
-        ...     input_length=102400,
-        ...     num_classes=11,
+        ...     input_length=SIGNAL_LENGTH,
+        ...     num_classes=NUM_CLASSES,
         ...     blocks=[2, 2, 2, 2],  # ResNet-18 style
         ...     channels=[64, 128, 256, 512]
         ... )
     """
     # Input/Output
-    input_length: int = 102400
-    num_classes: int = 11
+    input_length: int = SIGNAL_LENGTH
+    num_classes: int = NUM_CLASSES
 
     # ResNet structure
     blocks: List[int] = field(default_factory=lambda: [2, 2, 2, 2])  # Blocks per stage
@@ -128,16 +129,16 @@ class TransformerConfig(BaseConfig):
 
     Example:
         >>> config = TransformerConfig(
-        ...     input_length=102400,
-        ...     num_classes=11,
+        ...     input_length=SIGNAL_LENGTH,
+        ...     num_classes=NUM_CLASSES,
         ...     d_model=256,
         ...     nhead=8,
         ...     num_layers=6
         ... )
     """
     # Input/Output
-    input_length: int = 102400
-    num_classes: int = 11
+    input_length: int = SIGNAL_LENGTH
+    num_classes: int = NUM_CLASSES
 
     # Transformer architecture
     d_model: int = 256  # Model dimension
@@ -184,15 +185,15 @@ class LSTMConfig(BaseConfig):
 
     Example:
         >>> config = LSTMConfig(
-        ...     input_length=102400,
-        ...     num_classes=11,
+        ...     input_length=SIGNAL_LENGTH,
+        ...     num_classes=NUM_CLASSES,
         ...     hidden_size=256,
         ...     num_layers=3
         ... )
     """
     # Input/Output
-    input_length: int = 102400
-    num_classes: int = 11
+    input_length: int = SIGNAL_LENGTH
+    num_classes: int = NUM_CLASSES
     input_size: int = 1  # Number of features per timestep
 
     # LSTM architecture
@@ -230,15 +231,15 @@ class HybridPINNConfig(BaseConfig):
 
     Example:
         >>> config = HybridPINNConfig(
-        ...     input_length=102400,
-        ...     num_classes=11,
+        ...     input_length=SIGNAL_LENGTH,
+        ...     num_classes=NUM_CLASSES,
         ...     backbone='resnet1d',
         ...     physics_loss_weight=0.1
         ... )
     """
     # Input/Output
-    input_length: int = 102400
-    num_classes: int = 11
+    input_length: int = SIGNAL_LENGTH
+    num_classes: int = NUM_CLASSES
 
     # Backbone architecture
     backbone: str = 'resnet1d'  # 'cnn1d', 'resnet1d', 'transformer'
@@ -285,13 +286,13 @@ class EnsembleConfig(BaseConfig):
 
     Example:
         >>> config = EnsembleConfig(
-        ...     num_classes=11,
+        ...     num_classes=NUM_CLASSES,
         ...     model_configs=[cnn_cfg, resnet_cfg, transformer_cfg],
         ...     ensemble_method='soft_voting'
         ... )
     """
     # Input/Output
-    num_classes: int = 11
+    num_classes: int = NUM_CLASSES
 
     # Ensemble configuration
     model_configs: List[Dict[str, Any]] = field(default_factory=list)

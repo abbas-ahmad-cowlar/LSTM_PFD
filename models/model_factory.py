@@ -20,6 +20,7 @@ import torch.nn as nn
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .base_model import BaseModel
 from .cnn_1d import CNN1D, create_cnn1d
 from .resnet_1d import ResNet1D, create_resnet18_1d, create_resnet34_1d
@@ -80,7 +81,7 @@ def list_available_models() -> List[str]:
 
 def create_model(
     model_name: str,
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     **kwargs
 ) -> BaseModel:
     """
@@ -88,7 +89,7 @@ def create_model(
 
     Args:
         model_name: Name of the model ('cnn1d', 'resnet18', etc.)
-        num_classes: Number of output classes (default: 11)
+        num_classes: Number of output classes (default: NUM_CLASSES from constants)
         **kwargs: Additional model-specific arguments
 
     Returns:
@@ -98,8 +99,8 @@ def create_model(
         ValueError: If model_name is not registered
 
     Example:
-        >>> model = create_model('cnn1d', num_classes=11, dropout=0.3)
-        >>> model = create_model('resnet18', num_classes=11)
+        >>> model = create_model('cnn1d', num_classes=NUM_CLASSES, dropout=0.3)
+        >>> model = create_model('resnet18', num_classes=NUM_CLASSES)
     """
     model_name_lower = model_name.lower()
 
@@ -123,7 +124,7 @@ def create_model_from_config(config: Dict[str, Any]) -> BaseModel:
     Args:
         config: Configuration dictionary with keys:
             - model_name: Name of the model
-            - num_classes: Number of classes (optional, default: 11)
+            - num_classes: Number of classes (optional, default: NUM_CLASSES)
             - Additional model-specific parameters
 
     Returns:
@@ -132,7 +133,7 @@ def create_model_from_config(config: Dict[str, Any]) -> BaseModel:
     Example:
         >>> config = {
         ...     'model_name': 'cnn1d',
-        ...     'num_classes': 11,
+        ...     'num_classes': NUM_CLASSES,
         ...     'dropout': 0.3,
         ...     'input_channels': 1
         ... }
@@ -146,7 +147,7 @@ def create_model_from_config(config: Dict[str, Any]) -> BaseModel:
 def load_pretrained(
     model_name: str,
     checkpoint_path: str,
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     device: str = 'cpu',
     strict: bool = True,
     **kwargs
@@ -169,7 +170,7 @@ def load_pretrained(
         >>> model = load_pretrained(
         ...     'cnn1d',
         ...     'checkpoints/best_model.pt',
-        ...     num_classes=11
+        ...     num_classes=NUM_CLASSES
         ... )
     """
     # Create model
@@ -249,7 +250,7 @@ def create_ensemble(
     checkpoint_paths: Optional[List[str]] = None,
     ensemble_type: str = 'voting',
     weights: Optional[List[float]] = None,
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     device: str = 'cpu',
     **kwargs
 ) -> EnsembleModel:
@@ -274,7 +275,7 @@ def create_ensemble(
         ...     checkpoint_paths=['cnn.pt', 'resnet.pt', 'transformer.pt'],
         ...     ensemble_type='voting',
         ...     weights=[0.3, 0.4, 0.3],
-        ...     num_classes=11
+        ...     num_classes=NUM_CLASSES
         ... )
     """
     models = []
@@ -332,7 +333,7 @@ def get_model_info(model_name: str) -> Dict[str, Any]:
         raise ValueError(f"Unknown model: '{model_name}'")
 
     # Create a temporary model to get info
-    model = create_model(model_name, num_classes=11)
+    model = create_model(model_name, num_classes=NUM_CLASSES)
 
     info = {
         'model_name': model_name,
