@@ -39,6 +39,32 @@ def register_all_callbacks(app):
             from layouts.experiment_results import create_experiment_results_layout
             experiment_id = int(pathname.split('/')[2])
             return create_experiment_results_layout(experiment_id)
+        elif pathname == '/compare':
+            from layouts.experiment_comparison import create_experiment_comparison_layout
+            from dash import callback_context
+            # Parse query string for experiment IDs
+            import urllib.parse as urlparse
+            from flask import request
+            query_params = request.args
+            ids_str = query_params.get('ids', '')
+            if ids_str:
+                try:
+                    experiment_ids = [int(id.strip()) for id in ids_str.split(',')]
+                    return create_experiment_comparison_layout(experiment_ids)
+                except ValueError:
+                    from dash import html
+                    return html.Div([
+                        html.H2("Invalid Comparison Request"),
+                        html.P("Invalid experiment IDs provided."),
+                        html.A("Return to Experiments", href="/experiments")
+                    ], className="text-center mt-5")
+            else:
+                from dash import html
+                return html.Div([
+                    html.H2("Invalid Comparison Request"),
+                    html.P("No experiment IDs provided. Use: /compare?ids=1,2,3"),
+                    html.A("Return to Experiments", href="/experiments")
+                ], className="text-center mt-5")
         else:
             from dash import html
             return html.Div([
@@ -72,3 +98,16 @@ def register_all_callbacks(app):
         register_training_monitor_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import training_monitor_callbacks: {e}")
+
+    # Import and register comparison callbacks (Feature #2)
+    try:
+        from callbacks.comparison_callbacks import register_comparison_callbacks
+        register_comparison_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import comparison_callbacks: {e}")
+
+    try:
+        from callbacks.experiments_callbacks import register_experiments_callbacks
+        register_experiments_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import experiments_callbacks: {e}")
