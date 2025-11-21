@@ -22,6 +22,9 @@ DATABASE_URL = os.getenv(
 
 # Redis Configuration
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_DB = int(os.getenv("REDIS_DB", "0"))
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL)
@@ -79,3 +82,50 @@ CHECKPOINTS_DIR = BASE_DIR / "checkpoints"
 
 # GPU Configuration
 CUDA_VISIBLE_DEVICES = os.getenv("CUDA_VISIBLE_DEVICES", "0")
+
+# API Key & Rate Limiting Configuration (Feature #1)
+API_KEY_RATE_LIMIT_DEFAULT = int(os.getenv("API_KEY_RATE_LIMIT_DEFAULT", "1000"))  # Requests per hour
+API_KEY_RATE_LIMIT_WINDOW = 3600  # 1 hour in seconds
+API_KEY_EXPIRY_REDIS = 7200  # 2 hours (for cleanup)
+RATE_LIMIT_FAIL_OPEN = os.getenv("RATE_LIMIT_FAIL_OPEN", "True").lower() == "true"  # Allow requests if Redis down
+
+# Email Notification Configuration (Feature #3)
+EMAIL_ENABLED = os.getenv("EMAIL_ENABLED", "False").lower() == "true"
+EMAIL_PROVIDER = os.getenv("EMAIL_PROVIDER", "sendgrid")  # 'sendgrid', 'smtp'
+EMAIL_FROM = os.getenv("EMAIL_FROM", "noreply@lstm-dashboard.com")
+EMAIL_FROM_NAME = os.getenv("EMAIL_FROM_NAME", "LSTM Bearing Fault Diagnosis")
+
+# SendGrid Configuration
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
+
+# SMTP Configuration (alternative to SendGrid)
+SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
+SMTP_USERNAME = os.getenv("SMTP_USERNAME", "")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
+
+# Email Rate Limiting
+EMAIL_RATE_LIMIT = int(os.getenv("EMAIL_RATE_LIMIT", "100"))  # Max emails per minute
+
+# Webhook Notification Configuration (Feature #4)
+NOTIFICATIONS_SLACK_ENABLED = os.getenv("NOTIFICATIONS_SLACK_ENABLED", "True").lower() == "true"
+NOTIFICATIONS_TEAMS_ENABLED = os.getenv("NOTIFICATIONS_TEAMS_ENABLED", "True").lower() == "true"
+NOTIFICATIONS_WEBHOOK_ENABLED = os.getenv("NOTIFICATIONS_WEBHOOK_ENABLED", "True").lower() == "true"
+
+# Slack Configuration
+SLACK_RATE_LIMIT_PER_WEBHOOK = int(os.getenv("SLACK_RATE_LIMIT_PER_WEBHOOK", "1"))  # 1 msg/sec
+SLACK_RETRY_ATTEMPTS = int(os.getenv("SLACK_RETRY_ATTEMPTS", "3"))
+SLACK_TIMEOUT_SECONDS = int(os.getenv("SLACK_TIMEOUT_SECONDS", "10"))
+
+# Teams Configuration
+TEAMS_RATE_LIMIT_PER_WEBHOOK = int(os.getenv("TEAMS_RATE_LIMIT_PER_WEBHOOK", "2"))  # 2 msg/sec
+TEAMS_RETRY_ATTEMPTS = int(os.getenv("TEAMS_RETRY_ATTEMPTS", "3"))
+TEAMS_TIMEOUT_SECONDS = int(os.getenv("TEAMS_TIMEOUT_SECONDS", "10"))
+
+# Custom Webhook Configuration
+WEBHOOK_CUSTOM_TIMEOUT_SECONDS = int(os.getenv("WEBHOOK_CUSTOM_TIMEOUT_SECONDS", "5"))
+WEBHOOK_CUSTOM_RETRY_ATTEMPTS = int(os.getenv("WEBHOOK_CUSTOM_RETRY_ATTEMPTS", "2"))
+
+# Webhook Feature Toggles
+NOTIFICATIONS_ENABLE_RICH_FORMATTING = os.getenv("NOTIFICATIONS_ENABLE_RICH_FORMATTING", "True").lower() == "true"
+NOTIFICATIONS_ENABLE_MENTIONS = os.getenv("NOTIFICATIONS_ENABLE_MENTIONS", "True").lower() == "true"
