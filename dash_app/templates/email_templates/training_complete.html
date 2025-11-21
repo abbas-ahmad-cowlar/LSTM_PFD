@@ -1,0 +1,64 @@
+{% extends "email_templates/base.html" %}
+
+{% block title %}Training Complete - {{ experiment_name }}{% endblock %}
+
+{% block content %}
+<h2 class="content-title">🎉 Training Complete!</h2>
+
+<p class="content-text">
+    Hi{% if user_first_name %} {{ user_first_name }}{% endif %},
+</p>
+
+<p class="content-text">
+    Your model <strong>{{ experiment_name }}</strong> has successfully finished training.
+</p>
+
+<div class="metrics-box">
+    <div class="metric-row">
+        <span class="metric-label">Accuracy:</span>
+        <span class="metric-value">{{ accuracy }}%</span>
+    </div>
+    {% if precision %}
+    <div class="metric-row">
+        <span class="metric-label">Precision:</span>
+        <span class="metric-value">{{ precision }}%</span>
+    </div>
+    {% endif %}
+    {% if recall %}
+    <div class="metric-row">
+        <span class="metric-label">Recall:</span>
+        <span class="metric-value">{{ recall }}%</span>
+    </div>
+    {% endif %}
+    {% if f1_score %}
+    <div class="metric-row">
+        <span class="metric-label">F1-Score:</span>
+        <span class="metric-value">{{ f1_score }}%</span>
+    </div>
+    {% endif %}
+    <div class="metric-row">
+        <span class="metric-label">Duration:</span>
+        <span class="metric-value">{{ duration }}</span>
+    </div>
+    {% if total_epochs %}
+    <div class="metric-row">
+        <span class="metric-label">Total Epochs:</span>
+        <span class="metric-value">{{ total_epochs }}</span>
+    </div>
+    {% endif %}
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ results_url }}" class="button">View Full Results →</a>
+</p>
+
+<p class="content-text" style="margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 20px;">
+    <strong>Next steps:</strong>
+</p>
+<ul style="color: #4a4a4a; line-height: 1.8;">
+    <li>Compare with other models in your experiments</li>
+    <li>Analyze confusion matrix and performance metrics</li>
+    <li>Download trained model for deployment</li>
+    <li>Run additional experiments to improve results</li>
+</ul>
+{% endblock %}
