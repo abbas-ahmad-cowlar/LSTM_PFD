@@ -8,8 +8,10 @@ from models.user import User
 from models.system_log import SystemLog
 from models.hpo_campaign import HPOCampaign
 from models.explanation import Explanation
+from models.api_key import APIKey, APIUsage
 
 __all__ = [
     'Base', 'Dataset', 'Signal', 'Experiment', 'TrainingRun',
-    'User', 'SystemLog', 'HPOCampaign', 'Explanation'
+    'User', 'SystemLog', 'HPOCampaign', 'Explanation',
+    'APIKey', 'APIUsage'
 ]
