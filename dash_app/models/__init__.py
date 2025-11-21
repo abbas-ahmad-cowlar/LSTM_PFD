@@ -9,9 +9,15 @@ from models.system_log import SystemLog
 from models.hpo_campaign import HPOCampaign
 from models.explanation import Explanation
 from models.api_key import APIKey, APIUsage
+from models.notification_preference import NotificationPreference, EventType
+from models.email_log import EmailLog, EmailStatus
+from models.email_digest_queue import EmailDigestQueue
 
 __all__ = [
     'Base', 'Dataset', 'Signal', 'Experiment', 'TrainingRun',
     'User', 'SystemLog', 'HPOCampaign', 'Explanation',
-    'APIKey', 'APIUsage'
+    'APIKey', 'APIUsage',
+    'NotificationPreference', 'EventType',
+    'EmailLog', 'EmailStatus',
+    'EmailDigestQueue'
 ]
