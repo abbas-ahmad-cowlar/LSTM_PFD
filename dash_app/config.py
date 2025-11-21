@@ -22,6 +22,9 @@ DATABASE_URL = os.getenv(
 
 # Redis Configuration
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_DB = int(os.getenv("REDIS_DB", "0"))
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL)
@@ -79,3 +82,9 @@ CHECKPOINTS_DIR = BASE_DIR / "checkpoints"
 
 # GPU Configuration
 CUDA_VISIBLE_DEVICES = os.getenv("CUDA_VISIBLE_DEVICES", "0")
+
+# API Key & Rate Limiting Configuration (Feature #1)
+API_KEY_RATE_LIMIT_DEFAULT = int(os.getenv("API_KEY_RATE_LIMIT_DEFAULT", "1000"))  # Requests per hour
+API_KEY_RATE_LIMIT_WINDOW = 3600  # 1 hour in seconds
+API_KEY_EXPIRY_REDIS = 7200  # 2 hours (for cleanup)
+RATE_LIMIT_FAIL_OPEN = os.getenv("RATE_LIMIT_FAIL_OPEN", "True").lower() == "true"  # Allow requests if Redis down
