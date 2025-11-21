@@ -1,0 +1,52 @@
+{% extends "email_templates/base.html" %}
+
+{% block title %}Training Failed - {{ experiment_name }}{% endblock %}
+
+{% block content %}
+<h2 class="content-title" style="color: #d32f2f;">⚠️ Training Failed</h2>
+
+<p class="content-text">
+    Hi{% if user_first_name %} {{ user_first_name }}{% endif %},
+</p>
+
+<p class="content-text">
+    Your experiment <strong>{{ experiment_name }}</strong> encountered an error and could not complete training.
+</p>
+
+<div class="metrics-box" style="border-left-color: #d32f2f; background-color: #ffebee;">
+    <div style="margin-bottom: 15px;">
+        <strong style="color: #d32f2f;">Error:</strong>
+        <div style="margin-top: 8px; font-family: 'Courier New', monospace; font-size: 14px; color: #b71c1c;">
+            {{ error_message }}
+        </div>
+    </div>
+
+    {% if error_suggestion %}
+    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ef9a9a;">
+        <strong style="color: #1f77b4;">💡 Suggestion:</strong>
+        <div style="margin-top: 8px; color: #333333;">
+            {{ error_suggestion }}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<p style="text-align: center;">
+    <a href="{{ error_details_url }}" class="button" style="background-color: #d32f2f;">View Error Details →</a>
+    <a href="{{ new_training_url }}" class="button" style="background-color: #1f77b4; margin-left: 10px;">Start New Training →</a>
+</p>
+
+<p class="content-text" style="margin-top: 30px; border-top: 1px solid #e0e0e0; padding-top: 20px;">
+    <strong>Common solutions:</strong>
+</p>
+<ul style="color: #4a4a4a; line-height: 1.8;">
+    <li>Check your dataset is properly formatted and accessible</li>
+    <li>Verify hyperparameters are within valid ranges</li>
+    <li>Reduce batch size if encountering memory errors</li>
+    <li>Review error logs for detailed stack traces</li>
+</ul>
+
+<p class="content-text" style="font-size: 14px; color: #666666;">
+    Need help? Contact support or check our <a href="{{ troubleshooting_url }}" style="color: #1f77b4;">troubleshooting guide</a>.
+</p>
+{% endblock %}
