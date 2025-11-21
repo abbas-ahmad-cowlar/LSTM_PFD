@@ -17,6 +17,17 @@ logger = setup_logger(__name__)
 # Initialize Flask server
 server = Flask(__name__)
 
+# Register API blueprints (Feature #1, #5)
+from api.routes import api_bp
+from api.api_keys import api_keys_bp
+from api.tags import tags_bp
+from api.search import search_bp
+
+server.register_blueprint(api_bp)
+server.register_blueprint(api_keys_bp)
+server.register_blueprint(tags_bp)
+server.register_blueprint(search_bp)
+
 # Initialize Dash app
 app = dash.Dash(
     __name__,
