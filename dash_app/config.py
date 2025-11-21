@@ -106,3 +106,26 @@ SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
 
 # Email Rate Limiting
 EMAIL_RATE_LIMIT = int(os.getenv("EMAIL_RATE_LIMIT", "100"))  # Max emails per minute
+
+# Webhook Notification Configuration (Feature #4)
+NOTIFICATIONS_SLACK_ENABLED = os.getenv("NOTIFICATIONS_SLACK_ENABLED", "True").lower() == "true"
+NOTIFICATIONS_TEAMS_ENABLED = os.getenv("NOTIFICATIONS_TEAMS_ENABLED", "True").lower() == "true"
+NOTIFICATIONS_WEBHOOK_ENABLED = os.getenv("NOTIFICATIONS_WEBHOOK_ENABLED", "True").lower() == "true"
+
+# Slack Configuration
+SLACK_RATE_LIMIT_PER_WEBHOOK = int(os.getenv("SLACK_RATE_LIMIT_PER_WEBHOOK", "1"))  # 1 msg/sec
+SLACK_RETRY_ATTEMPTS = int(os.getenv("SLACK_RETRY_ATTEMPTS", "3"))
+SLACK_TIMEOUT_SECONDS = int(os.getenv("SLACK_TIMEOUT_SECONDS", "10"))
+
+# Teams Configuration
+TEAMS_RATE_LIMIT_PER_WEBHOOK = int(os.getenv("TEAMS_RATE_LIMIT_PER_WEBHOOK", "2"))  # 2 msg/sec
+TEAMS_RETRY_ATTEMPTS = int(os.getenv("TEAMS_RETRY_ATTEMPTS", "3"))
+TEAMS_TIMEOUT_SECONDS = int(os.getenv("TEAMS_TIMEOUT_SECONDS", "10"))
+
+# Custom Webhook Configuration
+WEBHOOK_CUSTOM_TIMEOUT_SECONDS = int(os.getenv("WEBHOOK_CUSTOM_TIMEOUT_SECONDS", "5"))
+WEBHOOK_CUSTOM_RETRY_ATTEMPTS = int(os.getenv("WEBHOOK_CUSTOM_RETRY_ATTEMPTS", "2"))
+
+# Webhook Feature Toggles
+NOTIFICATIONS_ENABLE_RICH_FORMATTING = os.getenv("NOTIFICATIONS_ENABLE_RICH_FORMATTING", "True").lower() == "true"
+NOTIFICATIONS_ENABLE_MENTIONS = os.getenv("NOTIFICATIONS_ENABLE_MENTIONS", "True").lower() == "true"

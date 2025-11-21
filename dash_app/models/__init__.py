@@ -12,6 +12,8 @@ from models.api_key import APIKey, APIUsage
 from models.notification_preference import NotificationPreference, EventType
 from models.email_log import EmailLog, EmailStatus
 from models.email_digest_queue import EmailDigestQueue
+from models.webhook_configuration import WebhookConfiguration
+from models.webhook_log import WebhookLog, WebhookStatus
 
 __all__ = [
     'Base', 'Dataset', 'Signal', 'Experiment', 'TrainingRun',
@@ -19,5 +21,7 @@ __all__ = [
     'APIKey', 'APIUsage',
     'NotificationPreference', 'EventType',
     'EmailLog', 'EmailStatus',
-    'EmailDigestQueue'
+    'EmailDigestQueue',
+    'WebhookConfiguration',
+    'WebhookLog', 'WebhookStatus'
 ]

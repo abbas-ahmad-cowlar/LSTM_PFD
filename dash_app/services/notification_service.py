@@ -1,8 +1,8 @@
 """
-Enhanced notification service with email support (Feature #3).
-Handles multi-channel notifications: in-app toasts, emails, and future channels.
+Enhanced notification service with email and webhook support (Features #3 and #4).
+Handles multi-channel notifications: in-app toasts, emails, Slack, Teams, and custom webhooks.
 """
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from pathlib import Path
@@ -13,8 +13,11 @@ from database.connection import get_db_session
 from models.notification_preference import NotificationPreference, EventType
 from models.email_log import EmailLog, EmailStatus
 from models.email_digest_queue import EmailDigestQueue
+from models.webhook_configuration import WebhookConfiguration
+from models.webhook_log import WebhookLog, WebhookStatus
 from models.user import User
 from services.email_provider import EmailProviderFactory, EmailRateLimiter
+from services.notification_providers import NotificationProviderFactory, NotificationMessage
 from config import DASH_APP_DIR
 import redis
 
@@ -142,6 +145,16 @@ class NotificationService:
                             session=session
                         )
                         results['channels']['email_digest'] = digest_result
+
+                # Send webhooks if configured (Feature #4)
+                webhook_results = NotificationService._send_webhook_notifications(
+                    user_id=user_id,
+                    event_type=event_type,
+                    data=data,
+                    session=session
+                )
+                if webhook_results:
+                    results['channels']['webhooks'] = webhook_results
 
             return results
 
@@ -324,6 +337,282 @@ class NotificationService:
         except Exception as e:
             logger.error(f"Failed to queue digest: {e}", exc_info=True)
             return {'status': 'error', 'error': str(e)}
+
+    @staticmethod
+    def _send_webhook_notifications(user_id: int, event_type: str, data: Dict[str, Any], session) -> List[Dict[str, Any]]:
+        """
+        Send webhook notifications to all configured webhooks for this user and event type.
+
+        Args:
+            user_id: User ID
+            event_type: Event type
+            data: Event data
+            session: Database session
+
+        Returns:
+            List of results for each webhook
+        """
+        try:
+            from config import (
+                NOTIFICATIONS_SLACK_ENABLED,
+                NOTIFICATIONS_TEAMS_ENABLED,
+                NOTIFICATIONS_WEBHOOK_ENABLED,
+                SLACK_RATE_LIMIT_PER_WEBHOOK,
+                SLACK_RETRY_ATTEMPTS,
+                SLACK_TIMEOUT_SECONDS,
+                TEAMS_RATE_LIMIT_PER_WEBHOOK,
+                TEAMS_RETRY_ATTEMPTS,
+                TEAMS_TIMEOUT_SECONDS,
+                WEBHOOK_CUSTOM_TIMEOUT_SECONDS,
+                WEBHOOK_CUSTOM_RETRY_ATTEMPTS
+            )
+
+            # Check if any webhook providers are enabled globally
+            if not any([NOTIFICATIONS_SLACK_ENABLED, NOTIFICATIONS_TEAMS_ENABLED, NOTIFICATIONS_WEBHOOK_ENABLED]):
+                logger.debug("All webhook providers disabled globally")
+                return []
+
+            # Query active webhooks for this user
+            webhooks = session.query(WebhookConfiguration).filter(
+                WebhookConfiguration.user_id == user_id,
+                WebhookConfiguration.is_active == True
+            ).all()
+
+            if not webhooks:
+                logger.debug(f"No active webhooks configured for user {user_id}")
+                return []
+
+            results = []
+
+            for webhook_config in webhooks:
+                # Check if this event is enabled for this webhook
+                if event_type not in webhook_config.enabled_events:
+                    logger.debug(f"Event '{event_type}' not enabled for webhook {webhook_config.id}")
+                    continue
+
+                # Check if provider is globally enabled
+                if webhook_config.provider_type == 'slack' and not NOTIFICATIONS_SLACK_ENABLED:
+                    logger.debug(f"Slack disabled globally, skipping webhook {webhook_config.id}")
+                    continue
+                elif webhook_config.provider_type == 'teams' and not NOTIFICATIONS_TEAMS_ENABLED:
+                    logger.debug(f"Teams disabled globally, skipping webhook {webhook_config.id}")
+                    continue
+                elif webhook_config.provider_type == 'webhook' and not NOTIFICATIONS_WEBHOOK_ENABLED:
+                    logger.debug(f"Custom webhooks disabled globally, skipping webhook {webhook_config.id}")
+                    continue
+
+                # Send webhook
+                result = NotificationService._send_single_webhook(
+                    webhook_config=webhook_config,
+                    event_type=event_type,
+                    data=data,
+                    session=session
+                )
+                results.append(result)
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Failed to send webhook notifications: {e}", exc_info=True)
+            return [{'error': str(e)}]
+
+    @staticmethod
+    def _send_single_webhook(webhook_config: WebhookConfiguration, event_type: str, data: Dict[str, Any], session) -> Dict[str, Any]:
+        """
+        Send notification to a single webhook.
+
+        Args:
+            webhook_config: Webhook configuration
+            event_type: Event type
+            data: Event data
+            session: Database session
+
+        Returns:
+            Result dict with status
+        """
+        from config import (
+            SLACK_RATE_LIMIT_PER_WEBHOOK,
+            SLACK_RETRY_ATTEMPTS,
+            SLACK_TIMEOUT_SECONDS,
+            TEAMS_RATE_LIMIT_PER_WEBHOOK,
+            TEAMS_RETRY_ATTEMPTS,
+            TEAMS_TIMEOUT_SECONDS,
+            WEBHOOK_CUSTOM_TIMEOUT_SECONDS,
+            WEBHOOK_CUSTOM_RETRY_ATTEMPTS
+        )
+
+        try:
+            # Get provider config
+            provider_config = {}
+            if webhook_config.provider_type == 'slack':
+                provider_config = {
+                    'rate_limit_per_webhook': SLACK_RATE_LIMIT_PER_WEBHOOK,
+                    'retry_attempts': SLACK_RETRY_ATTEMPTS,
+                    'timeout_seconds': SLACK_TIMEOUT_SECONDS
+                }
+            elif webhook_config.provider_type == 'teams':
+                provider_config = {
+                    'rate_limit_per_webhook': TEAMS_RATE_LIMIT_PER_WEBHOOK,
+                    'retry_attempts': TEAMS_RETRY_ATTEMPTS,
+                    'timeout_seconds': TEAMS_TIMEOUT_SECONDS
+                }
+            elif webhook_config.provider_type == 'webhook':
+                provider_config = {
+                    'timeout_seconds': WEBHOOK_CUSTOM_TIMEOUT_SECONDS,
+                    'retry_attempts': WEBHOOK_CUSTOM_RETRY_ATTEMPTS
+                }
+
+            # Get provider instance
+            provider = NotificationProviderFactory.get_provider(
+                provider_type=webhook_config.provider_type,
+                config=provider_config
+            )
+
+            # Build notification message
+            message = NotificationService._build_notification_message(
+                event_type=event_type,
+                data=data,
+                settings=webhook_config.settings
+            )
+
+            # Send notification
+            success = provider.send(webhook_config.webhook_url, message)
+
+            # Log result
+            webhook_log = WebhookLog(
+                webhook_config_id=webhook_config.id,
+                user_id=webhook_config.user_id,
+                event_type=event_type,
+                provider_type=webhook_config.provider_type,
+                webhook_url=webhook_config.webhook_url,
+                payload=message.__dict__,
+                status=WebhookStatus.SENT if success else WebhookStatus.FAILED,
+                http_status_code=200 if success else None,
+                sent_at=datetime.now() if success else None
+            )
+            session.add(webhook_log)
+
+            # Update webhook config status
+            if success:
+                webhook_config.last_used_at = datetime.now()
+                webhook_config.consecutive_failures = 0
+                webhook_config.last_error = None
+            else:
+                webhook_config.consecutive_failures += 1
+                webhook_config.last_error = "Send failed"
+
+                # Auto-disable after 10 consecutive failures
+                if webhook_config.consecutive_failures >= 10:
+                    webhook_config.is_active = False
+                    logger.warning(f"Webhook {webhook_config.id} auto-disabled after 10 failures")
+
+            session.commit()
+
+            logger.info(f"Webhook notification sent to {webhook_config.provider_type}: {success}")
+            return {
+                'webhook_id': webhook_config.id,
+                'provider': webhook_config.provider_type,
+                'success': success
+            }
+
+        except Exception as e:
+            logger.error(f"Failed to send webhook {webhook_config.id}: {e}", exc_info=True)
+
+            # Log error
+            webhook_log = WebhookLog(
+                webhook_config_id=webhook_config.id,
+                user_id=webhook_config.user_id,
+                event_type=event_type,
+                provider_type=webhook_config.provider_type,
+                webhook_url=webhook_config.webhook_url,
+                status=WebhookStatus.FAILED,
+                error_message=str(e)
+            )
+            session.add(webhook_log)
+
+            # Update webhook config
+            webhook_config.consecutive_failures += 1
+            webhook_config.last_error = str(e)
+            if webhook_config.consecutive_failures >= 10:
+                webhook_config.is_active = False
+
+            session.commit()
+
+            return {
+                'webhook_id': webhook_config.id,
+                'provider': webhook_config.provider_type,
+                'success': False,
+                'error': str(e)
+            }
+
+    @staticmethod
+    def _build_notification_message(event_type: str, data: Dict[str, Any], settings: Dict[str, Any]) -> NotificationMessage:
+        """
+        Build NotificationMessage from event data.
+
+        Args:
+            event_type: Event type
+            data: Event data
+            settings: Webhook-specific settings
+
+        Returns:
+            NotificationMessage instance
+        """
+        # Map event types to titles and priorities
+        event_config = {
+            EventType.TRAINING_COMPLETE: {
+                'title': f"Training Complete - {data.get('experiment_name', 'Experiment')}",
+                'priority': 'medium',
+                'emoji': '🎉'
+            },
+            EventType.TRAINING_FAILED: {
+                'title': f"Training Failed - {data.get('experiment_name', 'Experiment')}",
+                'priority': 'high',
+                'emoji': '⚠️'
+            },
+            EventType.TRAINING_STARTED: {
+                'title': f"Training Started - {data.get('experiment_name', 'Experiment')}",
+                'priority': 'low',
+                'emoji': '🚀'
+            },
+            EventType.HPO_CAMPAIGN_COMPLETE: {
+                'title': f"HPO Campaign Complete - {data.get('campaign_name', 'Campaign')}",
+                'priority': 'high',
+                'emoji': '🏆'
+            },
+            EventType.HPO_CAMPAIGN_FAILED: {
+                'title': f"HPO Campaign Failed - {data.get('campaign_name', 'Campaign')}",
+                'priority': 'high',
+                'emoji': '⚠️'
+            }
+        }
+
+        config = event_config.get(event_type, {
+            'title': 'Notification',
+            'priority': 'medium',
+            'emoji': '📢'
+        })
+
+        # Build actions (buttons)
+        actions = []
+        if 'dashboard_url' in data:
+            actions.append({
+                'label': 'View Results',
+                'url': data['dashboard_url'],
+                'style': 'primary'
+            })
+
+        # Build message
+        message = NotificationMessage(
+            title=config['title'],
+            body=data.get('message', ''),
+            event_type=event_type,
+            priority=config['priority'],
+            data=data,
+            actions=actions if actions else None
+        )
+
+        return message
 
     # Legacy toast notification methods (backward compatibility)
     @staticmethod
