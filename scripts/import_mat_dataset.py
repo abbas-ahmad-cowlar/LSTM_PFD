@@ -167,7 +167,6 @@ def import_mat_dataset(
 
         # Stratified split
         from sklearn.model_selection import train_test_split
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
         train_idx, temp_idx = train_test_split(
             indices,

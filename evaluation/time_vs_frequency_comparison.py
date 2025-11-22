@@ -467,7 +467,6 @@ if __name__ == '__main__':
     # Test comparison
     from models.cnn.cnn_1d import CNN1D
     from models.spectrogram_cnn import resnet18_2d
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     class_names = [
         'Normal', 'Ball Fault', 'Inner Race', 'Outer Race',

@@ -474,7 +474,6 @@ if __name__ == "__main__":
     print("=" * 60)
 
     from torch.utils.data import TensorDataset
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     # Create dummy datasets
     n_train = 1000

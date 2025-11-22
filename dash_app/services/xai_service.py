@@ -219,7 +219,6 @@ class XAIService:
         from database.connection import get_db_session
         from models.experiment import Experiment
         import torch
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
         try:
             with get_db_session() as session:

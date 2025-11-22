@@ -313,7 +313,6 @@ def run_demo(model, device, logger):
 
     from data.signal_generator import SignalGenerator
     from config.data_config import DataConfig
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Create generator
     config = DataConfig(num_signals_per_fault=1, rng_seed=None)

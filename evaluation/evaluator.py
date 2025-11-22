@@ -118,7 +118,6 @@ class ModelEvaluator:
             Dictionary of per-class metrics
         """
         from sklearn.metrics import precision_recall_fscore_support
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
         precision, recall, f1, support = precision_recall_fscore_support(
             targets,

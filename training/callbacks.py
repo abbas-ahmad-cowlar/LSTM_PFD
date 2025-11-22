@@ -235,7 +235,6 @@ class MLflowLogger(Callback):
     def on_train_begin(self, trainer):
         try:
             import mlflow
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
             self.mlflow = mlflow
 
             # Set experiment

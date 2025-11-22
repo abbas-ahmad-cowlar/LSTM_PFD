@@ -440,7 +440,6 @@ if __name__ == "__main__":
     model = HybridPINN(num_classes=NUM_CLASSES, backbone='resnet18')
 
     from torch.utils.data import TensorDataset
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     # Dummy test data
     n_samples = 100

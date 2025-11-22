@@ -438,7 +438,6 @@ def test_cnn_visualizer():
 
     # Create dummy model
     from models.cnn.cnn_1d import CNN1D
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     model = CNN1D(num_classes=NUM_CLASSES, input_length=102400, in_channels=1)
 
     # Create visualizer

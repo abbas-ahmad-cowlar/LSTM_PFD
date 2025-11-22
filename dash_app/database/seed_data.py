@@ -47,6 +47,5 @@ def seed_initial_data():
 
 if __name__ == '__main__':
     from database.connection import init_database
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     init_database()
     seed_initial_data()

@@ -88,7 +88,6 @@ DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 def load_model(model_path: Optional[str] = None):
     """Load pre-trained model (or dummy model for demo)."""
     from models.cnn.cnn_1d import CNN1D
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     model = CNN1D(num_classes=NUM_CLASSES, input_channels=1, dropout=0.3)
 

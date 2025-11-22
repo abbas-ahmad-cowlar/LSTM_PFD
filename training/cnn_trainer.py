@@ -444,7 +444,6 @@ def test_cnn_trainer():
 
     # Cleanup
     import shutil
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
     if Path('./test_checkpoints').exists():
         shutil.rmtree('./test_checkpoints')
         print("   Test checkpoints cleaned up")

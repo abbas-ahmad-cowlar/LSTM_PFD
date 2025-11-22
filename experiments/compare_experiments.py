@@ -24,7 +24,6 @@ def load_experiments(experiment_ids: List[str]) -> pd.DataFrame:
     """
     try:
         import mlflow
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
         data = []
 

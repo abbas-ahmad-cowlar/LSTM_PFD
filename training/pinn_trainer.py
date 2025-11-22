@@ -494,7 +494,6 @@ if __name__ == "__main__":
 
     # Create dummy data loader
     from torch.utils.data import TensorDataset
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     dummy_signals = torch.randn(100, 1, SIGNAL_LENGTH)
     dummy_labels = torch.randint(0, 11, (100,))

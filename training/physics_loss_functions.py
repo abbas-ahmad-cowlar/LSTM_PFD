@@ -221,7 +221,7 @@ class SommerfeldConsistencyLoss(nn.Module):
         return loss
 
 
-class TemporalSmoothness Loss(nn.Module):
+class TemporalSmoothnessLoss(nn.Module):
     """
     Penalizes erratic temporal changes in predictions.
 

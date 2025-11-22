@@ -122,7 +122,6 @@ class GridSearchOptimizer:
 
         import matplotlib.pyplot as plt
         import pandas as pd
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
         # Extract results
         results = pd.DataFrame(self.grid_search.cv_results_)

@@ -343,7 +343,6 @@ def update_api_key(key_id):
 
         # Update fields
         from database.connection import get_db_session
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
         with get_db_session() as session:
             db_key = session.query(APIKeyService.__class__).filter_by(id=key_id).first()
 

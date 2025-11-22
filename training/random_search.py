@@ -123,7 +123,6 @@ class RandomSearchOptimizer:
             raise ValueError("Random search has not been run")
 
         import matplotlib.pyplot as plt
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
         # Extract results
         results = self.random_search.cv_results_
