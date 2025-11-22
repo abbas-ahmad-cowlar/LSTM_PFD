@@ -749,8 +749,8 @@ curl -X POST http://localhost:8050/api/auth/login \
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/LSTM_PFD/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/LSTM_PFD/discussions)
+- **Issues**: [GitHub Issues](https://github.com/abbas-ahmad-cowlar/LSTM_PFD/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/abbas-ahmad-cowlar/LSTM_PFD/discussions)
 - **Documentation**: [Complete Usage Guide](../docs/USAGE_PHASE_11.md)
 
 ---
