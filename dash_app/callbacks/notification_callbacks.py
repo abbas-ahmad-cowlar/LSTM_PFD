@@ -332,32 +332,93 @@ def register_notification_callbacks(app):
             )
 
     @app.callback(
-        Output('notification-history-table', 'children'),
-        [Input('settings-tabs', 'active_tab'),
-         Input('reload-notification-prefs-btn', 'n_clicks')]
+        [
+            Output('notification-history-table', 'children'),
+            Output('email-log-count', 'children'),
+        ],
+        [
+            Input('settings-tabs', 'active_tab'),
+            Input('reload-notification-prefs-btn', 'n_clicks'),
+            Input('refresh-notification-history-btn', 'n_clicks'),
+            Input('email-log-search-input', 'value'),
+            Input('email-log-status-filter', 'value'),
+            Input('email-log-time-filter', 'value'),
+            Input('email-log-page-number', 'data'),
+        ],
+        [
+            State('email-log-items-per-page', 'data'),
+        ]
     )
-    def load_notification_history(active_tab, n_clicks):
+    def load_notification_history(
+        active_tab, reload_clicks, refresh_clicks,
+        search_query, status_filter, time_filter,
+        page_number, items_per_page
+    ):
         """
-        Load recent notification history.
+        Load recent notification history with filtering.
 
         Returns:
-            Table with last 50 notifications
+            Table with email notifications and count message
         """
         if active_tab != 'notifications':
-            raise PreventUpdate
+            return html.Div(), "Showing 0 emails"
 
         try:
+            from sqlalchemy import or_
+
             with get_db_session() as session:
-                # Query last 50 email logs
-                email_logs = session.query(EmailLog).order_by(
-                    EmailLog.created_at.desc()
-                ).limit(50).all()
+                # Base query
+                query = session.query(EmailLog)
+
+                # Apply search filter
+                if search_query and search_query.strip():
+                    search_term = f"%{search_query.strip()}%"
+                    query = query.filter(
+                        or_(
+                            EmailLog.subject.ilike(search_term),
+                            EmailLog.recipient_email.ilike(search_term),
+                            EmailLog.body.ilike(search_term)
+                        )
+                    )
+
+                # Apply status filter
+                if status_filter and status_filter != 'all':
+                    query = query.filter(EmailLog.status == status_filter)
+
+                # Apply time filter
+                now = datetime.utcnow()
+                if time_filter == 'hour':
+                    time_threshold = now - timedelta(hours=1)
+                    query = query.filter(EmailLog.created_at >= time_threshold)
+                elif time_filter == 'day':
+                    time_threshold = now - timedelta(days=1)
+                    query = query.filter(EmailLog.created_at >= time_threshold)
+                elif time_filter == 'week':
+                    time_threshold = now - timedelta(days=7)
+                    query = query.filter(EmailLog.created_at >= time_threshold)
+                elif time_filter == 'month':
+                    time_threshold = now - timedelta(days=30)
+                    query = query.filter(EmailLog.created_at >= time_threshold)
+
+                # Order by most recent first
+                query = query.order_by(EmailLog.created_at.desc())
+
+                # Get total count
+                total_logs = query.count()
+
+                # Pagination
+                page_number = page_number or 1
+                items_per_page = items_per_page or 100
+                offset = (page_number - 1) * items_per_page
+
+                # Get page of logs
+                email_logs = query.limit(items_per_page).offset(offset).all()
 
                 if not email_logs:
                     return dbc.Alert(
                         "No notification history found. Notifications will appear here once events occur.",
                         color="info"
-                    )
+                    ), "Showing 0 emails"
 
                 # Build table rows
                 rows = []
@@ -375,32 +436,48 @@ def register_notification_callbacks(app):
 
                     # Truncate message
                     message = log.subject or log.body or ''
-                    if len(message) > 80:
-                        message = message[:80] + '...'
+                    if len(message) > 100:
+                        message = message[:100] + '...'
 
                     rows.append(
                         html.Tr([
-                            html.Td(timestamp),
+                            html.Td([
+                                html.Div(log.created_at.strftime('%Y-%m-%d')),
+                                html.Small(log.created_at.strftime('%H:%M:%S'), className="text-muted")
+                            ]),
                             html.Td(log.recipient_email or 'N/A'),
                             html.Td(status_badge),
-                            html.Td(message),
+                            html.Td(html.Small(log.subject or '-')),
+                            html.Td(html.Small(message)),
                         ])
                     )
 
                 # Create table
-                table = dbc.Table([
-                    html.Thead(
-                        html.Tr([
-                            html.Th("Timestamp"),
-                            html.Th("Recipient"),
-                            html.Th("Status"),
-                            html.Th("Message"),
-                        ])
-                    ),
-                    html.Tbody(rows)
-                ], striped=True, hover=True, responsive=True, size='sm')
+                table_header = html.Thead(
+                    html.Tr([
+                        html.Th("Timestamp", style={'width': '15%'}),
+                        html.Th("Recipient", style={'width': '20%'}),
+                        html.Th("Status", style={'width': '10%'}),
+                        html.Th("Subject", style={'width': '25%'}),
+                        html.Th("Preview", style={'width': '30%'}),
+                    ])
+                )
+                table_body = html.Tbody(rows)
 
-                return table
+                table = dbc.Table(
+                    [table_header, table_body],
+                    bordered=True,
+                    hover=True,
+                    responsive=True,
+                    size='sm'
+                )
+
+                # Count message
+                start_idx = offset + 1
+                end_idx = min(offset + len(email_logs), total_logs)
+                count_msg = f"Showing {start_idx}-{end_idx} of {total_logs} emails"
+
+                return table, count_msg
 
         except Exception as e:
             logger.error(f"Failed to load notification history: {e}")
@@ -408,6 +485,6 @@ def register_notification_callbacks(app):
             return dbc.Alert(
                 f"Failed to load notification history: {str(e)}",
                 color="danger"
-            )
+            ), "Error"
 
     logger.info("Notification callbacks registered successfully")
