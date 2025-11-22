@@ -667,7 +667,7 @@ If you use this system in your research or project, please cite:
   author = {Your Name},
   year = {2025},
   note = {Milestone 2: LSTM implementation for temporal fault pattern recognition},
-  url = {https://github.com/yourusername/bearing-fault-diagnosis}
+  url = {https://github.com/abbas-ahmad-cowlar/bearing-fault-diagnosis}
 }
 ```
 

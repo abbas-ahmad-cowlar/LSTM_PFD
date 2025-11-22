@@ -258,7 +258,7 @@ For experienced users who just need the basics:
 
 ```bash
 # Clone and setup
-git clone https://github.com/yourusername/LSTM_PFD.git
+git clone https://github.com/abbas-ahmad-cowlar/LSTM_PFD.git
 cd LSTM_PFD
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
@@ -1053,7 +1053,7 @@ If you use this project in your research, please cite:
   author = {Your Name},
   title = {LSTM_PFD: Advanced Bearing Fault Diagnosis System},
   year = {2025},
-  url = {https://github.com/yourusername/LSTM_PFD},
+  url = {https://github.com/abbas-ahmad-cowlar/LSTM_PFD},
   note = {Production-ready bearing fault diagnosis with 98-99\% accuracy}
 }
 ```
@@ -1086,8 +1086,8 @@ If you use this project in your research, please cite:
 
 ## 📞 Contact & Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/LSTM_PFD/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/LSTM_PFD/discussions)
+- **Issues**: [GitHub Issues](https://github.com/abbas-ahmad-cowlar/LSTM_PFD/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/abbas-ahmad-cowlar/LSTM_PFD/discussions)
 - **Email**: your.email@example.com
 
 ---
