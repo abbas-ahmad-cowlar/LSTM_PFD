@@ -18,6 +18,7 @@ from torch.optim.lr_scheduler import (
     CosineAnnealingWarmRestarts
 )
 from typing import Dict, Any, Optional
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 def create_optimizer(

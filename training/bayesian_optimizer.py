@@ -227,6 +227,7 @@ class BayesianOptimizer:
 
         import matplotlib.pyplot as plt
         from optuna.importance import get_param_importances
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
         importances = get_param_importances(self.study)
 
