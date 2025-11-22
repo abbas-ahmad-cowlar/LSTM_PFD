@@ -102,7 +102,7 @@ def generate_dataset_task(self, config: dict):
 
                         NotificationService.emit_event(
                             event_type=EventType.TRAINING_COMPLETE,  # Reuse training complete for now
-                            user_id=1,  # Default user
+                            user_id=config.get('user_id', 1),  # Get user_id from config or default to 1 for background tasks
                             data={
                                 'generation_id': generation_id,
                                 'dataset_name': generation.name,
@@ -141,7 +141,7 @@ def generate_dataset_task(self, config: dict):
                     try:
                         NotificationService.emit_event(
                             event_type=EventType.TRAINING_FAILED,  # Reuse training failed
-                            user_id=1,
+                            user_id=config.get('user_id', 1),  # Get user_id from config or default to 1 for background tasks
                             data={
                                 'generation_id': generation_id,
                                 'dataset_name': generation.name,

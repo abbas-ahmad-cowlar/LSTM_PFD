@@ -17,6 +17,14 @@ logger = setup_logger(__name__)
 # Initialize Flask server
 server = Flask(__name__)
 
+# Configure Flask server for sessions (Phase 11D - Authentication)
+from config import SECRET_KEY
+server.secret_key = SECRET_KEY
+server.config['SESSION_COOKIE_HTTPONLY'] = True
+server.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# For production with HTTPS, also set:
+# server.config['SESSION_COOKIE_SECURE'] = True
+
 # Register API blueprints (Feature #1, #5)
 from api.routes import api_bp
 from api.api_keys import api_keys_bp
