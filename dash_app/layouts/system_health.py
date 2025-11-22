@@ -121,12 +121,115 @@ def create_system_health_layout():
             ])
         ], className="mb-4"),
 
+        # System Audit Logs Viewer
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([
+                            html.I(className="fas fa-file-alt me-2"),
+                            "System Audit Logs"
+                        ], className="mb-0 d-inline"),
+                        dbc.Button(
+                            [html.I(className="bi bi-arrow-clockwise me-2"), "Refresh"],
+                            id='refresh-system-logs-btn',
+                            color="secondary",
+                            size="sm",
+                            className="float-end"
+                        ),
+                    ]),
+                    dbc.CardBody([
+                        html.P("Search and filter system audit logs", className="text-muted mb-3"),
+
+                        # Filter Controls
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Search", className="small"),
+                                dbc.Input(
+                                    id='log-search-input',
+                                    placeholder="Search actions, details, or error messages...",
+                                    type="text",
+                                    debounce=True,
+                                    className="mb-3"
+                                ),
+                            ], md=6),
+                            dbc.Col([
+                                dbc.Label("Filter by Status", className="small"),
+                                dcc.Dropdown(
+                                    id='log-status-filter',
+                                    options=[
+                                        {'label': 'All Status', 'value': 'all'},
+                                        {'label': 'Success', 'value': 'success'},
+                                        {'label': 'Error', 'value': 'error'},
+                                        {'label': 'Warning', 'value': 'warning'},
+                                    ],
+                                    value='all',
+                                    clearable=False,
+                                    className="mb-3"
+                                ),
+                            ], md=3),
+                            dbc.Col([
+                                dbc.Label("Time Range", className="small"),
+                                dcc.Dropdown(
+                                    id='log-time-filter',
+                                    options=[
+                                        {'label': 'Last Hour', 'value': 'hour'},
+                                        {'label': 'Last 24 Hours', 'value': 'day'},
+                                        {'label': 'Last 7 Days', 'value': 'week'},
+                                        {'label': 'Last 30 Days', 'value': 'month'},
+                                        {'label': 'All Time', 'value': 'all'},
+                                    ],
+                                    value='day',
+                                    clearable=False,
+                                    className="mb-3"
+                                ),
+                            ], md=3),
+                        ]),
+
+                        dcc.Loading(
+                            id="loading-system-logs",
+                            children=[html.Div(id='system-log-table')],
+                            type="default"
+                        ),
+
+                        # Pagination and Export
+                        html.Div([
+                            html.Hr(),
+                            dbc.Row([
+                                dbc.Col([
+                                    html.P(id='log-count', children="Showing 0 logs", className="text-muted small mb-0")
+                                ], md=6),
+                                dbc.Col([
+                                    dbc.ButtonGroup([
+                                        dbc.Button(
+                                            [html.I(className="bi bi-download me-2"), "Export"],
+                                            id='export-logs-btn',
+                                            color="secondary",
+                                            size="sm",
+                                            outline=True,
+                                            className="me-2"
+                                        ),
+                                        dbc.Button("Previous", id='log-prev-page-btn', size="sm", outline=True, disabled=True),
+                                        dbc.Button("Next", id='log-next-page-btn', size="sm", outline=True, disabled=True),
+                                    ], className="float-end")
+                                ], md=6),
+                            ])
+                        ]),
+                    ])
+                ], className="shadow-sm")
+            ])
+        ], className="mb-4"),
+
         # Auto-refresh interval
         dcc.Interval(
             id='system-health-interval',
             interval=5*1000,  # Update every 5 seconds
             n_intervals=0
         ),
+
+        # Store for pagination
+        dcc.Store(id='log-page-number', data=1),
+        dcc.Store(id='log-items-per-page', data=50),
 
     ], fluid=True)
 
