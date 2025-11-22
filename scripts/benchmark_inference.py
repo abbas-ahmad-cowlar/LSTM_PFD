@@ -39,8 +39,8 @@ import matplotlib.pyplot as plt
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from deployment.inference import (
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+from deployment.inference import (
     TorchInferenceEngine,
     ONNXInferenceEngine,
     OptimizedInferenceEngine,
