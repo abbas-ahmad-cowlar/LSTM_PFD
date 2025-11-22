@@ -121,9 +121,12 @@ class HPOService:
         """
         try:
             with get_db_session() as session:
-                campaigns = session.query(HPOCampaign).order_by(
-                    HPOCampaign.created_at.desc()
-                ).all()
+                # Apply pagination to prevent loading too many campaigns
+                from utils.query_utils import paginate_with_default_limit
+                campaigns = paginate_with_default_limit(
+                    session.query(HPOCampaign).order_by(HPOCampaign.created_at.desc()),
+                    limit=100
+                )
 
                 return [HPOService._campaign_to_dict(c) for c in campaigns]
 
@@ -217,9 +220,14 @@ class HPOService:
         try:
             with get_db_session() as session:
                 # Get experiments with matching campaign tag
-                experiments = session.query(Experiment).filter(
-                    Experiment.tags.contains([f"hpo_campaign_{campaign_id}"])
-                ).order_by(Experiment.created_at.asc()).all()
+                # Apply pagination to prevent loading too many experiments
+                from utils.query_utils import paginate_with_default_limit
+                experiments = paginate_with_default_limit(
+                    session.query(Experiment).filter(
+                        Experiment.tags.contains([f"hpo_campaign_{campaign_id}"])
+                    ).order_by(Experiment.created_at.asc()),
+                    limit=500
+                )
 
                 return [HPOService._experiment_to_dict(e) for e in experiments]
 
