@@ -38,8 +38,8 @@ import numpy as np
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from deployment.onnx_export import (
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+from deployment.onnx_export import (
     export_to_onnx,
     validate_onnx_export,
     optimize_onnx_model,

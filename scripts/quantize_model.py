@@ -40,8 +40,8 @@ from torch.utils.data import DataLoader, TensorDataset
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from deployment.quantization import (
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+from deployment.quantization import (
     quantize_model_dynamic,
     quantize_model_static,
     quantize_to_fp16,
