@@ -96,7 +96,7 @@ You'll need:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/LSTM_PFD.git
+git clone https://github.com/abbas-ahmad-cowlar/LSTM_PFD.git
 cd LSTM_PFD
 
 # Verify you're in the right directory
@@ -1140,7 +1140,7 @@ docker-compose build --no-cache
 If you're stuck:
 
 1. **Check the detailed usage guides** in `USAGE_GUIDES/` for your phase
-2. **Search GitHub Issues**: https://github.com/yourusername/LSTM_PFD/issues
+2. **Search GitHub Issues**: https://github.com/abbas-ahmad-cowlar/LSTM_PFD/issues
 3. **Review the main README**: Most questions are answered there
 4. **Open a new GitHub Issue** with:
    - What you're trying to do
