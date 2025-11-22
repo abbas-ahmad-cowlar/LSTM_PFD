@@ -12,6 +12,8 @@ import h5py
 from pathlib import Path
 import traceback
 from typing import List, Dict, Optional
+from sklearn.manifold import TSNE
+from sklearn.decomposition import PCA
 
 from utils.logger import setup_logger
 from database.connection import get_db_session
@@ -95,8 +97,6 @@ def register_visualization_callbacks(app):
             return go.Figure(), ""
 
         try:
-            from sklearn.manifold import TSNE
-            from sklearn.decomposition import PCA
             try:
                 import umap
             except ImportError:
@@ -267,7 +267,13 @@ def register_visualization_callbacks(app):
                     )
 
                 elif viz_type == 'wavelet':
-                    import pywt
+                    try:
+                        import pywt
+                    except ImportError:
+                        return go.Figure(), html.Div(
+                            "PyWavelets (pywt) library is required for wavelet visualization. Install it with: pip install PyWavelets",
+                            className="text-danger"
+                        )
                     # Continuous Wavelet Transform
                     scales = np.arange(1, 128)
                     coefficients, frequencies = pywt.cwt(signal, scales, 'morl')

@@ -2,6 +2,7 @@
 Feature Engineering callbacks.
 Handle feature extraction, selection, and importance analysis.
 """
+import numpy as np
 from dash import Input, Output, State, html, ctx
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -284,7 +285,6 @@ def create_correlation_heatmap(corr_matrix: list, feature_names: list) -> go.Fig
     Returns:
         Plotly figure
     """
-    import numpy as np
     corr_matrix = np.array(corr_matrix)
 
     fig = go.Figure(data=go.Heatmap(
