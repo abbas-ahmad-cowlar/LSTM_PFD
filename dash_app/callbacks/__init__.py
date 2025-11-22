@@ -95,6 +95,9 @@ def register_all_callbacks(app):
         elif pathname == '/feature-engineering':
             from layouts.feature_engineering import create_feature_engineering_layout
             return create_feature_engineering_layout()
+        elif pathname == '/visualization':
+            from layouts.visualization import create_visualization_layout
+            return create_visualization_layout()
         else:
             from dash import html
             return html.Div([
@@ -218,3 +221,10 @@ def register_all_callbacks(app):
         register_notification_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import notification_callbacks: {e}")
+
+    # Import and register Enhanced Visualization callbacks
+    try:
+        from callbacks.visualization_callbacks import register_visualization_callbacks
+        register_visualization_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import visualization_callbacks: {e}")
