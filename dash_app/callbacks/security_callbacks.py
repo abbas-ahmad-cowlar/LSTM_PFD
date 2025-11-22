@@ -152,12 +152,20 @@ def register_security_callbacks(app):
                 if not user:
                     return dbc.Alert("User not found", color="danger", dismissable=True)
 
-                # Verify current password
+                # Verify current password (uses constant-time comparison)
                 if not verify_password(current_password, user.password_hash):
                     return dbc.Alert("Current password is incorrect", color="danger", dismissable=True)
 
-                # Hash and update new password
-                user.password_hash = hash_password(new_password)
+                # Hash new password (includes additional security validation)
+                try:
+                    new_password_hash = hash_password(new_password)
+                except ValueError as ve:
+                    # Password doesn't meet security requirements
+                    logger.warning(f"Password change failed validation: {ve}")
+                    return dbc.Alert(str(ve), color="danger", dismissable=True)
+
+                # Update password and timestamp
+                user.password_hash = new_password_hash
                 user.updated_at = datetime.utcnow()
                 session.commit()
 
@@ -168,9 +176,13 @@ def register_security_callbacks(app):
                 "Password changed successfully!"
             ], color="success", dismissable=True)
 
+        except ValueError as ve:
+            # Password validation errors (already logged in hash_password)
+            return dbc.Alert(str(ve), color="danger", dismissable=True)
+
         except Exception as e:
             logger.error(f"Error changing password: {e}", exc_info=True)
-            return dbc.Alert(f"Error: {str(e)}", color="danger", dismissable=True)
+            return dbc.Alert("An error occurred while changing your password. Please try again.", color="danger", dismissable=True)
 
     @app.callback(
         Output('active-sessions-table', 'children'),
