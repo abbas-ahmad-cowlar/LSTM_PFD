@@ -4,6 +4,7 @@ API routes for task status and real-time updates.
 from flask import Blueprint, jsonify, request
 from tasks import celery_app
 from utils.logger import setup_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 

@@ -11,6 +11,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class FocalLoss(nn.Module):

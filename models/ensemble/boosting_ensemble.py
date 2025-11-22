@@ -8,6 +8,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-20
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -43,7 +44,7 @@ class AdaptiveBoosting:
 
     Example:
         >>> def create_model():
-        ...     return CNN1D(num_classes=11)
+        ...     return CNN1D(num_classes=NUM_CLASSES)
         >>> boosting = AdaptiveBoosting(create_model, n_estimators=5)
         >>> boosting.fit(train_loader, val_loader, device='cuda')
         >>> predictions = boosting.predict(test_loader)
@@ -53,7 +54,7 @@ class AdaptiveBoosting:
         base_model_fn: Callable,
         n_estimators: int = 5,
         learning_rate: float = 1.0,
-        num_classes: int = 11
+        num_classes: int = NUM_CLASSES
     ):
         self.base_model_fn = base_model_fn
         self.n_estimators = n_estimators
@@ -330,7 +331,7 @@ class BoostingEnsemble(BaseModel):
         self,
         models: List[nn.Module],
         model_weights: List[float],
-        num_classes: int = 11
+        num_classes: int = NUM_CLASSES
     ):
         super().__init__()
 
@@ -403,7 +404,7 @@ def train_boosting(
 
     Example:
         >>> def create_cnn():
-        ...     return CNN1D(num_classes=11)
+        ...     return CNN1D(num_classes=NUM_CLASSES)
         >>> boosting = train_boosting(create_cnn, train_loader, val_loader, n_estimators=5)
     """
     # Create adaptive boosting trainer

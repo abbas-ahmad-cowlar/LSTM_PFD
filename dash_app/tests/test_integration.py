@@ -12,6 +12,7 @@ from middleware.auth import AuthMiddleware
 from middleware.security import RateLimiter
 from services.monitoring_service import MonitoringService
 import time
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 @pytest.fixture
@@ -111,9 +112,9 @@ class TestDatabaseModels:
                 name="Test Dataset",
                 description="Test dataset for integration tests",
                 num_samples=100,
-                num_classes=11,
+                num_classes=NUM_CLASSES,
                 sampling_rate=20480,
-                signal_length=102400,
+                signal_length = SIGNAL_LENGTH,
                 file_path="/path/to/test.h5"
             )
             session.add(dataset)
@@ -127,9 +128,9 @@ class TestDatabaseModels:
             dataset = Dataset(
                 name="Experiment Test Dataset",
                 num_samples=100,
-                num_classes=11,
+                num_classes=NUM_CLASSES,
                 sampling_rate=20480,
-                signal_length=102400,
+                signal_length = SIGNAL_LENGTH,
                 file_path="/path/to/test.h5"
             )
             session.add(dataset)
@@ -156,9 +157,9 @@ class TestDatabaseModels:
             dataset = Dataset(
                 name="Status Test Dataset",
                 num_samples=100,
-                num_classes=11,
+                num_classes=NUM_CLASSES,
                 sampling_rate=20480,
-                signal_length=102400,
+                signal_length = SIGNAL_LENGTH,
                 file_path="/path/to/test.h5"
             )
             session.add(dataset)
@@ -221,9 +222,9 @@ class TestWorkflows:
             dataset = Dataset(
                 name="Workflow Test Dataset",
                 num_samples=1430,
-                num_classes=11,
+                num_classes=NUM_CLASSES,
                 sampling_rate=20480,
-                signal_length=102400,
+                signal_length = SIGNAL_LENGTH,
                 file_path="/path/to/test.h5"
             )
             session.add(dataset)

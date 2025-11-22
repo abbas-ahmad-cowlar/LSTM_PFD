@@ -9,6 +9,7 @@ from typing import Dict, Any
 from services.notification_providers.base import NotificationProvider, NotificationMessage, ProviderError, RateLimitError
 from services.notification_providers.slack_notifier import TokenBucket
 from utils.logger import setup_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 

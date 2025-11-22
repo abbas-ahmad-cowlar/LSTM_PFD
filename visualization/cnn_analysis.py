@@ -36,7 +36,7 @@ class CNNAnalyzer:
 
     Examples:
         >>> from models.cnn.cnn_1d import CNN1D
-        >>> model = CNN1D(num_classes=11, input_length=102400)
+        >>> model = CNN1D(num_classes=NUM_CLASSES, input_length=102400)
         >>> analyzer = CNNAnalyzer(model)
         >>>
         >>> # Analyze gradient flow during training
@@ -573,7 +573,7 @@ def test_cnn_analyzer():
     from models.cnn.cnn_1d import CNN1D
 
     # Create model
-    model = CNN1D(num_classes=11, input_length=102400)
+    model = CNN1D(num_classes=NUM_CLASSES, input_length=102400)
     analyzer = CNNAnalyzer(model)
 
     # Test saliency map

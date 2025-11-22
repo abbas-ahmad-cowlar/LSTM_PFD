@@ -57,7 +57,7 @@ def export_to_onnx(
 
     Example:
         >>> model = load_pretrained('checkpoints/best_model.pth')
-        >>> dummy_input = torch.randn(1, 1, 102400)
+        >>> dummy_input = torch.randn(1, 1, SIGNAL_LENGTH)
         >>> onnx_path = export_to_onnx(model, dummy_input, 'models/model.onnx')
     """
     if config is None:
@@ -133,7 +133,7 @@ def validate_onnx_export(
         >>> is_valid = validate_onnx_export(
         ...     'models/model.onnx',
         ...     pytorch_model,
-        ...     torch.randn(1, 1, 102400)
+        ...     torch.randn(1, 1, SIGNAL_LENGTH)
         ... )
     """
     try:
@@ -382,7 +382,7 @@ def benchmark_onnx_inference(
         Dictionary with timing statistics
 
     Example:
-        >>> stats = benchmark_onnx_inference('models/model.onnx', (1, 1, 102400))
+        >>> stats = benchmark_onnx_inference('models/model.onnx', (1, 1, SIGNAL_LENGTH))
         >>> print(f"Latency: {stats['mean_latency_ms']:.2f} ms")
     """
     import time
@@ -438,7 +438,7 @@ def convert_and_quantize_onnx(
 
     Example:
         >>> model = load_pretrained('checkpoints/best_model.pth')
-        >>> dummy_input = torch.randn(1, 1, 102400)
+        >>> dummy_input = torch.randn(1, 1, SIGNAL_LENGTH)
         >>> quantized_path = convert_and_quantize_onnx(
         ...     model, dummy_input, 'models/model_int8.onnx'
         ... )

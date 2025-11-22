@@ -16,6 +16,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-19
 """
 
+from utils.constants import SAMPLING_RATE, SIGNAL_LENGTH
 import numpy as np
 from typing import Dict
 import pywt
@@ -37,7 +38,7 @@ def extract_cwt_features(signal_data: np.ndarray, fs: float = 20480) -> Dict[str
         Dictionary with 4 CWT features
 
     Example:
-        >>> cwt_features = extract_cwt_features(signal, fs=20480)
+        >>> cwt_features = extract_cwt_features(signal, fs=SAMPLING_RATE)
     """
     # Define scales (frequencies to analyze)
     scales = np.arange(1, 128)
@@ -307,7 +308,7 @@ def extract_advanced_features(signal_data: np.ndarray, fs: float = 20480) -> Dic
         - 4 time-frequency features
 
     Example:
-        >>> advanced_features = extract_advanced_features(signal, fs=20480)
+        >>> advanced_features = extract_advanced_features(signal, fs=SAMPLING_RATE)
         >>> print(f"Total advanced features: {len(advanced_features)}")  # 16
     """
     # CWT features (4)

@@ -25,6 +25,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from typing import Optional, Dict, Tuple
 import numpy as np
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class DistillationLoss(nn.Module):
@@ -387,8 +388,8 @@ if __name__ == "__main__":
     print("\nExample usage:")
     print("""
     # Create teacher and student models
-    teacher = create_resnet50_1d(num_classes=11)
-    student = create_resnet18_1d(num_classes=11)
+    teacher = create_resnet50_1d(num_classes=NUM_CLASSES)
+    student = create_resnet18_1d(num_classes=NUM_CLASSES)
 
     # Load pre-trained teacher
     teacher.load_state_dict(torch.load('teacher_model.pth'))

@@ -34,6 +34,7 @@ from tqdm import tqdm
 sys.path.insert(0, str(Path(__file__).parent))
 
 from trainer import Trainer, TrainingState
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class SpectrogramTrainer(Trainer):

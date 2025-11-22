@@ -10,6 +10,7 @@ Date: 2025-11-20
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict
 from datetime import datetime
+from utils.constants import SIGNAL_LENGTH
 
 
 class PredictionRequest(BaseModel):
@@ -19,7 +20,7 @@ class PredictionRequest(BaseModel):
         ...,
         description="Vibration signal data (1D array)",
         min_items=1,
-        max_items=102400
+        max_items=SIGNAL_LENGTH
     )
 
     return_probabilities: bool = Field(

@@ -14,6 +14,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-20
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 from typing import Optional, Tuple
@@ -45,7 +46,7 @@ class ConvBlock1D(nn.Module):
 
     Example:
         >>> block = ConvBlock1D(1, 32, kernel_size=64, stride=4)
-        >>> x = torch.randn(8, 1, 102400)  # Batch of 8 signals
+        >>> x = torch.randn(8, 1, SIGNAL_LENGTH)  # Batch of 8 signals
         >>> out = block(x)  # Shape: [8, 32, 25600]
     """
 
@@ -291,7 +292,7 @@ def test_conv_blocks():
     """Test convolutional blocks with sample inputs."""
     print("Testing ConvBlock1D...")
     block1 = ConvBlock1D(1, 32, kernel_size=64, stride=4)
-    x1 = torch.randn(8, 1, 102400)
+    x1 = torch.randn(8, 1, SIGNAL_LENGTH)
     out1 = block1(x1)
     print(f"  Input: {x1.shape} → Output: {out1.shape}")
     assert out1.shape == (8, 32, 25600), f"Expected [8, 32, 25600], got {out1.shape}"

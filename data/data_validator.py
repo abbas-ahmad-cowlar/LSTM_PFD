@@ -9,6 +9,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-19
 """
 
+from utils.constants import SAMPLING_RATE
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Any

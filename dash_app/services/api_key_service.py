@@ -11,6 +11,7 @@ from models.api_key import APIKey, APIUsage
 from models.user import User
 from database.connection import get_db_session
 from utils.logger import setup_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 

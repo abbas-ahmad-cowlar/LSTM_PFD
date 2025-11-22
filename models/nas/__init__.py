@@ -11,6 +11,7 @@ Note: NAS is computationally expensive. Consider using pre-designed
 architectures (ResNet, EfficientNet) for most applications.
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .search_space import (
     SearchSpaceConfig,
     ArchitectureSpec,

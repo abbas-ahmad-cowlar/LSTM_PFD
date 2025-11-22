@@ -15,6 +15,7 @@ Input:
 Output: [B, 11] for 11 fault classes
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -36,7 +37,7 @@ class PhysicsConstraint(nn.Module):
         num_classes: Number of fault classes
         physics_dim: Dimension of physics feature vector
     """
-    def __init__(self, num_classes: int = 11, physics_dim: int = 32):
+    def __init__(self, num_classes: int = NUM_CLASSES, physics_dim: int = 32):
         super().__init__()
 
         self.num_classes = num_classes
@@ -225,7 +226,7 @@ class HybridPINN(BaseModel):
     """
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         physics_dim: int = 32,
         fusion_dim: int = 256,
@@ -390,7 +391,7 @@ class HybridPINN(BaseModel):
         }
 
 
-def create_hybrid_pinn(num_classes: int = 11, **kwargs) -> HybridPINN:
+def create_hybrid_pinn(num_classes: int = NUM_CLASSES, **kwargs) -> HybridPINN:
     """
     Factory function to create Hybrid PINN model.
 

@@ -52,7 +52,7 @@ class CNNEvaluator:
 
     Example:
         >>> from models.cnn.cnn_1d import CNN1D
-        >>> model = CNN1D(num_classes=11)
+        >>> model = CNN1D(num_classes=NUM_CLASSES)
         >>> model.load_state_dict(torch.load('best_model.pth')['model_state_dict'])
         >>>
         >>> evaluator = CNNEvaluator(model, device='cuda')
@@ -404,8 +404,8 @@ def test_cnn_evaluator():
 
     # Create dummy data
     num_samples = 100
-    signal_length = 102400
-    num_classes = 11
+    signal_length = SIGNAL_LENGTH
+    num_classes=NUM_CLASSES
 
     signals = np.random.randn(num_samples, signal_length).astype(np.float32)
     labels = np.random.randint(0, num_classes, num_samples)

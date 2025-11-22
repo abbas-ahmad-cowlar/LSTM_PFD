@@ -10,6 +10,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-20
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -47,7 +48,7 @@ class VotingEnsemble(BaseModel):
         models: List[nn.Module],
         weights: Optional[List[float]] = None,
         voting_type: str = 'soft',
-        num_classes: int = 11
+        num_classes: int = NUM_CLASSES
     ):
         super().__init__()
 
@@ -329,7 +330,7 @@ def create_voting_ensemble(
     models: List[nn.Module],
     weights: Optional[List[float]] = None,
     voting_type: str = 'soft',
-    num_classes: int = 11
+    num_classes: int = NUM_CLASSES
 ) -> VotingEnsemble:
     """
     Factory function to create voting ensemble.

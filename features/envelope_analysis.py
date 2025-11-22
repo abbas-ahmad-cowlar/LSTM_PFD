@@ -11,6 +11,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-19
 """
 
+from utils.constants import SAMPLING_RATE, SIGNAL_LENGTH
 import numpy as np
 from typing import Dict
 from scipy.signal import hilbert
@@ -126,7 +127,7 @@ def extract_envelope_features(signal: np.ndarray, fs: float) -> Dict[str, float]
 
     Example:
         >>> signal = np.random.randn(10000)
-        >>> features = extract_envelope_features(signal, fs=20480)
+        >>> features = extract_envelope_features(signal, fs=SAMPLING_RATE)
         >>> print(f"Envelope RMS: {features['EnvelopeRMS']:.3f}")
         >>> print(f"Modulation Freq: {features['ModulationFreq']:.2f} Hz")
     """

@@ -9,6 +9,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-20
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -48,7 +49,7 @@ class StackingEnsemble(BaseModel):
         self,
         base_models: List[nn.Module],
         meta_learner: Optional[nn.Module] = None,
-        num_classes: int = 11
+        num_classes: int = NUM_CLASSES
     ):
         super().__init__()
 
@@ -252,7 +253,7 @@ def train_stacking(
     meta_learner: Union[nn.Module, str],
     train_loader: torch.utils.data.DataLoader,
     val_loader: torch.utils.data.DataLoader,
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     num_epochs: int = 20,
     lr: float = 0.001,
     device: str = 'cuda',
@@ -362,7 +363,7 @@ def train_stacking(
 def create_stacked_ensemble(
     base_models: List[nn.Module],
     meta_learner: Optional[nn.Module] = None,
-    num_classes: int = 11
+    num_classes: int = NUM_CLASSES
 ) -> StackingEnsemble:
     """
     Factory function to create stacked ensemble.

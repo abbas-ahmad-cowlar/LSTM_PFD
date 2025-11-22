@@ -15,6 +15,7 @@ Reference:
 - Zoph & Le (2017). "Neural Architecture Search with Reinforcement Learning"
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 from typing import List, Dict, Tuple, Optional

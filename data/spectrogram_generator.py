@@ -12,6 +12,7 @@ import numpy as np
 import scipy.signal as signal
 from typing import Tuple, Optional, Dict
 import warnings
+from utils.constants import SAMPLING_RATE
 
 
 class SpectrogramGenerator:
@@ -28,7 +29,7 @@ class SpectrogramGenerator:
 
     def __init__(
         self,
-        fs: int = 20480,
+        fs: int = SAMPLING_RATE,
         nperseg: int = 256,
         noverlap: int = 128,
         window: str = 'hann',
@@ -321,7 +322,7 @@ class SpectrogramConfig:
     """Configuration class for spectrogram generation."""
 
     DEFAULT_BEARING_CONFIG = {
-        'fs': 20480,
+        'fs': SAMPLING_RATE,
         'nperseg': 256,
         'noverlap': 128,
         'window': 'hann',
@@ -329,7 +330,7 @@ class SpectrogramConfig:
     }
 
     FAST_CONFIG = {
-        'fs': 20480,
+        'fs': SAMPLING_RATE,
         'nperseg': 128,
         'noverlap': 64,
         'window': 'hann',
@@ -337,7 +338,7 @@ class SpectrogramConfig:
     }
 
     HIGH_RESOLUTION_CONFIG = {
-        'fs': 20480,
+        'fs': SAMPLING_RATE,
         'nperseg': 512,
         'noverlap': 256,
         'window': 'hann',
@@ -363,7 +364,7 @@ class SpectrogramConfig:
 # Convenience functions
 def generate_spectrogram(
     signal_data: np.ndarray,
-    fs: int = 20480,
+    fs: int = SAMPLING_RATE,
     nperseg: int = 256,
     normalization: str = 'log_standardize'
 ) -> np.ndarray:
@@ -392,7 +393,7 @@ if __name__ == "__main__":
     print("Spectrogram Generator - Example Usage\n")
 
     # Generate synthetic signal (5 seconds, 20.48 kHz)
-    fs = 20480
+    fs = SAMPLING_RATE
     duration = 5.0
     t = np.linspace(0, duration, int(fs * duration))
 

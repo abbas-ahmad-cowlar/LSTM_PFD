@@ -15,14 +15,14 @@ Usage:
     # Compare STFT, CWT, WVD for a signal
     plot_spectrogram_comparison(
         signal=signal,
-        fs=20480,
+        fs = SAMPLING_RATE,
         save_path='tfr_comparison.png'
     )
 
     # Visualize all fault types
     plot_fault_spectrograms_grid(
         signals_by_fault=fault_dict,
-        fs=20480,
+        fs = SAMPLING_RATE,
         save_path='fault_spectrograms.png'
     )
 """
@@ -40,6 +40,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from data.spectrogram_generator import generate_stft_spectrogram, generate_mel_spectrogram
 from data.wavelet_transform import generate_cwt_scalogram
 from data.wigner_ville import generate_wvd
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 def plot_spectrogram(
@@ -431,7 +432,7 @@ if __name__ == '__main__':
     print("Testing spectrogram visualization...")
 
     # Generate test signal
-    fs = 20480
+    fs = SAMPLING_RATE
     duration = 5.0
     t = np.arange(0, duration, 1/fs)
 

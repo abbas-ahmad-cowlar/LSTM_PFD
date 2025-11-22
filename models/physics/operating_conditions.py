@@ -13,6 +13,7 @@ Key Functions:
 - Check for critical operating zones
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import numpy as np
 import torch
 from typing import Dict, Union, Tuple, Optional

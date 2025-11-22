@@ -11,6 +11,7 @@ Input: [B, 1, T] where T is signal length
 Output: [B, 11] for 11 fault classes
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -88,7 +89,7 @@ class CNN1D(BaseModel):
     """
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         dropout: float = 0.3,
         use_bn: bool = True
@@ -216,7 +217,7 @@ class CNN1D(BaseModel):
         }
 
 
-def create_cnn1d(num_classes: int = 11, **kwargs) -> CNN1D:
+def create_cnn1d(num_classes: int = NUM_CLASSES, **kwargs) -> CNN1D:
     """
     Factory function to create CNN1D model.
 

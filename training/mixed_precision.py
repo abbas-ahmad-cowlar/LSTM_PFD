@@ -12,6 +12,7 @@ import torch.nn as nn
 from torch.cuda.amp import autocast, GradScaler
 from typing import Optional
 from .trainer import Trainer
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class MixedPrecisionTrainer(Trainer):

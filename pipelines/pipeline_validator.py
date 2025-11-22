@@ -10,6 +10,7 @@ Date: 2025-11-19
 
 import numpy as np
 from typing import Dict, Optional
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class PipelineValidator:

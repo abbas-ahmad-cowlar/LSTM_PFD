@@ -16,6 +16,7 @@ Date: 2025-11-20
 import numpy as np
 import torch
 from typing import Optional, Callable, Union
+from utils.constants import SIGNAL_LENGTH
 
 
 class ToTensor1D:
@@ -26,9 +27,9 @@ class ToTensor1D:
 
     Example:
         >>> transform = ToTensor1D()
-        >>> signal = np.random.randn(102400)  # NumPy array
+        >>> signal = np.random.randn(SIGNAL_LENGTH)  # NumPy array
         >>> tensor = transform(signal)
-        >>> print(tensor.shape)  # torch.Size([1, 102400])
+        >>> print(tensor.shape)  # torch.Size([1, SIGNAL_LENGTH])
     """
 
     def __call__(self, signal: np.ndarray) -> torch.Tensor:
@@ -67,7 +68,7 @@ class Normalize1D:
 
     Example:
         >>> transform = Normalize1D()
-        >>> signal = np.random.randn(102400) * 10 + 5
+        >>> signal = np.random.randn(SIGNAL_LENGTH) * 10 + 5
         >>> normalized = transform(signal)
         >>> print(f"Mean: {normalized.mean():.6f}, Std: {normalized.std():.6f}")
     """
@@ -110,7 +111,7 @@ class RandomCrop1D:
 
     Example:
         >>> transform = RandomCrop1D(crop_size=50000)
-        >>> signal = np.random.randn(102400)
+        >>> signal = np.random.randn(SIGNAL_LENGTH)
         >>> cropped = transform(signal)
         >>> print(cropped.shape)  # (50000,)
     """
@@ -251,7 +252,7 @@ class Compose:
         ...     AddGaussianNoise(p=0.3),
         ...     ToTensor1D()
         ... ])
-        >>> signal = np.random.randn(102400)
+        >>> signal = np.random.randn(SIGNAL_LENGTH)
         >>> tensor = transform(signal)
     """
 
@@ -285,7 +286,7 @@ def get_train_transforms(augment: bool = True) -> Compose:
 
     Example:
         >>> train_transform = get_train_transforms(augment=True)
-        >>> signal = np.random.randn(102400)
+        >>> signal = np.random.randn(SIGNAL_LENGTH)
         >>> tensor = train_transform(signal)
     """
     if augment:
@@ -311,7 +312,7 @@ def get_test_transforms() -> Compose:
 
     Example:
         >>> test_transform = get_test_transforms()
-        >>> signal = np.random.randn(102400)
+        >>> signal = np.random.randn(SIGNAL_LENGTH)
         >>> tensor = test_transform(signal)
     """
     return Compose([
@@ -327,7 +328,7 @@ def test_transforms():
     print("=" * 60)
 
     # Create test signal
-    signal = np.random.randn(102400).astype(np.float32)
+    signal = np.random.randn(SIGNAL_LENGTH).astype(np.float32)
 
     # Test ToTensor1D
     print("\n1. Testing ToTensor1D...")
@@ -335,7 +336,7 @@ def test_transforms():
     tensor = to_tensor(signal)
     print(f"   Input shape: {signal.shape}, dtype: {signal.dtype}")
     print(f"   Output shape: {tensor.shape}, dtype: {tensor.dtype}")
-    assert tensor.shape == (1, 102400)
+    assert tensor.shape == (1, SIGNAL_LENGTH)
     assert tensor.dtype == torch.float32
 
     # Test Normalize1D
@@ -376,14 +377,14 @@ def test_transforms():
     output = train_transform(signal)
     print(f"   Pipeline output shape: {output.shape}, dtype: {output.dtype}")
     assert isinstance(output, torch.Tensor)
-    assert output.shape == (1, 102400)
+    assert output.shape == (1, SIGNAL_LENGTH)
 
     # Test test transforms
     print("\n7. Testing test transforms...")
     test_transform = get_test_transforms()
     test_output = test_transform(signal)
     print(f"   Test output shape: {test_output.shape}")
-    assert test_output.shape == (1, 102400)
+    assert test_output.shape == (1, SIGNAL_LENGTH)
 
     print("\n" + "=" * 60)
     print("✅ All transform tests passed!")

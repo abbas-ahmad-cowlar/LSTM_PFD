@@ -29,6 +29,7 @@ Reference:
 - Multi-scale feature learning for time series
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -110,7 +111,7 @@ class MultiScaleCNN(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         branch_configs: Optional[List[tuple]] = None,
         fusion_channels: Optional[List[int]] = None,
@@ -261,7 +262,7 @@ class MultiScaleCNN(BaseModel):
 
 
 def create_multiscale_cnn(
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     num_scales: int = 3,
     **kwargs
 ) -> MultiScaleCNN:
@@ -314,8 +315,8 @@ if __name__ == "__main__":
 
     # Test 3-scale
     print("\n3-scale CNN:")
-    model = create_multiscale_cnn(num_classes=11, num_scales=3)
-    x = torch.randn(2, 1, 102400)
+    model = create_multiscale_cnn(num_classes=NUM_CLASSES, num_scales=3)
+    x = torch.randn(2, 1, SIGNAL_LENGTH)
     y = model(x)
     print(f"Input: {x.shape}, Output: {y.shape}")
     print(f"Parameters: {model.get_num_params():,}")

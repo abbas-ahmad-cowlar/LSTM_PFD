@@ -52,7 +52,7 @@ class Phase1Adapter:
                 y_val = f['val']['labels'][:]
                 X_test = f['test']['signals'][:]
                 y_test = f['test']['labels'][:]
-                fs = f.attrs.get('sampling_rate', 20480)
+                fs = f.attrs.get('sampling_rate', SAMPLING_RATE)
 
             # Initialize pipeline
             model_type = config["model_type"]

@@ -12,6 +12,7 @@ References:
 - Lubrication theory from Hamrock et al., "Fundamentals of Fluid Film Lubrication"
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import numpy as np
 import torch
 from typing import Dict, Union, Tuple

@@ -12,6 +12,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-20
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from models.cnn.conv_blocks import (
     ConvBlock1D,
     ResidualConvBlock1D,

@@ -19,6 +19,7 @@ Architecture:
 Expected Performance: 96-97% accuracy
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -47,8 +48,8 @@ class PhysicsConstrainedCNN(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
-        input_length: int = 102400,
+        num_classes: int = NUM_CLASSES,
+        input_length: int = SIGNAL_LENGTH,
         backbone: str = 'resnet18',
         dropout: float = 0.3,
         sample_rate: int = 51200,
@@ -287,8 +288,8 @@ class AdaptivePhysicsConstrainedCNN(PhysicsConstrainedCNN):
 
     def __init__(
         self,
-        num_classes: int = 11,
-        input_length: int = 102400,
+        num_classes: int = NUM_CLASSES,
+        input_length: int = SIGNAL_LENGTH,
         backbone: str = 'resnet18',
         dropout: float = 0.3,
         sample_rate: int = 51200,
@@ -378,7 +379,7 @@ class AdaptivePhysicsConstrainedCNN(PhysicsConstrainedCNN):
 
 
 def create_physics_constrained_cnn(
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     backbone: str = 'resnet18',
     adaptive: bool = False,
     **kwargs
@@ -417,7 +418,7 @@ if __name__ == "__main__":
 
     # Create model
     model = PhysicsConstrainedCNN(
-        num_classes=11,
+        num_classes=NUM_CLASSES,
         backbone='resnet18',
         dropout=0.3,
         sample_rate=51200
@@ -431,7 +432,7 @@ if __name__ == "__main__":
     # Test forward pass
     print("\nTesting Forward Pass:")
     batch_size = 4
-    signal = torch.randn(batch_size, 1, 102400)
+    signal = torch.randn(batch_size, 1, SIGNAL_LENGTH)
 
     output = model(signal)
     print(f"  Input shape: {signal.shape}")
@@ -458,7 +459,7 @@ if __name__ == "__main__":
     # Test adaptive variant
     print("\nTesting Adaptive Physics-Constrained CNN:")
     adaptive_model = AdaptivePhysicsConstrainedCNN(
-        num_classes=11,
+        num_classes=NUM_CLASSES,
         backbone='resnet18',
         lambda_physics_schedule='linear',
         lambda_physics_max=1.0

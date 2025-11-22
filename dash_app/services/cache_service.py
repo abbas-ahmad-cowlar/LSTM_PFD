@@ -7,6 +7,7 @@ from typing import Any, Optional
 from config import REDIS_URL, CACHE_TTL_MEDIUM
 from utils.logger import setup_logger
 from utils.exceptions import CacheError
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 

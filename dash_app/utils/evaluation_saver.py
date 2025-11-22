@@ -128,6 +128,7 @@ class EvaluationSaver:
 """
 from evaluation.evaluator import ModelEvaluator
 from dash_app.utils.evaluation_saver import EvaluationSaver
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 # After training, evaluate the model
 evaluator = ModelEvaluator(model, device='cuda')

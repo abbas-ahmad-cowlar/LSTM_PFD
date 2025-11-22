@@ -20,6 +20,7 @@ Author: Phase 2 - CNN Implementation
 Date: 2025-11-20
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -196,16 +197,16 @@ class AttentionCNN1D(nn.Module):
         dropout: Dropout probability (default: 0.3)
 
     Examples:
-        >>> model = AttentionCNN1D(num_classes=11, input_length=102400)
-        >>> signal = torch.randn(16, 1, 102400)
+        >>> model = AttentionCNN1D(num_classes=NUM_CLASSES, input_length=SIGNAL_LENGTH)
+        >>> signal = torch.randn(16, 1, SIGNAL_LENGTH)
         >>> output = model(signal)
         >>> print(output.shape)  # [16, 11]
     """
 
     def __init__(
         self,
-        num_classes: int = 11,
-        input_length: int = 102400,
+        num_classes: int = NUM_CLASSES,
+        input_length: int = SIGNAL_LENGTH,
         in_channels: int = 1,
         base_channels: int = 32,
         reduction: int = 16,
@@ -309,8 +310,8 @@ class LightweightAttentionCNN(nn.Module):
 
     def __init__(
         self,
-        num_classes: int = 11,
-        input_length: int = 102400,
+        num_classes: int = NUM_CLASSES,
+        input_length: int = SIGNAL_LENGTH,
         in_channels: int = 1
     ):
         super().__init__()
@@ -377,13 +378,13 @@ def test_attention_cnn():
     print("Testing AttentionCNN1D")
     print("=" * 60)
 
-    model = AttentionCNN1D(num_classes=11, input_length=102400)
+    model = AttentionCNN1D(num_classes=NUM_CLASSES, input_length=SIGNAL_LENGTH)
     print(f"✓ Model created")
     print(f"  Parameters: {model.get_num_params():,}")
 
     # Test forward pass
     batch_size = 4
-    signal = torch.randn(batch_size, 1, 102400)
+    signal = torch.randn(batch_size, 1, SIGNAL_LENGTH)
     output = model(signal)
 
     print(f"\n✓ Forward pass:")
@@ -417,7 +418,7 @@ def test_attention_cnn():
     print("Testing LightweightAttentionCNN")
     print("=" * 60)
 
-    lightweight_model = LightweightAttentionCNN(num_classes=11, input_length=102400)
+    lightweight_model = LightweightAttentionCNN(num_classes=NUM_CLASSES, input_length=SIGNAL_LENGTH)
     print(f"✓ Lightweight model created")
     print(f"  Parameters: {lightweight_model.get_num_params():,}")
 

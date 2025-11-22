@@ -8,6 +8,7 @@ This module contains various ensemble learning techniques:
 - Mixture of Experts: Gating network selects specialized models
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .voting_ensemble import (
     VotingEnsemble,
     optimize_ensemble_weights,

@@ -8,6 +8,7 @@ bearing fault diagnosis:
 - Wide-ResNet: Wider but shallower networks
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .residual_blocks import (
     BasicBlock1D,
     Bottleneck1D,

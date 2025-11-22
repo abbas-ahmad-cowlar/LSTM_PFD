@@ -40,6 +40,7 @@ from models.spectrogram_cnn import get_model
 from data.tfr_dataset import load_spectrograms, create_spectrogram_dataloaders
 from training.spectrogram_trainer import SpectrogramTrainer
 from evaluation.spectrogram_evaluator import SpectrogramEvaluator
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 def parse_args():

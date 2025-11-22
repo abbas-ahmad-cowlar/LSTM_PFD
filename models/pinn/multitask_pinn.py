@@ -27,6 +27,7 @@ Architecture:
 Expected Benefit: +1-2% accuracy over single-task models
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -50,7 +51,7 @@ class MultitaskPINN(BaseModel):
         self,
         num_fault_classes: int = 11,
         num_severity_levels: int = 4,
-        input_length: int = 102400,
+        input_length: int = SIGNAL_LENGTH,
         backbone: str = 'resnet18',
         shared_feature_dim: int = 512,
         task_hidden_dim: int = 128,
@@ -315,7 +316,7 @@ class AdaptiveMultitaskPINN(MultitaskPINN):
         self,
         num_fault_classes: int = 11,
         num_severity_levels: int = 4,
-        input_length: int = 102400,
+        input_length: int = SIGNAL_LENGTH,
         backbone: str = 'resnet18',
         shared_feature_dim: int = 512,
         task_hidden_dim: int = 128,
@@ -484,7 +485,7 @@ if __name__ == "__main__":
     # Test forward pass
     print("\nTesting Forward Pass:")
     batch_size = 4
-    signal = torch.randn(batch_size, 1, 102400)
+    signal = torch.randn(batch_size, 1, SIGNAL_LENGTH)
 
     # Primary task only
     output_primary = model(signal, return_all_tasks=False)

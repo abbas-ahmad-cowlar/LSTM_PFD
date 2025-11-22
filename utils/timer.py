@@ -19,6 +19,7 @@ from collections import defaultdict
 import statistics
 
 from utils.logging import get_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = get_logger(__name__)
 

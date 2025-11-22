@@ -10,6 +10,7 @@ Date: 2025-11-20
 from pydantic_settings import BaseSettings
 from typing import Optional
 from pathlib import Path
+from utils.constants import SIGNAL_LENGTH
 
 
 class Settings(BaseSettings):
@@ -38,7 +39,7 @@ class Settings(BaseSettings):
 
     # API limits
     max_batch_size: int = 128
-    max_signal_length: int = 102400
+    max_signal_length: int = SIGNAL_LENGTH
     request_timeout: int = 30  # seconds
 
     # Logging

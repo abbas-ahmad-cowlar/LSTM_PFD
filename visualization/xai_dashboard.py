@@ -89,7 +89,7 @@ def load_model(model_path: Optional[str] = None):
     """Load pre-trained model (or dummy model for demo)."""
     from models.cnn.cnn_1d import CNN1D
 
-    model = CNN1D(num_classes=11, input_channels=1, dropout=0.3)
+    model = CNN1D(num_classes=NUM_CLASSES, input_channels=1, dropout=0.3)
 
     if model_path and Path(model_path).exists():
         model.load_state_dict(torch.load(model_path, map_location=DEVICE))

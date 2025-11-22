@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Optional, List
 from scipy.signal import spectrogram
 from scipy.fft import fft, fftfreq
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class SignalPlotter:

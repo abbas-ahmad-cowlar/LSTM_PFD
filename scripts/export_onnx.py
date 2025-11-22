@@ -38,6 +38,7 @@ import numpy as np
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 from deployment.onnx_export import (
     export_to_onnx,
     validate_onnx_export,
@@ -72,7 +73,7 @@ def main():
         '--input-shape',
         type=int,
         nargs='+',
-        default=[1, 1, 102400],
+        default=[1, 1, SIGNAL_LENGTH],
         help='Input tensor shape (default: 1 1 102400)'
     )
 

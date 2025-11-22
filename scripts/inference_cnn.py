@@ -136,7 +136,7 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
                 num_classes = state_dict[key].shape[0]
                 break
     else:
-        num_classes = 11
+        num_classes=NUM_CLASSES
 
     # Create model
     model = model_class(num_classes=num_classes, input_length=102400, in_channels=1)

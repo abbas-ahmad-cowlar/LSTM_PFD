@@ -15,6 +15,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-20
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -40,7 +41,7 @@ class GatingNetwork(nn.Module):
     """
     def __init__(
         self,
-        input_length: int = 102400,
+        input_length: int = SIGNAL_LENGTH,
         n_experts: int = 3,
         hidden_dim: int = 128
     ):
@@ -156,8 +157,8 @@ class MixtureOfExperts(BaseModel):
         self,
         experts: List[nn.Module],
         gating_network: Optional[GatingNetwork] = None,
-        num_classes: int = 11,
-        input_length: int = 102400,
+        num_classes: int = NUM_CLASSES,
+        input_length: int = SIGNAL_LENGTH,
         top_k: Optional[int] = None
     ):
         super().__init__()

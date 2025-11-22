@@ -12,6 +12,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-19
 """
 
+from utils.constants import SAMPLING_RATE, SIGNAL_LENGTH
 import numpy as np
 from typing import Dict, List
 import pywt
@@ -185,7 +186,7 @@ def extract_wavelet_features(signal: np.ndarray, fs: float = 20480) -> Dict[str,
 
     Example:
         >>> signal = np.random.randn(10000)
-        >>> features = extract_wavelet_features(signal, fs=20480)
+        >>> features = extract_wavelet_features(signal, fs=SAMPLING_RATE)
         >>> print(f"Wavelet Energy Ratio: {features['WaveletEnergyRatio']:.3f}")
     """
     # Compute DWT energies

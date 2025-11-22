@@ -12,6 +12,7 @@ Input: [B, 1, H, W] where H=n_freq (129), W=n_time (400)
 Output: [B, 11] for 11 fault classes
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -159,7 +160,7 @@ class ResNet2DSpectrogram(BaseModel):
     """
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         block: Type[Union[BasicBlock2D, Bottleneck2D]] = BasicBlock2D,
         layers: List[int] = None,
@@ -351,7 +352,7 @@ class ResNet2DSpectrogram(BaseModel):
         return features
 
 
-def resnet18_2d(num_classes: int = 11, pretrained: bool = False, **kwargs) -> ResNet2DSpectrogram:
+def resnet18_2d(num_classes: int = NUM_CLASSES, pretrained: bool = False, **kwargs) -> ResNet2DSpectrogram:
     """ResNet-18 for spectrograms."""
     return ResNet2DSpectrogram(
         num_classes=num_classes,
@@ -362,7 +363,7 @@ def resnet18_2d(num_classes: int = 11, pretrained: bool = False, **kwargs) -> Re
     )
 
 
-def resnet34_2d(num_classes: int = 11, pretrained: bool = False, **kwargs) -> ResNet2DSpectrogram:
+def resnet34_2d(num_classes: int = NUM_CLASSES, pretrained: bool = False, **kwargs) -> ResNet2DSpectrogram:
     """ResNet-34 for spectrograms."""
     return ResNet2DSpectrogram(
         num_classes=num_classes,
@@ -373,7 +374,7 @@ def resnet34_2d(num_classes: int = 11, pretrained: bool = False, **kwargs) -> Re
     )
 
 
-def resnet50_2d(num_classes: int = 11, pretrained: bool = False, **kwargs) -> ResNet2DSpectrogram:
+def resnet50_2d(num_classes: int = NUM_CLASSES, pretrained: bool = False, **kwargs) -> ResNet2DSpectrogram:
     """ResNet-50 for spectrograms (uses Bottleneck blocks)."""
     return ResNet2DSpectrogram(
         num_classes=num_classes,
@@ -386,7 +387,7 @@ def resnet50_2d(num_classes: int = 11, pretrained: bool = False, **kwargs) -> Re
 
 if __name__ == '__main__':
     # Test the model
-    model = resnet18_2d(num_classes=11, pretrained=False)
+    model = resnet18_2d(num_classes=NUM_CLASSES, pretrained=False)
 
     # Test forward pass
     batch_size = 4
