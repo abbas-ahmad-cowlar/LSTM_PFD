@@ -38,7 +38,7 @@ def count_parameters(model: nn.Module) -> int:
 
 def compute_flops(
     model: nn.Module,
-    input_shape: Tuple[int, ...] = (1, 1, 102400),
+    input_shape: Tuple[int, ...] = (1, 1, SIGNAL_LENGTH),
     device: str = 'cpu'
 ) -> int:
     """
@@ -100,7 +100,7 @@ def compute_flops(
 
 def measure_inference_time(
     model: nn.Module,
-    input_shape: Tuple[int, ...] = (1, 1, 102400),
+    input_shape: Tuple[int, ...] = (1, 1, SIGNAL_LENGTH),
     num_runs: int = 100,
     warmup_runs: int = 10,
     device: str = 'cpu'
@@ -156,7 +156,7 @@ def measure_inference_time(
 
 def measure_memory_usage(
     model: nn.Module,
-    input_shape: Tuple[int, ...] = (1, 1, 102400),
+    input_shape: Tuple[int, ...] = (1, 1, SIGNAL_LENGTH),
     device: str = 'cpu'
 ) -> Dict[str, float]:
     """
@@ -251,7 +251,7 @@ def evaluate_model_accuracy(
 def compare_architectures(
     model_dict: Dict[str, nn.Module],
     test_loader: Optional[torch.utils.data.DataLoader] = None,
-    input_shape: Tuple[int, ...] = (1, 1, 102400),
+    input_shape: Tuple[int, ...] = (1, 1, SIGNAL_LENGTH),
     device: str = 'cpu',
     save_path: Optional[str] = None
 ) -> pd.DataFrame:
@@ -541,6 +541,7 @@ if __name__ == "__main__":
     print("\nUsage example:")
     print("""
     from evaluation.architecture_comparison import compare_architectures
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     models = {
         'ResNet-18': resnet18_model,

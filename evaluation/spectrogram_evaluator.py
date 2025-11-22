@@ -378,8 +378,9 @@ class SpectrogramEvaluator(ModelEvaluator):
 if __name__ == '__main__':
     # Test evaluator
     from models.spectrogram_cnn import resnet18_2d
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
-    model = resnet18_2d(num_classes=11)
+    model = resnet18_2d(num_classes=NUM_CLASSES)
     evaluator = SpectrogramEvaluator(model, device='cpu')
 
     # Test with dummy data

@@ -16,6 +16,7 @@ from typing import Optional, Dict, List, Callable
 from pathlib import Path
 import time
 from tqdm import tqdm
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class TrainingState:

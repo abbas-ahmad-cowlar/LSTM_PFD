@@ -490,12 +490,13 @@ if __name__ == "__main__":
     from models.pinn.hybrid_pinn import HybridPINN
 
     # Create dummy model
-    model = HybridPINN(num_classes=11, backbone='resnet18')
+    model = HybridPINN(num_classes=NUM_CLASSES, backbone='resnet18')
 
     # Create dummy data loader
     from torch.utils.data import TensorDataset
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
-    dummy_signals = torch.randn(100, 1, 102400)
+    dummy_signals = torch.randn(100, 1, SIGNAL_LENGTH)
     dummy_labels = torch.randint(0, 11, (100,))
     dummy_rpm = torch.tensor([3600.0] * 100)
 
