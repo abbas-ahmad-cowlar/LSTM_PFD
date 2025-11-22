@@ -291,6 +291,182 @@ def create_step3_training_options():
 
             html.Hr(),
 
+            # Advanced Options (NEW)
+            html.H5([
+                html.I(className="fas fa-graduation-cap me-2"),
+                "Advanced Training Techniques"
+            ]),
+            html.P("Enable advanced ML techniques for improved performance", className="text-muted small mb-3"),
+
+            dbc.Accordion([
+                # Knowledge Distillation
+                dbc.AccordionItem([
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Checkbox(
+                                id="enable-distillation",
+                                label="Enable Knowledge Distillation",
+                                value=False
+                            ),
+                            html.P("Train student model using knowledge from pre-trained teacher", className="text-muted small")
+                        ], width=12, className="mb-3"),
+                    ]),
+                    html.Div([
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Teacher Model"),
+                                dcc.Dropdown(
+                                    id="teacher-model-select",
+                                    placeholder="Select completed experiment as teacher...",
+                                    className="mb-3"
+                                )
+                            ], width=6),
+                            dbc.Col([
+                                dbc.Label([
+                                    "Temperature ",
+                                    html.I(className="fas fa-info-circle ms-1", id="temp-info")
+                                ]),
+                                dbc.Tooltip("Higher temperature = softer probability distributions", target="temp-info"),
+                                dbc.Input(
+                                    id="distillation-temperature",
+                                    type="number",
+                                    value=3.0,
+                                    min=1.0,
+                                    max=10.0,
+                                    step=0.5,
+                                    className="mb-3"
+                                )
+                            ], width=3),
+                            dbc.Col([
+                                dbc.Label([
+                                    "Alpha (student weight) ",
+                                    html.I(className="fas fa-info-circle ms-1", id="alpha-info")
+                                ]),
+                                dbc.Tooltip("0.0 = all teacher loss, 1.0 = all student loss", target="alpha-info"),
+                                dbc.Input(
+                                    id="distillation-alpha",
+                                    type="number",
+                                    value=0.5,
+                                    min=0.0,
+                                    max=1.0,
+                                    step=0.1,
+                                    className="mb-3"
+                                )
+                            ], width=3),
+                        ])
+                    ], id="distillation-config", style={'display': 'none'})
+                ], title="Knowledge Distillation", item_id="distillation"),
+
+                # Mixed Precision
+                dbc.AccordionItem([
+                    dbc.Label("Precision Mode"),
+                    dbc.RadioItems(
+                        id="mixed-precision-mode",
+                        options=[
+                            {"label": "FP32 (Full Precision - Default)", "value": "fp32"},
+                            {"label": "FP16 (Half Precision - 2x faster, less memory)", "value": "fp16"},
+                            {"label": "BF16 (Brain Float16 - Better stability)", "value": "bf16"}
+                        ],
+                        value="fp32",
+                        className="mb-3"
+                    ),
+                    html.P([
+                        html.I(className="fas fa-info-circle me-2"),
+                        "FP16/BF16 can speed up training 2-3x and reduce memory usage by ~50%"
+                    ], className="text-info small")
+                ], title="Mixed Precision Training", item_id="mixed-precision"),
+
+                # Advanced Augmentation
+                dbc.AccordionItem([
+                    dbc.Checklist(
+                        id="enable-advanced-aug",
+                        options=[
+                            {"label": "RandAugment (random policy selection)", "value": "randaugment"},
+                            {"label": "CutMix (mix two samples)", "value": "cutmix"},
+                            {"label": "MixUp (blend two samples)", "value": "mixup"}
+                        ],
+                        value=[],
+                        className="mb-3"
+                    ),
+                    html.Div([
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Augmentation Magnitude"),
+                                dbc.Input(
+                                    id="aug-magnitude",
+                                    type="number",
+                                    value=9,
+                                    min=1,
+                                    max=20,
+                                    className="mb-2"
+                                ),
+                                html.P("Higher = stronger augmentations", className="text-muted small")
+                            ], width=6),
+                            dbc.Col([
+                                dbc.Label("Probability"),
+                                dbc.Input(
+                                    id="aug-probability",
+                                    type="number",
+                                    value=0.5,
+                                    min=0.0,
+                                    max=1.0,
+                                    step=0.1,
+                                    className="mb-2"
+                                ),
+                                html.P("Chance to apply per batch", className="text-muted small")
+                            ], width=6),
+                        ])
+                    ], id="advanced-aug-config", style={'display': 'none'})
+                ], title="Advanced Augmentation", item_id="advanced-aug"),
+
+                # Progressive Resizing
+                dbc.AccordionItem([
+                    dbc.Row([
+                        dbc.Col([
+                            dbc.Checkbox(
+                                id="enable-progressive",
+                                label="Enable Progressive Resizing",
+                                value=False
+                            ),
+                            html.P("Start training with smaller signals, gradually increase size", className="text-muted small mb-3")
+                        ], width=12),
+                    ]),
+                    html.Div([
+                        dbc.Row([
+                            dbc.Col([
+                                dbc.Label("Start Size"),
+                                dbc.Input(
+                                    id="progressive-start-size",
+                                    type="number",
+                                    value=51200,  # Half of 102400
+                                    min=10240,
+                                    max=102400,
+                                    step=10240,
+                                    className="mb-2"
+                                ),
+                                html.P(f"Default: {SIGNAL_LENGTH // 2}", className="text-muted small")
+                            ], width=6),
+                            dbc.Col([
+                                dbc.Label("End Size"),
+                                dbc.Input(
+                                    id="progressive-end-size",
+                                    type="number",
+                                    value=102400,
+                                    min=10240,
+                                    max=102400,
+                                    step=10240,
+                                    className="mb-2"
+                                ),
+                                html.P(f"Default: {SIGNAL_LENGTH}", className="text-muted small")
+                            ], width=6),
+                        ])
+                    ], id="progressive-config", style={'display': 'none'})
+                ], title="Progressive Resizing", item_id="progressive"),
+
+            ], start_collapsed=True, className="mb-3"),
+
+            html.Hr(),
+
             # Checkpointing & logging
             html.H5("Checkpointing & Logging"),
             dbc.Row([
