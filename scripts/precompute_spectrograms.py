@@ -203,6 +203,7 @@ def precompute_spectrograms(
 
     # Save metadata
     import json
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     metadata = {
         'tfr_type': tfr_type,
         'tfr_params': tfr_params,

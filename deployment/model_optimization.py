@@ -317,7 +317,7 @@ def profile_model(
 
     Example:
         >>> model = load_pretrained('checkpoints/best_model.pth')
-        >>> profile = profile_model(model, (1, 1, 102400))
+        >>> profile = profile_model(model, (1, 1, SIGNAL_LENGTH))
         >>> print(f"FLOPs: {profile['flops'] / 1e9:.2f}G")
     """
     try:
@@ -353,7 +353,7 @@ def profile_model(
 
 def compare_models(
     models: Dict[str, nn.Module],
-    input_shape: Tuple[int, ...] = (1, 1, 102400)
+    input_shape: Tuple[int, ...] = (1, 1, SIGNAL_LENGTH)
 ):
     """
     Compare multiple models' statistics.
@@ -393,7 +393,7 @@ def compare_models(
 def export_model_summary(
     model: nn.Module,
     save_path: str,
-    input_shape: Tuple[int, ...] = (1, 1, 102400)
+    input_shape: Tuple[int, ...] = (1, 1, SIGNAL_LENGTH)
 ):
     """
     Export detailed model summary to file.
@@ -408,6 +408,7 @@ def export_model_summary(
     """
     import sys
     from io import StringIO
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Redirect stdout
     old_stdout = sys.stdout

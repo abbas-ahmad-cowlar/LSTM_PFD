@@ -136,7 +136,7 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
                 num_classes = state_dict[key].shape[0]
                 break
     else:
-        num_classes = 11
+        num_classes=NUM_CLASSES
 
     # Create model
     model = model_class(num_classes=num_classes, input_length=102400, in_channels=1)
@@ -313,6 +313,7 @@ def run_demo(model, device, logger):
 
     from data.signal_generator import SignalGenerator
     from config.data_config import DataConfig
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Create generator
     config = DataConfig(num_signals_per_fault=1, rng_seed=None)
