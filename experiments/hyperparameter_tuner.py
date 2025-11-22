@@ -42,6 +42,7 @@ class HyperparameterTuner:
         """Initialize Optuna."""
         try:
             import optuna
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
             self.optuna = optuna
 
             self.study = optuna.create_study(

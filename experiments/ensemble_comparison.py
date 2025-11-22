@@ -60,7 +60,7 @@ class EnsembleComparison:
         self,
         base_models: List[nn.Module],
         model_names: List[str],
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         device: str = 'cuda'
     ):
         self.base_models = base_models
@@ -172,6 +172,7 @@ class EnsembleComparison:
             labels = np.concatenate(all_labels)
 
             from sklearn.metrics import accuracy_score, f1_score
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
             accuracy = accuracy_score(labels, predictions) * 100
             f1 = f1_score(labels, predictions, average='weighted', zero_division=0) * 100
 
@@ -447,7 +448,7 @@ def run_ensemble_comparison(
     train_loader: torch.utils.data.DataLoader,
     val_loader: torch.utils.data.DataLoader,
     test_loader: torch.utils.data.DataLoader,
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     device: str = 'cuda',
     save_dir: Optional[Path] = None
 ) -> Dict:

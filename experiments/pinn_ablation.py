@@ -228,7 +228,7 @@ class PINNAblationStudy:
         if config_name == 'baseline_cnn':
             # Standard ResNet without physics
             model = ResNet1D(
-                num_classes=11,
+                num_classes=NUM_CLASSES,
                 input_channels=1,
                 layers=[2, 2, 2, 2],
                 dropout=0.3,
@@ -238,7 +238,7 @@ class PINNAblationStudy:
         elif config_name == 'physics_loss':
             # ResNet + physics-based loss constraints
             model = PhysicsConstrainedCNN(
-                num_classes=11,
+                num_classes=NUM_CLASSES,
                 backbone='resnet18',
                 dropout=0.3,
                 sample_rate=51200
@@ -247,7 +247,7 @@ class PINNAblationStudy:
         elif config_name == 'hybrid_pinn':
             # Hybrid PINN with physics features
             model = HybridPINN(
-                num_classes=11,
+                num_classes=NUM_CLASSES,
                 backbone='resnet18',
                 physics_feature_dim=64,
                 fusion_dim=256,
@@ -257,7 +257,7 @@ class PINNAblationStudy:
         elif config_name == 'knowledge_graph':
             # Knowledge Graph PINN
             model = KnowledgeGraphPINN(
-                num_classes=11,
+                num_classes=NUM_CLASSES,
                 backbone='resnet18',
                 node_feature_dim=64,
                 gcn_hidden_dim=128,
@@ -474,21 +474,22 @@ if __name__ == "__main__":
     print("=" * 60)
 
     from torch.utils.data import TensorDataset
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     # Create dummy datasets
     n_train = 1000
     n_val = 200
     n_test = 200
 
-    train_signals = torch.randn(n_train, 1, 102400)
+    train_signals = torch.randn(n_train, 1, SIGNAL_LENGTH)
     train_labels = torch.randint(0, 11, (n_train,))
     train_dataset = TensorDataset(train_signals, train_labels)
 
-    val_signals = torch.randn(n_val, 1, 102400)
+    val_signals = torch.randn(n_val, 1, SIGNAL_LENGTH)
     val_labels = torch.randint(0, 11, (n_val,))
     val_dataset = TensorDataset(val_signals, val_labels)
 
-    test_signals = torch.randn(n_test, 1, 102400)
+    test_signals = torch.randn(n_test, 1, SIGNAL_LENGTH)
     test_labels = torch.randint(0, 11, (n_test,))
     test_dataset = TensorDataset(test_signals, test_labels)
 
