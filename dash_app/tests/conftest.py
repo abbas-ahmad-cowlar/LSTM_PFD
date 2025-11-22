@@ -4,6 +4,7 @@ Pytest configuration and fixtures.
 import pytest
 from database.connection import engine, SessionLocal
 from models.base import Base
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 @pytest.fixture(scope="session")

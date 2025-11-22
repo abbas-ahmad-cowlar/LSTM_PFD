@@ -4,6 +4,7 @@ Provides UI for managing API keys and user settings.
 """
 from dash import html, dcc
 import dash_bootstrap_components as dbc
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 def create_settings_layout():

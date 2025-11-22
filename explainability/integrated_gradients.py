@@ -394,8 +394,9 @@ if __name__ == "__main__":
 
     # Create dummy model and data
     from models.cnn.cnn_1d import CNN1D
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
-    model = CNN1D(num_classes=11, input_channels=1, dropout=0.3)
+    model = CNN1D(num_classes=NUM_CLASSES, input_channels=1, dropout=0.3)
 
     # Dummy input
     signal = torch.randn(1, 1, 10240)

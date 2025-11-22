@@ -292,6 +292,7 @@ def register_api_key_callbacks(app):
         # Open modal for specific key
         if 'revoke-key-btn' in trigger_id:
             import json
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
             button_id = json.loads(trigger_id.split('.')[0])
             key_id = button_id['index']
 

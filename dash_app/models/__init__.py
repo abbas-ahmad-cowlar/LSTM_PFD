@@ -14,6 +14,7 @@ from models.email_log import EmailLog, EmailStatus
 from models.email_digest_queue import EmailDigestQueue
 from models.webhook_configuration import WebhookConfiguration
 from models.webhook_log import WebhookLog, WebhookStatus
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 __all__ = [
     'Base', 'Dataset', 'Signal', 'Experiment', 'TrainingRun',

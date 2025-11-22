@@ -7,6 +7,7 @@ from dash import html, dcc, dash_table
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from config import FAULT_CLASSES
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 def create_experiment_comparison_layout(experiment_ids):

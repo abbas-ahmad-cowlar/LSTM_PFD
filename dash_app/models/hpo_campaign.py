@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from models.base import BaseModel
 from models.experiment import ExperimentStatus
 import enum
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class HPOMethod(enum.Enum):

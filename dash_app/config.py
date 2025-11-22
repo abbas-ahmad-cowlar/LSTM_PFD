@@ -4,6 +4,7 @@ Loads settings from environment variables following 12-factor app methodology.
 """
 import os
 from pathlib import Path
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 # Base paths
 BASE_DIR = Path(__file__).resolve().parent.parent
