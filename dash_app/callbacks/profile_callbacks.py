@@ -9,6 +9,7 @@ from datetime import datetime
 from database.connection import get_db_session
 from models.user import User
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -40,7 +41,7 @@ def register_profile_callbacks(app):
             return "", "", "", "", "", "", None
 
         try:
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             with get_db_session() as session:
                 user = session.query(User).filter_by(id=user_id).first()
