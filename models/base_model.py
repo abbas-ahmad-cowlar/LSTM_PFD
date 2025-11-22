@@ -12,6 +12,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-19
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 from abc import ABC, abstractmethod
@@ -142,8 +143,8 @@ class BaseModel(nn.Module, ABC):
             Summary string
 
         Example:
-            >>> model = MyModel(input_length=102400, num_classes=11)
-            >>> print(model.summary(input_shape=(102400,)))
+            >>> model = MyModel(input_length=SIGNAL_LENGTH, num_classes=NUM_CLASSES)
+            >>> print(model.summary(input_shape=(SIGNAL_LENGTH,)))
         """
         lines = []
         lines.append("=" * 80)
@@ -333,8 +334,8 @@ def print_model_summary(model: BaseModel, input_shape: Optional[Tuple[int, ...]]
         input_shape: Optional input shape
 
     Example:
-        >>> model = MyModel(input_length=102400, num_classes=11)
-        >>> print_model_summary(model, input_shape=(102400,))
+        >>> model = MyModel(input_length=SIGNAL_LENGTH, num_classes=NUM_CLASSES)
+        >>> print_model_summary(model, input_shape=(SIGNAL_LENGTH,))
     """
     print(model.summary(input_shape=input_shape))
 

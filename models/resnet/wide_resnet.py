@@ -13,6 +13,7 @@ Reference:
 - Showed wider networks can match or beat deeper networks
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 from typing import List
@@ -35,7 +36,7 @@ class WideResNet1D(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         depth: int = 16,
         widen_factor: int = 8,
@@ -181,7 +182,7 @@ class WideResNet1D(BaseModel):
         }
 
 
-def create_wide_resnet16_8(num_classes: int = 11, **kwargs) -> WideResNet1D:
+def create_wide_resnet16_8(num_classes: int = NUM_CLASSES, **kwargs) -> WideResNet1D:
     """
     Create Wide ResNet-16-8 (16 layers, 8× width).
 
@@ -196,7 +197,7 @@ def create_wide_resnet16_8(num_classes: int = 11, **kwargs) -> WideResNet1D:
     )
 
 
-def create_wide_resnet16_10(num_classes: int = 11, **kwargs) -> WideResNet1D:
+def create_wide_resnet16_10(num_classes: int = NUM_CLASSES, **kwargs) -> WideResNet1D:
     """
     Create Wide ResNet-16-10 (16 layers, 10× width).
 
@@ -211,7 +212,7 @@ def create_wide_resnet16_10(num_classes: int = 11, **kwargs) -> WideResNet1D:
     )
 
 
-def create_wide_resnet22_8(num_classes: int = 11, **kwargs) -> WideResNet1D:
+def create_wide_resnet22_8(num_classes: int = NUM_CLASSES, **kwargs) -> WideResNet1D:
     """
     Create Wide ResNet-22-8 (22 layers, 8× width).
 
@@ -226,7 +227,7 @@ def create_wide_resnet22_8(num_classes: int = 11, **kwargs) -> WideResNet1D:
     )
 
 
-def create_wide_resnet28_10(num_classes: int = 11, **kwargs) -> WideResNet1D:
+def create_wide_resnet28_10(num_classes: int = NUM_CLASSES, **kwargs) -> WideResNet1D:
     """
     Create Wide ResNet-28-10 (28 layers, 10× width).
 
@@ -245,8 +246,8 @@ def create_wide_resnet28_10(num_classes: int = 11, **kwargs) -> WideResNet1D:
 if __name__ == "__main__":
     print("Testing Wide ResNet...")
 
-    model = create_wide_resnet16_8(num_classes=11)
-    x = torch.randn(2, 1, 102400)
+    model = create_wide_resnet16_8(num_classes=NUM_CLASSES)
+    x = torch.randn(2, 1, SIGNAL_LENGTH)
     y = model(x)
     print(f"Input: {x.shape}, Output: {y.shape}")
     print(f"Parameters: {model.get_num_params():,}")

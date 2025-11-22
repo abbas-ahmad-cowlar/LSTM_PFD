@@ -12,6 +12,7 @@ Input: [B, 1, T] where T is signal length
 Output: [B, 11] for 11 fault classes
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -120,7 +121,7 @@ class ResNet1D(BaseModel):
     """
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         dropout: float = 0.2,
         layers: List[int] = None
@@ -309,7 +310,7 @@ class ResNet1D(BaseModel):
         }
 
 
-def create_resnet18_1d(num_classes: int = 11, **kwargs) -> ResNet1D:
+def create_resnet18_1d(num_classes: int = NUM_CLASSES, **kwargs) -> ResNet1D:
     """
     Factory function to create ResNet-18 for 1D signals.
 
@@ -323,7 +324,7 @@ def create_resnet18_1d(num_classes: int = 11, **kwargs) -> ResNet1D:
     return ResNet1D(num_classes=num_classes, layers=[2, 2, 2, 2], **kwargs)
 
 
-def create_resnet34_1d(num_classes: int = 11, **kwargs) -> ResNet1D:
+def create_resnet34_1d(num_classes: int = NUM_CLASSES, **kwargs) -> ResNet1D:
     """
     Factory function to create ResNet-34 for 1D signals.
 

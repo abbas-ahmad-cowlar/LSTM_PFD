@@ -11,6 +11,7 @@ Reference:
 - He et al. (2016). "Identity Mappings in Deep Residual Networks" (Pre-activation)
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
