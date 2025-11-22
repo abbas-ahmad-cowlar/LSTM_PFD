@@ -2,6 +2,8 @@
 Experiment wizard callbacks (Phase 11B).
 Handles multi-step wizard navigation and experiment launch.
 """
+import time
+import json
 from dash import Input, Output, State, ALL, callback_context, html
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -18,6 +20,31 @@ from models.dataset import Dataset
 from models.experiment import Experiment, ExperimentStatus
 from tasks.training_tasks import train_model_task
 from utils.logger import setup_logger
+from utils.constants import (
+    NUM_CLASSES,
+    SIGNAL_LENGTH,
+    SAMPLING_RATE,
+    RF_N_ESTIMATORS_MIN,
+    RF_N_ESTIMATORS_MAX,
+    RF_N_ESTIMATORS_STEP,
+    RF_MAX_DEPTH_MIN,
+    RF_MAX_DEPTH_MAX,
+    RF_MAX_DEPTH_STEP,
+    SVM_GAMMA_MIN,
+    SVM_GAMMA_MAX,
+    SVM_GAMMA_STEP,
+    NN_FILTERS_MIN,
+    NN_FILTERS_MAX,
+    NN_FILTERS_STEP,
+    TRANSFORMER_D_MODEL_MIN,
+    TRANSFORMER_D_MODEL_MAX,
+    TRANSFORMER_D_MODEL_STEP,
+    DEFAULT_EPOCHS_FALLBACK,
+    DEFAULT_LEARNING_RATE_FALLBACK,
+    PROGRESSIVE_START_SIZE_DEFAULT,
+    PROGRESSIVE_END_SIZE_DEFAULT,
+    PERCENT_MULTIPLIER,
+)
 
 logger = setup_logger(__name__)
 
@@ -25,16 +52,16 @@ logger = setup_logger(__name__)
 # Model hyperparameter templates
 MODEL_HYPERPARAMS = {
     "rf": {
-        "n_estimators": (100, 1000, 100),
-        "max_depth": (10, 100, 10),
+        "n_estimators": (RF_N_ESTIMATORS_MIN, RF_N_ESTIMATORS_MAX, RF_N_ESTIMATORS_STEP),
+        "max_depth": (RF_MAX_DEPTH_MIN, RF_MAX_DEPTH_MAX, RF_MAX_DEPTH_STEP),
         "min_samples_split": (2, 20, 2),
     },
     "svm": {
         "C": (0.1, 10.0, 0.1),
-        "gamma": (0.001, 1.0, 0.001),
+        "gamma": (SVM_GAMMA_MIN, SVM_GAMMA_MAX, SVM_GAMMA_STEP),
     },
     "cnn1d": {
-        "num_filters": (32, 256, 32),
+        "num_filters": (NN_FILTERS_MIN, NN_FILTERS_MAX, NN_FILTERS_STEP),
         "dropout": (0.0, 0.5, 0.1),
     },
     "resnet18": {
@@ -44,7 +71,7 @@ MODEL_HYPERPARAMS = {
         "dropout": (0.0, 0.5, 0.1),
     },
     "transformer": {
-        "d_model": (128, 512, 64),
+        "d_model": (TRANSFORMER_D_MODEL_MIN, TRANSFORMER_D_MODEL_MAX, TRANSFORMER_D_MODEL_STEP),
         "nhead": (4, 16, 4),
         "num_layers": (2, 12, 2),
         "dropout": (0.0, 0.5, 0.1),
@@ -100,7 +127,7 @@ def register_experiment_wizard_callbacks(app):
             nav_disabled = (False, False, False, True)
         else:  # step == 4
             content = create_step4_review_launch(config)
-            progress = 100
+            progress = PERCENT_MULTIPLIER
             prev_disabled = False
             next_text = "Launch"
             next_disabled = True  # Launch button is separate
@@ -143,7 +170,6 @@ def register_experiment_wizard_callbacks(app):
 
         # Extract model_id from the button that was clicked
         button_id = callback_context.triggered[0]["prop_id"].split(".")[0]
-        import json
         button_data = json.loads(button_id)
         model_type = button_data["index"]
 
@@ -177,7 +203,12 @@ def register_experiment_wizard_callbacks(app):
 
         try:
             with get_db_session() as session:
-                datasets = session.query(Dataset).all()
+                # Apply pagination to prevent loading too many datasets
+                from utils.query_utils import paginate_with_default_limit
+                datasets = paginate_with_default_limit(
+                    session.query(Dataset).order_by(Dataset.created_at.desc()),
+                    limit=100
+                )
                 return [
                     {"label": f"{ds.name} ({ds.num_samples} samples)", "value": ds.id}
                     for ds in datasets
@@ -248,10 +279,10 @@ def register_experiment_wizard_callbacks(app):
 
         # Training config summary
         training_summary = html.Ul([
-            html.Li(f"Epochs: {config.get('num_epochs', 100)}"),
+            html.Li(f"Epochs: {config.get('num_epochs', DEFAULT_EPOCHS_FALLBACK)}"),
             html.Li(f"Batch Size: {config.get('batch_size', 32)}"),
             html.Li(f"Optimizer: {config.get('optimizer', 'adam').upper()}"),
-            html.Li(f"Learning Rate: {config.get('learning_rate', 0.001)}"),
+            html.Li(f"Learning Rate: {config.get('learning_rate', DEFAULT_LEARNING_RATE_FALLBACK)}"),
             html.Li(f"Augmentation: {len(config.get('augmentation', []))} enabled"),
         ])
 
@@ -396,10 +427,10 @@ def register_experiment_wizard_callbacks(app):
 
         # Update basic training config
         config["dataset_id"] = dataset_id
-        config["num_epochs"] = num_epochs or 100
+        config["num_epochs"] = num_epochs or DEFAULT_EPOCHS_FALLBACK
         config["batch_size"] = batch_size or 32
         config["optimizer"] = optimizer or "adam"
-        config["learning_rate"] = learning_rate or 0.001
+        config["learning_rate"] = learning_rate or DEFAULT_LEARNING_RATE_FALLBACK
         config["augmentation"] = augmentation or []
 
         # Collect hyperparameters
@@ -441,14 +472,9 @@ def register_experiment_wizard_callbacks(app):
         if enable_progressive:
             config["advanced_training"]["progressive_resizing"] = {
                 "enabled": True,
-                "start_size": prog_start or 51200,
-                "end_size": prog_end or 102400
+                "start_size": prog_start or PROGRESSIVE_START_SIZE_DEFAULT,
+                "end_size": prog_end or PROGRESSIVE_END_SIZE_DEFAULT
             }
 
         logger.info(f"Updated training config with advanced options: {config.get('advanced_training', {})}")
         return config
-
-
-# Import time for timestamp generation
-import time
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
