@@ -8,6 +8,7 @@ from datetime import datetime
 
 from services.webhook_service import WebhookService
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -34,9 +35,7 @@ def register_webhook_callbacks(app):
             return html.Div()
 
         try:
-            # For demo purposes, use a test user ID
-            # In production, get this from session/JWT token
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             # Get webhooks
             webhooks = WebhookService.list_user_webhooks(user_id, include_inactive=True)
@@ -215,7 +214,7 @@ def register_webhook_callbacks(app):
             webhook_id = button_id['index']
 
             # Load webhook data
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
             webhook = WebhookService.get_webhook(webhook_id, user_id)
 
             if webhook:
@@ -268,7 +267,7 @@ def register_webhook_callbacks(app):
             if not events or len(events) == 0:
                 return dbc.Alert("Please select at least one event", color="danger"), webhook_id
 
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
 
             if edit_mode and webhook_id:
                 # Update existing webhook
@@ -333,7 +332,7 @@ def register_webhook_callbacks(app):
             return ""
 
         try:
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
 
             # If editing existing webhook, test it directly
             if edit_mode and webhook_id:
@@ -402,7 +401,7 @@ def register_webhook_callbacks(app):
             button_id = json.loads(trigger_id.split('.')[0])
             webhook_id = button_id['index']
 
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
 
             # Get current webhook
             webhook = WebhookService.get_webhook(webhook_id, user_id)
@@ -452,7 +451,7 @@ def register_webhook_callbacks(app):
             button_id = json.loads(trigger_id.split('.')[0])
             webhook_id = button_id['index']
 
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
             webhook = WebhookService.get_webhook(webhook_id, user_id)
 
             if webhook:
@@ -464,7 +463,7 @@ def register_webhook_callbacks(app):
 
         # Confirm delete
         if 'confirm-delete-webhook-btn' in trigger_id and selected_id:
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
             WebhookService.delete_webhook(selected_id, user_id)
             logger.info(f"Deleted webhook {selected_id}")
             return False, "", None
@@ -498,7 +497,7 @@ def register_webhook_callbacks(app):
             button_id = json.loads(trigger_id.split('.')[0])
             webhook_id = button_id['index']
 
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
             webhook = WebhookService.get_webhook(webhook_id, user_id)
 
             if not webhook:
