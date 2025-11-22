@@ -2,6 +2,7 @@
 Tag Management Callbacks.
 Handles UI interactions for experiment tagging and organization.
 """
+import json
 from dash import Input, Output, State, html, callback_context, ALL
 import dash_bootstrap_components as dbc
 from typing import List
@@ -288,7 +289,6 @@ def register_tag_callbacks(app):
 
             # Handle popular tag chip click
             elif 'popular-tag-chip' in trigger:
-                import json
                 tag_id = json.loads(trigger.split('.')[0])
                 tag_name = tag_id['index']
 
@@ -311,7 +311,6 @@ def register_tag_callbacks(app):
 
             # Handle remove tag button
             elif 'remove-tag-btn' in trigger:
-                import json
                 tag_id_obj = json.loads(trigger.split('.')[0])
                 tag_id = tag_id_obj['index']
 
@@ -349,7 +348,8 @@ def register_tag_callbacks(app):
                 with get_db_session() as session:
                     popular = TagService.get_popular_tags(session, limit=10)
                     return [{'label': tag.name, 'value': tag.name} for tag in popular]
-            except:
+            except Exception as e:
+                logger.error(f"Error loading popular tags for autocomplete: {e}", exc_info=True)
                 return []
 
         try:

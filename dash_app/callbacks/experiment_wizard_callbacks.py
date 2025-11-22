@@ -2,6 +2,7 @@
 Experiment wizard callbacks (Phase 11B).
 Handles multi-step wizard navigation and experiment launch.
 """
+import json
 from dash import Input, Output, State, ALL, callback_context, html
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -143,7 +144,6 @@ def register_experiment_wizard_callbacks(app):
 
         # Extract model_id from the button that was clicked
         button_id = callback_context.triggered[0]["prop_id"].split(".")[0]
-        import json
         button_data = json.loads(button_id)
         model_type = button_data["index"]
 
