@@ -408,7 +408,6 @@ def export_model_summary(
     """
     import sys
     from io import StringIO
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Redirect stdout
     old_stdout = sys.stdout

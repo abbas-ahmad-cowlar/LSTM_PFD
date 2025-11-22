@@ -469,7 +469,6 @@ def test_cnn_experiment():
 
     import numpy as np
     import tempfile
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     # Create dummy data
     num_samples = 200

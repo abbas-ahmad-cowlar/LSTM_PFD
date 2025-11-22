@@ -449,7 +449,6 @@ def test_cnn_evaluator():
 
     # Cleanup
     import shutil
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
     if Path('./test_results').exists():
         shutil.rmtree('./test_results')
         print("   Test results cleaned up")

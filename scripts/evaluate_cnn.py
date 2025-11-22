@@ -166,7 +166,6 @@ def load_test_data(args, logger):
 
     from data.signal_generator import SignalGenerator
     from config.data_config import DataConfig
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Create data config
     data_config = DataConfig(

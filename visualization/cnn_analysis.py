@@ -571,7 +571,6 @@ def test_cnn_analyzer():
     print("Testing CNNAnalyzer...")
 
     from models.cnn.cnn_1d import CNN1D
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Create model
     model = CNN1D(num_classes=NUM_CLASSES, input_length=102400)
