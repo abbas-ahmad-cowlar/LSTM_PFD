@@ -2,7 +2,7 @@
 API Key model for authentication and rate limiting (Feature #1).
 Implements secure API key management with bcrypt hashing.
 """
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ARRAY, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ARRAY, ForeignKey, Text, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -54,6 +54,13 @@ class APIKey(Base):
     user = relationship("User", back_populates="api_keys")
     usage_records = relationship("APIUsage", back_populates="api_key", cascade="all, delete-orphan")
     request_logs = relationship("APIRequestLog", back_populates="api_key")
+
+    # Performance indexes
+    # Note: user_id (FK), prefix, and is_active already have column-level indexes
+    __table_args__ = (
+        Index('ix_api_keys_created_at', 'created_at'),
+        # Composite index removed - user_id and is_active already individually indexed
+    )
 
     def __repr__(self):
         return f"<APIKey(id={self.id}, name='{self.name}', prefix='{self.prefix}', active={self.is_active})>"
