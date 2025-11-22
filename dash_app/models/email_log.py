@@ -37,9 +37,15 @@ class EmailLog(BaseModel):
     # Relationships
     user = relationship("User", backref="email_logs")
 
-    # Indexes
+    # Indexes - optimized for filtering and search
     __table_args__ = (
         Index('idx_email_logs_sent_at', 'sent_at'),
+        # Composite index for time-based status filtering
+        Index('idx_email_logs_time_status', 'created_at', 'status'),
+        # Composite index for user-specific queries
+        Index('idx_email_logs_user_time', 'user_id', 'created_at'),
+        # Composite index for recipient search with time
+        Index('idx_email_logs_recipient_time', 'recipient_email', 'created_at'),
     )
 
     def __repr__(self):
