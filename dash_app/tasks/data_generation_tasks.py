@@ -5,7 +5,7 @@ Async Celery tasks for generating synthetic vibration datasets.
 from tasks import celery_app
 from utils.logger import setup_logger
 from database.connection import get_db_session
-from database.models import DatasetGeneration, DatasetGenerationStatus
+from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
 from integrations.phase0_adapter import Phase0Adapter
 from services.notification_service import NotificationService
 from models.notification_preference import EventType
