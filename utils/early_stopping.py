@@ -289,7 +289,6 @@ def test_early_stopping():
 
     import torch
     import torch.nn as nn
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Create a simple dummy model
     class DummyModel(nn.Module):
