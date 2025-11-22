@@ -59,6 +59,10 @@ def create_sidebar():
                 html.I(className="fas fa-brain me-2"),
                 "XAI Dashboard"
             ], href="/xai", active="exact"),
+            dbc.NavLink([
+                html.I(className="fas fa-chart-area me-2"),
+                "Visualizations"
+            ], href="/visualization", active="exact"),
 
             html.Hr(),
 
