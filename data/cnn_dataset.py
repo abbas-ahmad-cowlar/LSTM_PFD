@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Optional, Callable, Any
 import h5py
 
+from utils.constants import SIGNAL_LENGTH, NUM_CLASSES
 from utils.logging import get_logger
 from data.cnn_transforms import get_train_transforms, get_test_transforms
 
@@ -45,7 +46,7 @@ class RawSignalDataset(Dataset):
         >>> transform = get_train_transforms(augment=True)
         >>> dataset = RawSignalDataset(signals, labels, transform=transform)
         >>> signal, label = dataset[0]
-        >>> print(f"Signal: {signal.shape}, Label: {label}")  # [1, 102400], 0
+        >>> print(f"Signal: {signal.shape}, Label: {label}")  # [1, SIGNAL_LENGTH], 0
     """
 
     def __init__(
@@ -350,11 +351,9 @@ def test_cnn_dataset():
 
     # Create dummy data
     num_samples = 100
-    signal_length = 102400
-    num_classes = 11
 
-    signals = np.random.randn(num_samples, signal_length).astype(np.float32)
-    labels = np.random.randint(0, num_classes, num_samples)
+    signals = np.random.randn(num_samples, SIGNAL_LENGTH).astype(np.float32)
+    labels = np.random.randint(0, NUM_CLASSES, num_samples)
 
     # Test RawSignalDataset
     print("\n1. Testing RawSignalDataset...")

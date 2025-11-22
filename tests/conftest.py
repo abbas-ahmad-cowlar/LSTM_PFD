@@ -14,6 +14,7 @@ import tempfile
 import shutil
 from pathlib import Path
 import h5py
+from utils.constants import NUM_CLASSES
 
 
 @pytest.fixture(scope="session")
@@ -70,10 +71,9 @@ def sample_features():
     np.random.seed(42)
     num_samples = 100
     num_features = 15
-    num_classes = 11
 
     X = np.random.randn(num_samples, num_features).astype(np.float32)
-    y = np.random.randint(0, num_classes, num_samples)
+    y = np.random.randint(0, NUM_CLASSES, num_samples)
 
     return X, y
 
@@ -107,7 +107,7 @@ def mock_h5_cache(temp_data_dir, sample_batch_signals):
         # Add metadata
         f.attrs['num_samples'] = len(signals)
         f.attrs['signal_length'] = signals.shape[1]
-        f.attrs['num_classes'] = 11
+        f.attrs['num_classes'] = NUM_CLASSES
 
     return str(cache_path)
 
@@ -118,7 +118,7 @@ def simple_cnn_model():
     import torch.nn as nn
 
     class SimpleCNN(nn.Module):
-        def __init__(self, num_classes=11):
+        def __init__(self, num_classes=NUM_CLASSES):
             super().__init__()
             self.conv1 = nn.Conv1d(1, 32, kernel_size=7, padding=3)
             self.pool = nn.MaxPool1d(2)
@@ -149,7 +149,7 @@ def trained_model_checkpoint(temp_checkpoint_dir, simple_cnn_model):
         'accuracy': 0.95,
         'metadata': {
             'model_type': 'SimpleCNN',
-            'num_classes': 11
+            'num_classes': NUM_CLASSES
         }
     }
 

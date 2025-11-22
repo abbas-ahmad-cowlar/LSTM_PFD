@@ -11,6 +11,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-19
 """
 
+from utils.constants import SAMPLING_RATE, SIGNAL_LENGTH
 import numpy as np
 from typing import Dict, Tuple
 from scipy import signal as sp_signal
@@ -177,7 +178,7 @@ def extract_frequency_domain_features(signal: np.ndarray, fs: float) -> Dict[str
 
     Example:
         >>> signal = np.random.randn(10000)
-        >>> features = extract_frequency_domain_features(signal, fs=20480)
+        >>> features = extract_frequency_domain_features(signal, fs=SAMPLING_RATE)
         >>> print(f"Dominant Freq: {features['DominantFreq']:.2f} Hz")
     """
     # Compute FFT
