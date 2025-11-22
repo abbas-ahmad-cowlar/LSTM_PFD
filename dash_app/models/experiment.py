@@ -1,6 +1,7 @@
 """Experiment model for storing training experiments."""
-from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, Enum, Text
 from sqlalchemy.orm import relationship
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from models.base import BaseModel
 import enum
 
@@ -37,6 +38,10 @@ class Experiment(BaseModel):
     onnx_path = Column(String(500))  # Path to ONNX export
     results_dir = Column(String(500))  # Directory containing all results
 
+    # Feature #5: Tags & Search
+    notes = Column(Text)  # User notes for experiment (searchable)
+    search_vector = Column(TSVECTOR)  # Full-text search vector (auto-updated by trigger)
+
     # Relationships
     created_by = Column(Integer, ForeignKey('users.id'))
     hpo_campaign_id = Column(Integer, ForeignKey('hpo_campaigns.id'))  # If part of HPO
@@ -46,3 +51,22 @@ class Experiment(BaseModel):
 
     def __repr__(self):
         return f"<Experiment(name='{self.name}', status='{self.status.value}')>"
+
+    def get_tags(self):
+        """Get list of tags for this experiment."""
+        from models.tag import ExperimentTag
+        return [et.tag for et in self.experiment_tags if et.tag]
+
+    def to_dict_with_tags(self):
+        """Convert experiment to dictionary including tags."""
+        data = self.to_dict()
+        data['tags'] = [
+            {
+                'id': tag.id,
+                'name': tag.name,
+                'slug': tag.slug,
+                'color': tag.color
+            }
+            for tag in self.get_tags()
+        ]
+        return data
