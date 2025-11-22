@@ -167,7 +167,6 @@ def log_system_info() -> None:
 
     # CPU
     import multiprocessing
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     logger.info(f"CPU Count: {multiprocessing.cpu_count()}")
 
     logger.info("=" * 60)
