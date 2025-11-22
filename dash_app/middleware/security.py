@@ -150,7 +150,6 @@ class SecurityMiddleware:
             allowed_origins: List of allowed origins (default: localhost only)
         """
         from flask_cors import CORS
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
         if allowed_origins is None:
             allowed_origins = [

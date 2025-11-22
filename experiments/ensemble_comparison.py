@@ -172,7 +172,6 @@ class EnsembleComparison:
             labels = np.concatenate(all_labels)
 
             from sklearn.metrics import accuracy_score, f1_score
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
             accuracy = accuracy_score(labels, predictions) * 100
             f1 = f1_score(labels, predictions, average='weighted', zero_division=0) * 100
 

@@ -453,7 +453,6 @@ if __name__ == "__main__":
     print("=" * 60)
 
     from models.cnn.cnn_1d import CNN1D
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Create model and dummy data
     model = CNN1D(num_classes=NUM_CLASSES, input_channels=1, dropout=0.3)
