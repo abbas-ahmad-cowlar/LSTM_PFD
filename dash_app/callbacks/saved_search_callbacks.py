@@ -8,6 +8,7 @@ import dash_bootstrap_components as dbc
 from database.connection import get_db_session
 from services.search_service import SearchService
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -31,7 +32,7 @@ def register_saved_search_callbacks(app):
             return []
 
         try:
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             with get_db_session() as session:
                 saved_searches = SearchService.get_saved_searches(session, user_id)
@@ -73,7 +74,7 @@ def register_saved_search_callbacks(app):
             return "", [], [], []
 
         try:
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             with get_db_session() as session:
                 # Get saved search
@@ -227,7 +228,7 @@ def register_saved_search_callbacks(app):
                 return dbc.Alert("No search query to save. Apply some filters first.", color="warning"), []
 
             # Save the search
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             with get_db_session() as session:
                 saved_search = SearchService.save_search(
