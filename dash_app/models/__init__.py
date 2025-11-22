@@ -22,6 +22,7 @@ from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
 from models.dataset_import import DatasetImport, DatasetImportStatus
 from models.session_log import SessionLog
 from models.login_history import LoginHistory
+from models.backup_code import BackupCode
 
 __all__ = [
     'Base', 'Dataset', 'Signal', 'Experiment', 'TrainingRun',
@@ -36,5 +37,5 @@ __all__ = [
     'SavedSearch',
     'DatasetGeneration', 'DatasetGenerationStatus',
     'DatasetImport', 'DatasetImportStatus',
-    'SessionLog', 'LoginHistory'
+    'SessionLog', 'LoginHistory', 'BackupCode'
 ]
