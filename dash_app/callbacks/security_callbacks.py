@@ -16,6 +16,7 @@ from models.user import User
 from models.session_log import SessionLog
 from models.login_history import LoginHistory
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 from middleware.auth import verify_password, hash_password
 
 logger = setup_logger(__name__)
@@ -149,7 +150,7 @@ def register_security_callbacks(app):
                 return dbc.Alert("Password must contain at least one number", color="danger", dismissable=True)
 
             # Get user from session
-            user_id = 1  # TODO: Get from authenticated session (will be fixed with full auth system)
+            user_id = get_current_user_id()
 
             # Verify current password and update with new hashed password
             with get_db_session() as session:
