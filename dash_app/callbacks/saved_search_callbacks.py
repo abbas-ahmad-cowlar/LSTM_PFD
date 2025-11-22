@@ -153,8 +153,8 @@ def register_saved_search_callbacks(app):
                         tag_names = [t.name for t in tags]
                         if tag_names:
                             query_parts.append(f"tag:{','.join(tag_names)}")
-                except:
-                    pass
+                except Exception as e:
+                    logger.error(f"Error loading tags for search query in preview: {e}", exc_info=True)
 
             if model_filter and len(model_filter) > 0:
                 for model in model_filter:
@@ -211,8 +211,8 @@ def register_saved_search_callbacks(app):
                         tag_names = [t.name for t in tags]
                         if tag_names:
                             query_parts.append(f"tag:{','.join(tag_names)}")
-                except:
-                    pass
+                except Exception as e:
+                    logger.error(f"Error loading tags for saved search: {e}", exc_info=True)
 
             if model_filter and len(model_filter) > 0:
                 for model in model_filter:
