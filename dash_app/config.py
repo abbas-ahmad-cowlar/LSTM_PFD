@@ -16,10 +16,12 @@ ENV = os.getenv("ENV", "development")
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 # Database Configuration
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://lstm_user:lstm_password@localhost:5432/lstm_dashboard"
-)
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError(
+        "DATABASE_URL must be set in environment variables. "
+        "Example: postgresql://user:password@localhost:5432/dbname"
+    )
 
 # Redis Configuration
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -46,7 +48,12 @@ APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("APP_PORT", "8050"))
 
 # Security
-SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError(
+        "SECRET_KEY must be set in environment variables. "
+        "Generate with: python -c 'import secrets; print(secrets.token_hex(32))'"
+    )
 
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO" if not DEBUG else "DEBUG")
