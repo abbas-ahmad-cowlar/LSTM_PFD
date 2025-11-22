@@ -53,6 +53,7 @@ class APIKey(Base):
     # Relationships
     user = relationship("User", back_populates="api_keys")
     usage_records = relationship("APIUsage", back_populates="api_key", cascade="all, delete-orphan")
+    request_logs = relationship("APIRequestLog", back_populates="api_key")
 
     def __repr__(self):
         return f"<APIKey(id={self.id}, name='{self.name}', prefix='{self.prefix}', active={self.is_active})>"
