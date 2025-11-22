@@ -262,3 +262,24 @@ def register_all_callbacks(app):
         register_tag_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import tag_callbacks: {e}")
+
+    # Import and register Saved Search callbacks
+    try:
+        from callbacks.saved_search_callbacks import register_saved_search_callbacks
+        register_saved_search_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import saved_search_callbacks: {e}")
+
+    # Import and register User Profile callbacks
+    try:
+        from callbacks.profile_callbacks import register_profile_callbacks
+        register_profile_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import profile_callbacks: {e}")
+
+    # Import and register Security Settings callbacks
+    try:
+        from callbacks.security_callbacks import register_security_callbacks
+        register_security_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import security_callbacks: {e}")
