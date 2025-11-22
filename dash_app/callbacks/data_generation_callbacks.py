@@ -12,6 +12,7 @@ from database.connection import get_db_session
 from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
 from tasks.data_generation_tasks import generate_dataset_task
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 from utils.constants import (
     DEFAULT_NUM_SIGNALS_PER_FAULT,
     DEFAULT_SPEED_VARIATION_PERCENT,
@@ -213,6 +214,7 @@ def register_data_generation_callbacks(app):
 
             # Launch Celery task
             config['generation_id'] = generation_id
+            config['user_id'] = get_current_user_id()
             task = generate_dataset_task.delay(config)
 
             # Update database with task ID

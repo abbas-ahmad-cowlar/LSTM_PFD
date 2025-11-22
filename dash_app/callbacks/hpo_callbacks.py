@@ -14,6 +14,7 @@ from utils.logger import setup_logger
 from utils.data_objects import CampaignObject
 from database.connection import get_db_session
 from models.dataset import Dataset
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -175,7 +176,7 @@ def register_hpo_callbacks(app):
                 num_trials=int(num_trials),
                 metric=metric,
                 direction=direction,
-                created_by=1  # TODO: Get from authentication
+                created_by=get_current_user_id()
             )
 
             if not campaign_id:
