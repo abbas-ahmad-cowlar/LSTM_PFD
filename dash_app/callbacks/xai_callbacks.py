@@ -2,6 +2,7 @@
 XAI Dashboard Callbacks.
 Connects XAI dashboard UI to backend explanation services.
 """
+import numpy as np
 from dash import Input, Output, State, html, dcc, callback_context
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -468,8 +469,6 @@ def _create_prediction_display(result: Dict[str, Any]) -> html.Div:
 
 def _create_shap_details(result: Dict[str, Any]) -> html.Div:
     """Create SHAP explanation details panel."""
-    import numpy as np
-
     shap_values = np.array(result.get('shap_values', []))
     base_value = result.get('base_value', 0)
 
@@ -529,8 +528,6 @@ def _create_shap_details(result: Dict[str, Any]) -> html.Div:
 
 def _create_lime_details(result: Dict[str, Any]) -> html.Div:
     """Create LIME explanation details panel."""
-    import numpy as np
-
     segment_weights = np.array(result.get('segment_weights', []))
     num_segments = result.get('num_segments', 0)
 
@@ -587,8 +584,6 @@ def _create_lime_details(result: Dict[str, Any]) -> html.Div:
 
 def _create_attribution_details(result: Dict[str, Any], method: str) -> html.Div:
     """Create attribution-based explanation details."""
-    import numpy as np
-
     attributions = np.array(result.get('attributions', []))
 
     # Calculate statistics

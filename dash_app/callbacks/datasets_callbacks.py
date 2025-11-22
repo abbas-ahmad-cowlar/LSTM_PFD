@@ -2,6 +2,7 @@
 Dataset Management callbacks.
 Handle dataset CRUD operations and visualization.
 """
+import json
 from dash import Input, Output, State, html, dash_table, ALL, ctx
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -75,7 +76,6 @@ def register_datasets_callbacks(app):
         # Open modal - find which dataset was clicked
         if 'view-dataset-btn' in triggered_id:
             # Extract index from triggered_id
-            import json
             triggered_dict = json.loads(triggered_id.split('.')[0])
             dataset_id = triggered_dict['index']
 
