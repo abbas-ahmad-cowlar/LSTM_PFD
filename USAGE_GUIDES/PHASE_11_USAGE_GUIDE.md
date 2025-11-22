@@ -806,4 +806,4 @@ Phase 11 delivers a **professional, production-ready dashboard** that:
 4. Performance profiling and optimization
 5. Production deployment
 
-For issues, see the [GitHub Issues page](https://github.com/yourusername/LSTM_PFD/issues).
+For issues, see the [GitHub Issues page](https://github.com/abbas-ahmad-cowlar/LSTM_PFD/issues).
