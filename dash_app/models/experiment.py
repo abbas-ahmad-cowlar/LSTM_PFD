@@ -1,5 +1,5 @@
 """Experiment model for storing training experiments."""
-from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, Enum, Text
+from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, Enum, Text, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from models.base import BaseModel
@@ -49,6 +49,15 @@ class Experiment(BaseModel):
 
     dataset = relationship("Dataset", backref="experiments")
     training_runs = relationship("TrainingRun", back_populates="experiment", cascade="all, delete-orphan")
+
+    # Performance indexes
+    # Note: name, model_type, status already have column-level indexes
+    # Note: dataset_id, created_by, hpo_campaign_id are ForeignKeys (auto-indexed in PostgreSQL)
+    __table_args__ = (
+        Index('ix_experiments_created_at', 'created_at'),
+        # Removed duplicate indexes on ForeignKey columns
+        # Removed composite on created_by+status (status already indexed, low cardinality)
+    )
 
     def __repr__(self):
         return f"<Experiment(name='{self.name}', status='{self.status.value}')>"

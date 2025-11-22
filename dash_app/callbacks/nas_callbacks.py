@@ -2,6 +2,7 @@
 Neural Architecture Search (NAS) Callbacks (Phase 4, Feature 3/3).
 Handles all callbacks for the NAS dashboard.
 """
+import json
 from dash import callback_context, html, no_update, ALL
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
@@ -221,7 +222,6 @@ def register_nas_callbacks(app):
         # Open modal
         if 'view-nas-campaign' in trigger_id:
             # Extract campaign ID from trigger
-            import json
             trigger_dict = json.loads(trigger_id.split('.')[0])
             campaign_id = trigger_dict['index']
 
