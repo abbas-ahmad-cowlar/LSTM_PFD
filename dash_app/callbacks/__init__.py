@@ -248,3 +248,10 @@ def register_all_callbacks(app):
         register_api_key_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import api_key_callbacks: {e}")
+
+    # Import and register Webhook Management callbacks
+    try:
+        from callbacks.webhook_callbacks import register_webhook_callbacks
+        register_webhook_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import webhook_callbacks: {e}")
