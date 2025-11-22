@@ -1,5 +1,5 @@
 """Saved search model for bookmarking frequent queries."""
-from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, UniqueConstraint, DateTime
+from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, UniqueConstraint, DateTime, Index
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
 
@@ -31,9 +31,14 @@ class SavedSearch(BaseModel):
     # Relationships
     user = relationship("User", backref="saved_searches")
 
-    # Unique constraint: user can't have duplicate saved search names
+    # Constraints and performance indexes
+    # Note: user_id already has column-level index
+    # Note: UniqueConstraint creates composite index on (user_id, name)
     __table_args__ = (
         UniqueConstraint('user_id', 'name', name='uq_user_saved_search_name'),
+        Index('ix_saved_searches_is_pinned', 'is_pinned'),
+        Index('ix_saved_searches_created_at', 'created_at'),
+        # Removed composite - is_pinned is boolean (low cardinality)
     )
 
     def __repr__(self):
