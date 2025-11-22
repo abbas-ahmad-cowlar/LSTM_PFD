@@ -12,6 +12,7 @@ import torch.nn as nn
 import numpy as np
 from typing import Dict, List
 from torch.utils.data import DataLoader
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class RobustnessTester:

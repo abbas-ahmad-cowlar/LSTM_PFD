@@ -171,7 +171,7 @@ class PINNEvaluator(ModelEvaluator):
 
             # Compute frequency loss (lower is better)
             freq_loss = self.freq_loss_fn(signals_subset,
-                                         torch.nn.functional.one_hot(predictions_subset, num_classes=11).float(),
+                                         torch.nn.functional.one_hot(predictions_subset, num_classes=NUM_CLASSES).float(),
                                          meta)
 
             # Convert to consistency score (1 = perfect, 0 = worst)
@@ -437,13 +437,14 @@ if __name__ == "__main__":
     from models.pinn.hybrid_pinn import HybridPINN
 
     # Create dummy model and data
-    model = HybridPINN(num_classes=11, backbone='resnet18')
+    model = HybridPINN(num_classes=NUM_CLASSES, backbone='resnet18')
 
     from torch.utils.data import TensorDataset
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     # Dummy test data
     n_samples = 100
-    signals = torch.randn(n_samples, 1, 102400)
+    signals = torch.randn(n_samples, 1, SIGNAL_LENGTH)
     labels = torch.randint(0, 11, (n_samples,))
     rpm = torch.tensor([3600.0] * n_samples)
 

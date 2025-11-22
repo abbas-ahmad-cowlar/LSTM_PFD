@@ -10,6 +10,7 @@ Computes ROC curves and AUC scores for multi-class classification:
 import numpy as np
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 from typing import Dict, Tuple, List
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class ROCAnalyzer:

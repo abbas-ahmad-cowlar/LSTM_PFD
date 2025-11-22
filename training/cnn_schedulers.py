@@ -392,6 +392,7 @@ def test_schedulers():
     print("=" * 60)
 
     import torch.nn as nn
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     # Dummy model
     model = nn.Linear(10, 1)

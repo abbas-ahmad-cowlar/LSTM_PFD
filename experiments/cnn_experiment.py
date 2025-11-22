@@ -469,11 +469,12 @@ def test_cnn_experiment():
 
     import numpy as np
     import tempfile
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     # Create dummy data
     num_samples = 200
-    signal_length = 102400
-    num_classes = 11
+    signal_length = SIGNAL_LENGTH
+    num_classes=NUM_CLASSES
 
     signals = np.random.randn(num_samples, signal_length).astype(np.float32)
     labels = np.random.randint(0, num_classes, num_samples)

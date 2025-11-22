@@ -45,7 +45,7 @@ def create_adamw_optimizer(
         AdamW optimizer
 
     Example:
-        >>> model = CNN1D(num_classes=11)
+        >>> model = CNN1D(num_classes=NUM_CLASSES)
         >>> optimizer = create_adamw_optimizer(model.parameters(), lr=1e-3)
     """
     optimizer = optim.AdamW(
@@ -300,7 +300,7 @@ def get_parameter_groups(
         List of parameter group dicts
 
     Example:
-        >>> model = CNN1D(num_classes=11)
+        >>> model = CNN1D(num_classes=NUM_CLASSES)
         >>> param_groups = get_parameter_groups(model, lr=1e-3, weight_decay=1e-4)
         >>> optimizer = optim.AdamW(param_groups)
     """
@@ -338,7 +338,8 @@ def test_optimizers():
 
     # Create dummy model
     from models.cnn.cnn_1d import CNN1D
-    model = CNN1D(num_classes=11)
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+    model = CNN1D(num_classes=NUM_CLASSES)
 
     # Test AdamW
     print("\n1. Testing AdamW optimizer...")
@@ -382,7 +383,7 @@ def test_optimizers():
     # Test optimizer step
     print("\n7. Testing optimizer step...")
     optimizer = create_adamw_optimizer(model.parameters(), lr=1e-3)
-    dummy_input = torch.randn(8, 1, 102400)
+    dummy_input = torch.randn(8, 1, SIGNAL_LENGTH)
     dummy_target = torch.randint(0, 11, (8,))
     output = model(dummy_input)
     loss = torch.nn.functional.cross_entropy(output, dummy_target)

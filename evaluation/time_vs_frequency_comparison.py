@@ -467,6 +467,7 @@ if __name__ == '__main__':
     # Test comparison
     from models.cnn.cnn_1d import CNN1D
     from models.spectrogram_cnn import resnet18_2d
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     class_names = [
         'Normal', 'Ball Fault', 'Inner Race', 'Outer Race',
@@ -475,8 +476,8 @@ if __name__ == '__main__':
     ]
 
     # Create dummy models
-    cnn_1d = CNN1D(num_classes=11)
-    resnet_2d = resnet18_2d(num_classes=11)
+    cnn_1d = CNN1D(num_classes=NUM_CLASSES)
+    resnet_2d = resnet18_2d(num_classes=NUM_CLASSES)
 
     models = {
         'CNN-1D (Time)': cnn_1d,
