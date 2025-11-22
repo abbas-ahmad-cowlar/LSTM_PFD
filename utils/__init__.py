@@ -52,7 +52,6 @@ from .timer import (
     get_global_profiler
 )
 from .visualization_utils import (
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     set_plot_style,
     save_figure,
     create_figure,
