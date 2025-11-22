@@ -12,6 +12,7 @@ from models.signal import Signal
 from utils.logger import setup_logger
 from utils.exceptions import DatasetNotFoundError
 from services.cache_service import CacheService
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 

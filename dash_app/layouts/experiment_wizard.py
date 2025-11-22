@@ -4,6 +4,7 @@ Multi-step form for configuring and launching training experiments.
 """
 import dash_bootstrap_components as dbc
 from dash import html, dcc
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 def create_experiment_wizard_layout():

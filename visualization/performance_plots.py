@@ -101,6 +101,7 @@ class PerformancePlotter:
         """
         from sklearn.metrics import roc_curve, auc
         from sklearn.preprocessing import label_binarize
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
         n_classes = y_proba.shape[1]
         y_true_bin = label_binarize(y_true, classes=range(n_classes))

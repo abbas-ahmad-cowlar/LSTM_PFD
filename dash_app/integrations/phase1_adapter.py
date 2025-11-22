@@ -39,6 +39,7 @@ class Phase1Adapter:
             from pipelines.classical_ml_pipeline import ClassicalMLPipeline
             import h5py
             import numpy as np
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
             logger.info(f"Starting Phase 1 training with config: {config}")
 
@@ -52,7 +53,7 @@ class Phase1Adapter:
                 y_val = f['val']['labels'][:]
                 X_test = f['test']['signals'][:]
                 y_test = f['test']['labels'][:]
-                fs = f.attrs.get('sampling_rate', 20480)
+                fs = f.attrs.get('sampling_rate', SAMPLING_RATE)
 
             # Initialize pipeline
             model_type = config["model_type"]

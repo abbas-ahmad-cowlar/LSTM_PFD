@@ -213,6 +213,7 @@ class DeepLearningAdapter:
     def _create_model(config, num_classes):
         """Create model based on configuration."""
         from models import create_model
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
         model_type = config["model_type"]
         hyperparams = config.get("hyperparameters", {})

@@ -5,6 +5,7 @@ import logging
 import sys
 from pathlib import Path
 from config import LOG_LEVEL, LOG_FILE
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 def setup_logger(name: str) -> logging.Logger:
     """
