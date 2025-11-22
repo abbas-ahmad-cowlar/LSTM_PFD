@@ -1,5 +1,5 @@
 """HPO Campaign model for hyperparameter optimization."""
-from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Float, JSON, ForeignKey, Enum, Index
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
 from models.experiment import ExperimentStatus
@@ -39,6 +39,16 @@ class HPOCampaign(BaseModel):
     # Relationships
     dataset = relationship("Dataset")
     best_experiment = relationship("Experiment", foreign_keys=[best_experiment_id])
+
+    # Performance indexes
+    # Note: name already has column-level index
+    # Note: created_by, dataset_id are ForeignKeys (auto-indexed)
+    __table_args__ = (
+        Index('ix_hpo_campaigns_status', 'status'),
+        Index('ix_hpo_campaigns_created_at', 'created_at'),
+        # Removed duplicate indexes on ForeignKey columns
+        # Removed composite - status has low cardinality, minimal benefit
+    )
 
     def __repr__(self):
         return f"<HPOCampaign(name='{self.name}', method='{self.method.value}')>"
