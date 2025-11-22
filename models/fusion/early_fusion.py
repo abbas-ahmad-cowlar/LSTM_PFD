@@ -18,6 +18,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-20
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -117,7 +118,7 @@ class EarlyFusion(BaseModel):
         >>> fusion = EarlyFusion(
         ...     feature_extractors=[(cnn_model, 'fc1'), (transformer_model, 'fc1')],
         ...     feature_dims=[512, 512],
-        ...     num_classes=11
+        ...     num_classes=NUM_CLASSES
         ... )
         >>> predictions = fusion(x)
     """
@@ -125,7 +126,7 @@ class EarlyFusion(BaseModel):
         self,
         feature_extractors: List[Tuple[nn.Module, Optional[str]]],
         feature_dims: List[int],
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         fusion_dim: int = 256,
         dropout: float = 0.3
     ):
@@ -212,13 +213,13 @@ class SimpleEarlyFusion(BaseModel):
         >>> combined_features = torch.cat([cnn_features, transformer_features], dim=1)  # [B, 1024]
         >>>
         >>> # Create fusion model
-        >>> fusion = SimpleEarlyFusion(input_dim=1024, num_classes=11)
+        >>> fusion = SimpleEarlyFusion(input_dim=1024, num_classes=NUM_CLASSES)
         >>> predictions = fusion(combined_features)
     """
     def __init__(
         self,
         input_dim: int,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         hidden_dims: List[int] = [512, 256, 128],
         dropout: float = 0.3
     ):
@@ -270,7 +271,7 @@ class SimpleEarlyFusion(BaseModel):
 def create_early_fusion(
     feature_extractors: List[Tuple[nn.Module, Optional[str]]],
     feature_dims: List[int],
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     fusion_dim: int = 256,
     dropout: float = 0.3
 ) -> EarlyFusion:
@@ -290,13 +291,13 @@ def create_early_fusion(
     Example:
         >>> from models import create_cnn1d, create_transformer
         >>>
-        >>> cnn = create_cnn1d(num_classes=11)
-        >>> transformer = create_transformer(num_classes=11)
+        >>> cnn = create_cnn1d(num_classes=NUM_CLASSES)
+        >>> transformer = create_transformer(num_classes=NUM_CLASSES)
         >>>
         >>> fusion = create_early_fusion(
         ...     feature_extractors=[(cnn, 'fc'), (transformer, 'encoder')],
         ...     feature_dims=[512, 512],
-        ...     num_classes=11
+        ...     num_classes=NUM_CLASSES
         ... )
     """
     return EarlyFusion(

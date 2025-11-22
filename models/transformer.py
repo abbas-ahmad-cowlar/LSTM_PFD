@@ -12,6 +12,7 @@ Input: [B, 1, T] where T is signal length
 Output: [B, 11] for 11 fault classes
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import math
 import torch
 import torch.nn as nn
@@ -172,7 +173,7 @@ class SignalTransformer(BaseModel):
     """
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         patch_size: int = 16,
         d_model: int = 256,
@@ -328,7 +329,7 @@ class SignalTransformer(BaseModel):
         }
 
 
-def create_transformer(num_classes: int = 11, **kwargs) -> SignalTransformer:
+def create_transformer(num_classes: int = NUM_CLASSES, **kwargs) -> SignalTransformer:
     """
     Factory function to create Transformer model.
 

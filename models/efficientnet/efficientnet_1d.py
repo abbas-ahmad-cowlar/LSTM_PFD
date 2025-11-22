@@ -17,6 +17,7 @@ Reference:
 - Tan & Le (2019). "EfficientNet: Rethinking Model Scaling for CNNs"
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -92,7 +93,7 @@ class EfficientNet1D(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         width_multiplier: float = 1.0,
         depth_multiplier: float = 1.0,
@@ -254,7 +255,7 @@ def calculate_scaling_params(phi: float) -> Tuple[float, float, float]:
     return depth_multiplier, width_multiplier, resolution_multiplier
 
 
-def create_efficientnet_b0(num_classes: int = 11, **kwargs) -> EfficientNet1D:
+def create_efficientnet_b0(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet1D:
     """
     EfficientNet-B0 (baseline).
 
@@ -270,7 +271,7 @@ def create_efficientnet_b0(num_classes: int = 11, **kwargs) -> EfficientNet1D:
     )
 
 
-def create_efficientnet_b1(num_classes: int = 11, **kwargs) -> EfficientNet1D:
+def create_efficientnet_b1(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet1D:
     """
     EfficientNet-B1.
 
@@ -286,7 +287,7 @@ def create_efficientnet_b1(num_classes: int = 11, **kwargs) -> EfficientNet1D:
     )
 
 
-def create_efficientnet_b2(num_classes: int = 11, **kwargs) -> EfficientNet1D:
+def create_efficientnet_b2(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet1D:
     """
     EfficientNet-B2.
 
@@ -302,7 +303,7 @@ def create_efficientnet_b2(num_classes: int = 11, **kwargs) -> EfficientNet1D:
     )
 
 
-def create_efficientnet_b3(num_classes: int = 11, **kwargs) -> EfficientNet1D:
+def create_efficientnet_b3(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet1D:
     """
     EfficientNet-B3 (recommended for accuracy-efficiency balance).
 
@@ -319,7 +320,7 @@ def create_efficientnet_b3(num_classes: int = 11, **kwargs) -> EfficientNet1D:
     )
 
 
-def create_efficientnet_b4(num_classes: int = 11, **kwargs) -> EfficientNet1D:
+def create_efficientnet_b4(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet1D:
     """
     EfficientNet-B4.
 
@@ -335,7 +336,7 @@ def create_efficientnet_b4(num_classes: int = 11, **kwargs) -> EfficientNet1D:
     )
 
 
-def create_efficientnet_b5(num_classes: int = 11, **kwargs) -> EfficientNet1D:
+def create_efficientnet_b5(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet1D:
     """
     EfficientNet-B5.
 
@@ -351,7 +352,7 @@ def create_efficientnet_b5(num_classes: int = 11, **kwargs) -> EfficientNet1D:
     )
 
 
-def create_efficientnet_b6(num_classes: int = 11, **kwargs) -> EfficientNet1D:
+def create_efficientnet_b6(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet1D:
     """
     EfficientNet-B6.
 
@@ -367,7 +368,7 @@ def create_efficientnet_b6(num_classes: int = 11, **kwargs) -> EfficientNet1D:
     )
 
 
-def create_efficientnet_b7(num_classes: int = 11, **kwargs) -> EfficientNet1D:
+def create_efficientnet_b7(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet1D:
     """
     EfficientNet-B7 (largest).
 
@@ -390,8 +391,8 @@ if __name__ == "__main__":
 
     # Test B0
     print("\nEfficientNet-B0:")
-    model = create_efficientnet_b0(num_classes=11)
-    x = torch.randn(2, 1, 102400)
+    model = create_efficientnet_b0(num_classes=NUM_CLASSES)
+    x = torch.randn(2, 1, SIGNAL_LENGTH)
     y = model(x)
     print(f"Input: {x.shape}, Output: {y.shape}")
     print(f"Parameters: {model.get_num_params():,}")
@@ -399,7 +400,7 @@ if __name__ == "__main__":
 
     # Test B3
     print("\nEfficientNet-B3:")
-    model = create_efficientnet_b3(num_classes=11)
+    model = create_efficientnet_b3(num_classes=NUM_CLASSES)
     y = model(x)
     print(f"Parameters: {model.get_num_params():,}")
     assert y.shape == (2, 11)

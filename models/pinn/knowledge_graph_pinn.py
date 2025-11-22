@@ -30,6 +30,7 @@ Note: This implements a simplified GNN without requiring torch_geometric.
 For production use with large graphs, consider using torch_geometric.
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -262,8 +263,8 @@ class KnowledgeGraphPINN(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
-        input_length: int = 102400,
+        num_classes: int = NUM_CLASSES,
+        input_length: int = SIGNAL_LENGTH,
         backbone: str = 'resnet18',
         node_feature_dim: int = 64,
         gcn_hidden_dim: int = 128,
@@ -475,7 +476,7 @@ if __name__ == "__main__":
     # Test model
     print("\nKnowledge Graph PINN Model:")
     model = KnowledgeGraphPINN(
-        num_classes=11,
+        num_classes=NUM_CLASSES,
         backbone='resnet18',
         node_feature_dim=64,
         gcn_hidden_dim=128,
@@ -490,7 +491,7 @@ if __name__ == "__main__":
     # Test forward pass
     print("\nTesting Forward Pass:")
     batch_size = 4
-    signal = torch.randn(batch_size, 1, 102400)
+    signal = torch.randn(batch_size, 1, SIGNAL_LENGTH)
 
     output = model(signal)
     print(f"  Input shape: {signal.shape}")

@@ -25,6 +25,7 @@ Reference:
   Recurrent Networks for Sequence Modeling"
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -215,7 +216,7 @@ class CNNTCN(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         cnn_backbone: str = 'simple',
         tcn_channels: Optional[List[int]] = None,
@@ -325,7 +326,7 @@ class CNNTCN(BaseModel):
         }
 
 
-def create_cnn_tcn(num_classes: int = 11, **kwargs) -> CNNTCN:
+def create_cnn_tcn(num_classes: int = NUM_CLASSES, **kwargs) -> CNNTCN:
     """
     Factory function to create CNN-TCN model.
 
@@ -343,8 +344,8 @@ def create_cnn_tcn(num_classes: int = 11, **kwargs) -> CNNTCN:
 if __name__ == "__main__":
     print("Testing CNN-TCN...")
 
-    model = create_cnn_tcn(num_classes=11)
-    x = torch.randn(2, 1, 102400)
+    model = create_cnn_tcn(num_classes=NUM_CLASSES)
+    x = torch.randn(2, 1, SIGNAL_LENGTH)
     y = model(x)
     print(f"Input: {x.shape}, Output: {y.shape}")
     print(f"Parameters: {model.get_num_params():,}")
