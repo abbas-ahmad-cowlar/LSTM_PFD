@@ -171,6 +171,22 @@ TAG_AUTOCOMPLETE_MIN_CHARS = int(os.getenv("TAG_AUTOCOMPLETE_MIN_CHARS", "2"))
 TAG_AUTOCOMPLETE_MAX_RESULTS = int(os.getenv("TAG_AUTOCOMPLETE_MAX_RESULTS", "10"))
 SEARCH_CACHE_TTL_SECONDS = int(os.getenv("SEARCH_CACHE_TTL_SECONDS", "60"))
 
+# Pagination Configuration
+PAGINATION_DEFAULT_LIMIT = int(os.getenv("PAGINATION_DEFAULT_LIMIT", "50"))
+PAGINATION_MIN_LIMIT = int(os.getenv("PAGINATION_MIN_LIMIT", "10"))
+PAGINATION_MAX_LIMIT = int(os.getenv("PAGINATION_MAX_LIMIT", "1000"))
+
+# Feature-specific pagination limits
+EMAIL_DIGEST_PAGE_SIZE = int(os.getenv("EMAIL_DIGEST_PAGE_SIZE", "50"))
+EMAIL_LOG_PAGE_SIZE = int(os.getenv("EMAIL_LOG_PAGE_SIZE", "100"))
+SYSTEM_LOG_PAGE_SIZE = int(os.getenv("SYSTEM_LOG_PAGE_SIZE", "50"))
+API_USAGE_PAGE_SIZE = int(os.getenv("API_USAGE_PAGE_SIZE", "50"))
+
+# API Usage Statistics Configuration
+API_USAGE_STATS_TTL = int(os.getenv("API_USAGE_STATS_TTL", "300"))  # 5 minutes cache
+API_USAGE_HISTORY_DAYS = int(os.getenv("API_USAGE_HISTORY_DAYS", "30"))  # Default lookback period
+API_USAGE_TOP_KEYS_LIMIT = int(os.getenv("API_USAGE_TOP_KEYS_LIMIT", "10"))  # Top N keys to show
+API_USAGE_TOP_ENDPOINTS_LIMIT = int(os.getenv("API_USAGE_TOP_ENDPOINTS_LIMIT", "10"))  # Top N endpoints
 # =============================================================================
 # Startup Validation
 # =============================================================================
