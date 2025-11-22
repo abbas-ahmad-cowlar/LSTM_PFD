@@ -20,6 +20,10 @@ def create_sidebar():
 
             html.P("Data", className="text-muted small mb-1"),
             dbc.NavLink([
+                html.I(className="fas fa-cog me-2"),
+                "Generate Data"
+            ], href="/data-generation", active="exact"),
+            dbc.NavLink([
                 html.I(className="fas fa-database me-2"),
                 "Data Explorer"
             ], href="/data-explorer", active="exact"),
