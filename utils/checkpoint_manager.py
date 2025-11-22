@@ -363,7 +363,6 @@ def test_checkpoint_manager():
 
     from models.cnn.cnn_1d import CNN1D
     import tempfile
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Create temporary directory for testing
     with tempfile.TemporaryDirectory() as tmpdir:
