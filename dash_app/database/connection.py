@@ -8,6 +8,7 @@ from contextlib import contextmanager
 from config import DATABASE_URL
 from models.base import Base
 from utils.logger import setup_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 

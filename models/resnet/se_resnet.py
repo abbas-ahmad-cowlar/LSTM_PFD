@@ -11,6 +11,7 @@ Reference:
 - Won ImageNet 2017 classification challenge
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -263,7 +264,7 @@ class SEResNet1D(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         block: type = SEBasicBlock1D,
         layers: List[int] = None,
@@ -400,7 +401,7 @@ class SEResNet1D(BaseModel):
         }
 
 
-def create_se_resnet18_1d(num_classes: int = 11, **kwargs) -> SEResNet1D:
+def create_se_resnet18_1d(num_classes: int = NUM_CLASSES, **kwargs) -> SEResNet1D:
     """Create SE-ResNet-18."""
     return SEResNet1D(
         num_classes=num_classes,
@@ -410,7 +411,7 @@ def create_se_resnet18_1d(num_classes: int = 11, **kwargs) -> SEResNet1D:
     )
 
 
-def create_se_resnet34_1d(num_classes: int = 11, **kwargs) -> SEResNet1D:
+def create_se_resnet34_1d(num_classes: int = NUM_CLASSES, **kwargs) -> SEResNet1D:
     """Create SE-ResNet-34."""
     return SEResNet1D(
         num_classes=num_classes,
@@ -420,7 +421,7 @@ def create_se_resnet34_1d(num_classes: int = 11, **kwargs) -> SEResNet1D:
     )
 
 
-def create_se_resnet50_1d(num_classes: int = 11, **kwargs) -> SEResNet1D:
+def create_se_resnet50_1d(num_classes: int = NUM_CLASSES, **kwargs) -> SEResNet1D:
     """Create SE-ResNet-50."""
     return SEResNet1D(
         num_classes=num_classes,
@@ -434,8 +435,8 @@ def create_se_resnet50_1d(num_classes: int = 11, **kwargs) -> SEResNet1D:
 if __name__ == "__main__":
     print("Testing SE-ResNet...")
 
-    model = create_se_resnet18_1d(num_classes=11)
-    x = torch.randn(2, 1, 102400)
+    model = create_se_resnet18_1d(num_classes=NUM_CLASSES)
+    x = torch.randn(2, 1, SIGNAL_LENGTH)
     y = model(x)
     print(f"Input: {x.shape}, Output: {y.shape}")
     print(f"Parameters: {model.get_num_params():,}")

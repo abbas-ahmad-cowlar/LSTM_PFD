@@ -6,6 +6,7 @@ This module contains various fusion strategies:
 - Late Fusion: Combine final predictions from multiple models
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .early_fusion import (
     EarlyFusion,
     MultiModalFeatureExtractor,

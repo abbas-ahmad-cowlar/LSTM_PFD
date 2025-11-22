@@ -12,6 +12,7 @@ import numpy as np
 from pathlib import Path
 from typing import Dict
 from scipy.io import loadmat, savemat
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class MatlabCompatibility:

@@ -8,6 +8,7 @@ import numpy as np
 from services.signal_service import SignalService
 from utils.plotting import create_time_series_plot
 from utils.logger import setup_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 
@@ -34,7 +35,7 @@ def register_signal_viewer_callbacks(app):
             features = signal_info["features"]
 
             # Time domain plot
-            time = np.arange(len(signal_data)) / 20480  # fs = 20480
+            time = np.arange(len(signal_data)) / 20480  # fs = SAMPLING_RATE
             time_fig = create_time_series_plot(time, signal_data)
 
             # Frequency domain plot
