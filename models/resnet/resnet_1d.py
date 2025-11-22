@@ -12,6 +12,7 @@ Input: [B, 1, T] where T is signal length (102400)
 Output: [B, 11] for 11 fault classes
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -46,12 +47,12 @@ class ResNet1D(BaseModel):
     """
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         block: Type[Union[BasicBlock1D, Bottleneck1D]] = BasicBlock1D,
         layers: List[int] = None,
         dropout: float = 0.1,
-        input_length: int = 102400
+        input_length: int = SIGNAL_LENGTH
     ):
         super().__init__()
 
@@ -288,7 +289,7 @@ class ResNet1D(BaseModel):
         }
 
 
-def create_resnet18_1d(num_classes: int = 11, **kwargs) -> ResNet1D:
+def create_resnet18_1d(num_classes: int = NUM_CLASSES, **kwargs) -> ResNet1D:
     """
     Factory function to create ResNet-18 for 1D signals.
 
@@ -309,7 +310,7 @@ def create_resnet18_1d(num_classes: int = 11, **kwargs) -> ResNet1D:
     )
 
 
-def create_resnet34_1d(num_classes: int = 11, **kwargs) -> ResNet1D:
+def create_resnet34_1d(num_classes: int = NUM_CLASSES, **kwargs) -> ResNet1D:
     """
     Factory function to create ResNet-34 for 1D signals.
 
@@ -330,7 +331,7 @@ def create_resnet34_1d(num_classes: int = 11, **kwargs) -> ResNet1D:
     )
 
 
-def create_resnet50_1d(num_classes: int = 11, **kwargs) -> ResNet1D:
+def create_resnet50_1d(num_classes: int = NUM_CLASSES, **kwargs) -> ResNet1D:
     """
     Factory function to create ResNet-50 for 1D signals.
 
@@ -354,21 +355,21 @@ def create_resnet50_1d(num_classes: int = 11, **kwargs) -> ResNet1D:
 # Test the model
 if __name__ == "__main__":
     print("Testing ResNet-18...")
-    model = create_resnet18_1d(num_classes=11)
-    x = torch.randn(2, 1, 102400)
+    model = create_resnet18_1d(num_classes=NUM_CLASSES)
+    x = torch.randn(2, 1, SIGNAL_LENGTH)
     y = model(x)
     print(f"Input: {x.shape}, Output: {y.shape}")
     print(f"Parameters: {model.get_num_params():,}")
     assert y.shape == (2, 11), f"Expected (2, 11), got {y.shape}"
 
     print("\nTesting ResNet-34...")
-    model = create_resnet34_1d(num_classes=11)
+    model = create_resnet34_1d(num_classes=NUM_CLASSES)
     y = model(x)
     print(f"Parameters: {model.get_num_params():,}")
     assert y.shape == (2, 11)
 
     print("\nTesting ResNet-50...")
-    model = create_resnet50_1d(num_classes=11)
+    model = create_resnet50_1d(num_classes=NUM_CLASSES)
     y = model(x)
     print(f"Parameters: {model.get_num_params():,}")
     assert y.shape == (2, 11)

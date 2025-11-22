@@ -15,6 +15,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class LabelSmoothingCrossEntropy(nn.Module):
@@ -236,7 +237,7 @@ class SupConLoss(nn.Module):
 
 def create_criterion(
     criterion_type: str = 'label_smoothing',
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     **kwargs
 ) -> nn.Module:
     """
@@ -281,7 +282,7 @@ def test_losses():
     print("=" * 60)
 
     batch_size = 16
-    num_classes = 11
+    num_classes=NUM_CLASSES
 
     # Create dummy data
     logits = torch.randn(batch_size, num_classes)

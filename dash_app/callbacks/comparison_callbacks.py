@@ -6,6 +6,7 @@ from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
 from services.comparison_service import ComparisonService
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 from layouts.experiment_comparison import (
     create_overview_tab,
     create_metrics_tab,

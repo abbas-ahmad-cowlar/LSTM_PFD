@@ -67,6 +67,7 @@ app.layout = dbc.Container([
 
 # Register all callbacks
 from callbacks import register_all_callbacks
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 register_all_callbacks(app)
 
 if __name__ == '__main__':

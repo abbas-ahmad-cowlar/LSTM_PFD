@@ -57,7 +57,7 @@ class CNNTrainer:
         >>> from training.cnn_optimizer import create_adamw_optimizer
         >>> from training.cnn_losses import LabelSmoothingCrossEntropy
         >>>
-        >>> model = CNN1D(num_classes=11)
+        >>> model = CNN1D(num_classes=NUM_CLASSES)
         >>> optimizer = create_adamw_optimizer(model.parameters(), lr=1e-3)
         >>> criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
         >>>
@@ -380,7 +380,7 @@ def test_cnn_trainer():
     from training.cnn_losses import LabelSmoothingCrossEntropy
 
     num_samples = 100
-    signal_length = 102400
+    signal_length = SIGNAL_LENGTH
     signals = np.random.randn(num_samples, signal_length).astype(np.float32)
     labels = np.random.randint(0, 11, num_samples)
 
@@ -396,7 +396,7 @@ def test_cnn_trainer():
     )
 
     # Create model, optimizer, criterion
-    model = CNN1D(num_classes=11)
+    model = CNN1D(num_classes=NUM_CLASSES)
     optimizer = create_adamw_optimizer(model.parameters(), lr=1e-3)
     criterion = LabelSmoothingCrossEntropy(smoothing=0.1)
 
@@ -430,7 +430,7 @@ def test_cnn_trainer():
         print(f"   Checkpoint saved at: {checkpoint_path}")
 
         # Create new trainer and load checkpoint
-        new_model = CNN1D(num_classes=11)
+        new_model = CNN1D(num_classes=NUM_CLASSES)
         new_optimizer = create_adamw_optimizer(new_model.parameters(), lr=1e-3)
         new_trainer = CNNTrainer(
             model=new_model,

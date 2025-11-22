@@ -10,6 +10,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-19
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import numpy as np
 from typing import Dict, Optional
 from sklearn.ensemble import GradientBoostingClassifier as SklearnGBM
