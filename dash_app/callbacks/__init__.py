@@ -92,6 +92,9 @@ def register_all_callbacks(app):
         elif pathname == '/testing':
             from layouts.testing_dashboard import create_testing_dashboard_layout
             return create_testing_dashboard_layout()
+        elif pathname == '/feature-engineering':
+            from layouts.feature_engineering import create_feature_engineering_layout
+            return create_feature_engineering_layout()
         else:
             from dash import html
             return html.Div([
@@ -201,3 +204,10 @@ def register_all_callbacks(app):
         register_testing_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import testing_callbacks: {e}")
+
+    # Import and register Feature Engineering callbacks
+    try:
+        from callbacks.feature_callbacks import register_feature_callbacks
+        register_feature_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import feature_callbacks: {e}")
