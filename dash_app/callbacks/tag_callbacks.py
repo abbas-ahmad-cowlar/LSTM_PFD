@@ -185,8 +185,11 @@ def register_tag_callbacks(app):
                 # Get tags for all selected experiments in a single query (no N+1)
                 # Use eager loading to fetch all tags at once
                 from models.tag import ExperimentTag
+                from sqlalchemy.orm import joinedload
 
-                experiment_tag_mappings = session.query(ExperimentTag).filter(
+                experiment_tag_mappings = session.query(ExperimentTag).options(
+                    joinedload(ExperimentTag.tag)  # Eager load the Tag relationship!
+                ).filter(
                     ExperimentTag.experiment_id.in_(experiment_ids)
                 ).all()
 
