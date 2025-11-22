@@ -255,3 +255,10 @@ def register_all_callbacks(app):
         register_webhook_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import webhook_callbacks: {e}")
+
+    # Import and register Tag Management callbacks
+    try:
+        from callbacks.tag_callbacks import register_tag_callbacks
+        register_tag_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import tag_callbacks: {e}")
