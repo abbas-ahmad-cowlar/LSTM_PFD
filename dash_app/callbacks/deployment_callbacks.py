@@ -13,6 +13,10 @@ from database.connection import get_db_session
 from models.experiment import Experiment, ExperimentStatus
 from dash import dcc
 import plotly.graph_objs as go
+from utils.constants import (
+    DEFAULT_PAGE_SIZE,
+    PERCENT_DIVISOR,
+)
 
 logger = setup_logger(__name__)
 
@@ -33,7 +37,7 @@ def register_deployment_callbacks(app):
             with get_db_session() as session:
                 experiments = session.query(Experiment).filter_by(
                     status=ExperimentStatus.COMPLETED
-                ).order_by(Experiment.created_at.desc()).limit(50).all()
+                ).order_by(Experiment.created_at.desc()).limit(DEFAULT_PAGE_SIZE).all()
 
                 options = [
                     {
@@ -175,7 +179,7 @@ def register_deployment_callbacks(app):
             task = optimize_model_task.delay(
                 experiment_id,
                 pruning_method,
-                pruning_amount / 100.0,  # Convert percentage to fraction
+                pruning_amount / PERCENT_DIVISOR,  # Convert percentage to fraction
                 apply_fusion
             )
 

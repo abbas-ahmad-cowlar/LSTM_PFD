@@ -373,10 +373,15 @@ class NotificationService:
                 return []
 
             # Query active webhooks for this user
-            webhooks = session.query(WebhookConfiguration).filter(
-                WebhookConfiguration.user_id == user_id,
-                WebhookConfiguration.is_active == True
-            ).all()
+            # Apply limit to prevent loading too many webhooks
+            from utils.query_utils import paginate_with_default_limit
+            webhooks = paginate_with_default_limit(
+                session.query(WebhookConfiguration).filter(
+                    WebhookConfiguration.user_id == user_id,
+                    WebhookConfiguration.is_active == True
+                ),
+                limit=50
+            )
 
             if not webhooks:
                 logger.debug(f"No active webhooks configured for user {user_id}")

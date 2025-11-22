@@ -11,6 +11,7 @@ from typing import Dict, List, Optional
 import traceback
 
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 from database.connection import get_db_session
 from models.notification_preference import NotificationPreference, EventType
 from models.email_log import EmailLog, EmailStatus
@@ -40,9 +41,7 @@ def register_notification_callbacks(app):
 
         try:
             with get_db_session() as session:
-                # For now, use user_id=1 (single user system)
-                # In a multi-user system, get from session/auth
-                user_id = 1
+                user_id = get_current_user_id()
 
                 # Get all preferences for user
                 preferences = session.query(NotificationPreference).filter(
@@ -199,7 +198,7 @@ def register_notification_callbacks(app):
 
             # Update database
             with get_db_session() as session:
-                user_id = 1  # Single user for now
+                user_id = get_current_user_id()
 
                 # Get or create preference
                 pref = session.query(NotificationPreference).filter(
