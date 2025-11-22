@@ -130,3 +130,26 @@ WEBHOOK_CUSTOM_RETRY_ATTEMPTS = int(os.getenv("WEBHOOK_CUSTOM_RETRY_ATTEMPTS", "
 # Webhook Feature Toggles
 NOTIFICATIONS_ENABLE_RICH_FORMATTING = os.getenv("NOTIFICATIONS_ENABLE_RICH_FORMATTING", "True").lower() == "true"
 NOTIFICATIONS_ENABLE_MENTIONS = os.getenv("NOTIFICATIONS_ENABLE_MENTIONS", "True").lower() == "true"
+
+# Feature #5: Tags & Search Configuration
+FEATURE_TAGS_ENABLED = os.getenv("FEATURE_TAGS_ENABLED", "True").lower() == "true"
+FEATURE_SEARCH_ENABLED = os.getenv("FEATURE_SEARCH_ENABLED", "True").lower() == "true"
+FEATURE_SAVED_SEARCHES_ENABLED = os.getenv("FEATURE_SAVED_SEARCHES_ENABLED", "True").lower() == "true"
+FEATURE_TAG_SUGGESTIONS_ENABLED = os.getenv("FEATURE_TAG_SUGGESTIONS_ENABLED", "True").lower() == "true"
+
+# Search Engine Configuration
+SEARCH_ENGINE = os.getenv("SEARCH_ENGINE", "postgres")  # Options: 'postgres', 'elasticsearch'
+SEARCH_MAX_RESULTS = int(os.getenv("SEARCH_MAX_RESULTS", "100"))
+
+# Tag System Configuration
+TAGS_MAX_PER_EXPERIMENT = int(os.getenv("TAGS_MAX_PER_EXPERIMENT", "10"))
+TAGS_MAX_LENGTH = int(os.getenv("TAGS_MAX_LENGTH", "50"))
+TAGS_CASE_SENSITIVE = os.getenv("TAGS_CASE_SENSITIVE", "False").lower() == "true"
+TAGS_ALLOW_SPACES = os.getenv("TAGS_ALLOW_SPACES", "False").lower() == "true"
+TAGS_RESERVED_WORDS = ["all", "none", "system"]
+
+# Performance Tuning
+SEARCH_DEBOUNCE_MS = int(os.getenv("SEARCH_DEBOUNCE_MS", "300"))  # Delay before search
+TAG_AUTOCOMPLETE_MIN_CHARS = int(os.getenv("TAG_AUTOCOMPLETE_MIN_CHARS", "2"))
+TAG_AUTOCOMPLETE_MAX_RESULTS = int(os.getenv("TAG_AUTOCOMPLETE_MAX_RESULTS", "10"))
+SEARCH_CACHE_TTL_SECONDS = int(os.getenv("SEARCH_CACHE_TTL_SECONDS", "60"))
