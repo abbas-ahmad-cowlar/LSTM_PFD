@@ -132,7 +132,6 @@ def restore_random_state(state: dict) -> None:
     if 'torch' in state:
         try:
             import torch
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
             torch.random.set_rng_state(state['torch'])
             if 'torch_cuda' in state and torch.cuda.is_available():
                 torch.cuda.set_rng_state_all(state['torch_cuda'])
