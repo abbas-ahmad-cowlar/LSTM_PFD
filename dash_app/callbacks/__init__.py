@@ -211,3 +211,10 @@ def register_all_callbacks(app):
         register_feature_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import feature_callbacks: {e}")
+
+    # Import and register Notification Management callbacks
+    try:
+        from callbacks.notification_callbacks import register_notification_callbacks
+        register_notification_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import notification_callbacks: {e}")
