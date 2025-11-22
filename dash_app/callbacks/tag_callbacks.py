@@ -10,6 +10,7 @@ from database.connection import get_db_session
 from services.tag_service import TagService
 from models.tag import Tag
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -262,7 +263,7 @@ def register_tag_callbacks(app):
         try:
             # Get experiment IDs
             experiment_ids = [table_data[i]['id'] for i in selected_rows if i < len(table_data)]
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
 
             # Handle add tags button
             if 'add-tags-btn' in trigger and selected_tag_names:
