@@ -13,6 +13,21 @@ from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
 from tasks.data_generation_tasks import generate_dataset_task
 from utils.logger import setup_logger
 from utils.auth_utils import get_current_user_id
+from utils.constants import (
+    DEFAULT_NUM_SIGNALS_PER_FAULT,
+    DEFAULT_SPEED_VARIATION_PERCENT,
+    DEFAULT_LOAD_RANGE_MIN_PERCENT,
+    DEFAULT_LOAD_RANGE_MAX_PERCENT,
+    DEFAULT_TEMP_RANGE_MIN,
+    DEFAULT_TEMP_RANGE_MAX,
+    DEFAULT_AUGMENTATION_RATIO_PERCENT,
+    DEFAULT_RANDOM_SEED,
+    PERCENT_DIVISOR,
+    PERCENT_MULTIPLIER,
+    SIGNALS_PER_MINUTE_GENERATION,
+    DEFAULT_RECENT_ITEMS_LIMIT,
+    TOTAL_NOISE_LAYERS,
+)
 
 logger = setup_logger(__name__)
 
@@ -50,7 +65,7 @@ def register_data_generation_callbacks(app):
 
         aug_enabled_bool = 'enabled' in (aug_enabled or [])
         if aug_enabled_bool and aug_ratio:
-            total_signals = base_signals + int(base_signals * (aug_ratio / 100))
+            total_signals = base_signals + int(base_signals * (aug_ratio / PERCENT_DIVISOR))
         else:
             total_signals = base_signals
 
@@ -81,7 +96,7 @@ def register_data_generation_callbacks(app):
 
             html.Div([
                 html.Strong("Noise Layers: "),
-                html.Span(f"{len(noise_layers or [])}/7", className="text-secondary")
+                html.Span(f"{len(noise_layers or [])}/{TOTAL_NOISE_LAYERS}", className="text-secondary")
             ], className="mb-2"),
 
             html.Div([
@@ -155,7 +170,7 @@ def register_data_generation_callbacks(app):
         config = {
             'name': dataset_name,
             'output_dir': output_dir or 'data/generated',
-            'num_signals_per_fault': num_signals or 100,
+            'num_signals_per_fault': num_signals or DEFAULT_NUM_SIGNALS_PER_FAULT,
             'fault_types': fault_types,
             'severity_levels': severity_levels or ['incipient', 'mild', 'moderate', 'severe'],
             'temporal_evolution': 'enabled' in (temporal_evolution or []),
@@ -168,16 +183,19 @@ def register_data_generation_callbacks(app):
                 'sensor_drift': 'sensor_drift' in (noise_layers or []),
                 'impulse': 'impulse' in (noise_layers or []),
             },
-            'speed_variation': (speed_variation or 10) / 100,  # Convert to decimal
-            'load_range': [(load_range[0] or 30) / 100, (load_range[1] or 100) / 100],
-            'temp_range': temp_range or [40, 80],
+            'speed_variation': (speed_variation or DEFAULT_SPEED_VARIATION_PERCENT) / PERCENT_DIVISOR,
+            'load_range': [
+                (load_range[0] or DEFAULT_LOAD_RANGE_MIN_PERCENT) / PERCENT_DIVISOR,
+                (load_range[1] or DEFAULT_LOAD_RANGE_MAX_PERCENT) / PERCENT_DIVISOR
+            ],
+            'temp_range': temp_range or [DEFAULT_TEMP_RANGE_MIN, DEFAULT_TEMP_RANGE_MAX],
             'augmentation': {
                 'enabled': 'enabled' in (aug_enabled or []),
-                'ratio': (aug_ratio or 30) / 100,
+                'ratio': (aug_ratio or DEFAULT_AUGMENTATION_RATIO_PERCENT) / PERCENT_DIVISOR,
                 'methods': aug_methods or ['time_shift', 'amplitude_scale', 'noise_injection']
             },
             'output_format': output_format or 'both',
-            'random_seed': random_seed or 42,
+            'random_seed': random_seed or DEFAULT_RANDOM_SEED,
         }
 
         try:
@@ -268,7 +286,7 @@ def register_data_generation_callbacks(app):
                             html.I(className="fas fa-check-circle me-2 text-success"),
                             html.Span("Generation completed successfully!", className="text-success")
                         ]),
-                        100,
+                        PERCENT_MULTIPLIER,
                         {"display": "block"},
                         {"display": "block"},
                         _create_generation_stats(generation),
@@ -315,7 +333,7 @@ def register_data_generation_callbacks(app):
             with get_db_session() as session:
                 generations = session.query(DatasetGeneration)\
                     .order_by(DatasetGeneration.created_at.desc())\
-                    .limit(5)\
+                    .limit(DEFAULT_RECENT_ITEMS_LIMIT)\
                     .all()
 
                 if not generations:
@@ -358,8 +376,7 @@ def register_data_generation_callbacks(app):
 
 def _estimate_generation_time(num_signals):
     """Estimate generation time based on number of signals."""
-    # Rough estimate: 50 signals per minute
-    return max(1, round(num_signals / 50))
+    return max(1, round(num_signals / SIGNALS_PER_MINUTE_GENERATION))
 
 
 def _create_generation_stats(generation):
