@@ -33,6 +33,7 @@ from .inference import (
 )
 
 from .model_optimization import (
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     prune_model,
     fuse_model_layers,
     optimize_for_deployment,
