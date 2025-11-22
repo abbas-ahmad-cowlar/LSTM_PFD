@@ -35,6 +35,10 @@ def create_sidebar():
                 html.I(className="fas fa-folder me-2"),
                 "Datasets"
             ], href="/datasets", active="exact"),
+            dbc.NavLink([
+                html.I(className="fas fa-project-diagram me-2"),
+                "Feature Engineering"
+            ], href="/feature-engineering", active="exact"),
 
             html.Hr(),
 
@@ -58,7 +62,11 @@ def create_sidebar():
 
             html.Hr(),
 
-            html.P("Analysis", className="text-muted small mb-1"),
+            html.P("Evaluation", className="text-muted small mb-1"),
+            dbc.NavLink([
+                html.I(className="fas fa-chart-bar me-2"),
+                "Evaluation"
+            ], href="/evaluation", active="exact"),
             dbc.NavLink([
                 html.I(className="fas fa-brain me-2"),
                 "XAI Dashboard"
@@ -70,9 +78,30 @@ def create_sidebar():
 
             html.Hr(),
 
+            html.P("Production", className="text-muted small mb-1"),
+            dbc.NavLink([
+                html.I(className="fas fa-rocket me-2"),
+                "Deployment"
+            ], href="/deployment", active="exact"),
+            dbc.NavLink([
+                html.I(className="fas fa-server me-2"),
+                "API Monitoring"
+            ], href="/api-monitoring", active="exact"),
+            dbc.NavLink([
+                html.I(className="fas fa-vial me-2"),
+                "Testing & QA"
+            ], href="/testing", active="exact"),
+
+            html.Hr(),
+
+            html.P("System", className="text-muted small mb-1"),
             dbc.NavLink([
                 html.I(className="fas fa-heartbeat me-2"),
                 "System Health"
             ], href="/system-health", active="exact"),
+            dbc.NavLink([
+                html.I(className="fas fa-cog me-2"),
+                "Settings"
+            ], href="/settings", active="exact"),
         ], vertical=True, pills=True),
     ], className="sidebar")
