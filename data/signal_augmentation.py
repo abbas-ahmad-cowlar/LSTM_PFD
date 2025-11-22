@@ -18,6 +18,8 @@ Author: LSTM_PFD Team
 Date: 2025-11-20
 """
 
+from utils.constants import SIGNAL_LENGTH
+
 import torch
 import numpy as np
 from typing import Tuple, Optional
@@ -54,8 +56,8 @@ class Mixup(SignalAugmentation):
 
     Example:
         >>> mixup = Mixup(alpha=0.2, prob=0.5)
-        >>> signal1 = torch.randn(102400)
-        >>> signal2 = torch.randn(102400)
+        >>> signal1 = torch.randn(SIGNAL_LENGTH)
+        >>> signal2 = torch.randn(SIGNAL_LENGTH)
         >>> mixed, lambda_val = mixup(signal1, signal2)
     """
 
@@ -116,7 +118,7 @@ class TimeWarping(SignalAugmentation):
 
     Example:
         >>> warp = TimeWarping(sigma=0.2, num_knots=4)
-        >>> signal = torch.randn(102400)
+        >>> signal = torch.randn(SIGNAL_LENGTH)
         >>> warped = warp(signal)
     """
 
@@ -186,7 +188,7 @@ class MagnitudeWarping(SignalAugmentation):
 
     Example:
         >>> mag_warp = MagnitudeWarping(sigma=0.2, num_knots=4)
-        >>> signal = torch.randn(102400)
+        >>> signal = torch.randn(SIGNAL_LENGTH)
         >>> warped = mag_warp(signal)
     """
 
@@ -243,7 +245,7 @@ class Jittering(SignalAugmentation):
 
     Example:
         >>> jitter = Jittering(sigma=0.05)
-        >>> signal = torch.randn(102400)
+        >>> signal = torch.randn(SIGNAL_LENGTH)
         >>> noisy = jitter(signal)
     """
 
@@ -274,7 +276,7 @@ class Scaling(SignalAugmentation):
 
     Example:
         >>> scale = Scaling(sigma=0.1)
-        >>> signal = torch.randn(102400)
+        >>> signal = torch.randn(SIGNAL_LENGTH)
         >>> scaled = scale(signal)
     """
 
@@ -305,7 +307,7 @@ class TimeShift(SignalAugmentation):
 
     Example:
         >>> shift = TimeShift(max_shift=0.1)
-        >>> signal = torch.randn(102400)
+        >>> signal = torch.randn(SIGNAL_LENGTH)
         >>> shifted = shift(signal)
     """
 
@@ -340,7 +342,7 @@ class WindowSlicing(SignalAugmentation):
         strategy: 'random' or 'center'
 
     Example:
-        >>> slicer = WindowSlicing(window_size=102400)
+        >>> slicer = WindowSlicing(window_size=SIGNAL_LENGTH)
         >>> long_signal = torch.randn(150000)
         >>> window = slicer(long_signal)
     """
@@ -424,7 +426,7 @@ def test_augmentations():
     print("=" * 60)
 
     # Create test signal
-    signal_length = 102400
+    signal_length = SIGNAL_LENGTH
     signal = torch.randn(signal_length)
 
     print(f"\nOriginal signal shape: {signal.shape}")
@@ -468,7 +470,7 @@ def test_augmentations():
 
     print("\n7. Testing Window Slicing...")
     long_signal = torch.randn(150000)
-    slicer = WindowSlicing(window_size=102400, strategy='random')
+    slicer = WindowSlicing(window_size=SIGNAL_LENGTH, strategy='random')
     sliced = slicer(long_signal)
     print(f"   Sliced from {long_signal.shape} to {sliced.shape}")
 
