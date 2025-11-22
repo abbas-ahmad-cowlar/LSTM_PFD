@@ -271,6 +271,132 @@ class CacheManager:
         hash_obj = hashlib.sha256(config_str.encode())
         return hash_obj.hexdigest()
 
+    def cache_dataset_with_splits(
+        self,
+        signals: np.ndarray,
+        labels: np.ndarray,
+        metadata: Optional[List[Dict[str, Any]]] = None,
+        cache_name: str = 'dataset',
+        split_ratios: Tuple[float, float, float] = (0.7, 0.15, 0.15),
+        stratify: bool = True,
+        random_seed: int = 42
+    ) -> Path:
+        """
+        Cache dataset with train/val/test splits.
+
+        Creates HDF5 file with structure compatible with signal_generator and dash_app:
+            - f['train']['signals'], f['train']['labels']
+            - f['val']['signals'], f['val']['labels']
+            - f['test']['signals'], f['test']['labels']
+
+        Args:
+            signals: Signal array (num_signals, signal_length)
+            labels: Label array (num_signals,) - integer labels
+            metadata: Optional metadata dictionaries
+            cache_name: Name for cache file (without extension)
+            split_ratios: (train, val, test) ratios (default: 0.7, 0.15, 0.15)
+            stratify: Whether to stratify splits by label (default: True)
+            random_seed: Random seed for reproducibility (default: 42)
+
+        Returns:
+            Path to created HDF5 cache file
+
+        Example:
+            >>> cache = CacheManager(cache_dir='data/processed')
+            >>> cache_path = cache.cache_dataset_with_splits(
+            ...     signals=signal_array,
+            ...     labels=label_array,
+            ...     cache_name='bearing_dataset',
+            ...     split_ratios=(0.7, 0.15, 0.15)
+            ... )
+            >>> print(f"Dataset cached at: {cache_path}")
+        """
+        from sklearn.model_selection import train_test_split
+
+        cache_path = self.cache_dir / f'{cache_name}.h5'
+
+        logger.info(f"Caching dataset with splits to {cache_path}")
+
+        # Create stratified splits
+        train_ratio, val_ratio, test_ratio = split_ratios
+
+        # First split: separate test set
+        stratify_arg = labels if stratify else None
+        X_temp, X_test, y_temp, y_test = train_test_split(
+            signals, labels,
+            test_size=test_ratio,
+            stratify=stratify_arg,
+            random_state=random_seed
+        )
+
+        # Second split: separate train and val from temp
+        val_size_adjusted = val_ratio / (train_ratio + val_ratio)
+        stratify_arg = y_temp if stratify else None
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_temp, y_temp,
+            test_size=val_size_adjusted,
+            stratify=stratify_arg,
+            random_state=random_seed
+        )
+
+        # Create HDF5 file
+        with h5py.File(cache_path, 'w') as f:
+            # Store global attributes
+            f.attrs['cache_name'] = cache_name
+            f.attrs['num_signals'] = len(signals)
+            f.attrs['signal_length'] = signals.shape[1]
+            f.attrs['cached_at'] = datetime.now().isoformat()
+            f.attrs['split_ratios'] = split_ratios
+            f.attrs['stratified'] = stratify
+            f.attrs['random_seed'] = random_seed
+
+            # Create train group
+            train_grp = f.create_group('train')
+            train_grp.create_dataset(
+                'signals',
+                data=X_train,
+                compression='gzip',
+                compression_opts=4
+            )
+            train_grp.create_dataset('labels', data=y_train)
+            train_grp.attrs['num_samples'] = len(X_train)
+
+            # Create val group
+            val_grp = f.create_group('val')
+            val_grp.create_dataset(
+                'signals',
+                data=X_val,
+                compression='gzip',
+                compression_opts=4
+            )
+            val_grp.create_dataset('labels', data=y_val)
+            val_grp.attrs['num_samples'] = len(X_val)
+
+            # Create test group
+            test_grp = f.create_group('test')
+            test_grp.create_dataset(
+                'signals',
+                data=X_test,
+                compression='gzip',
+                compression_opts=4
+            )
+            test_grp.create_dataset('labels', data=y_test)
+            test_grp.attrs['num_samples'] = len(X_test)
+
+            # Store metadata if provided
+            if metadata is not None:
+                metadata_json = [json.dumps(m) for m in metadata]
+                dt = h5py.string_dtype(encoding='utf-8')
+                f.create_dataset('metadata', data=metadata_json, dtype=dt)
+
+        logger.info(
+            f"Cached with splits - Train: {len(X_train)}, "
+            f"Val: {len(X_val)}, Test: {len(X_test)} "
+            f"({self._format_size(cache_path)})"
+        )
+
+        return cache_path
+
     def _format_size(self, path: Path) -> str:
         """Format file size for display."""
         size_bytes = path.stat().st_size
