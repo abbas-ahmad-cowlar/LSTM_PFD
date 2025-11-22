@@ -27,6 +27,7 @@ import sys
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from api.config import settings
 from api.schemas import (
     PredictionRequest,
@@ -165,8 +166,8 @@ async def get_model_info(api_key: str = Depends(verify_api_key)):
     return ModelInfo(
         model_name="LSTM_PFD Bearing Fault Diagnosis Model",
         model_type=settings.model_type,
-        num_classes=11,
-        input_shape=[1, 1, 102400],
+        num_classes=NUM_CLASSES,
+        input_shape=[1, 1, SIGNAL_LENGTH],
         class_names=FAULT_CLASS_NAMES
     )
 

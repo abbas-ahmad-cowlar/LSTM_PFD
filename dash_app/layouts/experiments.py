@@ -4,6 +4,7 @@ Full experiment history with filtering, sorting, and comparison.
 """
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 def create_experiments_layout():

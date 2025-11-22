@@ -39,14 +39,14 @@ class CNNVisualizer:
 
     Examples:
         >>> from models.cnn.cnn_1d import CNN1D
-        >>> model = CNN1D(num_classes=11, input_length=102400)
+        >>> model = CNN1D(num_classes=NUM_CLASSES, input_length=102400)
         >>> visualizer = CNNVisualizer(model)
         >>>
         >>> # Visualize filters
         >>> visualizer.plot_conv_filters(save_path='filters.png')
         >>>
         >>> # Visualize feature maps for a signal
-        >>> signal = torch.randn(1, 1, 102400)
+        >>> signal = torch.randn(1, 1, SIGNAL_LENGTH)
         >>> visualizer.plot_feature_maps(signal, layer_name='conv1', save_path='fmaps.png')
     """
 
@@ -438,7 +438,7 @@ def test_cnn_visualizer():
 
     # Create dummy model
     from models.cnn.cnn_1d import CNN1D
-    model = CNN1D(num_classes=11, input_length=102400, in_channels=1)
+    model = CNN1D(num_classes=NUM_CLASSES, input_length=102400, in_channels=1)
 
     # Create visualizer
     visualizer = CNNVisualizer(model)
@@ -454,7 +454,7 @@ def test_cnn_visualizer():
 
     # Test feature maps
     print("✓ Testing feature map visualization...")
-    dummy_signal = torch.randn(1, 1, 102400)
+    dummy_signal = torch.randn(1, 1, SIGNAL_LENGTH)
     first_layer = list(visualizer.conv_layers.keys())[0]
     fmaps = visualizer.plot_feature_maps(dummy_signal, first_layer)
     print(f"  Feature maps shape: {fmaps.shape}")

@@ -3,6 +3,7 @@ Data formatting utilities.
 """
 from datetime import datetime, timedelta
 from typing import Union
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 def format_number(value: float, decimals: int = 2, percentage: bool = False) -> str:

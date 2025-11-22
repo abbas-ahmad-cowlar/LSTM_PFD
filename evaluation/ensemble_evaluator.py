@@ -24,6 +24,7 @@ from sklearn.metrics import (
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class EnsembleEvaluator:
@@ -42,13 +43,13 @@ class EnsembleEvaluator:
         class_names: Optional class names for visualization
 
     Example:
-        >>> evaluator = EnsembleEvaluator(num_classes=11)
+        >>> evaluator = EnsembleEvaluator(num_classes=NUM_CLASSES)
         >>> results = evaluator.evaluate_ensemble(ensemble, test_loader)
         >>> diversity = evaluator.evaluate_ensemble_diversity(models, test_loader)
     """
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         class_names: Optional[List[str]] = None
     ):
         self.num_classes = num_classes

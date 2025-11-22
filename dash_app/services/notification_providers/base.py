@@ -5,6 +5,7 @@ Provides abstraction for multiple notification providers (Slack, Teams, custom w
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 @dataclass
