@@ -37,9 +37,12 @@ class EmailLog(BaseModel):
     # Relationships
     user = relationship("User", backref="email_logs")
 
-    # Indexes
+    # Performance indexes
+    # Note: user_id, event_type, status already have column-level indexes
     __table_args__ = (
         Index('idx_email_logs_sent_at', 'sent_at'),
+        Index('ix_email_logs_created_at', 'created_at'),
+        # Composite indexes removed - log tables should minimize indexes for write performance
     )
 
     def __repr__(self):
