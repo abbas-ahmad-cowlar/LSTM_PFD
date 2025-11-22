@@ -50,6 +50,13 @@ def create_settings_layout():
                 tab_id="security",
                 children=create_security_tab()
             ),
+
+            # Notifications Tab
+            dbc.Tab(
+                label="🔔 Notifications",
+                tab_id="notifications",
+                children=create_notifications_tab()
+            ),
         ], id='settings-tabs', active_tab='api-keys'),
 
     ], fluid=True, className="py-4")
@@ -242,4 +249,145 @@ def create_security_tab():
             html.Li("Review login history"),
             html.Li("Configure security alerts"),
         ])
+    ], className="py-4")
+
+
+def create_notifications_tab():
+    """Create notifications settings tab."""
+    return dbc.Container([
+        # Section Header
+        html.H4("Notification Preferences", className="mt-3 mb-3"),
+        html.P([
+            "Configure how you want to be notified about important events. ",
+            "Choose notification channels and frequency for each event type."
+        ], className="text-muted mb-4"),
+
+        # Notification Preferences Card
+        dbc.Card([
+            dbc.CardHeader([
+                html.H5("Event Notification Settings", className="mb-0 d-inline"),
+                dbc.Button(
+                    [html.I(className="bi bi-arrow-clockwise me-2"), "Reload"],
+                    id='reload-notification-prefs-btn',
+                    color="secondary",
+                    size="sm",
+                    className="float-end"
+                ),
+            ]),
+            dbc.CardBody([
+                dcc.Loading(
+                    id="loading-notification-prefs",
+                    children=[html.Div(id='notification-preferences-table')],
+                    type="default"
+                )
+            ])
+        ], className="mb-4"),
+
+        # Email Configuration Card
+        dbc.Card([
+            dbc.CardHeader(html.H5("Email Configuration", className="mb-0")),
+            dbc.CardBody([
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Label("SMTP Server", html_for='smtp-server-input'),
+                        dbc.Input(
+                            id='smtp-server-input',
+                            placeholder="e.g., smtp.gmail.com",
+                            type="text",
+                            className="mb-3"
+                        ),
+                    ], width=6),
+                    dbc.Col([
+                        dbc.Label("SMTP Port", html_for='smtp-port-input'),
+                        dbc.Input(
+                            id='smtp-port-input',
+                            type="number",
+                            value=587,
+                            min=1,
+                            max=65535,
+                            className="mb-3"
+                        ),
+                    ], width=6),
+                ]),
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Label("Username / Email", html_for='smtp-username-input'),
+                        dbc.Input(
+                            id='smtp-username-input',
+                            placeholder="your-email@example.com",
+                            type="text",
+                            className="mb-3"
+                        ),
+                    ], width=6),
+                    dbc.Col([
+                        dbc.Label("Password", html_for='smtp-password-input'),
+                        dbc.Input(
+                            id='smtp-password-input',
+                            type="password",
+                            placeholder="••••••••",
+                            className="mb-3"
+                        ),
+                    ], width=6),
+                ]),
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Checkbox(
+                            id='smtp-use-tls',
+                            label="Use TLS/SSL",
+                            value=True,
+                            className="mb-3"
+                        ),
+                    ], width=6),
+                    dbc.Col([
+                        dbc.Label("Test Email Address", html_for='test-email-input'),
+                        dbc.Input(
+                            id='test-email-input',
+                            placeholder="your-email@example.com",
+                            type="email",
+                            className="mb-3"
+                        ),
+                    ], width=6),
+                ]),
+                html.Div(id='email-config-message', className="mb-3"),
+                dbc.ButtonGroup([
+                    dbc.Button(
+                        [html.I(className="bi bi-envelope-check me-2"), "Send Test Email"],
+                        id='send-test-email-btn',
+                        color="info",
+                        className="me-2"
+                    ),
+                    dbc.Button(
+                        [html.I(className="bi bi-save me-2"), "Save Configuration"],
+                        id='save-email-config-btn',
+                        color="primary"
+                    ),
+                ]),
+            ])
+        ], className="mb-4"),
+
+        # Notification History Card
+        dbc.Card([
+            dbc.CardHeader([
+                html.H5("Notification History", className="mb-0 d-inline"),
+                dbc.Button(
+                    [html.I(className="bi bi-download me-2"), "Export"],
+                    id='export-notification-history-btn',
+                    color="secondary",
+                    size="sm",
+                    className="float-end"
+                ),
+            ]),
+            dbc.CardBody([
+                html.P("View the last 50 notifications sent to you.", className="text-muted"),
+                dcc.Loading(
+                    id="loading-notification-history",
+                    children=[html.Div(id='notification-history-table')],
+                    type="default"
+                )
+            ])
+        ], className="mb-4"),
+
+        # Store for user preferences data
+        dcc.Store(id='notification-prefs-data', data=None),
+
     ], className="py-4")
