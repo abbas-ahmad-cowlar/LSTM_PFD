@@ -1,0 +1,300 @@
+While CNNs excel at spatial pattern recognition, bearing vibration signals are fundamentally temporal sequences where the ordering and evolution of patterns contain critical diagnostic information. This section presents our LSTM-based approach, which explicitly models temporal dependencies in vibration data.
+
+\subsubsection{Motivation for Temporal Modeling}
+
+Bearing faults manifest as time-varying phenomena in vibration signals. Several temporal characteristics are diagnostically relevant:
+
+\begin{itemize}
+    \item \textbf{Sequential Patterns:} Fault signatures often appear as specific temporal sequences of impulses or oscillations that unfold over multiple rotation cycles.
+
+    \item \textbf{Long-Range Dependencies:} Early fault indicators may correlate with features appearing seconds later in the signal, requiring models that can remember information across extended time spans.
+
+    \item \textbf{Temporal Evolution:} Fault progression changes vibration patterns over time, and the rate and nature of these changes provide diagnostic clues.
+
+    \item \textbf{Phase Relationships:} The relative timing and phase between different signal components reveals fault mechanisms and locations.
+\end{itemize}
+
+Traditional CNNs, while capable of learning local temporal patterns through convolution, do not explicitly model long-range temporal dependencies or maintain internal state across time steps. Recurrent architectures address these limitations.
+
+\subsubsection{LSTM Fundamentals}
+
+Long Short-Term Memory networks\cite{hochreiter1997long} are a specialized form of Recurrent Neural Networks designed to capture long-term dependencies while avoiding the vanishing gradient problem that plagues standard RNNs.
+
+\paragraph{LSTM Cell Architecture}
+
+An LSTM cell maintains two state vectors: the cell state $\mathbf{c}_t$ (long-term memory) and the hidden state $\mathbf{h}_t$ (short-term output). At each time step $t$, the cell processes input $\mathbf{x}_t$ and previous hidden state $\mathbf{h}_{t-1}$ through three gates and one cell update:
+
+\textbf{Forget Gate:} Determines what information to discard from cell state:
+\begin{equation}
+\mathbf{f}_t = \sigma(W_f \mathbf{x}_t + U_f \mathbf{h}_{t-1} + \mathbf{b}_f)
+\end{equation}
+
+\textbf{Input Gate:} Determines what new information to store:
+\begin{equation}
+\mathbf{i}_t = \sigma(W_i \mathbf{x}_t + U_i \mathbf{h}_{t-1} + \mathbf{b}_i)
+\end{equation}
+
+\textbf{Candidate Cell State:} Proposes new information to add:
+\begin{equation}
+\tilde{\mathbf{c}}_t = \tanh(W_c \mathbf{x}_t + U_c \mathbf{h}_{t-1} + \mathbf{b}_c)
+\end{equation}
+
+\textbf{Cell State Update:} Combines forget and input gates:
+\begin{equation}
+\mathbf{c}_t = \mathbf{f}_t \odot \mathbf{c}_{t-1} + \mathbf{i}_t \odot \tilde{\mathbf{c}}_t
+\end{equation}
+
+\textbf{Output Gate:} Determines what to output based on cell state:
+\begin{equation}
+\mathbf{o}_t = \sigma(W_o \mathbf{x}_t + U_o \mathbf{h}_{t-1} + \mathbf{b}_o)
+\end{equation}
+
+\textbf{Hidden State:} Final output of the cell:
+\begin{equation}
+\mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{c}_t)
+\end{equation}
+
+where $\sigma$ denotes the sigmoid function, $\tanh$ is the hyperbolic tangent, $\odot$ represents element-wise multiplication, and $W$, $U$, $\mathbf{b}$ are learnable parameters.
+
+The gating mechanism allows LSTMs to selectively retain, forget, or update information over long sequences, addressing the vanishing gradient problem through the cell state's additive update structure.
+
+\subsubsection{LSTM Variants}
+
+We implement and evaluate two LSTM variants that differ in their temporal processing strategy:
+
+\paragraph{Vanilla LSTM (Unidirectional)}
+
+The standard LSTM processes sequences in a single direction (forward in time):
+
+\begin{equation}
+\mathbf{h}_t = \text{LSTM}(\mathbf{x}_t, \mathbf{h}_{t-1}, \mathbf{c}_{t-1})
+\end{equation}
+
+This architecture is suitable for causal applications where only past information is available (e.g., real-time monitoring). Our implementation consists of:
+
+\begin{itemize}
+    \item Input dimension: 1 (single-channel vibration signal)
+    \item Hidden dimension: 128 (default) or 256
+    \item Number of layers: 2 stacked LSTM layers
+    \item Dropout: 0.5 between LSTM layers
+    \item Parameters: Approximately 200K for hidden size 128
+\end{itemize}
+
+The stacked architecture allows the second LSTM layer to learn higher-level temporal abstractions from the first layer's outputs.
+
+\paragraph{Bidirectional LSTM (BiLSTM)}
+
+Bidirectional LSTMs\cite{graves2005framewise} process sequences in both forward and backward directions, providing complete temporal context:
+
+\begin{align}
+\overrightarrow{\mathbf{h}}_t &= \text{LSTM}_{forward}(\mathbf{x}_t, \overrightarrow{\mathbf{h}}_{t-1}, \overrightarrow{\mathbf{c}}_{t-1}) \\
+\overleftarrow{\mathbf{h}}_t &= \text{LSTM}_{backward}(\mathbf{x}_t, \overleftarrow{\mathbf{h}}_{t+1}, \overleftarrow{\mathbf{c}}_{t+1}) \\
+\mathbf{h}_t &= [\overrightarrow{\mathbf{h}}_t; \overleftarrow{\mathbf{h}}_t]
+\end{align}
+
+where $[\cdot; \cdot]$ denotes concatenation. The bidirectional architecture doubles the output dimension and parameter count:
+
+\begin{itemize}
+    \item Input dimension: 1
+    \item Hidden dimension: 128 (per direction)
+    \item Output dimension: 256 (concatenated forward and backward)
+    \item Number of layers: 2 stacked BiLSTM layers
+    \item Dropout: 0.5 between layers
+    \item Parameters: Approximately 400K for hidden size 128
+\end{itemize}
+
+BiLSTMs are appropriate for offline analysis where the entire signal is available before classification. The ability to incorporate future context often improves classification performance at the cost of doubled computation.
+
+\subsubsection{Signal Preprocessing for LSTMs}
+
+Unlike CNNs that process the entire signal as a single input, LSTMs require sequential input. We adopt two preprocessing strategies:
+
+\paragraph{Direct Sequence Input}
+
+The raw vibration signal of length $L=102{,}400$ is treated as a sequence of $L$ time steps:
+
+\begin{equation}
+\mathbf{X} = [\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_L] \in \mathbb{R}^{L \times 1}
+\end{equation}
+
+where each time step contains a single scalar value. This representation preserves the finest temporal granularity but results in very long sequences that are computationally expensive and may suffer from gradient vanishing despite LSTM's gating mechanisms.
+
+\paragraph{Windowed Sequence Input}
+
+Alternatively, we segment the signal into non-overlapping windows and extract features from each window:
+
+\begin{equation}
+\mathbf{X} = [\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_T] \in \mathbb{R}^{T \times D}
+\end{equation}
+
+where $T = L / w$ is the number of windows of size $w$, and $D$ is the feature dimension per window (e.g., mean, standard deviation, max, min). This reduces sequence length at the cost of reduced temporal resolution.
+
+For our experiments, we primarily use direct sequence input for sequences up to 10,240 samples (downsampled by a factor of 10) to balance temporal resolution with computational efficiency. Longer sequences would require excessive memory and training time.
+
+\subsubsection{Network Architecture}
+
+Our LSTM-based models follow this general architecture:
+
+\begin{enumerate}
+    \item \textbf{Input Layer:} Receives signal of shape $[B, T, 1]$ where $B$ is batch size and $T$ is sequence length.
+
+    \item \textbf{LSTM Layers:} Two stacked LSTM (or BiLSTM) layers with hidden size $h$:
+    \begin{itemize}
+        \item Layer 1: Processes input sequence, outputs hidden states of dimension $h$ (or $2h$ for BiLSTM)
+        \item Dropout (0.5) for regularization
+        \item Layer 2: Processes Layer 1 outputs, outputs hidden states
+        \item Dropout (0.5)
+    \end{itemize}
+
+    \item \textbf{Temporal Aggregation:} Multiple strategies for combining temporal outputs:
+    \begin{itemize}
+        \item \textbf{Last Hidden State:} Use final time step $\mathbf{h}_T$
+        \item \textbf{Mean Pooling:} Average over all time steps $\frac{1}{T}\sum_{t=1}^T \mathbf{h}_t$
+        \item \textbf{Max Pooling:} Maximum over time dimension
+        \item \textbf{Attention:} Learnable weighted combination
+    \end{itemize}
+
+    \item \textbf{Classification Head:}
+    \begin{itemize}
+        \item Fully-connected layer mapping aggregated features to 11 classes
+        \item Softmax activation for probability distribution
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Temporal Attention Mechanism}
+
+For enhanced performance, we optionally incorporate an attention mechanism that learns to weight different time steps according to their diagnostic relevance:
+
+\begin{align}
+e_t &= \mathbf{v}^T \tanh(W \mathbf{h}_t + \mathbf{b}) \\
+\alpha_t &= \frac{\exp(e_t)}{\sum_{t'=1}^T \exp(e_{t'})} \\
+\mathbf{h}_{att} &= \sum_{t=1}^T \alpha_t \mathbf{h}_t
+\end{align}
+
+where $e_t$ is the attention score for time step $t$, $\alpha_t$ is the normalized attention weight, and $\mathbf{h}_{att}$ is the attention-weighted aggregated hidden state. The parameters $\mathbf{v}$, $W$, and $\mathbf{b}$ are learned during training.
+
+Attention provides interpretability by revealing which temporal regions the model considers important for classification. High attention weights on specific time segments indicate fault-relevant patterns.
+
+\subsubsection{Training Methodology}
+
+\paragraph{Loss Function and Optimization}
+
+Similar to the CNN approach, we use cross-entropy loss with Adam optimizer. However, LSTM training presents unique challenges:
+
+\begin{itemize}
+    \item \textbf{Gradient Clipping:} We apply gradient clipping with threshold 5.0 to prevent exploding gradients:
+    \begin{equation}
+    \mathbf{g} \leftarrow \min\left(1, \frac{\theta}{||\mathbf{g}||}\right) \mathbf{g}
+    \end{equation}
+    where $\theta=5.0$ is the clipping threshold.
+
+    \item \textbf{Learning Rate:} We use a lower initial learning rate (0.001 to 0.0005) for LSTM training compared to CNNs, as RNNs can be more sensitive to learning rate choices.
+
+    \item \textbf{Batch Size:} Smaller batch sizes (16 or 32) are used due to the memory requirements of processing long sequences.
+\end{itemize}
+
+\paragraph{Regularization}
+
+LSTM overfitting is prevented through:
+
+\begin{enumerate}
+    \item \textbf{Dropout:} Applied between LSTM layers (not within LSTM cells) with probability 0.5
+
+    \item \textbf{Recurrent Dropout:} Optionally applied to recurrent connections:
+    \begin{equation}
+    \mathbf{h}_t = \text{LSTM}(\mathbf{x}_t, \mathbf{D} \odot \mathbf{h}_{t-1})
+    \end{equation}
+    where $\mathbf{D}$ is a dropout mask shared across time steps
+
+    \item \textbf{Weight Decay:} L2 regularization with coefficient $\lambda=0.0001$
+
+    \item \textbf{Early Stopping:} Validation-based early stopping with patience of 15 epochs
+\end{enumerate}
+
+\subsubsection{Computational Considerations}
+
+LSTM training is computationally intensive due to sequential processing that prevents parallelization across time steps. Key computational challenges include:
+
+\begin{itemize}
+    \item \textbf{Memory:} Backpropagation through time (BPTT) requires storing hidden states for all time steps, leading to $\mathcal{O}(T)$ memory complexity
+
+    \item \textbf{Time:} Sequential processing results in slower training compared to CNNs that can parallelize across the signal length
+
+    \item \textbf{Sequence Length:} Longer sequences exponentially increase both memory and computation requirements
+\end{itemize}
+
+To mitigate these challenges, we:
+\begin{itemize}
+    \item Downsample long signals to reduce sequence length
+    \item Use smaller batch sizes to fit in GPU memory
+    \item Leverage cuDNN-optimized LSTM implementations for efficient GPU execution
+\end{itemize}
+
+\subsubsection{Implementation Details}
+
+LSTM models are implemented in PyTorch 2.0.1:
+
+\begin{lstlisting}[language=Python]
+# Model Configuration
+num_classes = 11
+sequence_length = 10240  # Downsampled from 102400
+hidden_size = 128  # LSTM hidden dimension
+num_layers = 2
+bidirectional = True  # For BiLSTM
+
+# Training Configuration
+num_epochs = 75
+batch_size = 32
+initial_lr = 0.001
+optimizer = 'adam'
+scheduler = 'cosine'
+
+# Regularization
+dropout = 0.5
+gradient_clip = 5.0
+weight_decay = 0.0001
+
+# Computational
+device = 'cuda'
+cudnn_benchmark = True  # Optimize cuDNN for fixed input sizes
+\end{lstlisting}
+
+\subsubsection{Comparison: Vanilla LSTM vs. BiLSTM}
+
+Table~\ref{tab:lstm_comparison} provides a theoretical comparison of the two LSTM variants:
+
+\begin{table}[h]
+\centering
+\caption{Comparison of LSTM Variants}
+\label{tab:lstm_comparison}
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Characteristic} & \textbf{Vanilla LSTM} & \textbf{BiLSTM} \\
+\midrule
+Processing Direction & Forward only & Forward + Backward \\
+Temporal Context & Past only & Past + Future \\
+Output Dimension & $h$ & $2h$ \\
+Parameters & $\sim$200K & $\sim$400K \\
+Computational Cost & 1× & 2× \\
+Real-time Capable & Yes & No \\
+Typical Use Case & Online monitoring & Offline analysis \\
+Expected Accuracy & \todo{TBD\%} & \todo{TBD\%} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+We hypothesize that BiLSTM will achieve higher accuracy due to complete temporal context, while Vanilla LSTM offers computational efficiency suitable for real-time applications.
+
+\subsubsection{Expected Outcomes}
+
+Based on the temporal nature of bearing vibration data, we expect LSTM-based approaches to:
+
+\begin{itemize}
+    \item Effectively capture sequential patterns and temporal dependencies
+    \item Demonstrate complementary strengths to CNN approaches
+    \item Show particular advantage for fault types with strong temporal signatures
+    \item Achieve competitive accuracy despite having fewer parameters than large CNNs
+    \item Potentially struggle with very long sequence lengths due to gradient issues
+\end{itemize}
+
+The empirical validation of these expectations is presented in Section~\ref{sec:results}, where we provide comprehensive performance analysis and comparison with CNN-based approaches.
