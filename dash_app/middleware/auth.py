@@ -1,6 +1,11 @@
 """
 Authentication middleware (Phase 11D).
 JWT-based authentication for production deployment.
+
+Security Note:
+- JWT_SECRET_KEY is validated at startup via config module
+- Uses HS256 algorithm for token signing
+- Tokens expire after 24 hours
 """
 import jwt
 import datetime
@@ -14,13 +19,19 @@ from models.user import User
 
 logger = setup_logger(__name__)
 
-# Secret key for JWT - must be set in environment variables
-SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-if not SECRET_KEY:
-    raise ValueError(
-        "JWT_SECRET_KEY must be set in environment variables. "
-        "Generate with: python -c 'import secrets; print(secrets.token_hex(32))'"
-    )
+# Import config validator for JWT secret
+try:
+    from utils.config_validator import get_required_config
+    SECRET_KEY = get_required_config("JWT_SECRET_KEY")
+except ImportError:
+    # Fallback for backwards compatibility
+    SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+    if not SECRET_KEY:
+        raise ValueError(
+            "JWT_SECRET_KEY must be set in environment variables. "
+            "Generate with: python -c 'import secrets; print(secrets.token_hex(32))'"
+        )
+
 ALGORITHM = "HS256"
 TOKEN_EXPIRY_HOURS = 24
 
