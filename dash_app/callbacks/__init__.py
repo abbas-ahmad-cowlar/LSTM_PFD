@@ -1,9 +1,34 @@
 """
 Callback registration.
 """
-from dash import Input, Output, State, callback_context
+import urllib.parse as urlparse
+from dash import Input, Output, State, callback_context, html
 from dash.exceptions import PreventUpdate
+from flask import request
 import re
+
+# Layout imports
+from layouts.home import create_home_layout
+from layouts.data_generation import create_data_generation_layout
+from layouts.data_explorer import create_data_explorer_layout
+from layouts.signal_viewer import create_signal_viewer_layout
+from layouts.datasets import create_datasets_layout
+from layouts.experiments import create_experiments_layout
+from layouts.experiment_wizard import create_experiment_wizard_layout
+from layouts.training_monitor import create_training_monitor_layout
+from layouts.experiment_results import create_experiment_results_layout
+from layouts.experiment_comparison import create_experiment_comparison_layout
+from layouts.xai_dashboard import create_xai_dashboard_layout
+from layouts.system_health import create_system_health_layout
+from layouts.hpo_campaigns import create_hpo_campaigns_layout
+from layouts.deployment import create_deployment_layout
+from layouts.api_monitoring import create_api_monitoring_layout
+from layouts.evaluation_dashboard import create_evaluation_dashboard_layout
+from layouts.testing_dashboard import create_testing_dashboard_layout
+from layouts.feature_engineering import create_feature_engineering_layout
+from layouts.visualization import create_visualization_layout
+from layouts.nas_dashboard import create_nas_dashboard_layout
+from layouts.settings import create_settings_layout
 
 
 def register_all_callbacks(app):
@@ -17,40 +42,27 @@ def register_all_callbacks(app):
     def display_page(pathname):
         """Route to appropriate page based on URL."""
         if pathname == '/' or pathname is None:
-            from layouts.home import create_home_layout
             return create_home_layout()
         elif pathname == '/data-generation':
-            from layouts.data_generation import create_data_generation_layout
             return create_data_generation_layout()
         elif pathname == '/data-explorer':
-            from layouts.data_explorer import create_data_explorer_layout
             return create_data_explorer_layout()
         elif pathname == '/signal-viewer':
-            from layouts.signal_viewer import create_signal_viewer_layout
             return create_signal_viewer_layout()
         elif pathname == '/datasets':
-            from layouts.datasets import create_datasets_layout
             return create_datasets_layout()
         elif pathname == '/experiments':
-            from layouts.experiments import create_experiments_layout
             return create_experiments_layout()
         elif pathname == '/experiment/new':
-            from layouts.experiment_wizard import create_experiment_wizard_layout
             return create_experiment_wizard_layout()
         elif re.match(r'/experiment/(\d+)/monitor', pathname):
-            from layouts.training_monitor import create_training_monitor_layout
             experiment_id = int(pathname.split('/')[2])
             return create_training_monitor_layout(experiment_id)
         elif re.match(r'/experiment/(\d+)/results', pathname):
-            from layouts.experiment_results import create_experiment_results_layout
             experiment_id = int(pathname.split('/')[2])
             return create_experiment_results_layout(experiment_id)
         elif pathname == '/compare':
-            from layouts.experiment_comparison import create_experiment_comparison_layout
-            from dash import callback_context
             # Parse query string for experiment IDs
-            import urllib.parse as urlparse
-            from flask import request
             query_params = request.args
             ids_str = query_params.get('ids', '')
             if ids_str:
@@ -58,54 +70,40 @@ def register_all_callbacks(app):
                     experiment_ids = [int(id.strip()) for id in ids_str.split(',')]
                     return create_experiment_comparison_layout(experiment_ids)
                 except ValueError:
-                    from dash import html
                     return html.Div([
                         html.H2("Invalid Comparison Request"),
                         html.P("Invalid experiment IDs provided."),
                         html.A("Return to Experiments", href="/experiments")
                     ], className="text-center mt-5")
             else:
-                from dash import html
                 return html.Div([
                     html.H2("Invalid Comparison Request"),
                     html.P("No experiment IDs provided. Use: /compare?ids=1,2,3"),
                     html.A("Return to Experiments", href="/experiments")
                 ], className="text-center mt-5")
         elif pathname == '/xai':
-            from layouts.xai_dashboard import create_xai_dashboard_layout
             return create_xai_dashboard_layout()
         elif pathname == '/system-health':
-            from layouts.system_health import create_system_health_layout
             return create_system_health_layout()
         elif pathname == '/hpo/campaigns':
-            from layouts.hpo_campaigns import create_hpo_campaigns_layout
             return create_hpo_campaigns_layout()
         elif pathname == '/deployment':
-            from layouts.deployment import create_deployment_layout
             return create_deployment_layout()
         elif pathname == '/api-monitoring':
-            from layouts.api_monitoring import create_api_monitoring_layout
             return create_api_monitoring_layout()
         elif pathname == '/evaluation':
-            from layouts.evaluation_dashboard import create_evaluation_dashboard_layout
             return create_evaluation_dashboard_layout()
         elif pathname == '/testing':
-            from layouts.testing_dashboard import create_testing_dashboard_layout
             return create_testing_dashboard_layout()
         elif pathname == '/feature-engineering':
-            from layouts.feature_engineering import create_feature_engineering_layout
             return create_feature_engineering_layout()
         elif pathname == '/visualization':
-            from layouts.visualization import create_visualization_layout
             return create_visualization_layout()
         elif pathname == '/nas':
-            from layouts.nas_dashboard import create_nas_dashboard_layout
             return create_nas_dashboard_layout()
         elif pathname == '/settings':
-            from layouts.settings import create_settings_layout
             return create_settings_layout()
         else:
-            from dash import html
             return html.Div([
                 html.H2("404: Page Not Found"),
                 html.P(f"The page '{pathname}' does not exist."),
@@ -227,6 +225,13 @@ def register_all_callbacks(app):
         register_notification_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import notification_callbacks: {e}")
+
+    # Import and register Email Digest Queue callbacks
+    try:
+        from callbacks.email_digest_callbacks import register_email_digest_callbacks
+        register_email_digest_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import email_digest_callbacks: {e}")
 
     # Import and register Enhanced Visualization callbacks
     try:

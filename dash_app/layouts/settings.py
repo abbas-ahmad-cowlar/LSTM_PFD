@@ -5,6 +5,7 @@ Provides UI for managing API keys and user settings.
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+from layouts.email_digest_management import create_email_digest_tab
 
 
 def create_settings_layout():
@@ -64,6 +65,13 @@ def create_settings_layout():
                 tab_id="webhooks",
                 children=create_webhooks_tab()
             ),
+
+            # Email Digest Tab
+            dbc.Tab(
+                label="📧 Email Digests",
+                tab_id="email-digests",
+                children=create_email_digest_tab()
+            ),
         ], id='settings-tabs', active_tab='api-keys'),
 
     ], fluid=True, className="py-4")
@@ -107,8 +115,90 @@ def create_api_keys_tab():
             ])
         ], className="mb-4"),
 
-        # API Key Usage Statistics (placeholder)
-        html.Div(id='api-key-stats'),
+        # API Key Usage Statistics
+        dbc.Card([
+            dbc.CardHeader([
+                html.H5("API Usage Statistics", className="mb-0 d-inline"),
+                dbc.Button(
+                    [html.I(className="bi bi-arrow-clockwise me-2"), "Refresh"],
+                    id='refresh-api-stats-btn',
+                    color="secondary",
+                    size="sm",
+                    className="float-end"
+                ),
+            ]),
+            dbc.CardBody([
+                html.P("View API usage patterns and metrics for your API keys", className="text-muted mb-4"),
+
+                # Summary Stats Row
+                dbc.Row([
+                    dbc.Col([
+                        html.Div([
+                            html.H4(id='total-api-requests-count', children="0", className="text-primary mb-0"),
+                            html.Small("Total Requests (30 days)", className="text-muted")
+                        ], className="text-center p-3 border rounded")
+                    ], md=3),
+                    dbc.Col([
+                        html.Div([
+                            html.H4(id='avg-response-time', children="0ms", className="text-info mb-0"),
+                            html.Small("Avg Response Time", className="text-muted")
+                        ], className="text-center p-3 border rounded")
+                    ], md=3),
+                    dbc.Col([
+                        html.Div([
+                            html.H4(id='api-success-rate', children="0%", className="text-success mb-0"),
+                            html.Small("Success Rate", className="text-muted")
+                        ], className="text-center p-3 border rounded")
+                    ], md=3),
+                    dbc.Col([
+                        html.Div([
+                            html.H4(id='active-api-keys-count', children="0", className="text-warning mb-0"),
+                            html.Small("Active API Keys", className="text-muted")
+                        ], className="text-center p-3 border rounded")
+                    ], md=3),
+                ], className="mb-4"),
+
+                # Charts Row
+                dbc.Row([
+                    dbc.Col([
+                        html.H6("Requests Over Time (Last 30 Days)", className="mb-3"),
+                        dcc.Loading(
+                            id="loading-api-usage-chart",
+                            children=[dcc.Graph(id='api-usage-timeline-chart', config={'displayModeBar': False})],
+                            type="default"
+                        )
+                    ], md=12),
+                ], className="mb-4"),
+
+                dbc.Row([
+                    dbc.Col([
+                        html.H6("Top API Keys by Request Count", className="mb-3"),
+                        dcc.Loading(
+                            id="loading-top-keys-chart",
+                            children=[dcc.Graph(id='api-top-keys-chart', config={'displayModeBar': False})],
+                            type="default"
+                        )
+                    ], md=6),
+                    dbc.Col([
+                        html.H6("Requests by Endpoint", className="mb-3"),
+                        dcc.Loading(
+                            id="loading-endpoints-chart",
+                            children=[dcc.Graph(id='api-endpoints-chart', config={'displayModeBar': False})],
+                            type="default"
+                        )
+                    ], md=6),
+                ], className="mb-4"),
+
+                # Detailed Usage Table
+                html.Hr(),
+                html.H6("Detailed Usage by API Key", className="mt-4 mb-3"),
+                dcc.Loading(
+                    id="loading-api-usage-table",
+                    children=[html.Div(id='api-usage-detail-table')],
+                    type="default"
+                )
+            ])
+        ], className="mb-4"),
 
         # Modal for generating new API key
         dbc.Modal([
@@ -596,23 +686,99 @@ def create_notifications_tab():
         dbc.Card([
             dbc.CardHeader([
                 html.H5("Notification History", className="mb-0 d-inline"),
-                dbc.Button(
-                    [html.I(className="bi bi-download me-2"), "Export"],
-                    id='export-notification-history-btn',
-                    color="secondary",
-                    size="sm",
-                    className="float-end"
-                ),
+                dbc.ButtonGroup([
+                    dbc.Button(
+                        [html.I(className="bi bi-arrow-clockwise me-2"), "Refresh"],
+                        id='refresh-notification-history-btn',
+                        color="secondary",
+                        size="sm",
+                        outline=True,
+                        className="me-2"
+                    ),
+                    dbc.Button(
+                        [html.I(className="bi bi-download me-2"), "Export"],
+                        id='export-notification-history-btn',
+                        color="secondary",
+                        size="sm",
+                        outline=True,
+                    ),
+                ], className="float-end")
             ]),
             dbc.CardBody([
-                html.P("View the last 50 notifications sent to you.", className="text-muted"),
+                html.P("Search and filter email notification history", className="text-muted mb-3"),
+
+                # Filter Controls
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Label("Search", className="small"),
+                        dbc.Input(
+                            id='email-log-search-input',
+                            placeholder="Search subject or recipient...",
+                            type="text",
+                            debounce=True,
+                            className="mb-3"
+                        ),
+                    ], md=6),
+                    dbc.Col([
+                        dbc.Label("Filter by Status", className="small"),
+                        dcc.Dropdown(
+                            id='email-log-status-filter',
+                            options=[
+                                {'label': 'All Status', 'value': 'all'},
+                                {'label': 'Sent', 'value': 'sent'},
+                                {'label': 'Failed', 'value': 'failed'},
+                                {'label': 'Pending', 'value': 'pending'},
+                            ],
+                            value='all',
+                            clearable=False,
+                            className="mb-3"
+                        ),
+                    ], md=3),
+                    dbc.Col([
+                        dbc.Label("Time Range", className="small"),
+                        dcc.Dropdown(
+                            id='email-log-time-filter',
+                            options=[
+                                {'label': 'Last Hour', 'value': 'hour'},
+                                {'label': 'Last 24 Hours', 'value': 'day'},
+                                {'label': 'Last 7 Days', 'value': 'week'},
+                                {'label': 'Last 30 Days', 'value': 'month'},
+                                {'label': 'All Time', 'value': 'all'},
+                            ],
+                            value='month',
+                            clearable=False,
+                            className="mb-3"
+                        ),
+                    ], md=3),
+                ]),
+
                 dcc.Loading(
                     id="loading-notification-history",
                     children=[html.Div(id='notification-history-table')],
                     type="default"
-                )
+                ),
+
+                # Pagination
+                html.Div([
+                    html.Hr(),
+                    dbc.Row([
+                        dbc.Col([
+                            html.P(id='email-log-count', children="Showing 0 emails", className="text-muted small mb-0")
+                        ], md=6),
+                        dbc.Col([
+                            dbc.ButtonGroup([
+                                dbc.Button("Previous", id='email-log-prev-page-btn', size="sm", outline=True, disabled=True),
+                                dbc.Button("Next", id='email-log-next-page-btn', size="sm", outline=True, disabled=True),
+                            ], className="float-end")
+                        ], md=6),
+                    ])
+                ]),
             ])
         ], className="mb-4"),
+
+        # Store for pagination
+        dcc.Store(id='email-log-page-number', data=1),
+        dcc.Store(id='email-log-items-per-page', data=100),
 
         # Store for user preferences data
         dcc.Store(id='notification-prefs-data', data=None),
