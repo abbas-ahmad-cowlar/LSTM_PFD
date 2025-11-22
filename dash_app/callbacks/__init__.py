@@ -101,6 +101,9 @@ def register_all_callbacks(app):
         elif pathname == '/nas':
             from layouts.nas_dashboard import create_nas_dashboard_layout
             return create_nas_dashboard_layout()
+        elif pathname == '/settings':
+            from layouts.settings import create_settings_layout
+            return create_settings_layout()
         else:
             from dash import html
             return html.Div([
@@ -238,3 +241,10 @@ def register_all_callbacks(app):
         register_nas_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import nas_callbacks: {e}")
+
+    # Import and register Settings (API Keys) callbacks
+    try:
+        from callbacks.api_key_callbacks import register_api_key_callbacks
+        register_api_key_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import api_key_callbacks: {e}")
