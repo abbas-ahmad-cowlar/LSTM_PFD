@@ -228,6 +228,13 @@ def register_all_callbacks(app):
     except ImportError as e:
         print(f"Warning: Could not import notification_callbacks: {e}")
 
+    # Import and register Email Digest Queue callbacks
+    try:
+        from callbacks.email_digest_callbacks import register_email_digest_callbacks
+        register_email_digest_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import email_digest_callbacks: {e}")
+
     # Import and register Enhanced Visualization callbacks
     try:
         from callbacks.visualization_callbacks import register_visualization_callbacks
