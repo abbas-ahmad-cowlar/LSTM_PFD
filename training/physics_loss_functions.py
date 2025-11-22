@@ -24,6 +24,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from models.physics.bearing_dynamics import BearingDynamics
 from models.physics.fault_signatures import FaultSignatureDatabase
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class FrequencyConsistencyLoss(nn.Module):
@@ -220,7 +221,7 @@ class SommerfeldConsistencyLoss(nn.Module):
         return loss
 
 
-class TemporalSmoothness Loss(nn.Module):
+class TemporalSmoothnessLoss(nn.Module):
     """
     Penalizes erratic temporal changes in predictions.
 
@@ -506,7 +507,7 @@ if __name__ == "__main__":
     # Create synthetic data
     batch_size = 4
     signal_length = 10240
-    num_classes = 11
+    num_classes=NUM_CLASSES
 
     # Random signal
     signal = torch.randn(batch_size, 1, signal_length)

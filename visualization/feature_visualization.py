@@ -15,6 +15,7 @@ import seaborn as sns
 from pathlib import Path
 from typing import List, Optional
 from sklearn.manifold import TSNE
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class FeatureVisualizer:

@@ -9,6 +9,7 @@ Author: AI Assistant
 Date: 2025-11-20
 """
 
+from utils.constants import SAMPLING_RATE
 import numpy as np
 import pywt
 from typing import Tuple, Optional, List, Dict
@@ -481,7 +482,7 @@ if __name__ == "__main__":
     print("Wavelet Transform - Example Usage\n")
 
     # Generate synthetic signal
-    fs = 20480
+    fs = SAMPLING_RATE
     duration = 5.0
     t = np.linspace(0, duration, int(fs * duration))
 

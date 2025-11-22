@@ -538,7 +538,7 @@ if __name__ == "__main__":
     from models.cnn.cnn_1d import CNN1D
 
     # Create model
-    model = CNN1D(num_classes=11, input_channels=1, dropout=0.3)
+    model = CNN1D(num_classes=NUM_CLASSES, input_channels=1, dropout=0.3)
 
     # Generate dummy data
     X = torch.randn(100, 1, 10240)

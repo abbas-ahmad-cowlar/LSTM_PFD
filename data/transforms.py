@@ -17,6 +17,7 @@ import torch
 from typing import Optional, List, Callable, Union
 from scipy import signal as scipy_signal
 from scipy.interpolate import interp1d
+from utils.constants import SAMPLING_RATE
 
 from utils.logging import get_logger
 
@@ -105,7 +106,7 @@ class Resample:
     Resample signal to different sampling rate.
 
     Example:
-        >>> resample = Resample(original_fs=20480, target_fs=10240)
+        >>> resample = Resample(original_fs=SAMPLING_RATE, target_fs=10240)
         >>> signal_resampled = resample(signal)
     """
 
@@ -153,7 +154,7 @@ class BandpassFilter:
     Apply bandpass filter to signal.
 
     Example:
-        >>> bp_filter = BandpassFilter(lowcut=10, highcut=500, fs=20480)
+        >>> bp_filter = BandpassFilter(lowcut=10, highcut=500, fs=SAMPLING_RATE)
         >>> signal_filtered = bp_filter(signal)
     """
 
@@ -196,7 +197,7 @@ class LowpassFilter:
     Apply lowpass filter to signal.
 
     Example:
-        >>> lp_filter = LowpassFilter(cutoff=500, fs=20480)
+        >>> lp_filter = LowpassFilter(cutoff=500, fs=SAMPLING_RATE)
         >>> signal_filtered = lp_filter(signal)
     """
 
@@ -230,7 +231,7 @@ class HighpassFilter:
     Apply highpass filter to signal.
 
     Example:
-        >>> hp_filter = HighpassFilter(cutoff=10, fs=20480)
+        >>> hp_filter = HighpassFilter(cutoff=10, fs=SAMPLING_RATE)
         >>> signal_filtered = hp_filter(signal)
     """
 

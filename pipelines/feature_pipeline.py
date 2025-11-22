@@ -16,6 +16,7 @@ import h5py
 import time
 
 from features.feature_extractor import FeatureExtractor
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class FeaturePipeline:

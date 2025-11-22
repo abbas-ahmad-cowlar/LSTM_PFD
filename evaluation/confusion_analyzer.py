@@ -10,6 +10,7 @@ Deep analysis of confusion patterns to identify:
 import numpy as np
 import pandas as pd
 from typing import List, Tuple, Dict
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class ConfusionAnalyzer:

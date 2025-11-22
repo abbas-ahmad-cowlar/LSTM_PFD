@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, classification_report
 from collections import defaultdict
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class ErrorAnalyzer:

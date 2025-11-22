@@ -352,7 +352,7 @@ def benchmark_quantized_model(
         Dictionary with timing comparison
 
     Example:
-        >>> x = torch.randn(1, 1, 102400)
+        >>> x = torch.randn(1, 1, SIGNAL_LENGTH)
         >>> stats = benchmark_quantized_model(original_model, quantized_model, x)
         >>> print(f"Speedup: {stats['speedup']:.2f}x")
     """
@@ -450,7 +450,7 @@ def load_quantized_model(
         >>> model, metadata = load_quantized_model(
         ...     ResNet18,
         ...     'checkpoints/phase9/resnet_int8.pth',
-        ...     num_classes=11
+        ...     num_classes=NUM_CLASSES
         ... )
     """
     checkpoint = torch.load(checkpoint_path, map_location='cpu')

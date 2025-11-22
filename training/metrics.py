@@ -19,6 +19,7 @@ from sklearn.metrics import (
     confusion_matrix as sklearn_confusion_matrix
 )
 from typing import Dict, Optional, Tuple
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class MetricsTracker:

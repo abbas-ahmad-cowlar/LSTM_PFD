@@ -504,7 +504,7 @@ if __name__ == '__main__':
     print("Testing 2D CNN activation visualization...")
 
     # Create model
-    model = resnet18_2d(num_classes=11)
+    model = resnet18_2d(num_classes=NUM_CLASSES)
 
     # Create dummy spectrogram
     spectrogram = torch.randn(1, 1, 129, 400)

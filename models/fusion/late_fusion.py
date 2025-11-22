@@ -13,6 +13,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-20
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -44,7 +45,7 @@ class LateFusion(BaseModel):
         models: List[nn.Module],
         fusion_method: str = 'weighted_average',
         weights: Optional[List[float]] = None,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         learnable_weights: bool = False
     ):
         super().__init__()
@@ -325,7 +326,7 @@ def create_late_fusion(
     models: List[nn.Module],
     fusion_method: str = 'weighted_average',
     weights: Optional[List[float]] = None,
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     learnable_weights: bool = False
 ) -> LateFusion:
     """
@@ -358,7 +359,7 @@ def train_late_fusion_weights(
     models: List[nn.Module],
     train_loader: torch.utils.data.DataLoader,
     val_loader: torch.utils.data.DataLoader,
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     num_epochs: int = 10,
     lr: float = 0.01,
     device: str = 'cuda',

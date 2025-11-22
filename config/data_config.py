@@ -18,14 +18,15 @@ from typing import Dict, List, Tuple, Any
 from pathlib import Path
 
 from .base_config import BaseConfig, ConfigValidator
+from utils.constants import SAMPLING_RATE, SIGNAL_DURATION
 
 
 @dataclass
 class SignalConfig(BaseConfig):
     """Signal generation parameters."""
 
-    fs: int = 20480  # Sampling frequency (Hz)
-    T: float = 5.0  # Signal duration (seconds)
+    fs: int = SAMPLING_RATE  # Sampling frequency (Hz)
+    T: float = SIGNAL_DURATION  # Signal duration (seconds)
     Omega_base: float = 60.0  # Nominal rotation speed (Hz) = 3600 RPM
 
     def get_schema(self) -> Dict[str, Any]:

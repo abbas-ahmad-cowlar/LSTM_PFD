@@ -20,6 +20,7 @@ Architecture:
 Expected Performance: 97-98% accuracy (best PINN variant)
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -45,8 +46,8 @@ class HybridPINN(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
-        input_length: int = 102400,
+        num_classes: int = NUM_CLASSES,
+        input_length: int = SIGNAL_LENGTH,
         backbone: str = 'resnet18',
         physics_feature_dim: int = 64,
         fusion_dim: int = 256,
@@ -371,7 +372,7 @@ class HybridPINN(BaseModel):
 
 
 def create_hybrid_pinn(
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     backbone: str = 'resnet18',
     **kwargs
 ) -> HybridPINN:
@@ -401,7 +402,7 @@ if __name__ == "__main__":
 
     # Create model
     model = HybridPINN(
-        num_classes=11,
+        num_classes=NUM_CLASSES,
         backbone='resnet18',
         physics_feature_dim=64,
         fusion_dim=256,
@@ -416,7 +417,7 @@ if __name__ == "__main__":
     # Test forward pass
     print("\nTesting Forward Pass:")
     batch_size = 4
-    signal = torch.randn(batch_size, 1, 102400)
+    signal = torch.randn(batch_size, 1, SIGNAL_LENGTH)
 
     metadata = {
         'rpm': torch.tensor([3000.0, 3600.0, 4000.0, 3800.0]),

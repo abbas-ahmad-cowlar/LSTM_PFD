@@ -9,6 +9,7 @@ Each fault type has characteristic frequencies in the vibration spectrum that
 can be predicted from bearing geometry and operating conditions.
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import numpy as np
 import torch
 from typing import Dict, List, Union, Tuple

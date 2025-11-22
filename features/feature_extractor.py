@@ -12,6 +12,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-19
 """
 
+from utils.constants import SAMPLING_RATE, SIGNAL_LENGTH
 import numpy as np
 from typing import Dict, List, Optional
 from pathlib import Path
@@ -36,7 +37,7 @@ class FeatureExtractor:
     Total: 36 features
 
     Example:
-        >>> extractor = FeatureExtractor(fs=20480)
+        >>> extractor = FeatureExtractor(fs=SAMPLING_RATE)
         >>> signal = np.random.randn(102400)
         >>> features = extractor.extract_features(signal)
         >>> print(f"Total features: {len(features)}")  # 36

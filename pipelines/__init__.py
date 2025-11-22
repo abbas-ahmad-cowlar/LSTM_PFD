@@ -12,6 +12,7 @@ from .classical_ml_pipeline import ClassicalMLPipeline
 from .feature_pipeline import FeaturePipeline
 from .matlab_compat import MatlabCompatibility
 from .pipeline_validator import PipelineValidator
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 __all__ = [
     'ClassicalMLPipeline',

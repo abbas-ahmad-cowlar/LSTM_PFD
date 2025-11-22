@@ -19,6 +19,8 @@ import numpy as np
 import logging
 from collections import OrderedDict
 
+from utils.constants import SIGNAL_LENGTH
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -317,7 +319,7 @@ def profile_model(
 
     Example:
         >>> model = load_pretrained('checkpoints/best_model.pth')
-        >>> profile = profile_model(model, (1, 1, 102400))
+        >>> profile = profile_model(model, (1, 1, SIGNAL_LENGTH))
         >>> print(f"FLOPs: {profile['flops'] / 1e9:.2f}G")
     """
     try:
@@ -353,7 +355,7 @@ def profile_model(
 
 def compare_models(
     models: Dict[str, nn.Module],
-    input_shape: Tuple[int, ...] = (1, 1, 102400)
+    input_shape: Tuple[int, ...] = (1, 1, SIGNAL_LENGTH)
 ):
     """
     Compare multiple models' statistics.
@@ -393,7 +395,7 @@ def compare_models(
 def export_model_summary(
     model: nn.Module,
     save_path: str,
-    input_shape: Tuple[int, ...] = (1, 1, 102400)
+    input_shape: Tuple[int, ...] = (1, 1, SIGNAL_LENGTH)
 ):
     """
     Export detailed model summary to file.

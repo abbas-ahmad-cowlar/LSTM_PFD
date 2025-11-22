@@ -40,6 +40,7 @@ from torch.utils.data import DataLoader, TensorDataset
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 from deployment.quantization import (
     quantize_model_dynamic,
     quantize_model_static,
@@ -193,7 +194,7 @@ def main():
         logger.info(f"{'='*60}\n")
 
         # Create dummy input
-        dummy_input = torch.randn(1, 1, 102400)
+        dummy_input = torch.randn(1, 1, SIGNAL_LENGTH)
 
         try:
             perf_stats = benchmark_quantized_model(

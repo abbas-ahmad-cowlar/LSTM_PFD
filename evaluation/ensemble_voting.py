@@ -22,6 +22,7 @@ from typing import List, Dict, Optional, Tuple
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 import pandas as pd
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class EnsembleVoting:
@@ -412,9 +413,9 @@ if __name__ == "__main__":
     print("""
     # Create ensemble with multiple models
     models = [
-        create_resnet18_1d(num_classes=11),
-        create_resnet50_1d(num_classes=11),
-        create_efficientnet_b3(num_classes=11)
+        create_resnet18_1d(num_classes=NUM_CLASSES),
+        create_resnet50_1d(num_classes=NUM_CLASSES),
+        create_efficientnet_b3(num_classes=NUM_CLASSES)
     ]
 
     # Load trained weights

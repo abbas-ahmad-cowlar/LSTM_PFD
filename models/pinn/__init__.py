@@ -20,6 +20,7 @@ Key Features:
 - Fault relationship modeling via knowledge graphs
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .hybrid_pinn import HybridPINN, create_hybrid_pinn
 from .physics_constrained_cnn import (
     PhysicsConstrainedCNN,

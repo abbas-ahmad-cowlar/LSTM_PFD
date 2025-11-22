@@ -14,16 +14,17 @@ Usage:
     from models.spectrogram_cnn import resnet18_2d, efficientnet_b0
 
     # ResNet-2D with ImageNet transfer learning
-    model = resnet18_2d(num_classes=11, pretrained=True)
+    model = resnet18_2d(num_classes=NUM_CLASSES, pretrained=True)
 
     # EfficientNet-B0 (parameter-efficient)
-    model = efficientnet_b0(num_classes=11)
+    model = efficientnet_b0(num_classes=NUM_CLASSES)
 
     # Forward pass
     spectrogram = torch.randn(4, 1, 129, 400)  # [B, C, H, W]
     logits = model(spectrogram)  # [4, 11]
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .resnet2d_spectrogram import (
     ResNet2DSpectrogram,
     resnet18_2d,
@@ -53,7 +54,7 @@ __all__ = [
 ]
 
 
-def get_model(model_name: str, num_classes: int = 11, **kwargs):
+def get_model(model_name: str, num_classes: int = NUM_CLASSES, **kwargs):
     """
     Factory function to create models by name.
 
@@ -66,7 +67,7 @@ def get_model(model_name: str, num_classes: int = 11, **kwargs):
         Instantiated model
 
     Example:
-        model = get_model('resnet18_2d', num_classes=11, pretrained=True)
+        model = get_model('resnet18_2d', num_classes=NUM_CLASSES, pretrained=True)
     """
     models = {
         'resnet18_2d': resnet18_2d,

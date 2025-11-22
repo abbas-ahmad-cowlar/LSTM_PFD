@@ -33,13 +33,14 @@ Usage:
     model = DualStreamCNN(
         time_branch='resnet18_1d',
         freq_branch='resnet18_2d',
-        num_classes=11
+        num_classes=NUM_CLASSES
     )
 
-    signal = torch.randn(4, 1, 102400)
+    signal = torch.randn(4, 1, SIGNAL_LENGTH)
     output = model(signal)  # [4, 11]
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -69,7 +70,7 @@ class DualStreamCNN(BaseModel):
         self,
         time_branch: Union[str, nn.Module] = 'resnet18_1d',
         freq_branch: Union[str, nn.Module] = 'resnet18_2d',
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         fusion_dim: int = 1024,
         fusion_type: str = 'concat',
         freeze_time_branch: bool = False,
@@ -213,7 +214,7 @@ class DualStreamCNN(BaseModel):
     def _get_feature_dim(self, model: nn.Module) -> int:
         """Get output feature dimension of a model."""
         # Create dummy input and get output shape
-        dummy_input = torch.randn(1, 1, 102400)
+        dummy_input = torch.randn(1, 1, SIGNAL_LENGTH)
 
         # Check if model expects 2D input (spectrogram)
         try:
@@ -357,7 +358,7 @@ class AttentionFusion(nn.Module):
         return fused
 
 
-def dual_stream_resnet18(num_classes: int = 11, **kwargs) -> DualStreamCNN:
+def dual_stream_resnet18(num_classes: int = NUM_CLASSES, **kwargs) -> DualStreamCNN:
     """Dual-stream with ResNet-18 in both branches."""
     return DualStreamCNN(
         time_branch='resnet18_1d',
@@ -367,7 +368,7 @@ def dual_stream_resnet18(num_classes: int = 11, **kwargs) -> DualStreamCNN:
     )
 
 
-def dual_stream_mixed(num_classes: int = 11, **kwargs) -> DualStreamCNN:
+def dual_stream_mixed(num_classes: int = NUM_CLASSES, **kwargs) -> DualStreamCNN:
     """Dual-stream with ResNet-18 (time) and EfficientNet-B0 (freq)."""
     return DualStreamCNN(
         time_branch='resnet18_1d',
@@ -381,10 +382,10 @@ if __name__ == '__main__':
     # Test dual-stream model
     print("Testing Dual-Stream CNN...")
 
-    model = dual_stream_resnet18(num_classes=11, fusion_type='concat')
+    model = dual_stream_resnet18(num_classes=NUM_CLASSES, fusion_type='concat')
 
     # Test with time-domain input only
-    signal = torch.randn(4, 1, 102400)
+    signal = torch.randn(4, 1, SIGNAL_LENGTH)
     output = model(signal)
 
     print(f"Input signal shape: {signal.shape}")
@@ -398,6 +399,6 @@ if __name__ == '__main__':
 
     # Test attention fusion
     print("\nTesting attention fusion...")
-    model_attn = dual_stream_resnet18(num_classes=11, fusion_type='attention')
+    model_attn = dual_stream_resnet18(num_classes=NUM_CLASSES, fusion_type='attention')
     output_attn = model_attn(signal)
     print(f"Attention fusion output: {output_attn.shape}")

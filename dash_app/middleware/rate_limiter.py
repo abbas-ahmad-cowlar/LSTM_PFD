@@ -15,6 +15,7 @@ from config import (
     RATE_LIMIT_FAIL_OPEN
 )
 from utils.logger import setup_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 

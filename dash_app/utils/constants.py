@@ -2,6 +2,7 @@
 Global constants for the Dash application.
 """
 from config import FAULT_CLASSES, COLOR_PALETTE
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 # Fault class to index mapping
 FAULT_CLASS_TO_IDX = {fault: idx for idx, fault in enumerate(FAULT_CLASSES)}

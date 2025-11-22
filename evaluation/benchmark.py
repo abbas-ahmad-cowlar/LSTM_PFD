@@ -12,6 +12,7 @@ import pandas as pd
 from typing import Dict, List
 import torch
 from torch.utils.data import DataLoader
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 def benchmark_against_classical(

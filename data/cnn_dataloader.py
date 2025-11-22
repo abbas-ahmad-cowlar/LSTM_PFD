@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader, Dataset
 from typing import Dict, Tuple, Optional, List
 import numpy as np
 
+from utils.constants import SIGNAL_LENGTH, NUM_CLASSES
 from utils.logging import get_logger
 from data.cnn_dataset import RawSignalDataset
 
@@ -83,7 +84,7 @@ def create_cnn_dataloader(
         >>> dataset = RawSignalDataset(signals, labels)
         >>> loader = create_cnn_dataloader(dataset, batch_size=32, shuffle=True)
         >>> for signals, labels in loader:
-        ...     print(signals.shape)  # [32, 1, 102400]
+        ...     print(signals.shape)  # [32, 1, SIGNAL_LENGTH]
     """
     # Check if CUDA available for pin_memory
     if pin_memory and not torch.cuda.is_available():
@@ -268,9 +269,8 @@ def test_cnn_dataloader():
     from data.cnn_transforms import get_train_transforms
 
     num_samples = 100
-    signal_length = 102400
-    signals = np.random.randn(num_samples, signal_length).astype(np.float32)
-    labels = np.random.randint(0, 11, num_samples)
+    signals = np.random.randn(num_samples, SIGNAL_LENGTH).astype(np.float32)
+    labels = np.random.randint(0, NUM_CLASSES, num_samples)
 
     dataset = RawSignalDataset(
         signals=signals,

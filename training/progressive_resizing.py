@@ -24,6 +24,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
 from typing import List, Tuple, Optional, Dict
 import numpy as np
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class ResizableSignalDataset(Dataset):
@@ -311,7 +312,7 @@ if __name__ == "__main__":
     print("\nExample usage:")
     print("""
     # Create model
-    model = create_resnet18_1d(num_classes=11)
+    model = create_resnet18_1d(num_classes=NUM_CLASSES)
 
     # Setup training
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)

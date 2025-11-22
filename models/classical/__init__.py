@@ -8,6 +8,7 @@ Author: LSTM_PFD Team
 Date: 2025-11-19
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .svm_classifier import SVMClassifier
 from .random_forest import RandomForestClassifier
 from .neural_network import MLPClassifier

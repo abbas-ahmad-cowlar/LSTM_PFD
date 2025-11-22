@@ -386,7 +386,7 @@ if __name__ == "__main__":
     from models.cnn.cnn_1d import CNN1D
 
     # Create model and data
-    model = CNN1D(num_classes=11, input_channels=1, dropout=0.3)
+    model = CNN1D(num_classes=NUM_CLASSES, input_channels=1, dropout=0.3)
     signal = torch.randn(1, 1, 10240)
 
     # Create generator

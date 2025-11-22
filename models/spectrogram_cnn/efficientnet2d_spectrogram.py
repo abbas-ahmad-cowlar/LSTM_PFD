@@ -12,6 +12,7 @@ Input: [B, 1, H, W] where H=n_freq (129), W=n_time (400)
 Output: [B, 11] for 11 fault classes
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -198,7 +199,7 @@ class EfficientNet2DSpectrogram(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         width_mult: float = 1.0,
         depth_mult: float = 1.0,
@@ -341,7 +342,7 @@ class EfficientNet2DSpectrogram(BaseModel):
         return features
 
 
-def efficientnet_b0(num_classes: int = 11, **kwargs) -> EfficientNet2DSpectrogram:
+def efficientnet_b0(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet2DSpectrogram:
     """EfficientNet-B0 (baseline, 5.3M params)."""
     return EfficientNet2DSpectrogram(
         num_classes=num_classes,
@@ -352,7 +353,7 @@ def efficientnet_b0(num_classes: int = 11, **kwargs) -> EfficientNet2DSpectrogra
     )
 
 
-def efficientnet_b1(num_classes: int = 11, **kwargs) -> EfficientNet2DSpectrogram:
+def efficientnet_b1(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet2DSpectrogram:
     """EfficientNet-B1 (7.8M params)."""
     return EfficientNet2DSpectrogram(
         num_classes=num_classes,
@@ -363,7 +364,7 @@ def efficientnet_b1(num_classes: int = 11, **kwargs) -> EfficientNet2DSpectrogra
     )
 
 
-def efficientnet_b3(num_classes: int = 11, **kwargs) -> EfficientNet2DSpectrogram:
+def efficientnet_b3(num_classes: int = NUM_CLASSES, **kwargs) -> EfficientNet2DSpectrogram:
     """EfficientNet-B3 (12M params)."""
     return EfficientNet2DSpectrogram(
         num_classes=num_classes,
@@ -376,7 +377,7 @@ def efficientnet_b3(num_classes: int = 11, **kwargs) -> EfficientNet2DSpectrogra
 
 if __name__ == '__main__':
     # Test the model
-    model = efficientnet_b0(num_classes=11)
+    model = efficientnet_b0(num_classes=NUM_CLASSES)
 
     # Test forward pass
     batch_size = 4

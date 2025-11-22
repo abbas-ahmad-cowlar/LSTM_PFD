@@ -4,6 +4,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import TSVECTOR
 from models.base import BaseModel
 import enum
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class ExperimentStatus(enum.Enum):

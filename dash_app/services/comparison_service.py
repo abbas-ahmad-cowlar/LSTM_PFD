@@ -14,6 +14,7 @@ from database.connection import get_session
 from models.experiment import Experiment, ExperimentStatus
 from models.training_run import TrainingRun
 from config import STORAGE_RESULTS_DIR, FAULT_CLASSES
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class ComparisonService:

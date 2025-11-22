@@ -8,6 +8,7 @@ from sqlalchemy.sql import func
 from datetime import datetime
 
 from models.base import Base
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class APIKey(Base):

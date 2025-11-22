@@ -2,6 +2,7 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class NotificationPreference(BaseModel):
