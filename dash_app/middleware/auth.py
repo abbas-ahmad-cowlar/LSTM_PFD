@@ -14,8 +14,13 @@ from models.user import User
 
 logger = setup_logger(__name__)
 
-# Secret key for JWT (should be in environment variable in production)
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-in-production-please")
+# Secret key for JWT - must be set in environment variables
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    raise ValueError(
+        "JWT_SECRET_KEY must be set in environment variables. "
+        "Generate with: python -c 'import secrets; print(secrets.token_hex(32))'"
+    )
 ALGORITHM = "HS256"
 TOKEN_EXPIRY_HOURS = 24
 
