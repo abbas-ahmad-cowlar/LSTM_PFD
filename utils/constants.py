@@ -335,6 +335,265 @@ def validate_signal_length(length: int) -> bool:
 
 
 # ==============================================================================
+# WEB APPLICATION - FILE SIZE LIMITS
+# ==============================================================================
+
+# File upload limits
+MAX_UPLOAD_FILE_SIZE_BYTES: int = 100 * 1024 * 1024  # 100 MB - Maximum file upload size
+MAX_MODEL_FILE_SIZE_BYTES: int = 500 * 1024 * 1024  # 500 MB - Maximum model file size
+MAX_DATASET_FILE_SIZE_BYTES: int = 1024 * 1024 * 1024  # 1 GB - Maximum dataset file size
+
+# File size conversion constants
+BYTES_PER_KB: int = 1024  # Bytes in 1 kilobyte
+BYTES_PER_MB: int = 1024 * 1024  # Bytes in 1 megabyte
+BYTES_PER_GB: int = 1024 * 1024 * 1024  # Bytes in 1 gigabyte
+
+
+# ==============================================================================
+# WEB APPLICATION - SAMPLE AND DATA LIMITS
+# ==============================================================================
+
+# Default sample counts for various operations
+DEFAULT_NUM_SIGNALS_PER_FAULT: int = 100  # Default signals per fault type in dataset generation
+DEFAULT_BACKGROUND_SAMPLES: int = 100  # Default number of background samples for XAI methods
+DEFAULT_PERTURBATIONS: int = 1000  # Default number of perturbations for LIME
+
+# Maximum sample limits to prevent memory issues
+MAX_SAMPLES_PER_DATASET: int = 20480  # Maximum samples per dataset to prevent memory overflow
+MAX_VISUALIZATION_SAMPLES: int = 1000  # Maximum samples to visualize at once
+MAX_PREVIEW_SAMPLES: int = 100  # Maximum samples for preview displays
+MAX_DATASET_LIST_LIMIT: int = 100  # Maximum datasets to list at once
+
+
+# ==============================================================================
+# WEB APPLICATION - PAGINATION
+# ==============================================================================
+
+DEFAULT_PAGE_SIZE: int = 50  # Default number of items per page
+MAX_PAGE_SIZE: int = 500  # Maximum page size to prevent performance issues
+DEFAULT_RECENT_ITEMS_LIMIT: int = 5  # Number of recent items to show in lists
+
+
+# ==============================================================================
+# WEB APPLICATION - CACHE TTL (Time To Live)
+# ==============================================================================
+
+CACHE_TTL_SHORT: int = 300  # 5 minutes - For frequently changing data
+CACHE_TTL_MEDIUM: int = 600  # 10 minutes - For moderately stable data
+CACHE_TTL_LONG: int = 3600  # 1 hour - For stable data
+
+
+# ==============================================================================
+# WEB APPLICATION - RATE LIMITS
+# ==============================================================================
+
+API_RATE_LIMIT_PER_HOUR: int = 1000  # Maximum API requests per hour
+EMAIL_RATE_LIMIT_PER_MINUTE: int = 100  # Maximum emails to send per minute
+WEBHOOK_RATE_LIMIT_PER_SECOND: int = 1  # Maximum webhook calls per second
+
+
+# ==============================================================================
+# WEB APPLICATION - TRAINING LIMITS
+# ==============================================================================
+
+# Epoch limits
+MIN_EPOCHS: int = 1  # Minimum training epochs
+MAX_EPOCHS: int = 1000  # Maximum training epochs
+DEFAULT_EPOCHS_FALLBACK: int = 100  # Fallback value when epochs not specified
+
+# Learning rate defaults
+DEFAULT_LEARNING_RATE_FALLBACK: float = 0.001  # Fallback learning rate
+
+# Training timeouts
+MAX_TRAINING_DURATION_SECONDS: int = 7200  # 2 hours - Maximum training time
+MAX_TESTING_DURATION_SECONDS: int = 1800  # 30 minutes - Maximum testing time
+MAX_TASK_DURATION_SECONDS: int = 600  # 10 minutes - Maximum general task time
+MAX_OPERATION_TIMEOUT_SECONDS: int = 300  # 5 minutes - Maximum operation timeout
+
+
+# ==============================================================================
+# WEB APPLICATION - STRING LENGTHS
+# ==============================================================================
+
+MAX_TAG_LENGTH: int = 50  # Maximum length of tags
+MAX_NAME_LENGTH: int = 255  # Maximum length of names/titles
+MAX_DESCRIPTION_LENGTH: int = 2000  # Maximum length of descriptions
+
+
+# ==============================================================================
+# WEB APPLICATION - DATA GENERATION DEFAULTS
+# ==============================================================================
+
+# Default percentage values (stored as integers, converted to decimals in code)
+DEFAULT_SPEED_VARIATION_PERCENT: int = 10  # Default speed variation percentage
+DEFAULT_AUGMENTATION_RATIO_PERCENT: int = 30  # Default augmentation ratio percentage
+DEFAULT_LOAD_RANGE_MIN_PERCENT: int = 30  # Default minimum load percentage
+DEFAULT_LOAD_RANGE_MAX_PERCENT: int = 100  # Default maximum load percentage
+
+# Temperature range defaults
+DEFAULT_TEMP_RANGE_MIN: int = 40  # Default minimum temperature (°C)
+DEFAULT_TEMP_RANGE_MAX: int = 80  # Default maximum temperature (°C)
+
+# Random seed defaults
+DEFAULT_RANDOM_SEED: int = 42  # Default random seed for reproducibility
+
+# Estimation constants
+SIGNALS_PER_MINUTE_GENERATION: int = 50  # Estimated signals generated per minute
+FILES_PER_MINUTE_IMPORT: int = 10  # Estimated files imported per minute
+
+
+# ==============================================================================
+# WEB APPLICATION - HYPERPARAMETER OPTIMIZATION RANGES
+# ==============================================================================
+
+# Random Forest defaults
+RF_N_ESTIMATORS_MIN: int = 100  # Minimum number of trees
+RF_N_ESTIMATORS_MAX: int = 1000  # Maximum number of trees
+RF_N_ESTIMATORS_STEP: int = 100  # Step size for n_estimators
+RF_MAX_DEPTH_MIN: int = 10  # Minimum tree depth
+RF_MAX_DEPTH_MAX: int = 100  # Maximum tree depth
+RF_MAX_DEPTH_STEP: int = 10  # Step size for max_depth
+RF_N_ESTIMATORS_DEFAULT: int = 100  # Default number of estimators for feature importance
+
+# SVM defaults
+SVM_GAMMA_MIN: float = 0.001  # Minimum gamma value
+SVM_GAMMA_MAX: float = 1.0  # Maximum gamma value
+SVM_GAMMA_STEP: float = 0.001  # Step size for gamma
+
+# Neural network architecture ranges
+NN_FILTERS_MIN: int = 32  # Minimum number of filters/channels
+NN_FILTERS_MAX: int = 256  # Maximum number of filters/channels
+NN_FILTERS_STEP: int = 32  # Step size for filters
+NN_CHANNEL_SIZES_OPTIONS: list = [16, 32, 64, 128]  # Channel size options for NAS
+NN_D_MODEL_OPTIONS: list = [128, 256, 512]  # Transformer d_model options
+
+# Transformer defaults
+TRANSFORMER_D_MODEL_MIN: int = 128  # Minimum d_model dimension
+TRANSFORMER_D_MODEL_MAX: int = 512  # Maximum d_model dimension
+TRANSFORMER_D_MODEL_STEP: int = 64  # Step size for d_model
+
+# Progressive training defaults
+PROGRESSIVE_START_SIZE_DEFAULT: int = 51200  # Default starting signal size for progressive training
+PROGRESSIVE_END_SIZE_DEFAULT: int = 102400  # Default ending signal size for progressive training
+
+
+# ==============================================================================
+# WEB APPLICATION - DEPLOYMENT CONSTANTS
+# ==============================================================================
+
+# ONNX export defaults
+DEFAULT_ONNX_OPSET_VERSION: int = 14  # Default ONNX opset version
+DEFAULT_ONNX_INPUT_SHAPE: tuple = (1, 1, 102400)  # Default input shape for ONNX export
+
+# Model benchmarking
+DEFAULT_BENCHMARK_RUNS: int = 100  # Number of runs for benchmarking
+BENCHMARK_WARMUP_RUNS: int = 10  # Number of warmup runs before benchmarking
+MILLISECONDS_PER_SECOND: int = 1000  # Conversion factor for ms to seconds
+
+# Model pruning defaults
+DEFAULT_PRUNING_AMOUNT: float = 0.3  # Default pruning amount (30% of parameters)
+
+
+# ==============================================================================
+# WEB APPLICATION - VISUALIZATION DEFAULTS
+# ==============================================================================
+
+# Plot dimensions
+DEFAULT_PLOT_HEIGHT: int = 600  # Default plot height in pixels
+SMALL_PLOT_HEIGHT: int = 400  # Smaller plot height
+DYNAMIC_PLOT_HEIGHT_PER_ITEM: int = 20  # Height per item for dynamic plots
+MIN_PLOT_HEIGHT: int = 400  # Minimum plot height
+
+# Spectrogram scales
+WAVELET_SCALES_MIN: int = 1  # Minimum wavelet scale
+WAVELET_SCALES_MAX: int = 128  # Maximum wavelet scale
+
+# Sample data sizes for visualizations
+POWER_SPECTRUM_DISPLAY_SAMPLES: int = 500  # Number of power spectrum samples to display
+RANDOM_SAMPLE_SIZE: int = 100  # Default random sample size for visualizations
+SALIENCY_MAP_SIZE: int = 1000  # Default saliency map size
+ACTIVATION_MAP_FILTERS: int = 32  # Number of activation map filters
+ACTIVATION_MAP_LENGTH: int = 100  # Length of activation maps
+
+# Counterfactual visualization
+COUNTERFACTUAL_SIGNAL_LENGTH: int = 1000  # Length of counterfactual signals
+COUNTERFACTUAL_NOISE_FACTOR: float = 0.3  # Noise factor for counterfactual generation
+
+
+# ==============================================================================
+# WEB APPLICATION - HTTP STATUS CODES
+# ==============================================================================
+
+# Success status codes
+HTTP_STATUS_OK: int = 200  # Standard success response
+HTTP_STATUS_CREATED: int = 201  # Resource created successfully
+HTTP_STATUS_ACCEPTED: int = 202  # Request accepted for processing
+
+# Client error status codes
+HTTP_STATUS_BAD_REQUEST: int = 400  # Bad request
+HTTP_STATUS_UNAUTHORIZED: int = 401  # Unauthorized
+HTTP_STATUS_FORBIDDEN: int = 403  # Forbidden
+HTTP_STATUS_NOT_FOUND: int = 404  # Not found
+
+# Success range
+HTTP_SUCCESS_MIN: int = 200  # Minimum success status code
+HTTP_SUCCESS_MAX: int = 300  # Maximum success status code (exclusive)
+HTTP_ERROR_MIN: int = 400  # Minimum error status code
+
+
+# ==============================================================================
+# WEB APPLICATION - PERCENTAGE CONVERSION
+# ==============================================================================
+
+PERCENT_MULTIPLIER: int = 100  # Multiplier to convert decimal to percentage
+PERCENT_DIVISOR: int = 100  # Divisor to convert percentage to decimal
+
+
+# ==============================================================================
+# WEB APPLICATION - MONITORING AND METRICS
+# ==============================================================================
+
+# API monitoring defaults
+DEFAULT_MONITORING_HOURS: int = 24  # Default hours to look back for monitoring data
+DEFAULT_RECENT_REQUESTS_LIMIT: int = 100  # Default limit for recent requests
+
+# System monitoring
+BYTES_TO_GB_DIVISOR: int = 1024 ** 3  # Divisor to convert bytes to gigabytes
+
+
+# ==============================================================================
+# WEB APPLICATION - TESTING DEFAULTS
+# ==============================================================================
+
+DEFAULT_TEST_SAMPLES: int = 100  # Default number of test samples
+MAX_PASS_RATE_PERCENT: int = 100  # Maximum pass rate percentage
+
+
+# ==============================================================================
+# WEB APPLICATION - NOISE LAYERS
+# ==============================================================================
+
+# Number of available noise layers in data generation
+TOTAL_NOISE_LAYERS: int = 7  # Total number of noise layer options
+
+
+# ==============================================================================
+# WEB APPLICATION - API KEY DEFAULTS
+# ==============================================================================
+
+DEFAULT_API_KEY_EXPIRY_DAYS: int = 365  # Default API key expiration (1 year)
+
+
+# ==============================================================================
+# WEB APPLICATION - LOCAL DEVELOPMENT
+# ==============================================================================
+
+# Local server defaults
+DEFAULT_LOCAL_PORT: int = 8050  # Default port for local Dash server
+DEFAULT_LOCAL_HOST: str = "localhost"  # Default hostname
+
+
+# ==============================================================================
 # VERSION INFO
 # ==============================================================================
 
