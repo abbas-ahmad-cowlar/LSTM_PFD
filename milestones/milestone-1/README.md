@@ -931,7 +931,7 @@ If you use this system in your research or project, please cite:
   author = {Your Name},
   year = {2025},
   note = {Deep learning system for bearing fault diagnosis with 96-97\% accuracy},
-  url = {https://github.com/yourusername/bearing-fault-diagnosis}
+  url = {https://github.com/abbas-ahmad-cowlar/bearing-fault-diagnosis}
 }
 ```
 
