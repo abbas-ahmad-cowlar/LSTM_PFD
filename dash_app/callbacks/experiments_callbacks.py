@@ -16,10 +16,11 @@ def register_experiments_callbacks(app):
         Output('experiments-table-container', 'children'),
         [Input('url', 'pathname'),
          Input('experiment-search', 'value'),
+         Input('experiment-tag-filter', 'value'),
          Input('experiment-model-filter', 'value'),
          Input('experiment-status-filter', 'value')]
     )
-    def load_experiments(pathname, search_value, model_filter, status_filter):
+    def load_experiments(pathname, search_value, tag_filter, model_filter, status_filter):
         """Load and display experiments with filtering."""
         if pathname != '/experiments':
             raise PreventUpdate
@@ -28,6 +29,16 @@ def register_experiments_callbacks(app):
 
         # Build query
         query = session.query(Experiment)
+
+        # Apply tag filter
+        if tag_filter and len(tag_filter) > 0:
+            from models.tag import ExperimentTag
+            # Filter experiments that have ALL selected tags
+            for tag_id in tag_filter:
+                query = query.join(
+                    ExperimentTag,
+                    Experiment.id == ExperimentTag.experiment_id
+                ).filter(ExperimentTag.tag_id == tag_id)
 
         # Apply filters
         if search_value:

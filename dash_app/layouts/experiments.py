@@ -152,19 +152,30 @@ def create_experiments_table(experiments):
     if not experiments:
         return html.P("No experiments found", className="text-muted text-center")
 
-    # Prepare table data
+    # Import here to avoid circular imports
+    from database.connection import get_session
+    from services.tag_service import TagService
+
+    # Prepare table data with tags
+    session = get_session()
     table_data = []
     for exp in experiments:
+        # Get tags for this experiment
+        tags = TagService.get_experiment_tags(session, exp.id)
+        tag_names = ', '.join([tag.name for tag in tags]) if tags else ""
+
         table_data.append({
             "id": exp.id,
             "name": exp.name,
             "model_type": exp.model_type,
+            "tags": tag_names,
             "status": exp.status.value,
             "accuracy": f"{exp.metrics.get('test_accuracy', 0) * 100:.2f}%" if exp.metrics else "N/A",
             "epochs": f"{exp.best_epoch}/{exp.total_epochs}" if exp.total_epochs else "N/A",
             "duration": format_duration(exp.duration_seconds) if exp.duration_seconds else "N/A",
             "created_at": exp.created_at.strftime("%Y-%m-%d %H:%M") if exp.created_at else "N/A",
         })
+    session.close()
 
     return dash_table.DataTable(
         id="experiments-table",
@@ -172,8 +183,9 @@ def create_experiments_table(experiments):
             {"name": "ID", "id": "id", "type": "numeric"},
             {"name": "Name", "id": "name"},
             {"name": "Model", "id": "model_type"},
+            {"name": "Tags", "id": "tags"},
             {"name": "Status", "id": "status"},
-            {"name": "Test Accuracy", "id": "accuracy"},
+            {"name": "Accuracy", "id": "accuracy"},
             {"name": "Epochs", "id": "epochs"},
             {"name": "Duration", "id": "duration"},
             {"name": "Created", "id": "created_at"},
@@ -191,6 +203,13 @@ def create_experiments_table(experiments):
             'padding': '10px',
             'fontSize': '14px',
         },
+        style_cell_conditional=[
+            {
+                'if': {'column_id': 'tags'},
+                'fontSize': '12px',
+                'color': '#666'
+            }
+        ],
         style_header={
             'backgroundColor': 'rgb(230, 230, 230)',
             'fontWeight': 'bold'
