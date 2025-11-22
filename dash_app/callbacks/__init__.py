@@ -71,6 +71,15 @@ def register_all_callbacks(app):
         elif pathname == '/xai':
             from layouts.xai_dashboard import create_xai_dashboard_layout
             return create_xai_dashboard_layout()
+        elif pathname == '/system-health':
+            from layouts.system_health import create_system_health_layout
+            return create_system_health_layout()
+        elif pathname == '/hpo/campaigns':
+            from layouts.hpo_campaigns import create_hpo_campaigns_layout
+            return create_hpo_campaigns_layout()
+        elif pathname == '/deployment':
+            from layouts.deployment import create_deployment_layout
+            return create_deployment_layout()
         else:
             from dash import html
             return html.Div([
@@ -131,3 +140,24 @@ def register_all_callbacks(app):
         register_xai_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import xai_callbacks: {e}")
+
+    # Import and register Phase 11D System Health callbacks
+    try:
+        from callbacks.system_health_callbacks import register_system_health_callbacks
+        register_system_health_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import system_health_callbacks: {e}")
+
+    # Import and register Phase 11C HPO callbacks
+    try:
+        from callbacks.hpo_callbacks import register_hpo_callbacks
+        register_hpo_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import hpo_callbacks: {e}")
+
+    # Import and register Deployment callbacks
+    try:
+        from callbacks.deployment_callbacks import register_deployment_callbacks
+        register_deployment_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import deployment_callbacks: {e}")
