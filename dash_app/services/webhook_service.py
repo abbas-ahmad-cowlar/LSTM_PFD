@@ -39,7 +39,12 @@ class WebhookService:
             if not include_inactive:
                 query = query.filter(WebhookConfiguration.is_active == True)
 
-            webhooks = query.order_by(WebhookConfiguration.created_at.desc()).all()
+            # Apply pagination to prevent loading too many webhooks
+            from utils.query_utils import paginate_with_default_limit
+            webhooks = paginate_with_default_limit(
+                query.order_by(WebhookConfiguration.created_at.desc()),
+                limit=100
+            )
 
             # Detach from session
             session.expunge_all()
