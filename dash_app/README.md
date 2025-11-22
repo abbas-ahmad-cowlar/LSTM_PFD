@@ -391,27 +391,34 @@ MIT License - see `../LICENSE`
 
 ## 📚 Documentation
 
-### Complete Usage Guide
+### 🎯 Choose Your Path
 
-For **comprehensive, step-by-step instructions** on using all features, see the complete usage guide:
+**For GUI Users (No Coding Required):**
+- **[GUI Quick Start Guide](../GUI_QUICKSTART.md)** - 30-minute tutorial to train your first 96% accurate model using only the web dashboard
 
-**[📖 Phase 11 Complete Usage Guide](../PHASE_11_USAGE_GUIDE.md)**
+**For Dashboard Power Users:**
+- **[Phase 11 Complete Usage Guide](../docs/USAGE_PHASE_11.md)** - Comprehensive 850+ line guide covering all dashboard features
 
-This 800+ line guide covers:
+**For Understanding Feature Coverage:**
+- **[Dashboard Gaps Analysis](../docs/DASHBOARD_GAPS.md)** - Complete analysis of what's accessible via GUI vs CLI (50% feature coverage)
+
+### Complete Usage Guide Details
+
+The **[Phase 11 Usage Guide](../docs/USAGE_PHASE_11.md)** covers:
 - Detailed setup instructions for all deployment scenarios
 - Complete walkthrough of every page and feature
-- Authentication and security configuration
-- Hyperparameter optimization workflows
+- Data generation (synthetic + MAT file import)
 - XAI dashboard tutorials (SHAP, LIME, IG, Grad-CAM)
-- Production deployment best practices
+- Feature status matrix (what's available vs what's planned)
 - Troubleshooting and performance optimization
 
 ### Additional Resources
 
 - **[Main Project README](../README.md)** - Overall LSTM PFD system documentation
-- **[API Reference](./api/README.md)** - REST API endpoints documentation
-- **[Database Schema](./database/README.md)** - PostgreSQL database structure
-- **[Contributing Guide](../CONTRIBUTING.md)** - Development guidelines
+- **[CLI Quick Start](../QUICKSTART.md)** - Command-line workflow guide
+- **[API Reference](./api/README.md)** - REST API endpoints documentation (if available)
+- **[Database Schema](./database/README.md)** - PostgreSQL database structure (if available)
+- **[Contributing Guide](../CONTRIBUTING.md)** - Development guidelines (if available)
 
 ---
 
@@ -744,7 +751,7 @@ curl -X POST http://localhost:8050/api/auth/login \
 
 - **Issues**: [GitHub Issues](https://github.com/yourusername/LSTM_PFD/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/yourusername/LSTM_PFD/discussions)
-- **Documentation**: [Complete Usage Guide](../PHASE_11_USAGE_GUIDE.md)
+- **Documentation**: [Complete Usage Guide](../docs/USAGE_PHASE_11.md)
 
 ---
 
@@ -769,7 +776,7 @@ curl -X POST http://localhost:8050/api/auth/login \
 
 ### 🚀 Ready to Get Started?
 
-[Quick Start](#-quick-start) | [Complete Usage Guide](../PHASE_11_USAGE_GUIDE.md) | [Main Project](../README.md)
+[Quick Start](#-quick-start) | [GUI Quick Start](../GUI_QUICKSTART.md) | [Complete Usage Guide](../docs/USAGE_PHASE_11.md) | [Main Project](../README.md)
 
 **Built with ❤️ for Enterprise ML Operations**
 
