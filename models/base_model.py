@@ -95,6 +95,26 @@ class BaseModel(nn.Module, ABC):
             'non_trainable': total_params - trainable_params
         }
 
+    def get_num_params(self) -> int:
+        """
+        Get total number of parameters (wrapper for backward compatibility).
+
+        This method provides a simpler interface for getting just the total
+        parameter count, which is commonly needed for logging and reporting.
+
+        Returns:
+            Total number of parameters
+
+        Example:
+            >>> model = MyModel(...)
+            >>> print(f"Parameters: {model.get_num_params():,}")
+
+        Note:
+            For detailed parameter counts (trainable/non-trainable breakdown),
+            use count_parameters() instead.
+        """
+        return self.count_parameters()['total']
+
     def get_model_size_mb(self) -> float:
         """
         Estimate model size in megabytes.

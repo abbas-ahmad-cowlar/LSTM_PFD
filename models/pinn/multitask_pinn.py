@@ -31,13 +31,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Dict, Optional, Tuple, List
-import sys
-from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from base_model import BaseModel
+from models.base_model import BaseModel
 from resnet.resnet_1d import ResNet1D
 from cnn.cnn_1d import CNN1D
 

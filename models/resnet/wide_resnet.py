@@ -16,13 +16,9 @@ Reference:
 import torch
 import torch.nn as nn
 from typing import List
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from base_model import BaseModel
-from resnet.residual_blocks import BasicBlock1D, make_downsample_layer
+from models.base_model import BaseModel
+from models.resnet.residual_blocks import BasicBlock1D, make_downsample_layer
 
 
 class WideResNet1D(BaseModel):

@@ -44,13 +44,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional, Union, Tuple
-import sys
-from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from base_model import BaseModel
+from models.base_model import BaseModel
 
 
 class DualStreamCNN(BaseModel):
