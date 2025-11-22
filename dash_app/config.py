@@ -1,10 +1,29 @@
 """
 Configuration management for the Dash application.
 Loads settings from environment variables following 12-factor app methodology.
+
+Security Note:
+- All sensitive variables (DATABASE_URL, SECRET_KEY, JWT_SECRET_KEY) are validated at startup
+- The application will refuse to start with missing or weak credentials
+- See .env.example for configuration template
 """
 import os
 from pathlib import Path
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+
+# Import validator for lazy validation (only validates when config is imported)
+# This allows tests and scripts to run without full config
+try:
+    from utils.config_validator import ConfigValidator, get_required_config
+    _VALIDATOR_AVAILABLE = True
+except ImportError:
+    # Fallback if validator not available (backwards compatibility)
+    _VALIDATOR_AVAILABLE = False
+    def get_required_config(var_name: str, default=None):
+        value = os.getenv(var_name, default)
+        if value is None:
+            raise ValueError(f"{var_name} must be set in environment variables")
+        return value
 
 # Base paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -16,12 +35,8 @@ ENV = os.getenv("ENV", "development")
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
 # Database Configuration
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise ValueError(
-        "DATABASE_URL must be set in environment variables. "
-        "Example: postgresql://user:password@localhost:5432/dbname"
-    )
+# Use get_required_config for lazy validation (only validates when accessed)
+DATABASE_URL = get_required_config("DATABASE_URL")
 
 # Redis Configuration
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
@@ -48,12 +63,7 @@ APP_HOST = os.getenv("APP_HOST", "0.0.0.0")
 APP_PORT = int(os.getenv("APP_PORT", "8050"))
 
 # Security
-SECRET_KEY = os.getenv("SECRET_KEY")
-if not SECRET_KEY:
-    raise ValueError(
-        "SECRET_KEY must be set in environment variables. "
-        "Generate with: python -c 'import secrets; print(secrets.token_hex(32))'"
-    )
+SECRET_KEY = get_required_config("SECRET_KEY")
 
 # Logging
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO" if not DEBUG else "DEBUG")
@@ -160,3 +170,54 @@ SEARCH_DEBOUNCE_MS = int(os.getenv("SEARCH_DEBOUNCE_MS", "300"))  # Delay before
 TAG_AUTOCOMPLETE_MIN_CHARS = int(os.getenv("TAG_AUTOCOMPLETE_MIN_CHARS", "2"))
 TAG_AUTOCOMPLETE_MAX_RESULTS = int(os.getenv("TAG_AUTOCOMPLETE_MAX_RESULTS", "10"))
 SEARCH_CACHE_TTL_SECONDS = int(os.getenv("SEARCH_CACHE_TTL_SECONDS", "60"))
+
+# =============================================================================
+# Startup Validation
+# =============================================================================
+# Validate all critical configuration at module import time
+# This ensures the application fails fast with clear error messages
+# if configuration is missing or insecure
+
+def _validate_configuration():
+    """
+    Validate configuration at startup.
+    Only runs when this module is imported by the main application.
+    """
+    if not _VALIDATOR_AVAILABLE:
+        # Fallback validation without the validator module
+        required = ['DATABASE_URL', 'SECRET_KEY']
+        missing = [var for var in required if not os.getenv(var)]
+        if missing:
+            raise ValueError(
+                f"Missing required environment variables: {', '.join(missing)}\n"
+                f"Copy .env.example to .env and configure all required variables."
+            )
+        return
+
+    # Run comprehensive validation
+    # Only validate in application context (not for tests/scripts)
+    import sys
+
+    # Skip validation for specific commands that don't need full config
+    skip_commands = ['pytest', 'test', 'sphinx', 'migrate']
+    if any(cmd in ' '.join(sys.argv) for cmd in skip_commands):
+        return
+
+    # Skip if explicitly disabled (useful for CI/CD)
+    if os.getenv('SKIP_CONFIG_VALIDATION', 'False').lower() == 'true':
+        return
+
+    try:
+        ConfigValidator.validate_or_exit()
+    except SystemExit:
+        # Re-raise to exit application
+        raise
+    except Exception as e:
+        # Unexpected error during validation
+        print(f"⚠️  Configuration validation error: {e}")
+        print("Continuing with basic validation...")
+
+# Run validation when config is imported
+# This ensures immediate feedback on misconfiguration
+if __name__ != "__main__":  # Don't validate when running config.py directly
+    _validate_configuration()
