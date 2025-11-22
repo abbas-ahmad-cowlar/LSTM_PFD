@@ -10,6 +10,7 @@ import re
 from database.connection import get_db_session
 from models.user import User
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -145,7 +146,7 @@ def register_security_callbacks(app):
             # TODO: Hash new password and update database
             # For now, just show success (placeholder implementation)
 
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             logger.info(f"Password change requested for user {user_id}")
 

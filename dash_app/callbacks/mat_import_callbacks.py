@@ -11,6 +11,7 @@ from models.dataset_import import DatasetImport, DatasetImportStatus
 from tasks.mat_import_tasks import import_mat_dataset_task
 from utils.logger import setup_logger
 from utils.file_handler import parse_upload_contents, save_uploaded_mat_files, get_file_summary
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -190,6 +191,7 @@ def register_mat_import_callbacks(app):
 
             # Launch Celery task
             config['import_id'] = import_id
+            config['user_id'] = get_current_user_id()
             task = import_mat_dataset_task.delay(config, file_paths)
 
             # Update database with task ID
