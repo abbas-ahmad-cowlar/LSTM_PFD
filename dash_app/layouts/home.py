@@ -4,6 +4,7 @@ Home dashboard layout.
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 from components.cards import create_stat_card
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 def create_home_layout():

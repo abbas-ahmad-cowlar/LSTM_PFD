@@ -7,6 +7,7 @@ import dash_bootstrap_components as dbc
 
 from services.comparison_service import ComparisonService
 from layouts.experiment_comparison import (
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     create_overview_tab,
     create_metrics_tab,
     create_visualizations_tab,

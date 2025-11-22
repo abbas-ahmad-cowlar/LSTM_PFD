@@ -77,6 +77,7 @@ class NotificationProviderFactory:
             List of enabled provider strings (e.g., ['email', 'slack', 'teams'])
         """
         from config import (
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
             EMAIL_ENABLED,
             NOTIFICATIONS_SLACK_ENABLED,
             NOTIFICATIONS_TEAMS_ENABLED,

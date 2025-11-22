@@ -47,7 +47,7 @@ class CheckpointManager:
 
     Example:
         >>> from models.cnn.cnn_1d import CNN1D
-        >>> model = CNN1D(num_classes=11)
+        >>> model = CNN1D(num_classes=NUM_CLASSES)
         >>> optimizer = torch.optim.Adam(model.parameters())
         >>>
         >>> ckpt_manager = CheckpointManager(
@@ -363,13 +363,14 @@ def test_checkpoint_manager():
 
     from models.cnn.cnn_1d import CNN1D
     import tempfile
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     # Create temporary directory for testing
     with tempfile.TemporaryDirectory() as tmpdir:
         checkpoint_dir = Path(tmpdir) / 'checkpoints'
 
         # Create model and optimizer
-        model = CNN1D(num_classes=11)
+        model = CNN1D(num_classes=NUM_CLASSES)
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
         print("\n1. Creating checkpoint manager...")
@@ -408,7 +409,7 @@ def test_checkpoint_manager():
 
         # Test weight-only loading
         print("\n6. Testing weight-only loading...")
-        new_model = CNN1D(num_classes=11)
+        new_model = CNN1D(num_classes=NUM_CLASSES)
         new_ckpt_manager = CheckpointManager(
             checkpoint_dir=checkpoint_dir,
             model=new_model,

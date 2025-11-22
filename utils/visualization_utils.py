@@ -19,6 +19,7 @@ from typing import Optional, Tuple, List, Union
 import numpy as np
 
 from utils.logging import get_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = get_logger(__name__)
 
@@ -257,7 +258,7 @@ def plot_time_series(
         Axes object
 
     Example:
-        >>> ax = plot_time_series(signal, fs=20480, title='Vibration Signal')
+        >>> ax = plot_time_series(signal, fs = SAMPLING_RATE, title='Vibration Signal')
     """
     if ax is None:
         fig, ax = create_figure()
@@ -294,7 +295,7 @@ def plot_spectrum(
         Axes object
 
     Example:
-        >>> ax = plot_spectrum(signal, fs=20480, xlim=(0, 500))
+        >>> ax = plot_spectrum(signal, fs = SAMPLING_RATE, xlim=(0, 500))
     """
     if ax is None:
         fig, ax = create_figure()

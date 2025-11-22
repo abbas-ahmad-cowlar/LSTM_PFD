@@ -40,6 +40,7 @@ from .partial_dependence import (
     detect_interactions
 )
 from .anchors import (
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     Predicate,
     Anchor,
     AnchorExplainer,

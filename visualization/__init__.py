@@ -17,6 +17,7 @@ from .saliency_maps import (
     compare_saliency_methods
 )
 from .counterfactual_explanations import (
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     CounterfactualGenerator,
     plot_counterfactual_explanation,
     plot_optimization_history
