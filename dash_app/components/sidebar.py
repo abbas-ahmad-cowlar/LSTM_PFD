@@ -51,6 +51,10 @@ def create_sidebar():
                 html.I(className="fas fa-search me-2"),
                 "HPO Campaigns"
             ], href="/hpo/campaigns", active="exact"),
+            dbc.NavLink([
+                html.I(className="fas fa-sitemap me-2"),
+                "NAS"
+            ], href="/nas", active="exact"),
 
             html.Hr(),
 
