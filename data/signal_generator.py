@@ -21,6 +21,9 @@ from dataclasses import dataclass, asdict
 import time
 from scipy import signal as sp_signal
 from scipy.io import savemat
+import h5py
+import json
+from datetime import datetime
 
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
@@ -28,6 +31,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from config.data_config import DataConfig
 from utils.reproducibility import set_seed
 from utils.logging import get_logger
+from utils.constants import FAULT_TYPES, NUM_CLASSES, SAMPLING_RATE
 
 logger = get_logger(__name__)
 
@@ -696,13 +700,36 @@ class SignalGenerator:
 
         return aug_params
 
-    def save_dataset(self, dataset: Dict, output_dir: Optional[Path] = None) -> None:
+    def save_dataset(
+        self,
+        dataset: Dict,
+        output_dir: Optional[Path] = None,
+        format: str = 'mat',  # DEFAULT='mat' for backward compatibility
+        train_val_test_split: Tuple[float, float, float] = (0.7, 0.15, 0.15)
+    ) -> Dict[str, Path]:
         """
-        Save generated dataset to disk (MATLAB .mat format).
+        Save generated dataset to disk in .mat and/or HDF5 format.
 
         Args:
             dataset: Dataset from generate_dataset()
             output_dir: Output directory (uses config if None)
+            format: Output format - 'mat', 'hdf5', or 'both' (default: 'mat')
+            train_val_test_split: Train/val/test split ratios for HDF5 format
+
+        Returns:
+            Dictionary with paths to saved files:
+            - 'mat_dir': Path to directory with .mat files (if format='mat' or 'both')
+            - 'hdf5': Path to HDF5 file (if format='hdf5' or 'both')
+
+        Examples:
+            >>> # Backward compatible - saves .mat files only (default behavior)
+            >>> generator.save_dataset(dataset, output_dir='data/processed')
+
+            >>> # Save as HDF5 only
+            >>> paths = generator.save_dataset(dataset, format='hdf5')
+
+            >>> # Save both formats
+            >>> paths = generator.save_dataset(dataset, format='both')
         """
         if output_dir is None:
             output_dir = Path(self.config.output_dir)
@@ -710,34 +737,179 @@ class SignalGenerator:
             output_dir = Path(output_dir)
 
         output_dir.mkdir(parents=True, exist_ok=True)
+        saved_paths = {}
 
-        logger.info(f"Saving dataset to: {output_dir}")
-
-        for i, (signal, metadata, label) in enumerate(zip(
-            dataset['signals'], dataset['metadata'], dataset['labels']
-        )):
-            # Determine filename
-            signal_idx = (i % self.config.num_signals_per_fault) + 1
-            if metadata.is_augmented:
-                filename = f"{label}_{signal_idx:03d}_aug.mat"
+        # Save as .mat files (original format - for backward compatibility)
+        if format in ['mat', 'both']:
+            # For backward compatibility: save directly in output_dir if format='mat'
+            # Otherwise save in subdirectory
+            if format == 'mat':
+                mat_dir = output_dir
             else:
-                filename = f"{label}_{signal_idx:03d}.mat"
+                mat_dir = output_dir / 'mat_files'
+                mat_dir.mkdir(exist_ok=True)
 
-            filepath = output_dir / filename
+            logger.info(f"Saving .mat files to: {mat_dir}")
 
-            # Prepare MATLAB-compatible structure
-            mat_data = {
-                'x': signal,
-                'fs': metadata.fs,
-                'fault': label,
-                'metadata': self._metadata_to_matlab_struct(metadata)
-            }
+            for i, (signal, metadata, label) in enumerate(zip(
+                dataset['signals'], dataset['metadata'], dataset['labels']
+            )):
+                # Determine filename
+                signal_idx = (i % self.config.num_signals_per_fault) + 1
+                if metadata.is_augmented:
+                    filename = f"{label}_{signal_idx:03d}_aug.mat"
+                else:
+                    filename = f"{label}_{signal_idx:03d}.mat"
 
-            # Save .mat file
-            savemat(filepath, mat_data, do_compression=True)
+                filepath = mat_dir / filename
 
-        logger.info(f"✓ Saved {len(dataset['signals'])} signals")
+                # Prepare MATLAB-compatible structure
+                mat_data = {
+                    'x': signal,
+                    'fs': metadata.fs,
+                    'fault': label,
+                    'metadata': self._metadata_to_matlab_struct(metadata)
+                }
+
+                # Save .mat file
+                savemat(filepath, mat_data, do_compression=True)
+
+            logger.info(f"✓ Saved {len(dataset['signals'])} .mat files")
+            saved_paths['mat_dir'] = mat_dir
+
+        # Save as HDF5 file (new format - faster, more efficient)
+        if format in ['hdf5', 'both']:
+            hdf5_path = output_dir / 'dataset.h5'
+            logger.info(f"Saving HDF5 file to: {hdf5_path}")
+
+            saved_paths['hdf5'] = self._save_as_hdf5(
+                dataset,
+                hdf5_path,
+                train_val_test_split
+            )
+
+            logger.info(f"✓ Saved HDF5 file: {hdf5_path}")
+
+        return saved_paths
 
     def _metadata_to_matlab_struct(self, metadata: SignalMetadata) -> Dict:
         """Convert metadata to MATLAB-compatible structure."""
         return asdict(metadata)
+
+    def _save_as_hdf5(
+        self,
+        dataset: Dict,
+        output_path: Path,
+        split_ratios: Tuple[float, float, float] = (0.7, 0.15, 0.15)
+    ) -> Path:
+        """
+        Save dataset as HDF5 file with train/val/test splits.
+
+        This creates an HDF5 file compatible with dash_app and training scripts:
+        - f['train']['signals'] and f['train']['labels']
+        - f['val']['signals'] and f['val']['labels']
+        - f['test']['signals'] and f['test']['labels']
+
+        Args:
+            dataset: Dataset dictionary from generate_dataset()
+            output_path: Path to HDF5 output file
+            split_ratios: (train, val, test) split ratios (default: 0.7, 0.15, 0.15)
+
+        Returns:
+            Path to created HDF5 file
+
+        Example:
+            >>> generator = SignalGenerator(config)
+            >>> dataset = generator.generate_dataset()
+            >>> hdf5_path = generator._save_as_hdf5(
+            ...     dataset,
+            ...     Path('data/processed/dataset.h5')
+            ... )
+        """
+        from sklearn.model_selection import train_test_split
+
+        signals = dataset['signals']
+        labels_str = dataset['labels']
+        metadata = dataset['metadata']
+
+        # Convert string labels to integers using FAULT_TYPES mapping
+        label_to_idx = {label: idx for idx, label in enumerate(FAULT_TYPES)}
+        labels = np.array([label_to_idx[label] for label in labels_str])
+
+        # Create stratified splits to ensure each split has all classes
+        train_ratio, val_ratio, test_ratio = split_ratios
+
+        # First split: separate test set
+        X_temp, X_test, y_temp, y_test = train_test_split(
+            signals, labels,
+            test_size=test_ratio,
+            stratify=labels,
+            random_state=self.config.rng_seed
+        )
+
+        # Second split: separate train and val from temp
+        val_size_adjusted = val_ratio / (train_ratio + val_ratio)
+        X_train, X_val, y_train, y_val = train_test_split(
+            X_temp, y_temp,
+            test_size=val_size_adjusted,
+            stratify=y_temp,
+            random_state=self.config.rng_seed
+        )
+
+        # Create HDF5 file
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with h5py.File(output_path, 'w') as f:
+            # Store global attributes
+            f.attrs['num_classes'] = NUM_CLASSES
+            f.attrs['sampling_rate'] = SAMPLING_RATE
+            f.attrs['signal_length'] = signals.shape[1]
+            f.attrs['generation_date'] = datetime.now().isoformat()
+            f.attrs['split_ratios'] = split_ratios
+            f.attrs['rng_seed'] = self.config.rng_seed
+
+            # Create train group
+            train_grp = f.create_group('train')
+            train_grp.create_dataset(
+                'signals',
+                data=X_train,
+                compression='gzip',
+                compression_opts=4
+            )
+            train_grp.create_dataset('labels', data=y_train)
+            train_grp.attrs['num_samples'] = len(X_train)
+
+            # Create val group
+            val_grp = f.create_group('val')
+            val_grp.create_dataset(
+                'signals',
+                data=X_val,
+                compression='gzip',
+                compression_opts=4
+            )
+            val_grp.create_dataset('labels', data=y_val)
+            val_grp.attrs['num_samples'] = len(X_val)
+
+            # Create test group
+            test_grp = f.create_group('test')
+            test_grp.create_dataset(
+                'signals',
+                data=X_test,
+                compression='gzip',
+                compression_opts=4
+            )
+            test_grp.create_dataset('labels', data=y_test)
+            test_grp.attrs['num_samples'] = len(X_test)
+
+            # Store metadata as JSON (optional, for reference)
+            if metadata:
+                metadata_json = [json.dumps(asdict(m)) for m in metadata]
+                dt = h5py.string_dtype(encoding='utf-8')
+                f.create_dataset('metadata', data=metadata_json, dtype=dt)
+
+        logger.info(
+            f"Created HDF5 with splits - Train: {len(X_train)}, "
+            f"Val: {len(X_val)}, Test: {len(X_test)}"
+        )
+
+        return output_path
