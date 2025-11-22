@@ -55,7 +55,9 @@ def register_experiments_callbacks(app):
         # Order by created date (newest first)
         query = query.order_by(Experiment.created_at.desc())
 
-        experiments = query.all()
+        # Apply pagination to prevent loading too many experiments
+        from utils.query_utils import paginate_with_default_limit
+        experiments = paginate_with_default_limit(query, limit=500)
         session.close()
 
         return create_experiments_table(experiments)
