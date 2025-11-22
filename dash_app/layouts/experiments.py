@@ -231,15 +231,37 @@ def create_experiments_table(experiments):
 
     # Import here to avoid circular imports
     from database.connection import get_session
-    from services.tag_service import TagService
+    from models.tag import ExperimentTag
+    from sqlalchemy.orm import joinedload
 
     # Prepare table data with tags
     session = get_session()
+
+    # Bulk load all tags for all experiments to avoid N+1 query (CRITICAL OPTIMIZATION!)
+    # This reduces queries from N+1 to just 2 queries total
+    experiment_ids = [exp.id for exp in experiments]
+    experiment_tags_map = {}  # experiment_id -> list of tag names
+
+    if experiment_ids:
+        # Single query with eager loading to get all tags for all experiments
+        experiment_tag_mappings = session.query(ExperimentTag).options(
+            joinedload(ExperimentTag.tag)  # Eager load Tag relationship
+        ).filter(
+            ExperimentTag.experiment_id.in_(experiment_ids)
+        ).all()
+
+        # Build mapping: experiment_id -> [tag names]
+        for exp_tag in experiment_tag_mappings:
+            if exp_tag.tag:  # Ensure tag exists
+                if exp_tag.experiment_id not in experiment_tags_map:
+                    experiment_tags_map[exp_tag.experiment_id] = []
+                experiment_tags_map[exp_tag.experiment_id].append(exp_tag.tag.name)
+
     table_data = []
     for exp in experiments:
-        # Get tags for this experiment
-        tags = TagService.get_experiment_tags(session, exp.id)
-        tag_names = ', '.join([tag.name for tag in tags]) if tags else ""
+        # Get tags from pre-loaded mapping (no additional query!)
+        tags = experiment_tags_map.get(exp.id, [])
+        tag_names = ', '.join(tags) if tags else ""
 
         table_data.append({
             "id": exp.id,

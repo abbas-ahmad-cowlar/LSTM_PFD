@@ -151,9 +151,14 @@ class NASService:
                     return None
 
                 # Get all trials
-                trials = session.query(NASTrial).filter(
-                    NASTrial.campaign_id == campaign_id
-                ).order_by(NASTrial.trial_number.asc()).all()
+                # Apply pagination to prevent loading too many trials
+                from utils.query_utils import paginate_with_default_limit
+                trials = paginate_with_default_limit(
+                    session.query(NASTrial).filter(
+                        NASTrial.campaign_id == campaign_id
+                    ).order_by(NASTrial.trial_number.asc()),
+                    limit=500
+                )
 
                 return {
                     'id': campaign.id,
