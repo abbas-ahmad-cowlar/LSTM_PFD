@@ -20,6 +20,8 @@ from models.tag import Tag, ExperimentTag
 from models.saved_search import SavedSearch
 from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
 from models.dataset_import import DatasetImport, DatasetImportStatus
+from models.session_log import SessionLog
+from models.login_history import LoginHistory
 
 __all__ = [
     'Base', 'Dataset', 'Signal', 'Experiment', 'TrainingRun',
@@ -33,5 +35,6 @@ __all__ = [
     'Tag', 'ExperimentTag',
     'SavedSearch',
     'DatasetGeneration', 'DatasetGenerationStatus',
-    'DatasetImport', 'DatasetImportStatus'
+    'DatasetImport', 'DatasetImportStatus',
+    'SessionLog', 'LoginHistory'
 ]
