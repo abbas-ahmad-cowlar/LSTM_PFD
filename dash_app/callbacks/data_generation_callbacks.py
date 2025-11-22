@@ -1,6 +1,6 @@
 """
 Data Generation callbacks - Phase 0 integration.
-Handles user interactions for dataset generation.
+Handles user interactions for dataset generation and MAT file import.
 """
 from dash import Input, Output, State, html, callback_context
 from dash.exceptions import PreventUpdate
@@ -9,7 +9,7 @@ from datetime import datetime
 import json
 
 from database.connection import get_db_session
-from database.models import DatasetGeneration, DatasetGenerationStatus
+from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
 from tasks.data_generation_tasks import generate_dataset_task
 from utils.logger import setup_logger
 
@@ -17,7 +17,11 @@ logger = setup_logger(__name__)
 
 
 def register_data_generation_callbacks(app):
-    """Register all data generation callbacks."""
+    """Register all data generation and import callbacks."""
+
+    # Register MAT import callbacks
+    from callbacks.mat_import_callbacks import register_mat_import_callbacks
+    register_mat_import_callbacks(app)
 
     @app.callback(
         Output('config-summary', 'children'),
