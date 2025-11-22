@@ -524,6 +524,290 @@ class TestPhysicsCalculations(unittest.TestCase):
         self.assertLessEqual(max(temps), config.operating.temp_c_max)
 
 
+class TestHDF5Generation(unittest.TestCase):
+    """Test HDF5 dataset generation and loading."""
+
+    def setUp(self):
+        """Setup test fixtures."""
+        self.temp_dir = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        """Cleanup temporary files."""
+        if self.temp_dir.exists():
+            shutil.rmtree(self.temp_dir)
+
+    def test_save_dataset_hdf5_only(self):
+        """Test saving dataset as HDF5 only."""
+        from data.signal_generator import SignalGenerator
+
+        # Create minimal config
+        config = DataConfig(num_signals_per_fault=10, rng_seed=42)
+        config.fault.enabled_faults = ['sain', 'desalignement']  # Only 2 faults
+
+        generator = SignalGenerator(config)
+        dataset = generator.generate_dataset()
+
+        # Save as HDF5
+        output_dir = self.temp_dir / 'output'
+        saved_paths = generator.save_dataset(
+            dataset,
+            output_dir=output_dir,
+            format='hdf5'
+        )
+
+        # Verify paths returned
+        self.assertIn('hdf5', saved_paths)
+        self.assertTrue(saved_paths['hdf5'].exists())
+        self.assertNotIn('mat_dir', saved_paths)
+
+        # Verify HDF5 structure
+        import h5py
+        with h5py.File(saved_paths['hdf5'], 'r') as f:
+            self.assertIn('train', f)
+            self.assertIn('val', f)
+            self.assertIn('test', f)
+
+            self.assertIn('signals', f['train'])
+            self.assertIn('labels', f['train'])
+
+            # Check shapes
+            train_signals = f['train']['signals']
+            self.assertEqual(len(train_signals.shape), 2)
+            self.assertEqual(train_signals.shape[1], 102400)  # SIGNAL_LENGTH
+
+    def test_save_dataset_both_formats(self):
+        """Test saving in both .mat and HDF5 formats."""
+        from data.signal_generator import SignalGenerator
+
+        config = DataConfig(num_signals_per_fault=5, rng_seed=42)
+        config.fault.enabled_faults = ['sain']
+
+        generator = SignalGenerator(config)
+        dataset = generator.generate_dataset()
+
+        # Save in both formats
+        output_dir = self.temp_dir / 'output'
+        saved_paths = generator.save_dataset(
+            dataset,
+            output_dir=output_dir,
+            format='both'
+        )
+
+        # Verify both paths exist
+        self.assertIn('mat_dir', saved_paths)
+        self.assertIn('hdf5', saved_paths)
+        self.assertTrue(saved_paths['mat_dir'].exists())
+        self.assertTrue(saved_paths['hdf5'].exists())
+
+        # Verify .mat files exist
+        mat_files = list(saved_paths['mat_dir'].glob('*.mat'))
+        self.assertGreater(len(mat_files), 0)
+
+    def test_load_from_hdf5(self):
+        """Test loading dataset from HDF5."""
+        from data.signal_generator import SignalGenerator
+        from data.dataset import BearingFaultDataset
+
+        # Generate and save
+        config = DataConfig(num_signals_per_fault=10, rng_seed=42)
+        config.fault.enabled_faults = ['sain', 'desalignement']
+
+        generator = SignalGenerator(config)
+        dataset = generator.generate_dataset()
+
+        output_dir = self.temp_dir / 'output'
+        saved_paths = generator.save_dataset(dataset, output_dir, format='hdf5')
+
+        # Load from HDF5
+        hdf5_path = saved_paths['hdf5']
+        train_dataset = BearingFaultDataset.from_hdf5(hdf5_path, split='train')
+
+        # Verify dataset
+        self.assertGreater(len(train_dataset), 0)
+        signal, label = train_dataset[0]
+        self.assertEqual(signal.shape, (102400,))
+        self.assertIsInstance(label, int)
+
+    def test_hdf5_split_ratios(self):
+        """Test that split ratios are correct."""
+        from data.signal_generator import SignalGenerator
+        import h5py
+
+        config = DataConfig(num_signals_per_fault=100, rng_seed=42)
+        config.fault.enabled_faults = ['sain']
+
+        generator = SignalGenerator(config)
+        dataset = generator.generate_dataset()
+
+        output_dir = self.temp_dir / 'output'
+        split_ratios = (0.7, 0.15, 0.15)
+        saved_paths = generator.save_dataset(
+            dataset,
+            output_dir,
+            format='hdf5',
+            train_val_test_split=split_ratios
+        )
+
+        # Verify splits
+        with h5py.File(saved_paths['hdf5'], 'r') as f:
+            n_train = f['train']['signals'].shape[0]
+            n_val = f['val']['signals'].shape[0]
+            n_test = f['test']['signals'].shape[0]
+            total = n_train + n_val + n_test
+
+            # Allow ±5% tolerance due to rounding and stratification
+            self.assertAlmostEqual(n_train / total, split_ratios[0], delta=0.05)
+            self.assertAlmostEqual(n_val / total, split_ratios[1], delta=0.05)
+            self.assertAlmostEqual(n_test / total, split_ratios[2], delta=0.05)
+
+    def test_hdf5_attributes(self):
+        """Test HDF5 file attributes are set correctly."""
+        from data.signal_generator import SignalGenerator
+        import h5py
+
+        config = DataConfig(num_signals_per_fault=5, rng_seed=42)
+        config.fault.enabled_faults = ['sain']
+
+        generator = SignalGenerator(config)
+        dataset = generator.generate_dataset()
+
+        output_dir = self.temp_dir / 'output'
+        saved_paths = generator.save_dataset(dataset, output_dir, format='hdf5')
+
+        # Check attributes
+        with h5py.File(saved_paths['hdf5'], 'r') as f:
+            self.assertIn('num_classes', f.attrs)
+            self.assertIn('sampling_rate', f.attrs)
+            self.assertIn('signal_length', f.attrs)
+            self.assertIn('generation_date', f.attrs)
+            self.assertIn('split_ratios', f.attrs)
+            self.assertIn('rng_seed', f.attrs)
+
+            self.assertEqual(f.attrs['num_classes'], 11)
+            self.assertEqual(f.attrs['sampling_rate'], 20480)
+            self.assertEqual(f.attrs['signal_length'], 102400)
+            self.assertEqual(f.attrs['rng_seed'], 42)
+
+
+class TestCacheManagerSplits(unittest.TestCase):
+    """Test CacheManager with train/val/test splits."""
+
+    def setUp(self):
+        """Setup test fixtures."""
+        self.temp_dir = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        """Cleanup temporary files."""
+        if self.temp_dir.exists():
+            shutil.rmtree(self.temp_dir)
+
+    def test_cache_with_splits(self):
+        """Test caching with train/val/test splits."""
+        from data.cache_manager import CacheManager
+        import h5py
+
+        cache_dir = self.temp_dir / 'cache'
+        cache = CacheManager(cache_dir=cache_dir)
+
+        # Create dummy data
+        num_samples = 100
+        signal_length = 102400
+        signals = np.random.randn(num_samples, signal_length).astype(np.float32)
+        labels = np.random.randint(0, 11, size=num_samples)
+
+        # Cache with splits
+        cache_path = cache.cache_dataset_with_splits(
+            signals, labels,
+            cache_name='test_splits',
+            split_ratios=(0.7, 0.15, 0.15)
+        )
+
+        self.assertTrue(cache_path.exists())
+
+        # Verify structure
+        with h5py.File(cache_path, 'r') as f:
+            self.assertIn('train', f)
+            self.assertIn('val', f)
+            self.assertIn('test', f)
+
+            n_train = f['train']['signals'].shape[0]
+            n_val = f['val']['signals'].shape[0]
+            n_test = f['test']['signals'].shape[0]
+
+            self.assertEqual(n_train + n_val + n_test, num_samples)
+
+            # Check ratios (allow tolerance)
+            self.assertAlmostEqual(n_train / num_samples, 0.7, delta=0.05)
+
+    def test_stratified_splits(self):
+        """Test stratified splitting preserves class distribution."""
+        from data.cache_manager import CacheManager
+        import h5py
+
+        cache_dir = self.temp_dir / 'cache'
+        cache = CacheManager(cache_dir=cache_dir)
+
+        # Create imbalanced data
+        num_samples = 110  # 11 classes × 10 samples each
+        signal_length = 1024
+        signals = np.random.randn(num_samples, signal_length).astype(np.float32)
+        labels = np.repeat(np.arange(11), 10)  # 10 of each class
+
+        # Cache with stratification
+        cache_path = cache.cache_dataset_with_splits(
+            signals, labels,
+            cache_name='test_stratified',
+            split_ratios=(0.7, 0.15, 0.15),
+            stratify=True
+        )
+
+        # Verify each split has all classes
+        with h5py.File(cache_path, 'r') as f:
+            for split in ['train', 'val', 'test']:
+                split_labels = f[split]['labels'][:]
+                unique_labels = np.unique(split_labels)
+                self.assertEqual(len(unique_labels), 11,
+                    f"Split '{split}' missing classes: has {len(unique_labels)}, expected 11")
+
+
+class TestBackwardCompatibility(unittest.TestCase):
+    """Test backward compatibility of HDF5 additions."""
+
+    def setUp(self):
+        """Setup test fixtures."""
+        self.temp_dir = Path(tempfile.mkdtemp())
+
+    def tearDown(self):
+        """Cleanup temporary files."""
+        if self.temp_dir.exists():
+            shutil.rmtree(self.temp_dir)
+
+    def test_default_save_behavior_unchanged(self):
+        """Test that default save_dataset() behavior is unchanged."""
+        from data.signal_generator import SignalGenerator
+
+        config = DataConfig(num_signals_per_fault=3, rng_seed=42)
+        config.fault.enabled_faults = ['sain']
+
+        generator = SignalGenerator(config)
+        dataset = generator.generate_dataset()
+
+        # Default call (no format parameter)
+        output_dir = self.temp_dir / 'output'
+        saved_paths = generator.save_dataset(dataset, output_dir=output_dir)
+
+        # Should save .mat files by default
+        self.assertIn('mat_dir', saved_paths)
+        self.assertTrue(saved_paths['mat_dir'].exists())
+
+        # Should have .mat files
+        mat_files = list(saved_paths['mat_dir'].glob('*.mat'))
+        self.assertGreater(len(mat_files), 0)
+
+        # Should NOT create HDF5 by default
+        self.assertNotIn('hdf5', saved_paths)
+
+
 def run_tests(verbosity: int = 2):
     """
     Run all tests with specified verbosity.
