@@ -223,39 +223,259 @@ def create_api_keys_tab():
 
 
 def create_profile_tab():
-    """Create user profile tab (placeholder)."""
+    """Create user profile tab."""
     return dbc.Container([
         html.H4("User Profile", className="mt-3 mb-3"),
-        dbc.Alert(
-            "User profile management coming soon!",
-            color="info"
+        html.P(
+            "Manage your account information and preferences.",
+            className="text-muted mb-4"
         ),
-        html.P("This section will allow you to update your:"),
-        html.Ul([
-            html.Li("Username and email"),
-            html.Li("Display name and bio"),
-            html.Li("Notification preferences"),
-            html.Li("Profile picture"),
-        ])
+
+        # Profile Information Card
+        dbc.Card([
+            dbc.CardHeader(html.H5("Profile Information", className="mb-0")),
+            dbc.CardBody([
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Label("Username", html_for='profile-username-display'),
+                        dbc.Input(
+                            id='profile-username-display',
+                            type="text",
+                            disabled=True,
+                            className="mb-3"
+                        ),
+                        dbc.FormText("Username cannot be changed after account creation"),
+                    ], md=6),
+                    dbc.Col([
+                        dbc.Label("Role", html_for='profile-role-display'),
+                        dbc.Input(
+                            id='profile-role-display',
+                            type="text",
+                            disabled=True,
+                            className="mb-3"
+                        ),
+                        dbc.FormText("Your role determines your permissions"),
+                    ], md=6),
+                ]),
+
+                html.Hr(),
+
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Label("Email *", html_for='profile-email-input'),
+                        dbc.Input(
+                            id='profile-email-input',
+                            type="email",
+                            placeholder="your-email@example.com",
+                            className="mb-3"
+                        ),
+                        dbc.FormText("Used for notifications and account recovery"),
+                    ], md=6),
+                    dbc.Col([
+                        dbc.Label("Account Status", html_for='profile-status-display'),
+                        dbc.Input(
+                            id='profile-status-display',
+                            type="text",
+                            disabled=True,
+                            className="mb-3"
+                        ),
+                    ], md=6),
+                ]),
+
+                html.Div(id='profile-update-message', className="mb-3"),
+
+                dbc.Button(
+                    [html.I(className="bi bi-save me-2"), "Save Changes"],
+                    id='save-profile-btn',
+                    color="primary"
+                ),
+            ])
+        ], className="mb-4"),
+
+        # Account Info Card (Read-only)
+        dbc.Card([
+            dbc.CardHeader(html.H5("Account Information", className="mb-0")),
+            dbc.CardBody([
+                html.P([
+                    html.Strong("Account Created: "),
+                    html.Span(id='profile-created-at', className="text-muted")
+                ], className="mb-2"),
+                html.P([
+                    html.Strong("Last Updated: "),
+                    html.Span(id='profile-updated-at', className="text-muted")
+                ], className="mb-2"),
+            ])
+        ], className="mb-4"),
+
+        # Store for user data
+        dcc.Store(id='profile-user-data', data=None),
+
     ], className="py-4")
 
 
 def create_security_tab():
-    """Create security settings tab (placeholder)."""
+    """Create security settings tab."""
     return dbc.Container([
         html.H4("Security Settings", className="mt-3 mb-3"),
-        dbc.Alert(
-            "Security settings coming soon!",
-            color="info"
+        html.P(
+            "Manage your password, authentication, and security preferences.",
+            className="text-muted mb-4"
         ),
-        html.P("This section will allow you to:"),
-        html.Ul([
-            html.Li("Change your password"),
-            html.Li("Enable two-factor authentication (2FA)"),
-            html.Li("View active sessions"),
-            html.Li("Review login history"),
-            html.Li("Configure security alerts"),
-        ])
+
+        # Change Password Card
+        dbc.Card([
+            dbc.CardHeader(html.H5("Change Password", className="mb-0")),
+            dbc.CardBody([
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Label("Current Password *", html_for='current-password-input'),
+                        dbc.Input(
+                            id='current-password-input',
+                            type="password",
+                            placeholder="Enter current password",
+                            className="mb-3"
+                        ),
+                    ], md=12),
+                ]),
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Label("New Password *", html_for='new-password-input'),
+                        dbc.Input(
+                            id='new-password-input',
+                            type="password",
+                            placeholder="Enter new password (min 8 characters)",
+                            className="mb-3"
+                        ),
+                        dbc.FormText("Password must be at least 8 characters with uppercase, lowercase, and numbers"),
+                    ], md=6),
+                    dbc.Col([
+                        dbc.Label("Confirm New Password *", html_for='confirm-password-input'),
+                        dbc.Input(
+                            id='confirm-password-input',
+                            type="password",
+                            placeholder="Confirm new password",
+                            className="mb-3"
+                        ),
+                    ], md=6),
+                ]),
+
+                # Password strength indicator
+                html.Div(id='password-strength-indicator', className="mb-3"),
+
+                html.Div(id='password-change-message', className="mb-3"),
+
+                dbc.Button(
+                    [html.I(className="bi bi-key me-2"), "Change Password"],
+                    id='change-password-btn',
+                    color="primary"
+                ),
+            ])
+        ], className="mb-4"),
+
+        # Two-Factor Authentication Card
+        dbc.Card([
+            dbc.CardHeader(html.H5("Two-Factor Authentication (2FA)", className="mb-0")),
+            dbc.CardBody([
+                html.P(
+                    "Add an extra layer of security to your account by requiring a verification code in addition to your password.",
+                    className="mb-3"
+                ),
+
+                html.Div(id='2fa-status-display', children=[
+                    dbc.Alert([
+                        html.I(className="bi bi-info-circle me-2"),
+                        "Two-factor authentication is currently disabled"
+                    ], color="warning")
+                ], className="mb-3"),
+
+                dbc.Button(
+                    [html.I(className="bi bi-shield-check me-2"), "Enable 2FA"],
+                    id='enable-2fa-btn',
+                    color="success",
+                    className="me-2"
+                ),
+                dbc.Button(
+                    [html.I(className="bi bi-shield-x me-2"), "Disable 2FA"],
+                    id='disable-2fa-btn',
+                    color="danger",
+                    disabled=True
+                ),
+            ])
+        ], className="mb-4"),
+
+        # Active Sessions Card
+        dbc.Card([
+            dbc.CardHeader([
+                html.H5("Active Sessions", className="mb-0 d-inline"),
+                dbc.Button(
+                    [html.I(className="bi bi-arrow-clockwise me-2"), "Refresh"],
+                    id='refresh-sessions-btn',
+                    color="secondary",
+                    size="sm",
+                    className="float-end"
+                ),
+            ]),
+            dbc.CardBody([
+                html.P("Monitor devices and locations where your account is currently logged in.", className="text-muted mb-3"),
+                dcc.Loading(
+                    id="loading-sessions",
+                    children=[html.Div(id='active-sessions-table')],
+                    type="default"
+                ),
+                html.Div(className="mt-3"),
+                dbc.Button(
+                    [html.I(className="bi bi-x-circle me-2"), "Logout All Other Sessions"],
+                    id='logout-all-sessions-btn',
+                    color="danger",
+                    outline=True,
+                    size="sm"
+                ),
+            ])
+        ], className="mb-4"),
+
+        # Login History Card
+        dbc.Card([
+            dbc.CardHeader(html.H5("Login History", className="mb-0")),
+            dbc.CardBody([
+                html.P("View recent login activity for your account.", className="text-muted mb-3"),
+                dcc.Loading(
+                    id="loading-login-history",
+                    children=[html.Div(id='login-history-table')],
+                    type="default"
+                )
+            ])
+        ], className="mb-4"),
+
+        # 2FA Setup Modal
+        dbc.Modal([
+            dbc.ModalHeader(dbc.ModalTitle("🔒 Enable Two-Factor Authentication")),
+            dbc.ModalBody([
+                html.P("Scan this QR code with your authenticator app:", className="mb-3"),
+                html.Div(id='2fa-qr-code', className="text-center mb-3"),
+                html.Hr(),
+                html.P("Or enter this secret key manually:", className="mb-2 small text-muted"),
+                html.Pre(id='2fa-secret-key', className="bg-light p-2 rounded text-center"),
+                html.Hr(),
+                dbc.Label("Enter verification code from your app:", className="mt-3"),
+                dbc.Input(
+                    id='2fa-verify-code-input',
+                    type="text",
+                    placeholder="6-digit code",
+                    maxLength=6,
+                    className="mb-3 text-center",
+                    style={'fontSize': '1.5rem', 'letterSpacing': '0.5rem'}
+                ),
+                html.Div(id='2fa-setup-message', className="mt-3"),
+            ]),
+            dbc.ModalFooter([
+                dbc.Button("Cancel", id='cancel-2fa-setup-btn', color="secondary", className="me-2"),
+                dbc.Button("Verify & Enable", id='verify-2fa-btn', color="success")
+            ])
+        ], id='2fa-setup-modal', is_open=False),
+
+        # Store for security data
+        dcc.Store(id='security-data', data=None),
+
     ], className="py-4")
 
 

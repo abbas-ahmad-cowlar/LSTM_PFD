@@ -15,12 +15,29 @@ def create_experiments_layout():
         # Filters and actions row
         dbc.Row([
             dbc.Col([
-                dbc.Input(
-                    id="experiment-search",
-                    placeholder="Search by name, tags, or notes...",
-                    type="text",
-                    debounce=True
-                ),
+                dbc.InputGroup([
+                    dcc.Dropdown(
+                        id="saved-searches-dropdown",
+                        placeholder="📌 Saved searches...",
+                        options=[],  # Populated by callback
+                        className="flex-grow-0",
+                        style={'minWidth': '180px'}
+                    ),
+                    dbc.Input(
+                        id="experiment-search",
+                        placeholder="Search by name, tags, or notes...",
+                        type="text",
+                        debounce=True
+                    ),
+                    dbc.Button(
+                        html.I(className="fas fa-bookmark"),
+                        id="save-search-btn",
+                        color="secondary",
+                        outline=True,
+                        size="sm",
+                        title="Save current search"
+                    ),
+                ], className="mb-0"),
             ], width=3),
             dbc.Col([
                 dcc.Dropdown(
@@ -141,8 +158,68 @@ def create_experiments_layout():
             ])
         ], id="tag-management-modal", is_open=False, size="lg"),
 
+        # Save Search Modal
+        dbc.Modal([
+            dbc.ModalHeader(dbc.ModalTitle("💾 Save Search Query")),
+            dbc.ModalBody([
+                html.P("Save this search for quick access later:", className="text-muted mb-3"),
+
+                # Show current search query
+                html.Div([
+                    html.Label("Current Search:", className="fw-bold small"),
+                    html.Pre(
+                        id="current-search-query-display",
+                        className="bg-light p-2 rounded small",
+                        style={'whiteSpace': 'pre-wrap'}
+                    ),
+                ], className="mb-3"),
+
+                # Save search name
+                dbc.Label("Name *", html_for="save-search-name-input"),
+                dbc.Input(
+                    id="save-search-name-input",
+                    placeholder="e.g., High Accuracy Baselines, Recent ResNets...",
+                    type="text",
+                    className="mb-3"
+                ),
+                dbc.FormText("Give your search a descriptive name"),
+
+                # Pin option
+                dbc.Checkbox(
+                    id="pin-search-checkbox",
+                    label="📌 Pin to top (show first in saved searches)",
+                    value=False,
+                    className="mb-3"
+                ),
+
+                # Status message
+                html.Div(id="save-search-status", className="mt-3"),
+            ]),
+            dbc.ModalFooter([
+                dbc.Button("Cancel", id="cancel-save-search-btn", color="secondary", className="me-2"),
+                dbc.Button("Save Search", id="confirm-save-search-btn", color="primary")
+            ])
+        ], id="save-search-modal", is_open=False),
+
+        # Delete Search Confirmation Modal
+        dbc.Modal([
+            dbc.ModalHeader(dbc.ModalTitle("🗑️ Delete Saved Search?")),
+            dbc.ModalBody([
+                html.P("Are you sure you want to delete this saved search?"),
+                html.Div(id="delete-search-info"),
+                html.P([
+                    html.Strong("This action cannot be undone."),
+                ], className="text-warning small mt-2"),
+            ]),
+            dbc.ModalFooter([
+                dbc.Button("Cancel", id="cancel-delete-search-btn", color="secondary", className="me-2"),
+                dbc.Button("Delete", id="confirm-delete-search-btn", color="danger")
+            ])
+        ], id="delete-search-modal", is_open=False),
+
         # Hidden stores
         dcc.Store(id="selected-experiments-store", data=[]),
+        dcc.Store(id="selected-saved-search-id", data=None),
 
     ], fluid=True)
 
