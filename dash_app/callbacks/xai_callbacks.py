@@ -19,6 +19,7 @@ from utils.xai_visualization import XAIVisualization
 from tasks.xai_tasks import generate_explanation_task
 from utils.logger import setup_logger
 from utils.constants import NUM_CLASSES
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -181,7 +182,8 @@ def register_xai_callbacks(app):
                 'experiment_id': experiment_id,
                 'signal_id': signal_id,
                 'method': method,
-                'params': {}
+                'params': {},
+                'user_id': get_current_user_id()
             }
 
             # Add method-specific parameters
