@@ -1,11 +1,13 @@
 """
 Callbacks for experiments list page.
 """
-from dash import Input, Output, State, callback_context, dcc
+from dash import Input, Output, State, callback_context, dcc, html
 from dash.exceptions import PreventUpdate
+import dash_bootstrap_components as dbc
 
 from database.connection import get_session
 from models.experiment import Experiment, ExperimentStatus
+from models.tag import ExperimentTag
 from layouts.experiments import create_experiments_table
 
 
@@ -32,7 +34,6 @@ def register_experiments_callbacks(app):
 
         # Apply tag filter
         if tag_filter and len(tag_filter) > 0:
-            from models.tag import ExperimentTag
             # Filter experiments that have ALL selected tags
             for tag_id in tag_filter:
                 query = query.join(
@@ -82,9 +83,6 @@ def register_experiments_callbacks(app):
         ).count()
 
         session.close()
-
-        from dash import html
-        import dash_bootstrap_components as dbc
 
         return dbc.Row([
             dbc.Col([
@@ -181,9 +179,6 @@ def register_experiments_callbacks(app):
             raise PreventUpdate
 
         trigger_id = callback_context.triggered[0]['prop_id'].split('.')[0]
-
-        from dash import html
-        import dash_bootstrap_components as dbc
 
         if trigger_id == 'compare-experiments-btn':
             if not selected_ids:
