@@ -28,6 +28,9 @@ def register_all_callbacks(app):
         elif pathname == '/signal-viewer':
             from layouts.signal_viewer import create_signal_viewer_layout
             return create_signal_viewer_layout()
+        elif pathname == '/datasets':
+            from layouts.datasets import create_datasets_layout
+            return create_datasets_layout()
         elif pathname == '/experiments':
             from layouts.experiments import create_experiments_layout
             return create_experiments_layout()
@@ -116,6 +119,13 @@ def register_all_callbacks(app):
         register_signal_viewer_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import signal_viewer_callbacks: {e}")
+
+    # Import and register Dataset Management callbacks
+    try:
+        from callbacks.datasets_callbacks import register_datasets_callbacks
+        register_datasets_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import datasets_callbacks: {e}")
 
     # Import and register Phase 11B callbacks
     try:
