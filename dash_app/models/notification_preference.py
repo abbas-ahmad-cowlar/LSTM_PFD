@@ -1,5 +1,5 @@
 """Notification preference model for user notification settings."""
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
@@ -24,9 +24,12 @@ class NotificationPreference(BaseModel):
     # Relationships
     user = relationship("User", backref="notification_preferences")
 
-    # Constraints
+    # Constraints and performance indexes
+    # Note: user_id and event_type already have column-level indexes
+    # Note: UniqueConstraint automatically creates a composite index
     __table_args__ = (
         UniqueConstraint('user_id', 'event_type', name='uq_user_event_type'),
+        # Removed duplicate composite index - UniqueConstraint handles this
     )
 
     def __repr__(self):

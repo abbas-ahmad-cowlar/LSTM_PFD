@@ -11,6 +11,11 @@ from utils.logger import setup_logger
 import h5py
 import numpy as np
 import os
+from utils.constants import (
+    MAX_DATASET_LIST_LIMIT,
+    BYTES_PER_MB,
+    PERCENT_MULTIPLIER,
+)
 
 logger = setup_logger(__name__)
 
@@ -19,7 +24,7 @@ class DatasetService:
     """Service for dataset management operations."""
 
     @staticmethod
-    def list_datasets(limit: int = 100, offset: int = 0, search_query: str = None) -> List[Dict]:
+    def list_datasets(limit: int = MAX_DATASET_LIST_LIMIT, offset: int = 0, search_query: str = None) -> List[Dict]:
         """
         Get list of all datasets with pagination.
 
@@ -47,7 +52,7 @@ class DatasetService:
                     # Calculate file size
                     file_size_mb = 0
                     if ds.file_path and Path(ds.file_path).exists():
-                        file_size_mb = Path(ds.file_path).stat().st_size / (1024 * 1024)
+                        file_size_mb = Path(ds.file_path).stat().st_size / BYTES_PER_MB
 
                     result.append({
                         'id': ds.id,
@@ -133,7 +138,7 @@ class DatasetService:
 
             with h5py.File(file_path, 'r') as f:
                 # File size
-                stats['file_size_mb'] = Path(file_path).stat().st_size / (1024 * 1024)
+                stats['file_size_mb'] = Path(file_path).stat().st_size / BYTES_PER_MB
 
                 # Signal shape
                 if 'signals' in f:
@@ -395,7 +400,7 @@ class DatasetService:
             total = stats['total_signals']
             if total > 0:
                 stats['class_distribution_pct'] = {
-                    k: (v / total * 100) for k, v in stats['class_distribution'].items()
+                    k: (v / total * PERCENT_MULTIPLIER) for k, v in stats['class_distribution'].items()
                 }
 
             return stats

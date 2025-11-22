@@ -271,6 +271,58 @@ pip install -r requirements.txt
 python -c "import torch; print(f'✓ PyTorch {torch.__version__} | CUDA: {torch.cuda.is_available()}')"
 ```
 
+### 🔐 Environment Configuration (REQUIRED for Dashboard)
+
+**IMPORTANT**: The enterprise dashboard requires environment variables to be configured. Follow these steps:
+
+```bash
+# 1. Copy the example environment file
+cp .env.example .env
+
+# 2. Generate secure secrets (run these commands)
+python -c 'import secrets; print("SECRET_KEY=" + secrets.token_hex(32))' >> .env
+python -c 'import secrets; print("JWT_SECRET_KEY=" + secrets.token_hex(32))' >> .env
+
+# 3. Edit .env and set your database credentials
+nano .env  # or use your preferred editor
+
+# Required variables:
+# - DATABASE_URL: postgresql://user:password@localhost:5432/dbname
+# - SECRET_KEY: (already generated above)
+# - JWT_SECRET_KEY: (already generated above)
+```
+
+**What you need to configure:**
+
+1. **DATABASE_URL** (REQUIRED): PostgreSQL connection string
+   ```
+   DATABASE_URL=postgresql://lstm_user:your_password@localhost:5432/lstm_dashboard
+   ```
+
+2. **SECRET_KEY** (REQUIRED): Application secret for sessions (auto-generated above)
+
+3. **JWT_SECRET_KEY** (REQUIRED): JWT token signing secret (auto-generated above)
+
+4. **REDIS_URL** (Optional): Defaults to `redis://localhost:6379/0`
+
+5. **Email/Webhooks** (Optional): Only needed if using notifications
+
+**Security Best Practices:**
+- ✅ Never commit `.env` to version control (already in `.gitignore`)
+- ✅ Use different secrets for development, staging, and production
+- ✅ Rotate secrets every 90 days minimum
+- ✅ Use strong, randomly generated secrets (minimum 32 characters)
+- ✅ Store production secrets in a secure vault (AWS Secrets Manager, HashiCorp Vault, etc.)
+
+**Verification:**
+```bash
+# The application will fail to start if required variables are missing
+# This is intentional for security - it prevents running with default credentials
+cd dash_app
+python app.py
+# Expected: Clear error message if .env is not configured
+```
+
 **Next steps:** See **[QUICKSTART.md](QUICKSTART.md)** for data preparation and training workflows.
 
 ---
@@ -752,20 +804,42 @@ Phase 11 delivers a **production-ready enterprise dashboard** built with Plotly 
 
 ### Quick Start
 
+**Prerequisites**: Set up environment variables (see [Environment Configuration](#-environment-configuration-required-for-dashboard) above)
+
 ```bash
 # Option 1: Docker Compose (Recommended)
 cd dash_app
-cp .env.example .env
+
+# 1. Create .env file (REQUIRED - see Environment Configuration section)
+cp ../.env.example .env
+# Edit .env and set DATABASE_URL, SECRET_KEY, JWT_SECRET_KEY
+
+# 2. Start services
 docker-compose up
 
 # Access at: http://localhost:8050
 
 # Option 2: Local Development
 cd dash_app
+
+# 1. Create .env file (REQUIRED)
+cp ../.env.example .env
+# Edit .env and set required variables
+
+# 2. Install dependencies
 pip install -r requirements.txt
-# (Start PostgreSQL and Redis separately)
+
+# 3. Start PostgreSQL and Redis
+# (Install and configure separately)
+
+# 4. Start application
 python app.py
 ```
+
+**Important Security Notes:**
+- 🔴 The dashboard will NOT start without proper `.env` configuration
+- 🔴 This is intentional - it prevents running with insecure defaults
+- ✅ Follow the environment setup steps in the [Quick Start](#-quick-start) section above
 
 ### Architecture
 
