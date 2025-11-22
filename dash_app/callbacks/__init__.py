@@ -19,6 +19,9 @@ def register_all_callbacks(app):
         if pathname == '/' or pathname is None:
             from layouts.home import create_home_layout
             return create_home_layout()
+        elif pathname == '/data-generation':
+            from layouts.data_generation import create_data_generation_layout
+            return create_data_generation_layout()
         elif pathname == '/data-explorer':
             from layouts.data_explorer import create_data_explorer_layout
             return create_data_explorer_layout()
@@ -72,6 +75,13 @@ def register_all_callbacks(app):
                 html.P(f"The page '{pathname}' does not exist."),
                 html.A("Return to Home", href="/")
             ], className="text-center mt-5")
+
+    # Import and register Phase 0 (data generation) callbacks
+    try:
+        from callbacks.data_generation_callbacks import register_data_generation_callbacks
+        register_data_generation_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import data_generation_callbacks: {e}")
 
     # Import and register Phase 11A callbacks
     try:

@@ -17,6 +17,7 @@ from models.webhook_log import WebhookLog, WebhookStatus
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 from models.tag import Tag, ExperimentTag
 from models.saved_search import SavedSearch
+from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
 
 __all__ = [
     'Base', 'Dataset', 'Signal', 'Experiment', 'TrainingRun',
@@ -28,5 +29,6 @@ __all__ = [
     'WebhookConfiguration',
     'WebhookLog', 'WebhookStatus',
     'Tag', 'ExperimentTag',
-    'SavedSearch'
+    'SavedSearch',
+    'DatasetGeneration', 'DatasetGenerationStatus'
 ]
