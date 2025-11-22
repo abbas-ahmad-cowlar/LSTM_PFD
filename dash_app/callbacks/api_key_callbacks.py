@@ -9,6 +9,7 @@ from datetime import datetime
 
 from services.api_key_service import APIKeyService
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -32,9 +33,7 @@ def register_api_key_callbacks(app):
             return html.Div()
 
         try:
-            # For demo purposes, use a test user ID
-            # In production, get this from session/JWT token
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             # Get API keys
             keys = APIKeyService.list_user_keys(user_id, include_inactive=True)
@@ -194,8 +193,7 @@ def register_api_key_callbacks(app):
                     html.Div()
                 )
 
-            # For demo purposes, use a test user ID
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             # Generate key
             result = APIKeyService.generate_key(
@@ -296,7 +294,7 @@ def register_api_key_callbacks(app):
             key_id = button_id['index']
 
             # Get key details
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
             keys = APIKeyService.list_user_keys(user_id, include_inactive=True)
             key = next((k for k in keys if k.id == key_id), None)
 
@@ -315,7 +313,7 @@ def register_api_key_callbacks(app):
         # Confirm revoke
         if 'confirm-revoke-btn' in trigger_id and selected_key_id:
             try:
-                user_id = 1  # TODO: Get from session
+                user_id = get_current_user_id()
                 success = APIKeyService.revoke_key(selected_key_id, user_id)
 
                 if success:
