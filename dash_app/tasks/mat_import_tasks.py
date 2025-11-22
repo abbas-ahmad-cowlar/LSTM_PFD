@@ -103,7 +103,7 @@ def import_mat_dataset_task(self, config: dict, mat_file_paths: list):
 
                         NotificationService.emit_event(
                             event_type=EventType.TRAINING_COMPLETE,  # Reuse training complete for now
-                            user_id=1,  # Default user
+                            user_id=config.get('user_id', 1),  # Get user_id from config or default to 1 for background tasks
                             data={
                                 'import_id': import_id,
                                 'dataset_name': import_job.name,
@@ -143,7 +143,7 @@ def import_mat_dataset_task(self, config: dict, mat_file_paths: list):
                     try:
                         NotificationService.emit_event(
                             event_type=EventType.TRAINING_FAILED,  # Reuse training failed
-                            user_id=1,
+                            user_id=config.get('user_id', 1),  # Get user_id from config or default to 1 for background tasks
                             data={
                                 'import_id': import_id,
                                 'dataset_name': import_job.name,
