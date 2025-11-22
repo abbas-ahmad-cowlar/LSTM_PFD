@@ -21,15 +21,23 @@ def create_experiments_layout():
                     type="text",
                     debounce=True
                 ),
-            ], width=4),
+            ], width=3),
             dbc.Col([
                 dcc.Dropdown(
-                    id="experiment-model-filter",
-                    placeholder="Filter by model type",
+                    id="experiment-tag-filter",
+                    placeholder="Filter by tags",
                     options=[],  # Populated by callback
                     multi=True
                 ),
-            ], width=3),
+            ], width=2),
+            dbc.Col([
+                dcc.Dropdown(
+                    id="experiment-model-filter",
+                    placeholder="Filter by model",
+                    options=[],  # Populated by callback
+                    multi=True
+                ),
+            ], width=2),
             dbc.Col([
                 dcc.Dropdown(
                     id="experiment-status-filter",
@@ -48,6 +56,8 @@ def create_experiments_layout():
                 dbc.ButtonGroup([
                     dbc.Button([html.I(className="fas fa-plus me-2"), "New"],
                                href="/experiment/new", color="primary", size="sm"),
+                    dbc.Button([html.I(className="fas fa-tags me-2"), "Manage Tags"],
+                               id="manage-tags-btn", color="success", size="sm", disabled=True),
                     dbc.Button([html.I(className="fas fa-chart-bar me-2"), "Compare"],
                                id="compare-experiments-btn", color="info", size="sm", disabled=True),
                 ], className="float-end")
@@ -88,6 +98,48 @@ def create_experiments_layout():
                            id="view-comparison-btn", color="primary", className="w-100"),
             ]
         ),
+
+        # Tag Management Modal
+        dbc.Modal([
+            dbc.ModalHeader(dbc.ModalTitle("Manage Tags")),
+            dbc.ModalBody([
+                html.P(id="selected-experiments-count", className="text-muted mb-3"),
+
+                html.H6("Add Tags", className="mb-2"),
+                dbc.Row([
+                    dbc.Col([
+                        dcc.Dropdown(
+                            id="tag-autocomplete",
+                            placeholder="Type to search tags or create new...",
+                            options=[],  # Populated by callback
+                            multi=True,
+                            className="mb-3"
+                        ),
+                    ], width=9),
+                    dbc.Col([
+                        dbc.Button(
+                            [html.I(className="fas fa-plus")],
+                            id="add-tags-btn",
+                            color="success",
+                            className="w-100"
+                        ),
+                    ], width=3),
+                ]),
+                html.P("Popular tags:", className="small text-muted mb-2"),
+                html.Div(id="popular-tags-chips", className="mb-4"),
+
+                html.Hr(),
+
+                html.H6("Current Tags", className="mb-2"),
+                html.P("Tags on selected experiments:", className="small text-muted mb-2"),
+                html.Div(id="current-tags-display", className="mb-3"),
+
+                html.Div(id="tag-operation-status", className="mt-3"),
+            ]),
+            dbc.ModalFooter([
+                dbc.Button("Close", id="close-tag-modal-btn", color="secondary")
+            ])
+        ], id="tag-management-modal", is_open=False, size="lg"),
 
         # Hidden stores
         dcc.Store(id="selected-experiments-store", data=[]),
