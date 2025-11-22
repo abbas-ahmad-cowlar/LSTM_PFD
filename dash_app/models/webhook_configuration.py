@@ -1,5 +1,5 @@
 """Webhook configuration model for Slack/Teams integrations (Feature #4)."""
-from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, UniqueConstraint, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, UniqueConstraint, DateTime, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
@@ -42,9 +42,12 @@ class WebhookConfiguration(BaseModel):
     # Relationships
     user = relationship("User", backref="webhook_configurations")
 
-    # Constraints - prevent duplicate webhooks for same user
+    # Constraints and performance indexes
+    # Note: user_id, provider_type, is_active already have column-level indexes
     __table_args__ = (
         UniqueConstraint('user_id', 'webhook_url', name='uq_user_webhook_url'),
+        Index('ix_webhook_configurations_created_at', 'created_at'),
+        # Composite indexes removed - columns already individually indexed
     )
 
     def __repr__(self):

@@ -2,7 +2,7 @@
 Neural Architecture Search (NAS) Campaign and Trial models.
 Tracks NAS campaigns and individual architecture trials.
 """
-from sqlalchemy import Column, Integer, String, Float, BigInteger, ForeignKey, JSON, Text
+from sqlalchemy import Column, Integer, String, Float, BigInteger, ForeignKey, JSON, Text, Index
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
 
@@ -36,6 +36,16 @@ class NASCampaign(BaseModel):
     trials = relationship("NASTrial", backref="campaign", foreign_keys="NASTrial.campaign_id",
                          cascade="all, delete-orphan")
 
+    # Performance indexes
+    # Note: name already has column-level index
+    # Note: dataset_id is ForeignKey (auto-indexed)
+    __table_args__ = (
+        Index('ix_nas_campaigns_status', 'status'),
+        Index('ix_nas_campaigns_created_at', 'created_at'),
+        # Removed duplicate index on dataset_id (ForeignKey)
+        # Removed composite - status has low cardinality
+    )
+
     def __repr__(self):
         return f"<NASCampaign(name='{self.name}', algorithm='{self.search_algorithm}', status='{self.status}')>"
 
@@ -67,6 +77,15 @@ class NASTrial(BaseModel):
 
     # Additional metrics
     metrics = Column(JSON, nullable=True)  # Additional training metrics
+
+    # Performance indexes
+    # Note: campaign_id is ForeignKey (auto-indexed)
+    # Note: architecture_hash already has column-level index
+    __table_args__ = (
+        Index('ix_nas_trials_created_at', 'created_at'),
+        Index('ix_nas_trials_campaign_trial', 'campaign_id', 'trial_number'),  # Composite for ORDER BY
+        # Kept composite for query pattern: SELECT * FROM nas_trials WHERE campaign_id=X ORDER BY trial_number
+    )
 
     def __repr__(self):
         return f"<NASTrial(campaign_id={self.campaign_id}, trial={self.trial_number}, acc={self.validation_accuracy})>"

@@ -1,5 +1,5 @@
 """Webhook log model for tracking webhook delivery status (Feature #4)."""
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Index
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
@@ -45,6 +45,15 @@ class WebhookLog(BaseModel):
     # Relationships
     webhook_config = relationship("WebhookConfiguration", backref="logs")
     user = relationship("User", backref="webhook_logs")
+
+    # Performance indexes
+    # Note: webhook_config_id (FK), user_id (index=True), event_type (index=True),
+    #       status (index=True) already have column-level indexes
+    __table_args__ = (
+        Index('ix_webhook_logs_sent_at', 'sent_at'),
+        Index('ix_webhook_logs_created_at', 'created_at'),
+        # Composite indexes removed - log tables should minimize indexes for write performance
+    )
 
     def __repr__(self):
         return f"<WebhookLog(id={self.id}, provider='{self.provider_type}', status='{self.status}', event='{self.event_type}')>"

@@ -16,6 +16,7 @@ from models.user import User
 from models.session_log import SessionLog
 from models.login_history import LoginHistory
 from utils.logger import setup_logger
+from middleware.auth import verify_password, hash_password
 
 logger = setup_logger(__name__)
 
@@ -147,23 +148,47 @@ def register_security_callbacks(app):
             if not re.search(r'\d', new_password):
                 return dbc.Alert("Password must contain at least one number", color="danger", dismissable=True)
 
-            # TODO: Verify current password against stored hash
-            # TODO: Hash new password and update database
-            # For now, just show success (placeholder implementation)
+            # Get user from session
+            user_id = 1  # TODO: Get from authenticated session (will be fixed with full auth system)
 
-            user_id = 1  # TODO: Get from authenticated session
+            # Verify current password and update with new hashed password
+            with get_db_session() as session:
+                user = session.query(User).filter_by(id=user_id).first()
 
-            logger.info(f"Password change requested for user {user_id}")
+                if not user:
+                    return dbc.Alert("User not found", color="danger", dismissable=True)
+
+                # Verify current password (uses constant-time comparison)
+                if not verify_password(current_password, user.password_hash):
+                    return dbc.Alert("Current password is incorrect", color="danger", dismissable=True)
+
+                # Hash new password (includes additional security validation)
+                try:
+                    new_password_hash = hash_password(new_password)
+                except ValueError as ve:
+                    # Password doesn't meet security requirements
+                    logger.warning(f"Password change failed validation: {ve}")
+                    return dbc.Alert(str(ve), color="danger", dismissable=True)
+
+                # Update password and timestamp
+                user.password_hash = new_password_hash
+                user.updated_at = datetime.utcnow()
+                session.commit()
+
+            logger.info(f"Password changed successfully for user {user_id}")
 
             return dbc.Alert([
-                html.I(className="bi bi-info-circle me-2"),
-                "Password change functionality will be implemented with full authentication system. ",
-                "Your password strength requirements are valid!"
-            ], color="info", dismissable=True)
+                html.I(className="bi bi-check-circle me-2"),
+                "Password changed successfully!"
+            ], color="success", dismissable=True)
+
+        except ValueError as ve:
+            # Password validation errors (already logged in hash_password)
+            return dbc.Alert(str(ve), color="danger", dismissable=True)
 
         except Exception as e:
             logger.error(f"Error changing password: {e}", exc_info=True)
-            return dbc.Alert(f"Error: {str(e)}", color="danger", dismissable=True)
+            return dbc.Alert("An error occurred while changing your password. Please try again.", color="danger", dismissable=True)
 
     @app.callback(
         Output('active-sessions-table', 'children'),

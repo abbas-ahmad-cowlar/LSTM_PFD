@@ -1,5 +1,5 @@
 """Tag models for experiment organization."""
-from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint, Index
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
 
@@ -26,6 +26,14 @@ class Tag(BaseModel):
         "ExperimentTag",
         back_populates="tag",
         cascade="all, delete-orphan"
+    )
+
+    # Performance indexes
+    # Note: name and slug already have column-level unique indexes
+    # Note: created_by is ForeignKey (auto-indexed)
+    __table_args__ = (
+        Index('ix_tags_created_at', 'created_at'),
+        # Removed duplicate on created_by (FK)
     )
 
     def __repr__(self):
@@ -72,9 +80,14 @@ class ExperimentTag(BaseModel):
     experiment = relationship("Experiment", backref="experiment_tags")
     tag = relationship("Tag", back_populates="experiment_tags")
 
-    # Unique constraint: one experiment can't have the same tag twice
+    # Constraints and performance indexes
+    # Note: experiment_id and tag_id already have column-level indexes
+    # Note: UniqueConstraint automatically creates composite index on (experiment_id, tag_id)
+    # Note: added_by is ForeignKey (auto-indexed)
     __table_args__ = (
         UniqueConstraint('experiment_id', 'tag_id', name='uq_experiment_tag'),
+        Index('ix_experiment_tags_created_at', 'created_at'),
+        # Removed all duplicates - UniqueConstraint handles composite index
     )
 
     def __repr__(self):
