@@ -9,6 +9,7 @@ Author: AI Assistant
 Date: 2025-11-20
 """
 
+from utils.constants import SAMPLING_RATE
 import numpy as np
 from scipy import signal as scipy_signal
 from typing import Tuple, Optional
@@ -316,7 +317,7 @@ if __name__ == "__main__":
     print("Wigner-Ville Distribution - Example Usage\n")
 
     # Generate test signal with two frequency components
-    fs = 20480
+    fs = SAMPLING_RATE
     duration = 1.0
     t = np.linspace(0, duration, int(fs * duration))
 
