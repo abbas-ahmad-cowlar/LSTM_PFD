@@ -2,12 +2,20 @@
 Webhook Management Callbacks (Feature #4).
 Handles UI interactions for webhook configuration management.
 """
+import json
 from dash import Input, Output, State, html, callback_context, ALL, MATCH
 import dash_bootstrap_components as dbc
 from datetime import datetime
 
 from services.webhook_service import WebhookService
 from utils.logger import setup_logger
+from utils.validation import (
+    validate_required,
+    validate_string_length,
+    validate_url,
+    validate_list_not_empty,
+    ValidationError
+)
 
 logger = setup_logger(__name__)
 
@@ -104,7 +112,8 @@ def register_webhook_callbacks(app):
                 try:
                     stats = WebhookService.get_webhook_stats(webhook.id, user_id)
                     success_rate = f"{stats.get('success_rate', 0)}%"
-                except:
+                except Exception as e:
+                    logger.error(f"Error getting webhook stats for webhook {webhook.id}: {e}", exc_info=True)
                     success_rate = "N/A"
 
                 # Actions
@@ -210,7 +219,6 @@ def register_webhook_callbacks(app):
         # Edit webhook button clicked
         if 'edit-webhook-btn' in trigger_id:
             # Get which button was clicked
-            import json
             button_id = json.loads(trigger_id.split('.')[0])
             webhook_id = button_id['index']
 
@@ -259,14 +267,13 @@ def register_webhook_callbacks(app):
 
         try:
             # Validate inputs
-            if not name or not name.strip():
-                return dbc.Alert("Please provide a webhook name", color="danger"), webhook_id
+            name = validate_required(name, "Webhook name")
+            name = validate_string_length(name, 100, "Webhook name")
 
-            if not url or not url.strip():
-                return dbc.Alert("Please provide a webhook URL", color="danger"), webhook_id
+            url = validate_required(url, "Webhook URL")
+            url = validate_url(url, "Webhook URL")
 
-            if not events or len(events) == 0:
-                return dbc.Alert("Please select at least one event", color="danger"), webhook_id
+            events = validate_list_not_empty(events, "Event selection")
 
             user_id = 1  # TODO: Get from session
 
@@ -308,11 +315,15 @@ def register_webhook_callbacks(app):
                     f"Webhook '{name}' created successfully!"
                 ], color="success"), None
 
+        except ValidationError as e:
+            logger.warning(f"Validation error in save_webhook: {e}")
+            return dbc.Alert(str(e), color="danger"), webhook_id
         except ValueError as e:
+            logger.warning(f"Value error in save_webhook: {e}")
             return dbc.Alert(str(e), color="danger"), webhook_id
         except Exception as e:
             logger.error(f"Error saving webhook: {e}", exc_info=True)
-            return dbc.Alert(f"Error: {str(e)}", color="danger"), webhook_id
+            return dbc.Alert("An unexpected error occurred while saving the webhook", color="danger"), webhook_id
 
     @app.callback(
         Output('webhook-form-message', 'children', allow_duplicate=True),
@@ -397,7 +408,6 @@ def register_webhook_callbacks(app):
             return html.Div()
 
         try:
-            import json
             trigger_id = ctx.triggered[0]['prop_id']
             button_id = json.loads(trigger_id.split('.')[0])
             webhook_id = button_id['index']
@@ -448,7 +458,6 @@ def register_webhook_callbacks(app):
 
         # Delete button clicked
         if 'delete-webhook-btn' in trigger_id:
-            import json
             button_id = json.loads(trigger_id.split('.')[0])
             webhook_id = button_id['index']
 
@@ -494,7 +503,6 @@ def register_webhook_callbacks(app):
 
         # View button clicked
         if 'view-webhook-btn' in trigger_id:
-            import json
             button_id = json.loads(trigger_id.split('.')[0])
             webhook_id = button_id['index']
 
