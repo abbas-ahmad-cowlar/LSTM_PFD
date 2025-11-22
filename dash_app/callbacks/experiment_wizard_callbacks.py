@@ -297,6 +297,157 @@ def register_experiment_wizard_callbacks(app):
             logger.error(f"Failed to launch training: {e}")
             return "/experiments"  # Redirect to experiments list on error
 
+    # Advanced Training Options Callbacks
+
+    @app.callback(
+        Output("distillation-config", "style"),
+        Input("enable-distillation", "value")
+    )
+    def toggle_distillation_config(enable):
+        """Show/hide distillation configuration."""
+        if enable:
+            return {"display": "block", "marginTop": "1rem"}
+        return {"display": "none"}
+
+    @app.callback(
+        Output("advanced-aug-config", "style"),
+        Input("enable-advanced-aug", "value")
+    )
+    def toggle_advanced_aug_config(enabled_augs):
+        """Show/hide advanced augmentation configuration."""
+        if enabled_augs and len(enabled_augs) > 0:
+            return {"display": "block", "marginTop": "1rem"}
+        return {"display": "none"}
+
+    @app.callback(
+        Output("progressive-config", "style"),
+        Input("enable-progressive", "value")
+    )
+    def toggle_progressive_config(enable):
+        """Show/hide progressive resizing configuration."""
+        if enable:
+            return {"display": "block", "marginTop": "1rem"}
+        return {"display": "none"}
+
+    @app.callback(
+        Output("teacher-model-select", "options"),
+        Input("enable-distillation", "value")
+    )
+    def load_teacher_models(enable):
+        """Load available teacher models from completed experiments."""
+        if not enable:
+            return []
+
+        try:
+            with get_db_session() as session:
+                # Get completed experiments
+                completed_experiments = session.query(Experiment).filter(
+                    Experiment.status == ExperimentStatus.COMPLETED
+                ).order_by(Experiment.created_at.desc()).limit(20).all()
+
+                return [
+                    {
+                        "label": f"{exp.name} ({exp.model_type}) - Acc: {exp.metrics.get('accuracy', 0):.2%}",
+                        "value": exp.id
+                    }
+                    for exp in completed_experiments
+                    if exp.metrics and 'accuracy' in exp.metrics
+                ]
+        except Exception as e:
+            logger.error(f"Failed to load teacher models: {e}")
+            return []
+
+    @app.callback(
+        Output("wizard-config", "data", allow_duplicate=True),
+        [Input("dataset-dropdown", "value"),
+         Input({"type": "hyperparam", "name": ALL}, "value"),
+         Input("num-epochs", "value"),
+         Input("batch-size", "value"),
+         Input("optimizer", "value"),
+         Input("learning-rate", "value"),
+         Input("augmentation-options", "value"),
+         # Advanced options
+         Input("enable-distillation", "value"),
+         Input("teacher-model-select", "value"),
+         Input("distillation-temperature", "value"),
+         Input("distillation-alpha", "value"),
+         Input("mixed-precision-mode", "value"),
+         Input("enable-advanced-aug", "value"),
+         Input("aug-magnitude", "value"),
+         Input("aug-probability", "value"),
+         Input("enable-progressive", "value"),
+         Input("progressive-start-size", "value"),
+         Input("progressive-end-size", "value")],
+        [State("wizard-config", "data"),
+         State({"type": "hyperparam", "name": ALL}, "id")],
+        prevent_initial_call=True
+    )
+    def collect_training_config(
+        dataset_id, hyperparam_values, num_epochs, batch_size, optimizer,
+        learning_rate, augmentation,
+        enable_distillation, teacher_model_id, distill_temp, distill_alpha,
+        mixed_precision, enable_adv_aug, aug_mag, aug_prob,
+        enable_progressive, prog_start, prog_end,
+        config, hyperparam_ids
+    ):
+        """Collect all training configuration including advanced options."""
+        if not callback_context.triggered:
+            raise PreventUpdate
+
+        # Update basic training config
+        config["dataset_id"] = dataset_id
+        config["num_epochs"] = num_epochs or 100
+        config["batch_size"] = batch_size or 32
+        config["optimizer"] = optimizer or "adam"
+        config["learning_rate"] = learning_rate or 0.001
+        config["augmentation"] = augmentation or []
+
+        # Collect hyperparameters
+        hyperparameters = {}
+        for param_id, value in zip(hyperparam_ids, hyperparam_values):
+            param_name = param_id["name"]
+            hyperparameters[param_name] = value
+        config["hyperparameters"] = hyperparameters
+
+        # Advanced options
+        config["advanced_training"] = {}
+
+        # Knowledge Distillation
+        if enable_distillation and teacher_model_id:
+            config["advanced_training"]["distillation"] = {
+                "enabled": True,
+                "teacher_model_id": teacher_model_id,
+                "temperature": distill_temp or 3.0,
+                "alpha": distill_alpha or 0.5
+            }
+
+        # Mixed Precision
+        if mixed_precision and mixed_precision != "fp32":
+            config["advanced_training"]["mixed_precision"] = {
+                "enabled": True,
+                "dtype": mixed_precision
+            }
+
+        # Advanced Augmentation
+        if enable_adv_aug and len(enable_adv_aug) > 0:
+            config["advanced_training"]["advanced_augmentation"] = {
+                "enabled": True,
+                "methods": enable_adv_aug,
+                "magnitude": aug_mag or 9,
+                "probability": aug_prob or 0.5
+            }
+
+        # Progressive Resizing
+        if enable_progressive:
+            config["advanced_training"]["progressive_resizing"] = {
+                "enabled": True,
+                "start_size": prog_start or 51200,
+                "end_size": prog_end or 102400
+            }
+
+        logger.info(f"Updated training config with advanced options: {config.get('advanced_training', {})}")
+        return config
+
 
 # Import time for timestamp generation
 import time
