@@ -1,5 +1,5 @@
 """User model for authentication (Phase 11D)."""
-from sqlalchemy import Column, String, Boolean
+from sqlalchemy import Column, String, Boolean, Index
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
@@ -15,8 +15,21 @@ class User(BaseModel):
     role = Column(String(50), default='user')  # user, admin
     is_active = Column(Boolean, default=True)
 
+    # 2FA/TOTP fields (Phase 6, Feature 3)
+    totp_secret = Column(String(32), nullable=True)  # Base32 encoded TOTP secret
+    totp_enabled = Column(Boolean, default=False)  # Whether 2FA is enabled
+
     # Relationships
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("SessionLog", back_populates="user", cascade="all, delete-orphan")
+
+    # Performance indexes
+    # Note: username and email already have column-level unique indexes
+    __table_args__ = (
+        Index('ix_users_is_active', 'is_active'),
+        Index('ix_users_created_at', 'created_at'),
+        # Removed duplicate on email (already unique=True)
+    )
 
     # Note: Password hashing and authentication logic will be added in Phase 11D
 

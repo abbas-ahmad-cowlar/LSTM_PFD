@@ -219,6 +219,184 @@ def create_metrics_history_chart():
         return create_empty_metrics_chart()
 
 
+    @app.callback(
+        [
+            Output('system-log-table', 'children'),
+            Output('log-count', 'children'),
+        ],
+        [
+            Input('url', 'pathname'),
+            Input('system-health-interval', 'n_intervals'),
+            Input('refresh-system-logs-btn', 'n_clicks'),
+            Input('log-search-input', 'value'),
+            Input('log-status-filter', 'value'),
+            Input('log-time-filter', 'value'),
+            Input('log-page-number', 'data'),
+        ],
+        [
+            State('log-items-per-page', 'data'),
+        ]
+    )
+    def load_system_logs(
+        pathname, n_intervals, refresh_clicks,
+        search_query, status_filter, time_filter,
+        page_number, items_per_page
+    ):
+        """Load and display system logs with filtering."""
+        if pathname != '/system-health':
+            return html.Div(), "Showing 0 logs"
+
+        try:
+            import dash_bootstrap_components as dbc
+            from sqlalchemy import or_, and_
+
+            with get_db_session() as session:
+                # Base query
+                query = session.query(SystemLog)
+
+                # Apply search filter
+                if search_query and search_query.strip():
+                    search_term = f"%{search_query.strip()}%"
+                    query = query.filter(
+                        or_(
+                            SystemLog.action.ilike(search_term),
+                            SystemLog.details.cast(str).ilike(search_term),
+                            SystemLog.error_message.ilike(search_term)
+                        )
+                    )
+
+                # Apply status filter
+                if status_filter and status_filter != 'all':
+                    query = query.filter(SystemLog.status == status_filter)
+
+                # Apply time filter
+                now = datetime.utcnow()
+                if time_filter == 'hour':
+                    time_threshold = now - timedelta(hours=1)
+                    query = query.filter(SystemLog.created_at >= time_threshold)
+                elif time_filter == 'day':
+                    time_threshold = now - timedelta(days=1)
+                    query = query.filter(SystemLog.created_at >= time_threshold)
+                elif time_filter == 'week':
+                    time_threshold = now - timedelta(days=7)
+                    query = query.filter(SystemLog.created_at >= time_threshold)
+                elif time_filter == 'month':
+                    time_threshold = now - timedelta(days=30)
+                    query = query.filter(SystemLog.created_at >= time_threshold)
+
+                # Order by most recent first
+                query = query.order_by(SystemLog.created_at.desc())
+
+                # Get total count
+                total_logs = query.count()
+
+                # Pagination
+                page_number = page_number or 1
+                items_per_page = items_per_page or 50
+                offset = (page_number - 1) * items_per_page
+
+                # Get page of logs
+                logs = query.limit(items_per_page).offset(offset).all()
+
+                # Build table
+                if not logs:
+                    return html.Div([
+                        html.P("No system logs found.", className="text-muted text-center py-4")
+                    ]), "Showing 0 logs"
+
+                # Table header
+                table_header = html.Thead(html.Tr([
+                    html.Th("Timestamp", style={'width': '15%'}),
+                    html.Th("Action", style={'width': '20%'}),
+                    html.Th("Status", style={'width': '10%'}),
+                    html.Th("Details", style={'width': '40%'}),
+                    html.Th("Error", style={'width': '15%'}),
+                ]))
+
+                # Table rows
+                rows = []
+                for log in logs:
+                    # Status badge with color
+                    if log.status == 'success':
+                        status_badge = dbc.Badge("Success", color="success")
+                    elif log.status == 'error':
+                        status_badge = dbc.Badge("Error", color="danger")
+                    elif log.status == 'warning':
+                        status_badge = dbc.Badge("Warning", color="warning")
+                    else:
+                        status_badge = dbc.Badge(log.status, color="secondary")
+
+                    # Format details (JSON or dict)
+                    details_str = ""
+                    if log.details:
+                        if isinstance(log.details, dict):
+                            # Show key details in a compact format
+                            detail_items = []
+                            for key, value in list(log.details.items())[:3]:  # Limit to 3 items
+                                detail_items.append(f"{key}: {value}")
+                            details_str = ", ".join(detail_items)
+                            if len(log.details) > 3:
+                                details_str += "..."
+                        else:
+                            details_str = str(log.details)[:100]  # Truncate long strings
+                    else:
+                        details_str = "-"
+
+                    row = html.Tr([
+                        html.Td([
+                            html.Div(log.created_at.strftime('%Y-%m-%d')),
+                            html.Small(log.created_at.strftime('%H:%M:%S'), className="text-muted")
+                        ]),
+                        html.Td(log.action),
+                        html.Td(status_badge),
+                        html.Td(html.Small(details_str)),
+                        html.Td(html.Small(log.error_message if log.error_message else "-", className="text-danger")),
+                    ])
+                    rows.append(row)
+
+                table_body = html.Tbody(rows)
+                table = dbc.Table(
+                    [table_header, table_body],
+                    bordered=True,
+                    hover=True,
+                    responsive=True,
+                    size="sm",
+                    className="mb-0"
+                )
+
+                # Count message
+                start_idx = offset + 1
+                end_idx = min(offset + len(logs), total_logs)
+                count_msg = f"Showing {start_idx}-{end_idx} of {total_logs} logs"
+
+                return table, count_msg
+
+        except Exception as e:
+            logger.error(f"Error loading system logs: {e}", exc_info=True)
+            import dash_bootstrap_components as dbc
+            return dbc.Alert(f"Error loading logs: {str(e)}", color="danger"), "Error"
+
+    @app.callback(
+        Output('export-logs-btn', 'n_clicks'),
+        Input('export-logs-btn', 'n_clicks'),
+        prevent_initial_call=True
+    )
+    def export_system_logs(n_clicks):
+        """Export system logs to CSV."""
+        if not n_clicks:
+            raise PreventUpdate
+
+        try:
+            # TODO: Implement CSV export functionality
+            # This would typically use dcc.Download component
+            logger.info("System logs export requested")
+            return None
+
+        except Exception as e:
+            logger.error(f"Error exporting logs: {e}", exc_info=True)
+            return None
+
+
 def create_empty_metrics_chart():
     """
     Create empty metrics chart when no data available.

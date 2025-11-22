@@ -19,9 +19,15 @@ class EmailDigestQueue(BaseModel):
     # Relationships
     user = relationship("User", backref="digest_queue")
 
-    # Indexes - partial index for pending items
+    # Indexes - optimized for common queries
     __table_args__ = (
         Index('idx_digest_queue_scheduled', 'scheduled_for'),
+        # Composite index for user-specific queries with time filtering
+        Index('idx_digest_queue_user_scheduled', 'user_id', 'scheduled_for'),
+        # Index for filtering by inclusion status
+        Index('idx_digest_queue_included', 'included_in_digest', 'scheduled_for'),
+        # Composite index for event type filtering
+        Index('idx_digest_queue_event_scheduled', 'event_type', 'scheduled_for'),
     )
 
     def __repr__(self):

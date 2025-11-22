@@ -10,6 +10,15 @@ from utils.logger import setup_logger
 from database.connection import get_db_session
 from models.experiment import Experiment
 import os
+from utils.constants import (
+    BYTES_PER_MB,
+    DEFAULT_ONNX_INPUT_SHAPE,
+    DEFAULT_ONNX_OPSET_VERSION,
+    DEFAULT_BENCHMARK_RUNS,
+    BENCHMARK_WARMUP_RUNS,
+    MILLISECONDS_PER_SECOND,
+    DEFAULT_PRUNING_AMOUNT,
+)
 
 logger = setup_logger(__name__)
 
@@ -115,7 +124,7 @@ class DeploymentService:
         """
         try:
             size_bytes = model_path.stat().st_size
-            size_mb = size_bytes / (1024 * 1024)
+            size_mb = size_bytes / BYTES_PER_MB
             return size_mb
         except Exception as e:
             logger.error(f"Failed to get model size: {e}")
@@ -234,8 +243,8 @@ class DeploymentService:
     def export_to_onnx(
         model: nn.Module,
         save_path: Path,
-        input_shape: tuple = (1, 1, 102400),
-        opset_version: int = 14,
+        input_shape: tuple = DEFAULT_ONNX_INPUT_SHAPE,
+        opset_version: int = DEFAULT_ONNX_OPSET_VERSION,
         optimize: bool = True,
         dynamic_axes: bool = True
     ) -> bool:
@@ -296,7 +305,7 @@ class DeploymentService:
             return False
 
     @staticmethod
-    def prune_model(model: nn.Module, amount: float = 0.3, method: str = "l1_unstructured") -> nn.Module:
+    def prune_model(model: nn.Module, amount: float = DEFAULT_PRUNING_AMOUNT, method: str = "l1_unstructured") -> nn.Module:
         """
         Apply pruning to model.
 
@@ -335,7 +344,7 @@ class DeploymentService:
             raise
 
     @staticmethod
-    def benchmark_model(model: nn.Module, input_shape: tuple = (1, 1, 102400), num_runs: int = 100) -> Dict[str, Any]:
+    def benchmark_model(model: nn.Module, input_shape: tuple = DEFAULT_ONNX_INPUT_SHAPE, num_runs: int = DEFAULT_BENCHMARK_RUNS) -> Dict[str, Any]:
         """
         Benchmark model inference speed.
 
@@ -358,7 +367,7 @@ class DeploymentService:
             # Warmup
             dummy_input = torch.randn(*input_shape).to(device)
             with torch.no_grad():
-                for _ in range(10):
+                for _ in range(BENCHMARK_WARMUP_RUNS):
                     _ = model(dummy_input)
 
             # Benchmark
@@ -368,7 +377,7 @@ class DeploymentService:
                     start = time.time()
                     _ = model(dummy_input)
                     end = time.time()
-                    times.append((end - start) * 1000)  # Convert to ms
+                    times.append((end - start) * MILLISECONDS_PER_SECOND)  # Convert to ms
 
             import statistics
 
