@@ -18,6 +18,7 @@ from typing import Dict, Any, Optional, Tuple
 
 from models.base_model import BaseModel
 from models.cnn.conv_blocks import ConvBlock1D
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class CNN1D(BaseModel):
@@ -25,7 +26,7 @@ class CNN1D(BaseModel):
     1D Convolutional Neural Network for raw signal classification.
 
     Architecture:
-        Input: [B, 1, 102400]  # 5 sec @ 20.48 kHz
+        Input: [B, 1, SIGNAL_LENGTH]  # 5 sec @ SAMPLING_RATE Hz
         ├─ ConvBlock1: Conv1D(1→32, k=64, s=4) + Pool → [B, 32, 25600]
         ├─ ConvBlock2: Conv1D(32→64, k=32, s=2) + Pool → [B, 64, 12800]
         ├─ ConvBlock3: Conv1D(64→128, k=16, s=2) + Pool → [B, 128, 6400]
@@ -33,26 +34,26 @@ class CNN1D(BaseModel):
         ├─ ConvBlock5: Conv1D(256→512, k=4, s=2) + Pool → [B, 512, 1600]
         ├─ GlobalAvgPool → [B, 512]
         ├─ FC1: 512 → 256, ReLU, Dropout(0.5)
-        └─ FC2: 256 → 11 (num_classes)
+        └─ FC2: 256 → NUM_CLASSES (fault types)
 
     Parameters: ~1.2M (lightweight for real-time deployment)
 
     Args:
-        num_classes: Number of fault classes (default: 11)
+        num_classes: Number of fault classes (default: NUM_CLASSES from constants)
         input_channels: Number of input channels (default: 1 for mono signal)
         dropout: Dropout probability in FC layers (default: 0.5)
         use_batch_norm: Apply batch normalization (default: True)
 
     Example:
-        >>> model = CNN1D(num_classes=11)
-        >>> x = torch.randn(8, 1, 102400)  # Batch of 8 signals
-        >>> logits = model(x)  # Shape: [8, 11]
+        >>> model = CNN1D(num_classes=NUM_CLASSES)
+        >>> x = torch.randn(8, 1, SIGNAL_LENGTH)  # Batch of 8 signals
+        >>> logits = model(x)  # Shape: [8, NUM_CLASSES]
         >>> print(model.count_parameters())
     """
 
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         dropout: float = 0.5,
         use_batch_norm: bool = True
@@ -65,7 +66,7 @@ class CNN1D(BaseModel):
         self.use_batch_norm = use_batch_norm
 
         # Convolutional feature extractor
-        # Progressive downsampling: 102400 → 25600 → 12800 → 6400 → 3200 → 1600
+        # Progressive downsampling: SIGNAL_LENGTH → 25600 → 12800 → 6400 → 3200 → 1600
         self.conv_block1 = ConvBlock1D(
             in_channels=input_channels,
             out_channels=32,
@@ -143,7 +144,7 @@ class CNN1D(BaseModel):
         Forward pass.
 
         Args:
-            x: Input tensor [B, 1, 102400] or [B, 102400]
+            x: Input tensor [B, 1, SIGNAL_LENGTH] or [B, SIGNAL_LENGTH]
 
         Returns:
             Logits [B, num_classes]
@@ -153,7 +154,7 @@ class CNN1D(BaseModel):
             x = x.unsqueeze(1)  # [B, T] → [B, 1, T]
 
         # Convolutional feature extraction
-        x = self.conv_block1(x)  # [B, 1, 102400] → [B, 32, 25600]
+        x = self.conv_block1(x)  # [B, 1, SIGNAL_LENGTH] → [B, 32, 25600]
         x = self.conv_block2(x)  # [B, 32, 25600] → [B, 64, 12800]
         x = self.conv_block3(x)  # [B, 64, 12800] → [B, 128, 6400]
         x = self.conv_block4(x)  # [B, 128, 6400] → [B, 256, 3200]
@@ -183,15 +184,15 @@ class CNN1D(BaseModel):
         Useful for visualization, transfer learning, and interpretability.
 
         Args:
-            x: Input tensor [B, 1, 102400]
+            x: Input tensor [B, 1, SIGNAL_LENGTH]
             layer_name: Name of layer ('conv1', 'conv2', ..., 'conv5', 'fc1')
 
         Returns:
             Features at specified layer
 
         Example:
-            >>> model = CNN1D(num_classes=11)
-            >>> x = torch.randn(8, 1, 102400)
+            >>> model = CNN1D(num_classes=NUM_CLASSES)
+            >>> x = torch.randn(8, 1, SIGNAL_LENGTH)
             >>> conv3_features = model.get_intermediate_features(x, 'conv3')
             >>> print(conv3_features.shape)  # [8, 128, 6400]
         """
@@ -260,25 +261,25 @@ def test_cnn_1d():
     print("=" * 60)
 
     # Create model
-    model = CNN1D(num_classes=11)
+    model = CNN1D(num_classes=NUM_CLASSES)
     print(f"\nModel created: {model.get_config()}")
 
     # Test forward pass
     print("\n1. Testing forward pass...")
     batch_size = 8
-    x = torch.randn(batch_size, 1, 102400)
+    x = torch.randn(batch_size, 1, SIGNAL_LENGTH)
     logits = model(x)
     print(f"   Input shape: {x.shape}")
     print(f"   Output shape: {logits.shape}")
-    assert logits.shape == (batch_size, 11), f"Expected [8, 11], got {logits.shape}"
+    assert logits.shape == (batch_size, NUM_CLASSES), f"Expected [8, {NUM_CLASSES}], got {logits.shape}"
 
     # Test with 2D input
     print("\n2. Testing with 2D input (auto-unsqueeze)...")
-    x_2d = torch.randn(batch_size, 102400)
+    x_2d = torch.randn(batch_size, SIGNAL_LENGTH)
     logits_2d = model(x_2d)
     print(f"   Input shape: {x_2d.shape}")
     print(f"   Output shape: {logits_2d.shape}")
-    assert logits_2d.shape == (batch_size, 11)
+    assert logits_2d.shape == (batch_size, NUM_CLASSES)
 
     # Test intermediate features
     print("\n3. Testing intermediate feature extraction...")
