@@ -40,6 +40,7 @@ import matplotlib.pyplot as plt
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from deployment.inference import (
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     TorchInferenceEngine,
     ONNXInferenceEngine,
     OptimizedInferenceEngine,
@@ -135,7 +136,7 @@ def main():
         '--input-shape',
         type=int,
         nargs='+',
-        default=[1, 1, 102400],
+        default=[1, 1, SIGNAL_LENGTH],
         help='Input tensor shape'
     )
 

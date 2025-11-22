@@ -257,6 +257,7 @@ class ONNXInferenceEngine(BaseInferenceEngine):
         """
         try:
             import onnxruntime as ort
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
         except ImportError:
             logger.error("Please install onnxruntime: pip install onnxruntime")
             raise
@@ -450,7 +451,7 @@ def benchmark_inference(
     Example:
         >>> results = benchmark_inference(
         ...     'checkpoints/best_model.pth',
-        ...     (1, 1, 102400),
+        ...     (1, 1, SIGNAL_LENGTH),
         ...     backends=['torch', 'torch_fp16', 'onnx']
         ... )
         >>> for backend, stats in results.items():
