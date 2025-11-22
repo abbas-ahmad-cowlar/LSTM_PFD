@@ -2,12 +2,14 @@
 API Key Management Callbacks (Feature #1).
 Handles UI interactions for API key management.
 """
+import json
 from dash import Input, Output, State, html, callback_context
 import dash_bootstrap_components as dbc
 from datetime import datetime
 
 from services.api_key_service import APIKeyService
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -31,9 +33,7 @@ def register_api_key_callbacks(app):
             return html.Div()
 
         try:
-            # For demo purposes, use a test user ID
-            # In production, get this from session/JWT token
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             # Get API keys
             keys = APIKeyService.list_user_keys(user_id, include_inactive=True)
@@ -193,8 +193,7 @@ def register_api_key_callbacks(app):
                     html.Div()
                 )
 
-            # For demo purposes, use a test user ID
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             # Generate key
             result = APIKeyService.generate_key(
@@ -291,12 +290,11 @@ def register_api_key_callbacks(app):
 
         # Open modal for specific key
         if 'revoke-key-btn' in trigger_id:
-            import json
             button_id = json.loads(trigger_id.split('.')[0])
             key_id = button_id['index']
 
             # Get key details
-            user_id = 1  # TODO: Get from session
+            user_id = get_current_user_id()
             keys = APIKeyService.list_user_keys(user_id, include_inactive=True)
             key = next((k for k in keys if k.id == key_id), None)
 
@@ -315,7 +313,7 @@ def register_api_key_callbacks(app):
         # Confirm revoke
         if 'confirm-revoke-btn' in trigger_id and selected_key_id:
             try:
-                user_id = 1  # TODO: Get from session
+                user_id = get_current_user_id()
                 success = APIKeyService.revoke_key(selected_key_id, user_id)
 
                 if success:
@@ -328,5 +326,377 @@ def register_api_key_callbacks(app):
                 return False, None, html.Div()
 
         return is_open, selected_key_id, html.Div()
+
+    @app.callback(
+        [
+            Output('total-api-requests-count', 'children'),
+            Output('avg-response-time', 'children'),
+            Output('api-success-rate', 'children'),
+            Output('active-api-keys-count', 'children'),
+        ],
+        [
+            Input('settings-tabs', 'active_tab'),
+            Input('refresh-api-stats-btn', 'n_clicks'),
+        ]
+    )
+    def update_api_stats_summary(active_tab, refresh_clicks):
+        """Update API usage summary statistics."""
+        if active_tab != 'api-keys':
+            return "0", "0ms", "0%", "0"
+
+        try:
+            from database.connection import get_db_session
+            from models.api_key import APIKey, APIUsage
+            from models.api_request_log import APIRequestLog
+            from sqlalchemy import func
+            from datetime import timedelta
+
+            with get_db_session() as session:
+                # Active API keys count
+                user_id = 1  # TODO: Get from session
+                active_keys_count = session.query(APIKey)\
+                    .filter_by(user_id=user_id, is_active=True)\
+                    .count()
+
+                # Get API request stats for last 30 days
+                thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+                # Total requests (from APIUsage or APIRequestLog)
+                total_requests = session.query(func.count(APIUsage.id))\
+                    .join(APIKey, APIUsage.api_key_id == APIKey.id)\
+                    .filter(APIKey.user_id == user_id)\
+                    .filter(APIUsage.timestamp >= thirty_days_ago)\
+                    .scalar() or 0
+
+                # Average response time
+                avg_response = session.query(func.avg(APIUsage.response_time_ms))\
+                    .join(APIKey, APIUsage.api_key_id == APIKey.id)\
+                    .filter(APIKey.user_id == user_id)\
+                    .filter(APIUsage.timestamp >= thirty_days_ago)\
+                    .scalar()
+
+                avg_response_str = f"{int(avg_response)}ms" if avg_response else "0ms"
+
+                # Success rate (status codes 200-299)
+                successful_requests = session.query(func.count(APIUsage.id))\
+                    .join(APIKey, APIUsage.api_key_id == APIKey.id)\
+                    .filter(APIKey.user_id == user_id)\
+                    .filter(APIUsage.timestamp >= thirty_days_ago)\
+                    .filter(APIUsage.status_code >= 200)\
+                    .filter(APIUsage.status_code < 300)\
+                    .scalar() or 0
+
+                success_rate = (successful_requests / total_requests * 100) if total_requests > 0 else 0
+                success_rate_str = f"{success_rate:.1f}%"
+
+                return (
+                    f"{total_requests:,}",
+                    avg_response_str,
+                    success_rate_str,
+                    str(active_keys_count)
+                )
+
+        except Exception as e:
+            logger.error(f"Error loading API stats summary: {e}", exc_info=True)
+            return "Error", "Error", "Error", "Error"
+
+    @app.callback(
+        Output('api-usage-timeline-chart', 'figure'),
+        [
+            Input('settings-tabs', 'active_tab'),
+            Input('refresh-api-stats-btn', 'n_clicks'),
+        ]
+    )
+    def update_api_usage_timeline(active_tab, refresh_clicks):
+        """Update API usage timeline chart."""
+        if active_tab != 'api-keys':
+            return {}
+
+        try:
+            from database.connection import get_db_session
+            from models.api_key import APIKey, APIUsage
+            from sqlalchemy import func
+            from datetime import timedelta
+            import plotly.graph_objects as go
+
+            with get_db_session() as session:
+                user_id = 1  # TODO: Get from session
+                thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+                # Get daily request counts
+                daily_stats = session.query(
+                    func.date(APIUsage.timestamp).label('date'),
+                    func.count(APIUsage.id).label('count')
+                )\
+                    .join(APIKey, APIUsage.api_key_id == APIKey.id)\
+                    .filter(APIKey.user_id == user_id)\
+                    .filter(APIUsage.timestamp >= thirty_days_ago)\
+                    .group_by(func.date(APIUsage.timestamp))\
+                    .order_by(func.date(APIUsage.timestamp))\
+                    .all()
+
+                if not daily_stats:
+                    return {
+                        'data': [],
+                        'layout': {
+                            'title': 'No data available',
+                            'xaxis': {'title': 'Date'},
+                            'yaxis': {'title': 'Requests'},
+                            'height': 300,
+                        }
+                    }
+
+                dates = [stat.date for stat in daily_stats]
+                counts = [stat.count for stat in daily_stats]
+
+                fig = go.Figure(data=[
+                    go.Scatter(
+                        x=dates,
+                        y=counts,
+                        mode='lines+markers',
+                        name='Requests',
+                        line=dict(color='#0d6efd', width=2),
+                        marker=dict(size=6)
+                    )
+                ])
+
+                fig.update_layout(
+                    xaxis_title='Date',
+                    yaxis_title='Number of Requests',
+                    height=300,
+                    margin=dict(l=40, r=40, t=40, b=40),
+                    hovermode='x unified'
+                )
+
+                return fig
+
+        except Exception as e:
+            logger.error(f"Error loading API usage timeline: {e}", exc_info=True)
+            return {}
+
+    @app.callback(
+        Output('api-top-keys-chart', 'figure'),
+        [
+            Input('settings-tabs', 'active_tab'),
+            Input('refresh-api-stats-btn', 'n_clicks'),
+        ]
+    )
+    def update_top_keys_chart(active_tab, refresh_clicks):
+        """Update top API keys by request count chart."""
+        if active_tab != 'api-keys':
+            return {}
+
+        try:
+            from database.connection import get_db_session
+            from models.api_key import APIKey, APIUsage
+            from sqlalchemy import func
+            from datetime import timedelta
+            import plotly.graph_objects as go
+
+            with get_db_session() as session:
+                user_id = 1  # TODO: Get from session
+                thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+                # Get top 10 API keys by request count
+                top_keys = session.query(
+                    APIKey.name,
+                    APIKey.prefix,
+                    func.count(APIUsage.id).label('count')
+                )\
+                    .join(APIUsage, APIUsage.api_key_id == APIKey.id)\
+                    .filter(APIKey.user_id == user_id)\
+                    .filter(APIUsage.timestamp >= thirty_days_ago)\
+                    .group_by(APIKey.id, APIKey.name, APIKey.prefix)\
+                    .order_by(func.count(APIUsage.id).desc())\
+                    .limit(10)\
+                    .all()
+
+                if not top_keys:
+                    return {
+                        'data': [],
+                        'layout': {
+                            'title': 'No data available',
+                            'height': 300,
+                        }
+                    }
+
+                labels = [f"{key.name} ({key.prefix}...)" for key in top_keys]
+                values = [key.count for key in top_keys]
+
+                fig = go.Figure(data=[
+                    go.Bar(
+                        x=labels,
+                        y=values,
+                        marker=dict(color='#198754')
+                    )
+                ])
+
+                fig.update_layout(
+                    xaxis_title='API Key',
+                    yaxis_title='Request Count',
+                    height=300,
+                    margin=dict(l=40, r=40, t=40, b=80),
+                    xaxis={'tickangle': -45}
+                )
+
+                return fig
+
+        except Exception as e:
+            logger.error(f"Error loading top keys chart: {e}", exc_info=True)
+            return {}
+
+    @app.callback(
+        Output('api-endpoints-chart', 'figure'),
+        [
+            Input('settings-tabs', 'active_tab'),
+            Input('refresh-api-stats-btn', 'n_clicks'),
+        ]
+    )
+    def update_endpoints_chart(active_tab, refresh_clicks):
+        """Update requests by endpoint chart."""
+        if active_tab != 'api-keys':
+            return {}
+
+        try:
+            from database.connection import get_db_session
+            from models.api_key import APIKey, APIUsage
+            from sqlalchemy import func
+            from datetime import timedelta
+            import plotly.graph_objects as go
+
+            with get_db_session() as session:
+                user_id = 1  # TODO: Get from session
+                thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+                # Get top endpoints by request count
+                top_endpoints = session.query(
+                    APIUsage.endpoint,
+                    func.count(APIUsage.id).label('count')
+                )\
+                    .join(APIKey, APIUsage.api_key_id == APIKey.id)\
+                    .filter(APIKey.user_id == user_id)\
+                    .filter(APIUsage.timestamp >= thirty_days_ago)\
+                    .group_by(APIUsage.endpoint)\
+                    .order_by(func.count(APIUsage.id).desc())\
+                    .limit(10)\
+                    .all()
+
+                if not top_endpoints:
+                    return {
+                        'data': [],
+                        'layout': {
+                            'title': 'No data available',
+                            'height': 300,
+                        }
+                    }
+
+                labels = [endpoint.endpoint for endpoint in top_endpoints]
+                values = [endpoint.count for endpoint in top_endpoints]
+
+                fig = go.Figure(data=[
+                    go.Pie(
+                        labels=labels,
+                        values=values,
+                        hole=0.4
+                    )
+                ])
+
+                fig.update_layout(
+                    height=300,
+                    margin=dict(l=20, r=20, t=40, b=20),
+                )
+
+                return fig
+
+        except Exception as e:
+            logger.error(f"Error loading endpoints chart: {e}", exc_info=True)
+            return {}
+
+    @app.callback(
+        Output('api-usage-detail-table', 'children'),
+        [
+            Input('settings-tabs', 'active_tab'),
+            Input('refresh-api-stats-btn', 'n_clicks'),
+        ]
+    )
+    def update_api_usage_detail_table(active_tab, refresh_clicks):
+        """Update detailed API usage table."""
+        if active_tab != 'api-keys':
+            return html.Div()
+
+        try:
+            from database.connection import get_db_session
+            from models.api_key import APIKey, APIUsage
+            from sqlalchemy import func
+            from datetime import timedelta
+
+            with get_db_session() as session:
+                user_id = 1  # TODO: Get from session
+                thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+                # Get detailed stats per API key
+                key_stats = session.query(
+                    APIKey.name,
+                    APIKey.prefix,
+                    APIKey.is_active,
+                    func.count(APIUsage.id).label('total_requests'),
+                    func.avg(APIUsage.response_time_ms).label('avg_response_time'),
+                    func.max(APIUsage.timestamp).label('last_used')
+                )\
+                    .outerjoin(APIUsage,
+                              (APIUsage.api_key_id == APIKey.id) &
+                              (APIUsage.timestamp >= thirty_days_ago))\
+                    .filter(APIKey.user_id == user_id)\
+                    .group_by(APIKey.id, APIKey.name, APIKey.prefix, APIKey.is_active)\
+                    .all()
+
+                if not key_stats:
+                    return html.P("No API keys found.", className="text-muted text-center py-4")
+
+                # Build table
+                table_header = html.Thead(html.Tr([
+                    html.Th("API Key Name"),
+                    html.Th("Prefix"),
+                    html.Th("Status"),
+                    html.Th("Total Requests"),
+                    html.Th("Avg Response Time"),
+                    html.Th("Last Used"),
+                ]))
+
+                rows = []
+                for stat in key_stats:
+                    status_badge = dbc.Badge(
+                        "Active",
+                        color="success"
+                    ) if stat.is_active else dbc.Badge(
+                        "Inactive",
+                        color="secondary"
+                    )
+
+                    last_used_str = stat.last_used.strftime('%Y-%m-%d %H:%M') if stat.last_used else "Never"
+                    avg_time_str = f"{int(stat.avg_response_time)}ms" if stat.avg_response_time else "N/A"
+
+                    row = html.Tr([
+                        html.Td(stat.name),
+                        html.Td(html.Code(f"{stat.prefix}...")),
+                        html.Td(status_badge),
+                        html.Td(f"{stat.total_requests:,}"),
+                        html.Td(avg_time_str),
+                        html.Td(last_used_str),
+                    ])
+                    rows.append(row)
+
+                table_body = html.Tbody(rows)
+                return dbc.Table(
+                    [table_header, table_body],
+                    bordered=True,
+                    hover=True,
+                    responsive=True,
+                    size="sm"
+                )
+
+        except Exception as e:
+            logger.error(f"Error loading API usage detail table: {e}", exc_info=True)
+            return dbc.Alert(f"Error loading usage details: {str(e)}", color="danger")
 
     logger.info("API key management callbacks registered")

@@ -98,10 +98,14 @@ class ComparisonService:
                 'statistical_tests': {...}
             }
         """
+        from sqlalchemy.orm import selectinload
+
         session = get_session()
 
-        # Load experiments
-        experiments = session.query(Experiment).filter(
+        # Load experiments with eager loading to prevent N+1 queries
+        experiments = session.query(Experiment).options(
+            selectinload(Experiment.training_runs)
+        ).filter(
             Experiment.id.in_(experiment_ids)
         ).order_by(Experiment.id).all()
 
@@ -155,10 +159,8 @@ class ComparisonService:
         else:
             config = exp.config or {}
 
-        # Load training history
-        training_runs = session.query(TrainingRun).filter(
-            TrainingRun.experiment_id == exp.id
-        ).order_by(TrainingRun.epoch).all()
+        # Load training history (using eager-loaded relationship to avoid N+1 query)
+        training_runs = sorted(exp.training_runs, key=lambda r: r.epoch)
 
         training_history = {
             'epochs': [run.epoch for run in training_runs],

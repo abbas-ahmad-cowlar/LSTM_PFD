@@ -2,6 +2,7 @@
 HPO Campaign callbacks (Phase 11C).
 Callbacks for HPO campaign management and monitoring.
 """
+import json
 from dash import Input, Output, State, html, callback_context
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -10,6 +11,7 @@ from services.hpo_service import HPOService
 from tasks.hpo_tasks import run_hpo_campaign_task, stop_hpo_campaign_task
 from models.experiment import ExperimentStatus
 from utils.logger import setup_logger
+from utils.data_objects import CampaignObject
 from database.connection import get_db_session
 from models.dataset import Dataset
 from utils.auth_utils import get_current_user_id
@@ -78,20 +80,7 @@ def register_hpo_callbacks(app):
             cards = []
             for campaign in campaigns:
                 # Convert campaign dict to object-like structure
-                class CampaignObj:
-                    def __init__(self, data):
-                        self.id = data['id']
-                        self.name = data['name']
-                        self.status = data['status']
-                        self.model_type = data['base_model_type']
-                        self.optimization_method = data['method']
-                        self.completed_trials = data['trials_completed']
-                        self.total_trials = data['trials_total']
-                        self.best_score = data['best_accuracy'] or 0.0
-                        from datetime import datetime
-                        self.created_at = datetime.fromisoformat(data['created_at']) if data['created_at'] else datetime.now()
-
-                campaign_obj = CampaignObj(campaign)
+                campaign_obj = CampaignObject(campaign)
                 cards.append(create_hpo_campaign_card(campaign_obj))
 
             return cards
@@ -228,7 +217,6 @@ def register_hpo_callbacks(app):
 
         # Get campaign ID from button
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
-        import json
         button_data = json.loads(button_id)
         campaign_id = button_data['index']
 
