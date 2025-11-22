@@ -2,6 +2,7 @@
 API Key Management Callbacks (Feature #1).
 Handles UI interactions for API key management.
 """
+import json
 from dash import Input, Output, State, html, callback_context
 import dash_bootstrap_components as dbc
 from datetime import datetime
@@ -289,7 +290,6 @@ def register_api_key_callbacks(app):
 
         # Open modal for specific key
         if 'revoke-key-btn' in trigger_id:
-            import json
             button_id = json.loads(trigger_id.split('.')[0])
             key_id = button_id['index']
 

@@ -2,6 +2,7 @@
 Tag Management Callbacks.
 Handles UI interactions for experiment tagging and organization.
 """
+import json
 from dash import Input, Output, State, html, callback_context, ALL
 import dash_bootstrap_components as dbc
 from typing import List
@@ -183,17 +184,27 @@ def register_tag_callbacks(app):
             experiment_ids = [table_data[i]['id'] for i in selected_rows if i < len(table_data)]
 
             with get_db_session() as session:
-                # Get tags for all selected experiments
+                # Get tags for all selected experiments in a single query (no N+1)
+                # Use eager loading to fetch all tags at once
+                from models.tag import ExperimentTag
+                from sqlalchemy.orm import joinedload
+
+                experiment_tag_mappings = session.query(ExperimentTag).options(
+                    joinedload(ExperimentTag.tag)  # Eager load the Tag relationship!
+                ).filter(
+                    ExperimentTag.experiment_id.in_(experiment_ids)
+                ).all()
+
+                # Build tag count mapping
                 all_tags = {}
-                for exp_id in experiment_ids:
-                    tags = TagService.get_experiment_tags(session, exp_id)
-                    for tag in tags:
-                        if tag.id not in all_tags:
-                            all_tags[tag.id] = {
-                                'tag': tag,
+                for exp_tag in experiment_tag_mappings:
+                    if exp_tag.tag:  # Ensure tag exists
+                        if exp_tag.tag.id not in all_tags:
+                            all_tags[exp_tag.tag.id] = {
+                                'tag': exp_tag.tag,
                                 'count': 0
                             }
-                        all_tags[tag.id]['count'] += 1
+                        all_tags[exp_tag.tag.id]['count'] += 1
 
                 if not all_tags:
                     return html.P("No tags on selected experiments", className="text-muted small")
@@ -289,7 +300,6 @@ def register_tag_callbacks(app):
 
             # Handle popular tag chip click
             elif 'popular-tag-chip' in trigger:
-                import json
                 tag_id = json.loads(trigger.split('.')[0])
                 tag_name = tag_id['index']
 
@@ -312,7 +322,6 @@ def register_tag_callbacks(app):
 
             # Handle remove tag button
             elif 'remove-tag-btn' in trigger:
-                import json
                 tag_id_obj = json.loads(trigger.split('.')[0])
                 tag_id = tag_id_obj['index']
 
@@ -350,7 +359,8 @@ def register_tag_callbacks(app):
                 with get_db_session() as session:
                     popular = TagService.get_popular_tags(session, limit=10)
                     return [{'label': tag.name, 'value': tag.name} for tag in popular]
-            except:
+            except Exception as e:
+                logger.error(f"Error loading popular tags for autocomplete: {e}", exc_info=True)
                 return []
 
         try:
