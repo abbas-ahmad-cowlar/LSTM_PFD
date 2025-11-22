@@ -37,7 +37,6 @@ class ExperimentManager:
         """Initialize MLflow."""
         try:
             import mlflow
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
             self.mlflow = mlflow
 
             if self.tracking_uri:

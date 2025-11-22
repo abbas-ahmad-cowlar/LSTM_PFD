@@ -63,7 +63,6 @@ def train_model_task(self, config: dict):
         # Deep learning models (Phases 2-8)
         else:
             from integrations.deep_learning_adapter import DeepLearningAdapter
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
             def progress_callback(epoch, metrics):
                 self.update_state(

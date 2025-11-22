@@ -204,5 +204,4 @@ def verify_password(password: str, hashed: str) -> bool:
         True if password matches
     """
     import bcrypt
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))

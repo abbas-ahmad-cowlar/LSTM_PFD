@@ -445,7 +445,6 @@ def convert_and_quantize_onnx(
     """
     try:
         from onnxruntime.quantization import quantize_dynamic, QuantType
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
     except ImportError:
         logger.error("Please install onnxruntime: pip install onnxruntime")
         raise

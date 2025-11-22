@@ -357,7 +357,6 @@ def benchmark_quantized_model(
         >>> print(f"Speedup: {stats['speedup']:.2f}x")
     """
     import time
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     original_model.eval()
     quantized_model.eval()

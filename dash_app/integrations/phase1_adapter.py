@@ -39,7 +39,6 @@ class Phase1Adapter:
             from pipelines.classical_ml_pipeline import ClassicalMLPipeline
             import h5py
             import numpy as np
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
             logger.info(f"Starting Phase 1 training with config: {config}")
 

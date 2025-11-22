@@ -462,7 +462,6 @@ def test_callbacks():
 
     import torch.nn as nn
     import tempfile
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     # Dummy model and optimizer
     model = nn.Linear(10, 1)
