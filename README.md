@@ -8,6 +8,8 @@
 
 **A state-of-the-art, production-ready bearing fault diagnosis system** implementing cutting-edge machine learning and deep learning techniques for predictive maintenance.
 
+> **🚀 NEW!** Complete beginner? Start here → **[QUICK START GUIDE](QUICKSTART.md)** - Takes you from zero to a fully-functional 98-99% accurate fault diagnosis system in 11 phases.
+
 ---
 
 ## 📖 Table of Contents
@@ -194,78 +196,37 @@ All 11 phases are **complete and production-ready**:
 
 ## 🚀 Quick Start
 
-### Prerequisites
+> **📖 For complete beginners:** We highly recommend following the **[COMPREHENSIVE QUICK START GUIDE](QUICKSTART.md)** which takes you step-by-step from installation through all 11 phases with detailed explanations, expected outputs, and troubleshooting tips.
+
+**The guide covers:**
+- ✅ Installation and setup from scratch
+- ✅ All 11 phases (Phase 0: Data → Phase 11: Dashboard)
+- ✅ Expected outputs and verification steps
+- ✅ Common issues and solutions
+- ✅ Complete workflow to achieve 98-99% accuracy
+
+---
+
+### 30-Second Installation
+
+For experienced users who just need the basics:
 
 ```bash
-# System requirements
-- Python 3.8+
-- CUDA 11.8+ (for GPU training, optional but recommended)
-- 16GB+ RAM (32GB recommended for training)
-- 50GB+ disk space
-```
-
-### Installation
-
-```bash
-# 1. Clone the repository
+# Clone and setup
 git clone https://github.com/yourusername/LSTM_PFD.git
 cd LSTM_PFD
-
-# 2. Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 
-# 3. Install PyTorch (with CUDA support)
+# Install dependencies
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# 4. Install dependencies
 pip install -r requirements.txt
 
-# 5. (Optional) Install development dependencies for testing
-pip install -r requirements-test.txt
+# Verify
+python -c "import torch; print(f'✓ PyTorch {torch.__version__} | CUDA: {torch.cuda.is_available()}')"
 ```
 
-### Data Preparation
-
-```bash
-# Create directory structure
-mkdir -p data/{raw/bearing_data,processed,spectrograms/{stft,cwt,wvd}}
-mkdir -p checkpoints/{phase1,phase2,phase3,phase4,phase5,phase6,phase7,phase8}
-mkdir -p logs results visualizations
-
-# Place your bearing data (1430 MAT files) in:
-# data/raw/bearing_data/{normal,ball_fault,inner_race,outer_race,...}
-# 130 files per class × 11 classes = 1430 total
-
-# Import to HDF5 cache (one-time operation)
-python scripts/import_mat_dataset.py \
-    --mat_dir data/raw/bearing_data/ \
-    --output data/processed/signals_cache.h5 \
-    --split-ratios 0.7 0.15 0.15
-
-# Expected output:
-# ✓ Loaded 1430 signals
-# ✓ Train: 1001 samples | Val: 215 samples | Test: 214 samples
-# ✓ Cache saved to data/processed/signals_cache.h5
-```
-
-### Quick Test
-
-```bash
-# Verify installation
-python -c "
-import torch
-from models import create_cnn1d, list_available_models
-
-print(f'PyTorch version: {torch.__version__}')
-print(f'CUDA available: {torch.cuda.is_available()}')
-print(f'Available models: {list_available_models()}')
-
-model = create_cnn1d(num_classes=11)
-print(f'✓ Model created: {model.__class__.__name__}')
-print('✓ Installation successful!')
-"
-```
+**Next steps:** See **[QUICKSTART.md](QUICKSTART.md)** for data preparation and training workflows.
 
 ---
 
@@ -277,7 +238,7 @@ Each phase has a **dedicated usage guide** with step-by-step instructions:
 
 **What**: Feature engineering + traditional ML algorithms
 **Accuracy**: 95-96%
-**Guide**: [`PHASE_1_USAGE_GUIDE.md`](PHASE_1_USAGE_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md)
 
 ```python
 from pipelines.classical_ml_pipeline import ClassicalMLPipeline
@@ -301,7 +262,7 @@ print(f"Test Accuracy: {results['test_accuracy']:.2f}%")
 
 **What**: Deep learning baseline with multi-scale CNNs
 **Accuracy**: 93-95%
-**Guide**: [`PHASE_2_USAGE_GUIDE.md`](PHASE_2_USAGE_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md)
 
 ```bash
 python scripts/train_cnn.py \
@@ -320,7 +281,7 @@ python scripts/train_cnn.py \
 
 **What**: State-of-the-art CNNs (ResNet, EfficientNet, NAS)
 **Accuracy**: 96-97%
-**Guide**: [`PHASE_3_USAGE_GUIDE.md`](PHASE_3_USAGE_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md)
 
 ```bash
 # Train ResNet-18
@@ -345,7 +306,7 @@ python scripts/train_cnn.py \
 
 **What**: Self-attention for long-range temporal dependencies
 **Accuracy**: 96-97%
-**Guide**: [`PHASE_4_USAGE_GUIDE.md`](PHASE_4_USAGE_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md)
 
 ```python
 from transformers import create_signal_transformer
@@ -368,7 +329,7 @@ model = create_signal_transformer(
 
 **What**: 2D CNNs on spectrograms (STFT, CWT, WVD)
 **Accuracy**: 96-98%
-**Guide**: [`PHASE_5_USAGE_GUIDE.md`](PHASE_5_USAGE_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md)
 
 ```bash
 # Precompute spectrograms
@@ -392,7 +353,7 @@ python scripts/train_spectrogram_cnn.py \
 
 **What**: Integrate domain knowledge and physical laws
 **Accuracy**: 97-98%
-**Guide**: [`PHASE_6_USAGE_GUIDE.md`](PHASE_6_USAGE_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md)
 
 ```python
 from models.pinn.hybrid_pinn import HybridPINN
@@ -414,7 +375,7 @@ trainer = PINNTrainer(model, physics_losses=physics_losses)
 
 **What**: Interpret predictions with SHAP, LIME, Integrated Gradients
 **Purpose**: Build trust and understand model decisions
-**Guide**: [`PHASE_7_USAGE_GUIDE.md`](PHASE_7_USAGE_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md)
 
 ```python
 from explainability import SHAPExplainer, LIMEExplainer
@@ -436,7 +397,7 @@ streamlit run explainability/xai_dashboard.py
 
 **What**: Combine multiple models for superior performance
 **Accuracy**: 98-99% ⭐
-**Guide**: [`PHASE_8_USAGE_GUIDE.md`](PHASE_8_USAGE_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md)
 
 ```python
 from models.ensemble import VotingEnsemble, StackedEnsemble
@@ -463,7 +424,7 @@ stacked = StackedEnsemble(
 
 **What**: Production-ready deployment with optimization
 **Target**: <50ms latency
-**Guide**: [`Phase_9_DEPLOYMENT_GUIDE.md`](Phase_9_DEPLOYMENT_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md`](USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md)
 
 ```bash
 # Quantize model (4x smaller, 3x faster)
@@ -492,7 +453,7 @@ docker-compose up
 
 **What**: Comprehensive testing and CI/CD
 **Coverage**: 90%+
-**Guide**: [`Phase_10_QA_INTEGRATION_GUIDE.md`](Phase_10_QA_INTEGRATION_GUIDE.md)
+**Guide**: [`USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md`](USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md)
 
 ```bash
 # Run all tests
@@ -871,26 +832,26 @@ python app.py
 ### Phase-Specific Guides
 
 **Usage Guides** (Step-by-step how-to):
-- [`PHASE_1_USAGE_GUIDE.md`](PHASE_1_USAGE_GUIDE.md) - Classical ML
-- [`PHASE_2_USAGE_GUIDE.md`](PHASE_2_USAGE_GUIDE.md) - 1D CNNs
-- [`PHASE_3_USAGE_GUIDE.md`](PHASE_3_USAGE_GUIDE.md) - Advanced CNNs
-- [`PHASE_4_USAGE_GUIDE.md`](PHASE_4_USAGE_GUIDE.md) - Transformers
-- [`PHASE_5_USAGE_GUIDE.md`](PHASE_5_USAGE_GUIDE.md) - Time-Frequency
-- [`PHASE_6_USAGE_GUIDE.md`](PHASE_6_USAGE_GUIDE.md) - PINNs
-- [`PHASE_7_USAGE_GUIDE.md`](PHASE_7_USAGE_GUIDE.md) - XAI
-- [`PHASE_8_USAGE_GUIDE.md`](PHASE_8_USAGE_GUIDE.md) - Ensemble
-- [`Phase_9_DEPLOYMENT_GUIDE.md`](Phase_9_DEPLOYMENT_GUIDE.md) - Deployment
-- [`Phase_10_QA_INTEGRATION_GUIDE.md`](Phase_10_QA_INTEGRATION_GUIDE.md) - QA
-- [`PHASE_11_USAGE_GUIDE.md`](PHASE_11_USAGE_GUIDE.md) - **Enterprise Dashboard** ⭐
+- [`USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md) - Classical ML
+- [`USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md) - 1D CNNs
+- [`USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md) - Advanced CNNs
+- [`USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md) - Transformers
+- [`USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md) - Time-Frequency
+- [`USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md) - PINNs
+- [`USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md) - XAI
+- [`USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md) - Ensemble
+- [`USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md`](USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md) - Deployment
+- [`USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md`](USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md) - QA
+- [`USAGE_GUIDES/PHASE_11_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_11_USAGE_GUIDE.md) - **Enterprise Dashboard** ⭐
 
 **Architecture Documents** (Technical details):
-- [`phase_0.md`](phase_0.md) - Foundation design
-- [`phase_1.md`](phase_1.md) - Classical ML details
-- [`Phase_2.md`](Phase_2.md) - 1D CNN architecture
-- [`Phase_3.md`](Phase_3.md) - Advanced CNN architectures
-- [`Phase_4.md`](Phase_4.md) - Transformer implementation
-- [`Phase_5.md`](Phase_5.md) - Time-frequency theory
-- [`PHASE_5_ARCHITECTURE.md`](PHASE_5_ARCHITECTURE.md) - Phase 5 detailed architecture
+- [`phase-plan/phase_0.md`](phase-plan/phase_0.md) - Foundation design
+- [`phase-plan/phase_1.md`](phase-plan/phase_1.md) - Classical ML details
+- [`phase-plan/Phase_2.md`](phase-plan/Phase_2.md) - 1D CNN architecture
+- [`phase-plan/Phase_3.md`](phase-plan/Phase_3.md) - Advanced CNN architectures
+- [`phase-plan/Phase_4.md`](phase-plan/Phase_4.md) - Transformer implementation
+- [`phase-plan/Phase_5.md`](phase-plan/Phase_5.md) - Time-frequency theory
+- [`USAGE_GUIDES/PHASE_5_ARCHITECTURE.md`](USAGE_GUIDES/PHASE_5_ARCHITECTURE.md) - Phase 5 detailed architecture
 
 ### Other Documentation
 
