@@ -8,6 +8,7 @@ import dash_bootstrap_components as dbc
 from database.connection import get_db_session
 from services.search_service import SearchService
 from utils.logger import setup_logger
+from utils.auth_utils import get_current_user_id
 
 logger = setup_logger(__name__)
 
@@ -31,7 +32,7 @@ def register_saved_search_callbacks(app):
             return []
 
         try:
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             with get_db_session() as session:
                 saved_searches = SearchService.get_saved_searches(session, user_id)
@@ -73,7 +74,7 @@ def register_saved_search_callbacks(app):
             return "", [], [], []
 
         try:
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             with get_db_session() as session:
                 # Get saved search
@@ -152,8 +153,8 @@ def register_saved_search_callbacks(app):
                         tag_names = [t.name for t in tags]
                         if tag_names:
                             query_parts.append(f"tag:{','.join(tag_names)}")
-                except:
-                    pass
+                except Exception as e:
+                    logger.error(f"Error loading tags for search query in preview: {e}", exc_info=True)
 
             if model_filter and len(model_filter) > 0:
                 for model in model_filter:
@@ -210,8 +211,8 @@ def register_saved_search_callbacks(app):
                         tag_names = [t.name for t in tags]
                         if tag_names:
                             query_parts.append(f"tag:{','.join(tag_names)}")
-                except:
-                    pass
+                except Exception as e:
+                    logger.error(f"Error loading tags for saved search: {e}", exc_info=True)
 
             if model_filter and len(model_filter) > 0:
                 for model in model_filter:
@@ -227,7 +228,7 @@ def register_saved_search_callbacks(app):
                 return dbc.Alert("No search query to save. Apply some filters first.", color="warning"), []
 
             # Save the search
-            user_id = 1  # TODO: Get from authenticated session
+            user_id = get_current_user_id()
 
             with get_db_session() as session:
                 saved_search = SearchService.save_search(

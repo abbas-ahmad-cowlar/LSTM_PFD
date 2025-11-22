@@ -3,6 +3,7 @@ Experiment wizard callbacks (Phase 11B).
 Handles multi-step wizard navigation and experiment launch.
 """
 import time
+import json
 from dash import Input, Output, State, ALL, callback_context, html
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -169,7 +170,6 @@ def register_experiment_wizard_callbacks(app):
 
         # Extract model_id from the button that was clicked
         button_id = callback_context.triggered[0]["prop_id"].split(".")[0]
-        import json
         button_data = json.loads(button_id)
         model_type = button_data["index"]
 
@@ -203,7 +203,12 @@ def register_experiment_wizard_callbacks(app):
 
         try:
             with get_db_session() as session:
-                datasets = session.query(Dataset).all()
+                # Apply pagination to prevent loading too many datasets
+                from utils.query_utils import paginate_with_default_limit
+                datasets = paginate_with_default_limit(
+                    session.query(Dataset).order_by(Dataset.created_at.desc()),
+                    limit=100
+                )
                 return [
                     {"label": f"{ds.name} ({ds.num_samples} samples)", "value": ds.id}
                     for ds in datasets
