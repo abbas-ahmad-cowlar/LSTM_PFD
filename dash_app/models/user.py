@@ -15,8 +15,13 @@ class User(BaseModel):
     role = Column(String(50), default='user')  # user, admin
     is_active = Column(Boolean, default=True)
 
+    # 2FA/TOTP fields (Phase 6, Feature 3)
+    totp_secret = Column(String(32), nullable=True)  # Base32 encoded TOTP secret
+    totp_enabled = Column(Boolean, default=False)  # Whether 2FA is enabled
+
     # Relationships
     api_keys = relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
+    sessions = relationship("SessionLog", back_populates="user", cascade="all, delete-orphan")
 
     # Performance indexes
     # Note: username and email already have column-level unique indexes
