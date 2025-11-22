@@ -1,5 +1,5 @@
 """API Request Log model for tracking API usage and performance."""
-from sqlalchemy import Column, Integer, String, Float, DateTime, JSON, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, DateTime, JSON, Text, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
 from datetime import datetime
@@ -43,6 +43,15 @@ class APIRequestLog(BaseModel):
     # Relationships
     api_key = relationship("APIKey", back_populates="request_logs")
 
+    # Performance indexes
+    # Note: endpoint, status_code, request_time already have column-level indexes
+    # Note: api_key_id is ForeignKey (auto-indexed)
+    __table_args__ = (
+        Index('ix_api_request_logs_created_at', 'created_at'),
+        # Removed all duplicates - log table should have minimal indexes for write performance
+        # Time-based queries use request_time and created_at (both already indexed)
+    )
+
     def __repr__(self):
         return f"<APIRequestLog(endpoint='{self.endpoint}', status={self.status_code}, time={self.response_time_ms}ms)>"
 
@@ -79,6 +88,12 @@ class APIMetricsSummary(BaseModel):
 
     # Per endpoint breakdown (JSON)
     endpoint_metrics = Column(JSON)
+
+    # Performance indexes
+    __table_args__ = (
+        Index('ix_api_metrics_summary_created_at', 'created_at'),
+        Index('ix_api_metrics_summary_period_type', 'period_start', 'aggregation_type'),  # Composite for querying
+    )
 
     def __repr__(self):
         return f"<APIMetricsSummary(period={self.period_start}, type={self.aggregation_type})>"

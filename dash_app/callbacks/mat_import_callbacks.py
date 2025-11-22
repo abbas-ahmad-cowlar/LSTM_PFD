@@ -11,6 +11,13 @@ from models.dataset_import import DatasetImport, DatasetImportStatus
 from tasks.mat_import_tasks import import_mat_dataset_task
 from utils.logger import setup_logger
 from utils.file_handler import parse_upload_contents, save_uploaded_mat_files, get_file_summary
+from utils.constants import (
+    BYTES_PER_MB,
+    FILES_PER_MINUTE_IMPORT,
+    SIGNAL_LENGTH,
+    DEFAULT_RECENT_ITEMS_LIMIT,
+    PERCENT_MULTIPLIER,
+)
 
 logger = setup_logger(__name__)
 
@@ -53,7 +60,7 @@ def register_mat_import_callbacks(app):
 
         file_items = []
         for i, file_info in enumerate(all_files):
-            size_mb = file_info['size'] / 1024 / 1024
+            size_mb = file_info['size'] / BYTES_PER_MB
             file_items.append(
                 html.Div([
                     html.I(className="fas fa-file me-2"),
@@ -79,7 +86,7 @@ def register_mat_import_callbacks(app):
             return html.P("Upload files to see summary", className="text-muted")
 
         num_files = len(uploaded_files)
-        total_size_mb = sum(f['size'] for f in uploaded_files) / 1024 / 1024
+        total_size_mb = sum(f['size'] for f in uploaded_files) / BYTES_PER_MB
 
         return [
             html.Div([
@@ -107,7 +114,7 @@ def register_mat_import_callbacks(app):
             html.Div([
                 html.I(className="fas fa-info-circle me-2"),
                 html.Small(
-                    f"Estimated processing time: {max(1, int(num_files / 10))} minutes",
+                    f"Estimated processing time: {max(1, int(num_files / FILES_PER_MINUTE_IMPORT))} minutes",
                     className="text-muted"
                 )
             ])
@@ -169,7 +176,7 @@ def register_mat_import_callbacks(app):
         config = {
             'name': dataset_name,
             'output_dir': output_dir or 'data/imported',
-            'signal_length': signal_length or 102400,
+            'signal_length': signal_length or SIGNAL_LENGTH,
             'validate': 'enabled' in (validate_check or []),
             'auto_normalize': 'enabled' in (normalize_check or []),
             'output_format': output_format or 'hdf5',
@@ -261,7 +268,7 @@ def register_mat_import_callbacks(app):
                             html.I(className="fas fa-check-circle me-2 text-success"),
                             html.Span("Import completed successfully!", className="text-success")
                         ]),
-                        100,
+                        PERCENT_MULTIPLIER,
                         {"display": "block"},
                         {"display": "block"},
                         _create_import_stats(import_job),
@@ -308,7 +315,7 @@ def register_mat_import_callbacks(app):
             with get_db_session() as session:
                 imports = session.query(DatasetImport)\
                     .order_by(DatasetImport.created_at.desc())\
-                    .limit(5)\
+                    .limit(DEFAULT_RECENT_ITEMS_LIMIT)\
                     .all()
 
                 if not imports:
