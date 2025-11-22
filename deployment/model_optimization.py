@@ -19,6 +19,8 @@ import numpy as np
 import logging
 from collections import OrderedDict
 
+from utils.constants import SIGNAL_LENGTH
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
