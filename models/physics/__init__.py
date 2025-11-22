@@ -7,6 +7,7 @@ This package contains physics-based models for bearing fault diagnosis:
 - operating_conditions: Operating condition validation and analysis
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .bearing_dynamics import (
     BearingDynamics,
     characteristic_frequencies,

@@ -13,6 +13,7 @@ Reference:
 - Tan & Le (2019). "EfficientNet: Rethinking Model Scaling for CNNs"
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

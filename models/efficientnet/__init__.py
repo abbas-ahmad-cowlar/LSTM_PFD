@@ -7,6 +7,7 @@ This package provides EfficientNet implementations with compound scaling:
 - Efficient attention mechanisms
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .mbconv_block import (
     MBConvBlock,
     FusedMBConvBlock,

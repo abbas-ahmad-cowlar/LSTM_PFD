@@ -25,6 +25,7 @@ Reference:
 - Zhao et al. (2017). "Deep Learning and Its Applications to Machine Health Monitoring"
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -96,7 +97,7 @@ class CNNLSTM(BaseModel):
 
     def __init__(
         self,
-        num_classes: int = 11,
+        num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         cnn_backbone: str = 'resnet18',
         lstm_hidden: int = 256,
@@ -162,7 +163,7 @@ class CNNLSTM(BaseModel):
             # Import ResNet-18 and use as feature extractor
             try:
                 from resnet.resnet_1d import create_resnet18_1d
-                resnet = create_resnet18_1d(num_classes=11, input_channels=input_channels)
+                resnet = create_resnet18_1d(num_classes=NUM_CLASSES, input_channels=input_channels)
                 # Remove final FC layer and pooling - we'll use LSTM instead
                 backbone_layers = [
                     resnet.conv1,
@@ -182,7 +183,7 @@ class CNNLSTM(BaseModel):
         elif backbone == 'resnet34':
             try:
                 from resnet.resnet_1d import create_resnet34_1d
-                resnet = create_resnet34_1d(num_classes=11, input_channels=input_channels)
+                resnet = create_resnet34_1d(num_classes=NUM_CLASSES, input_channels=input_channels)
                 backbone_layers = [
                     resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool,
                     resnet.layer1, resnet.layer2, resnet.layer3, resnet.layer4
@@ -360,7 +361,7 @@ class CNNLSTM(BaseModel):
 
 
 def create_cnn_lstm(
-    num_classes: int = 11,
+    num_classes: int = NUM_CLASSES,
     backbone: str = 'resnet18',
     **kwargs
 ) -> CNNLSTM:
@@ -383,8 +384,8 @@ if __name__ == "__main__":
     print("Testing CNN-LSTM...")
 
     # Test with simple backbone
-    model = create_cnn_lstm(num_classes=11, backbone='simple')
-    x = torch.randn(2, 1, 102400)
+    model = create_cnn_lstm(num_classes=NUM_CLASSES, backbone='simple')
+    x = torch.randn(2, 1, SIGNAL_LENGTH)
     y = model(x)
     print(f"Input: {x.shape}, Output: {y.shape}")
     print(f"Parameters: {model.get_num_params():,}")

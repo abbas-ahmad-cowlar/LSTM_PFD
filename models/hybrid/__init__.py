@@ -7,6 +7,7 @@ This package provides hybrid models that combine:
 - Multi-scale CNN: Parallel processing at multiple scales
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .cnn_lstm import CNNLSTM, create_cnn_lstm
 from .cnn_tcn import CNNTCN, create_cnn_tcn
 from .multiscale_cnn import MultiScaleCNN, create_multiscale_cnn
