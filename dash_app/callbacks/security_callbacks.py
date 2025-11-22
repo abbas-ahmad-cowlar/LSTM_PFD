@@ -6,9 +6,15 @@ from dash import Input, Output, State, html, callback_context
 import dash_bootstrap_components as dbc
 from datetime import datetime
 import re
+import pyotp
+import qrcode
+import io
+import base64
 
 from database.connection import get_db_session
 from models.user import User
+from models.session_log import SessionLog
+from models.login_history import LoginHistory
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -172,45 +178,75 @@ def register_security_callbacks(app):
         if active_tab != 'security':
             return ""
 
-        # Placeholder implementation
-        # TODO: Implement session tracking in database
-        sessions_data = [
-            {
-                'device': 'Chrome on Windows',
-                'ip': '192.168.1.100',
-                'location': 'New York, US',
-                'last_active': 'Just now',
-                'current': True
-            },
-        ]
+        try:
+            # TODO: Get user_id from authenticated session
+            user_id = 1  # Placeholder until authentication is implemented
 
-        table_rows = []
-        for session in sessions_data:
-            badge = dbc.Badge("Current Session", color="success") if session['current'] else ""
+            with get_db_session() as session:
+                # Query active sessions from database
+                active_sessions = session.query(SessionLog)\
+                    .filter_by(user_id=user_id, is_active=True)\
+                    .order_by(SessionLog.last_active.desc())\
+                    .all()
 
-            table_rows.append(html.Tr([
-                html.Td([
-                    html.Strong(session['device']),
-                    html.Br(),
-                    html.Small(badge, className="text-muted")
-                ]),
-                html.Td(session['ip']),
-                html.Td(session['location']),
-                html.Td(session['last_active']),
-            ]))
+                if not active_sessions:
+                    return dbc.Alert([
+                        html.I(className="bi bi-info-circle me-2"),
+                        "No active sessions found. Sessions will be tracked once full authentication is implemented."
+                    ], color="info")
 
-        if not table_rows:
-            return dbc.Alert("No active sessions found", color="info")
+                table_rows = []
+                for sess in active_sessions:
+                    # Format device info
+                    device_info = sess.device_type or "Unknown Device"
+                    if sess.browser:
+                        device_info = f"{sess.browser} on {sess.device_type or 'Unknown'}"
 
-        return dbc.Table([
-            html.Thead(html.Tr([
-                html.Th("Device"),
-                html.Th("IP Address"),
-                html.Th("Location"),
-                html.Th("Last Active"),
-            ])),
-            html.Tbody(table_rows)
-        ], bordered=True, hover=True, size="sm")
+                    # Format last active time
+                    if sess.last_active:
+                        time_diff = datetime.utcnow() - sess.last_active
+                        if time_diff.total_seconds() < 60:
+                            last_active = "Just now"
+                        elif time_diff.total_seconds() < 3600:
+                            minutes = int(time_diff.total_seconds() / 60)
+                            last_active = f"{minutes} min ago"
+                        elif time_diff.total_seconds() < 86400:
+                            hours = int(time_diff.total_seconds() / 3600)
+                            last_active = f"{hours} hour{'s' if hours > 1 else ''} ago"
+                        else:
+                            last_active = sess.last_active.strftime('%Y-%m-%d %H:%M')
+                    else:
+                        last_active = "Unknown"
+
+                    # Determine if this is the current session
+                    # TODO: Compare with current session token when auth is implemented
+                    is_current = False  # Placeholder
+
+                    badge = dbc.Badge("Current Session", color="success", className="ms-2") if is_current else ""
+
+                    table_rows.append(html.Tr([
+                        html.Td([
+                            html.Strong(device_info),
+                            badge
+                        ]),
+                        html.Td(sess.ip_address or "N/A"),
+                        html.Td(sess.location or "Unknown"),
+                        html.Td(last_active),
+                    ]))
+
+                return dbc.Table([
+                    html.Thead(html.Tr([
+                        html.Th("Device"),
+                        html.Th("IP Address"),
+                        html.Th("Location"),
+                        html.Th("Last Active"),
+                    ])),
+                    html.Tbody(table_rows)
+                ], bordered=True, hover=True, size="sm", responsive=True)
+
+        except Exception as e:
+            logger.error(f"Error loading active sessions: {e}", exc_info=True)
+            return dbc.Alert(f"Error loading sessions: {str(e)}", color="danger")
 
     @app.callback(
         Output('login-history-table', 'children'),
@@ -222,46 +258,77 @@ def register_security_callbacks(app):
         if active_tab != 'security':
             return ""
 
-        # Placeholder implementation
-        # TODO: Implement login history tracking in database
-        history_data = [
-            {
-                'timestamp': datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
-                'device': 'Chrome on Windows',
-                'ip': '192.168.1.100',
-                'location': 'New York, US',
-                'status': 'success'
-            },
-        ]
+        try:
+            # TODO: Get user_id from authenticated session
+            user_id = 1  # Placeholder until authentication is implemented
 
-        table_rows = []
-        for login in history_data:
-            status_badge = dbc.Badge(
-                "✓ Success" if login['status'] == 'success' else "✗ Failed",
-                color="success" if login['status'] == 'success' else "danger"
-            )
+            with get_db_session() as session:
+                # Query login history from database
+                history = session.query(LoginHistory)\
+                    .filter_by(user_id=user_id)\
+                    .order_by(LoginHistory.timestamp.desc())\
+                    .limit(50)\
+                    .all()
 
-            table_rows.append(html.Tr([
-                html.Td(login['timestamp']),
-                html.Td(login['device']),
-                html.Td(login['ip']),
-                html.Td(login['location']),
-                html.Td(status_badge),
-            ]))
+                if not history:
+                    return dbc.Alert([
+                        html.I(className="bi bi-info-circle me-2"),
+                        "No login history found. Login attempts will be tracked once full authentication is implemented."
+                    ], color="info")
 
-        if not table_rows:
-            return dbc.Alert("No login history found", color="info")
+                table_rows = []
+                for entry in history:
+                    # Format timestamp
+                    timestamp = entry.timestamp.strftime('%Y-%m-%d %H:%M:%S') if entry.timestamp else "Unknown"
 
-        return dbc.Table([
-            html.Thead(html.Tr([
-                html.Th("Timestamp"),
-                html.Th("Device"),
-                html.Th("IP Address"),
-                html.Th("Location"),
-                html.Th("Status"),
-            ])),
-            html.Tbody(table_rows)
-        ], bordered=True, hover=True, size="sm")
+                    # Create status badge
+                    if entry.success:
+                        status_badge = dbc.Badge([
+                            html.I(className="bi bi-check-circle me-1"),
+                            "Success"
+                        ], color="success")
+                    else:
+                        status_badge = dbc.Badge([
+                            html.I(className="bi bi-x-circle me-1"),
+                            "Failed"
+                        ], color="danger")
+
+                    # Format login method
+                    login_method = entry.login_method or "password"
+                    if entry.login_method == "2fa":
+                        method_display = dbc.Badge("2FA", color="info", className="me-1")
+                    elif entry.login_method == "oauth":
+                        method_display = dbc.Badge("OAuth", color="primary", className="me-1")
+                    elif entry.login_method == "api_key":
+                        method_display = dbc.Badge("API Key", color="secondary", className="me-1")
+                    else:
+                        method_display = dbc.Badge("Password", color="light", text_color="dark", className="me-1")
+
+                    table_rows.append(html.Tr([
+                        html.Td(timestamp),
+                        html.Td(entry.ip_address or "N/A"),
+                        html.Td(entry.location or "Unknown"),
+                        html.Td(method_display),
+                        html.Td([
+                            status_badge,
+                            html.Small(f" - {entry.failure_reason}", className="text-muted") if not entry.success and entry.failure_reason else ""
+                        ]),
+                    ]))
+
+                return dbc.Table([
+                    html.Thead(html.Tr([
+                        html.Th("Timestamp"),
+                        html.Th("IP Address"),
+                        html.Th("Location"),
+                        html.Th("Method"),
+                        html.Th("Status"),
+                    ])),
+                    html.Tbody(table_rows)
+                ], bordered=True, hover=True, size="sm", responsive=True, striped=True)
+
+        except Exception as e:
+            logger.error(f"Error loading login history: {e}", exc_info=True)
+            return dbc.Alert(f"Error loading login history: {str(e)}", color="danger")
 
     @app.callback(
         [
@@ -285,16 +352,68 @@ def register_security_callbacks(app):
         trigger_id = ctx.triggered[0]['prop_id']
 
         if 'enable-2fa-btn' in trigger_id:
-            # Generate placeholder QR code and secret
-            # TODO: Generate actual TOTP secret and QR code
-            qr_placeholder = html.Div([
-                html.I(className="bi bi-qr-code", style={'fontSize': '120px', 'color': '#ccc'}),
-                html.P("QR Code generation will be implemented with 2FA library", className="mt-2 small text-muted")
-            ])
+            try:
+                # TODO: Get user_id from authenticated session
+                user_id = 1  # Placeholder until authentication is implemented
 
-            secret_key = "ABCD EFGH IJKL MNOP"  # Placeholder
+                with get_db_session() as session:
+                    user = session.query(User).filter_by(id=user_id).first()
 
-            return True, qr_placeholder, secret_key
+                    if not user:
+                        logger.error(f"User {user_id} not found")
+                        return False, "", ""
+
+                    # Generate TOTP secret if not already exists
+                    if not user.totp_secret:
+                        secret = pyotp.random_base32()
+                        user.totp_secret = secret
+                        session.commit()
+                    else:
+                        secret = user.totp_secret
+
+                    # Generate TOTP URI for QR code
+                    totp_uri = pyotp.totp.TOTP(secret).provisioning_uri(
+                        name=user.email,
+                        issuer_name='LSTM Dashboard'
+                    )
+
+                    # Generate QR code
+                    qr = qrcode.QRCode(
+                        version=1,
+                        error_correction=qrcode.constants.ERROR_CORRECT_L,
+                        box_size=10,
+                        border=4
+                    )
+                    qr.add_data(totp_uri)
+                    qr.make(fit=True)
+
+                    img = qr.make_image(fill_color="black", back_color="white")
+
+                    # Convert to base64
+                    buffer = io.BytesIO()
+                    img.save(buffer, format='PNG')
+                    img_str = base64.b64encode(buffer.getvalue()).decode()
+
+                    qr_code = html.Div([
+                        html.Img(
+                            src=f'data:image/png;base64,{img_str}',
+                            style={'width': '200px', 'height': '200px', 'margin': '0 auto', 'display': 'block'}
+                        ),
+                        html.P(
+                            "Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)",
+                            className="text-center mt-2 small text-muted"
+                        )
+                    ])
+
+                    # Format secret key for display (groups of 4 characters)
+                    formatted_secret = ' '.join([secret[i:i+4] for i in range(0, len(secret), 4)])
+
+                    logger.info(f"Generated 2FA QR code for user {user_id}")
+                    return True, qr_code, formatted_secret
+
+            except Exception as e:
+                logger.error(f"Error generating 2FA setup: {e}", exc_info=True)
+                return False, dbc.Alert(f"Error: {str(e)}", color="danger"), ""
 
         # Close modal
         return False, "", ""
@@ -311,10 +430,39 @@ def register_security_callbacks(app):
             return ""
 
         if not code or len(code) != 6:
-            return dbc.Alert("Please enter a 6-digit code", color="danger")
+            return dbc.Alert("Please enter a 6-digit code", color="danger", dismissable=True)
 
-        # TODO: Verify code against TOTP secret
-        return dbc.Alert([
-            html.I(className="bi bi-info-circle me-2"),
-            "2FA verification will be implemented with TOTP library"
-        ], color="info")
+        try:
+            # TODO: Get user_id from authenticated session
+            user_id = 1  # Placeholder until authentication is implemented
+
+            with get_db_session() as session:
+                user = session.query(User).filter_by(id=user_id).first()
+
+                if not user:
+                    logger.error(f"User {user_id} not found")
+                    return dbc.Alert("User not found", color="danger", dismissable=True)
+
+                if not user.totp_secret:
+                    return dbc.Alert("2FA not set up. Please enable 2FA first.", color="danger", dismissable=True)
+
+                # Verify TOTP code
+                totp = pyotp.TOTP(user.totp_secret)
+                if totp.verify(code, valid_window=1):  # Allow 30s time window
+                    user.totp_enabled = True
+                    session.commit()
+                    logger.info(f"2FA enabled successfully for user {user_id}")
+                    return dbc.Alert([
+                        html.I(className="bi bi-check-circle me-2"),
+                        "2FA enabled successfully! Your account is now protected with two-factor authentication."
+                    ], color="success", dismissable=True)
+                else:
+                    logger.warning(f"Invalid 2FA code attempt for user {user_id}")
+                    return dbc.Alert([
+                        html.I(className="bi bi-x-circle me-2"),
+                        "Invalid code. Please check your authenticator app and try again."
+                    ], color="danger", dismissable=True)
+
+        except Exception as e:
+            logger.error(f"Error verifying 2FA code: {e}", exc_info=True)
+            return dbc.Alert(f"Error: {str(e)}", color="danger", dismissable=True)
