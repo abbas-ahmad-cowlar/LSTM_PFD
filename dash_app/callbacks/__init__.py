@@ -68,6 +68,9 @@ def register_all_callbacks(app):
                     html.P("No experiment IDs provided. Use: /compare?ids=1,2,3"),
                     html.A("Return to Experiments", href="/experiments")
                 ], className="text-center mt-5")
+        elif pathname == '/xai':
+            from layouts.xai_dashboard import create_xai_dashboard_layout
+            return create_xai_dashboard_layout()
         else:
             from dash import html
             return html.Div([
@@ -121,3 +124,10 @@ def register_all_callbacks(app):
         register_experiments_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import experiments_callbacks: {e}")
+
+    # Import and register Phase 11C XAI callbacks
+    try:
+        from callbacks.xai_callbacks import register_xai_callbacks
+        register_xai_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import xai_callbacks: {e}")
