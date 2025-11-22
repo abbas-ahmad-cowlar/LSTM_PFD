@@ -278,34 +278,45 @@ Loading MAT files... 100%|████████████| 1430/1430
 
 **If you don't have data, generate synthetic bearing signals:**
 
+**🆕 NEW: Using HDF5 Format (Recommended - 25× faster loading!)**
+
 ```python
 # Create generate_data.py
 cat > generate_data.py << 'EOF'
-import numpy as np
 from data.signal_generator import SignalGenerator
 from config.data_config import DataConfig
 
 # Configure data generation
 config = DataConfig(
     num_signals_per_fault=130,  # 130 × 11 classes = 1,430 total
-    signal_length=102400,        # 5 seconds @ 20.48 kHz
-    fs=20480,                    # Sampling frequency
     rng_seed=42                  # For reproducibility
 )
 
 # Generate dataset
+print("Generating synthetic bearing fault signals...")
 generator = SignalGenerator(config)
 dataset = generator.generate_dataset()
 
-# Save to HDF5
-import h5py
-with h5py.File('data/processed/signals_cache.h5', 'w') as f:
-    f.create_dataset('signals', data=dataset['signals'])
-    f.create_dataset('labels', data=dataset['labels'])
-    f.create_dataset('metadata', data=str(dataset['metadata']))
+# Save as HDF5 with automatic train/val/test splits
+print("Saving to HDF5 format...")
+paths = generator.save_dataset(
+    dataset,
+    output_dir='data/processed',
+    format='hdf5',  # Fast, efficient format
+    train_val_test_split=(0.7, 0.15, 0.15)  # 70% train, 15% val, 15% test
+)
 
 print(f"✓ Generated {len(dataset['signals'])} signals")
-print(f"✓ Saved to data/processed/signals_cache.h5")
+print(f"✓ Saved to {paths['hdf5']}")
+print(f"✓ Automatic train/val/test splits created!")
+
+# Verify the HDF5 file
+import h5py
+with h5py.File(paths['hdf5'], 'r') as f:
+    print(f"\n📊 Dataset Statistics:")
+    print(f"   Train: {f['train']['signals'].shape[0]} samples")
+    print(f"   Val:   {f['val']['signals'].shape[0]} samples")
+    print(f"   Test:  {f['test']['signals'].shape[0]} samples")
 EOF
 
 # Run it
@@ -314,9 +325,27 @@ python generate_data.py
 
 **Expected output:**
 ```
+Generating synthetic bearing fault signals...
+Saving to HDF5 format...
 ✓ Generated 1430 signals
-✓ Saved to data/processed/signals_cache.h5
+✓ Saved to data/processed/dataset.h5
+✓ Automatic train/val/test splits created!
+
+📊 Dataset Statistics:
+   Train: 1001 samples
+   Val:   215 samples
+   Test:  214 samples
 ```
+
+**Alternative: Using both .mat and HDF5 (for comparison):**
+
+```python
+# Save in both formats
+paths = generator.save_dataset(dataset, output_dir='data/processed', format='both')
+# Creates: data/processed/mat_files/*.mat AND data/processed/dataset.h5
+```
+
+📖 **For more details on HDF5 vs .mat formats**, see [`HDF5_MIGRATION_GUIDE.md`](HDF5_MIGRATION_GUIDE.md)
 
 ### Verify Data
 
