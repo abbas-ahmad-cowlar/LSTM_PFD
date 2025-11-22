@@ -80,6 +80,15 @@ def register_all_callbacks(app):
         elif pathname == '/deployment':
             from layouts.deployment import create_deployment_layout
             return create_deployment_layout()
+        elif pathname == '/api-monitoring':
+            from layouts.api_monitoring import create_api_monitoring_layout
+            return create_api_monitoring_layout()
+        elif pathname == '/evaluation':
+            from layouts.evaluation_dashboard import create_evaluation_dashboard_layout
+            return create_evaluation_dashboard_layout()
+        elif pathname == '/testing':
+            from layouts.testing_dashboard import create_testing_dashboard_layout
+            return create_testing_dashboard_layout()
         else:
             from dash import html
             return html.Div([
@@ -161,3 +170,24 @@ def register_all_callbacks(app):
         register_deployment_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import deployment_callbacks: {e}")
+
+    # Import and register API Monitoring callbacks
+    try:
+        from callbacks.api_monitoring_callbacks import register_api_monitoring_callbacks
+        register_api_monitoring_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import api_monitoring_callbacks: {e}")
+
+    # Import and register Enhanced Evaluation callbacks
+    try:
+        from callbacks.evaluation_callbacks import register_evaluation_callbacks
+        register_evaluation_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import evaluation_callbacks: {e}")
+
+    # Import and register Testing & QA callbacks
+    try:
+        from callbacks.testing_callbacks import register_testing_callbacks
+        register_testing_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import testing_callbacks: {e}")
