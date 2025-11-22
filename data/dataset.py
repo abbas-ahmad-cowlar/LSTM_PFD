@@ -194,6 +194,71 @@ class BearingFaultDataset(Dataset):
 
         return cls(signals, labels, None, transform)
 
+    @classmethod
+    def from_hdf5(
+        cls,
+        hdf5_path: Path,
+        split: str = 'train',
+        transform: Optional[Callable] = None
+    ) -> 'BearingFaultDataset':
+        """
+        Load dataset from HDF5 file.
+
+        Expects HDF5 structure created by signal_generator._save_as_hdf5():
+            - f[split]['signals']: (N, signal_length) array
+            - f[split]['labels']: (N,) array of integer labels
+
+        Args:
+            hdf5_path: Path to HDF5 file
+            split: Which split to load ('train', 'val', or 'test')
+            transform: Optional transform to apply to signals
+
+        Returns:
+            BearingFaultDataset instance
+
+        Raises:
+            FileNotFoundError: If HDF5 file doesn't exist
+            ValueError: If specified split doesn't exist in file
+
+        Example:
+            >>> # Load training set
+            >>> train_dataset = BearingFaultDataset.from_hdf5(
+            ...     Path('data/processed/dataset.h5'),
+            ...     split='train'
+            ... )
+            >>> print(f"Loaded {len(train_dataset)} training samples")
+
+            >>> # Load validation set with transforms
+            >>> val_dataset = BearingFaultDataset.from_hdf5(
+            ...     Path('data/processed/dataset.h5'),
+            ...     split='val',
+            ...     transform=my_transform
+            ... )
+        """
+        import h5py
+
+        hdf5_path = Path(hdf5_path)
+
+        if not hdf5_path.exists():
+            raise FileNotFoundError(f"HDF5 file not found: {hdf5_path}")
+
+        logger.info(f"Loading {split} set from HDF5: {hdf5_path}")
+
+        with h5py.File(hdf5_path, 'r') as f:
+            if split not in f:
+                available_splits = list(f.keys())
+                raise ValueError(
+                    f"Split '{split}' not found in HDF5. "
+                    f"Available splits: {available_splits}"
+                )
+
+            signals = f[split]['signals'][:]
+            labels = f[split]['labels'][:]
+
+        logger.info(f"Loaded {len(signals)} samples from {split} split")
+
+        return cls(signals, labels, None, transform)
+
 
 class AugmentedBearingDataset(BearingFaultDataset):
     """
