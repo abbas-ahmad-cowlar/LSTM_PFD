@@ -98,6 +98,9 @@ def register_all_callbacks(app):
         elif pathname == '/visualization':
             from layouts.visualization import create_visualization_layout
             return create_visualization_layout()
+        elif pathname == '/nas':
+            from layouts.nas_dashboard import create_nas_dashboard_layout
+            return create_nas_dashboard_layout()
         else:
             from dash import html
             return html.Div([
@@ -228,3 +231,10 @@ def register_all_callbacks(app):
         register_visualization_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import visualization_callbacks: {e}")
+
+    # Import and register NAS Dashboard callbacks
+    try:
+        from callbacks.nas_callbacks import register_nas_callbacks
+        register_nas_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import nas_callbacks: {e}")
