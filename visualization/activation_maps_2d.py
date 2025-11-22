@@ -500,7 +500,6 @@ def visualize_filter_responses_to_frequency(
 if __name__ == '__main__':
     # Test visualization
     from models.spectrogram_cnn import resnet18_2d
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     print("Testing 2D CNN activation visualization...")
 

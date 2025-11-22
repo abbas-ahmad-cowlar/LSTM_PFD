@@ -431,7 +431,6 @@ class NotificationService:
             Result dict with status
         """
         from config import (
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
             SLACK_RATE_LIMIT_PER_WEBHOOK,
             SLACK_RETRY_ATTEMPTS,
             SLACK_TIMEOUT_SECONDS,

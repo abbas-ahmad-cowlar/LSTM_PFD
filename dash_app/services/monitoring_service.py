@@ -95,7 +95,6 @@ class MonitoringService:
         try:
             with get_db_session() as session:
                 from models.experiment import Experiment, ExperimentStatus
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
                 # Count experiments by status
                 total_experiments = session.query(Experiment).count()

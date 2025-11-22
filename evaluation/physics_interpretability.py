@@ -480,7 +480,6 @@ if __name__ == "__main__":
     print("=" * 60)
 
     from models.pinn.hybrid_pinn import HybridPINN
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     # Create model
     model = HybridPINN(num_classes=NUM_CLASSES, backbone='resnet18')
