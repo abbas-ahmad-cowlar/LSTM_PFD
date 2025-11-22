@@ -18,6 +18,7 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 from models.tag import Tag, ExperimentTag
 from models.saved_search import SavedSearch
 from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
+from models.dataset_import import DatasetImport, DatasetImportStatus
 
 __all__ = [
     'Base', 'Dataset', 'Signal', 'Experiment', 'TrainingRun',
@@ -30,5 +31,6 @@ __all__ = [
     'WebhookLog', 'WebhookStatus',
     'Tag', 'ExperimentTag',
     'SavedSearch',
-    'DatasetGeneration', 'DatasetGenerationStatus'
+    'DatasetGeneration', 'DatasetGenerationStatus',
+    'DatasetImport', 'DatasetImportStatus'
 ]
