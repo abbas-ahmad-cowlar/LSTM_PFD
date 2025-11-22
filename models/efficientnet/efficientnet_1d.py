@@ -22,13 +22,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Tuple, Optional
 import math
-import sys
-from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from base_model import BaseModel
-from efficientnet.mbconv_block import MBConvBlock, FusedMBConvBlock
+from models.base_model import BaseModel
+from models.efficientnet.mbconv_block import MBConvBlock, FusedMBConvBlock
 
 
 def round_channels(channels: int, width_multiplier: float, divisor: int = 8) -> int:
