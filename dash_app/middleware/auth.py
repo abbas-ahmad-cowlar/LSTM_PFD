@@ -84,9 +84,8 @@ class AuthMiddleware:
                 if not user:
                     return False, None, "Invalid username or password"
 
-                # Verify password (implement proper password hashing in production)
-                # For now, simple comparison (INSECURE - replace with bcrypt/argon2)
-                if user.password_hash != password:  # TODO: Use proper password verification
+                # Verify password using bcrypt
+                if not verify_password(password, user.password_hash):
                     return False, None, "Invalid username or password"
 
                 # Generate token
@@ -157,11 +156,11 @@ class AuthMiddleware:
                 if existing_user:
                     return False, None, "Username already exists"
 
-                # Create user (TODO: Implement proper password hashing)
+                # Create user with hashed password
                 user = User(
                     username=username,
                     email=email,
-                    password_hash=password,  # TODO: Hash password with bcrypt/argon2
+                    password_hash=hash_password(password),
                     role=role
                 )
                 session.add(user)
@@ -179,7 +178,6 @@ class AuthMiddleware:
 def hash_password(password: str) -> str:
     """
     Hash password using bcrypt.
-    TODO: Implement in production.
 
     Args:
         password: Plain text password
@@ -194,7 +192,6 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed: str) -> bool:
     """
     Verify password against hash.
-    TODO: Implement in production.
 
     Args:
         password: Plain text password
