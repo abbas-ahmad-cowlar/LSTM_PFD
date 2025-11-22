@@ -14,6 +14,8 @@ from models.email_log import EmailLog, EmailStatus
 from models.email_digest_queue import EmailDigestQueue
 from models.webhook_configuration import WebhookConfiguration
 from models.webhook_log import WebhookLog, WebhookStatus
+from models.tag import Tag, ExperimentTag
+from models.saved_search import SavedSearch
 
 __all__ = [
     'Base', 'Dataset', 'Signal', 'Experiment', 'TrainingRun',
@@ -23,5 +25,7 @@ __all__ = [
     'EmailLog', 'EmailStatus',
     'EmailDigestQueue',
     'WebhookConfiguration',
-    'WebhookLog', 'WebhookStatus'
+    'WebhookLog', 'WebhookStatus',
+    'Tag', 'ExperimentTag',
+    'SavedSearch'
 ]
