@@ -52,6 +52,7 @@ class Phase0Adapter:
     def load_existing_cache(cache_path: str):
         """Load existing Phase 0 cache file."""
         import h5py
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
         try:
             with h5py.File(cache_path, 'r') as f:
                 return {

@@ -8,6 +8,7 @@ from datetime import datetime
 
 from services.api_key_service import APIKeyService
 from utils.logger import setup_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 

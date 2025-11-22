@@ -75,6 +75,7 @@ def run_all_migrations():
 
 if __name__ == '__main__':
     import argparse
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     parser = argparse.ArgumentParser(description='Run database migrations')
     parser.add_argument(

@@ -324,6 +324,7 @@ def get_optimal_num_workers() -> int:
         >>> loader = DataLoader(dataset, num_workers=num_workers)
     """
     import multiprocessing as mp
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
     cpu_count = mp.cpu_count()
 

@@ -17,6 +17,7 @@ from tasks.training_tasks import train_model_task
 from celery.result import AsyncResult
 from utils.logger import setup_logger
 import time
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 logger = setup_logger(__name__)
 

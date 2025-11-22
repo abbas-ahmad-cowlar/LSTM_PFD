@@ -3,6 +3,7 @@ Reusable card components.
 """
 import dash_bootstrap_components as dbc
 from dash import html
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 def create_stat_card(title: str, value: str, icon: str = "fa-chart-line", color: str = "primary"):

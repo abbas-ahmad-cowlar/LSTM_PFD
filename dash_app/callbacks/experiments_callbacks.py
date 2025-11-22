@@ -173,6 +173,7 @@ def register_experiments_callbacks(app):
 
         from dash import html
         import dash_bootstrap_components as dbc
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
         if trigger_id == 'compare-experiments-btn':
             if not selected_ids:

@@ -108,6 +108,7 @@ def register_all_callbacks(app):
 
     try:
         from callbacks.experiments_callbacks import register_experiments_callbacks
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
         register_experiments_callbacks(app)
     except ImportError as e:
         print(f"Warning: Could not import experiments_callbacks: {e}")

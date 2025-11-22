@@ -1,6 +1,7 @@
 """Dataset model for storing dataset metadata."""
 from sqlalchemy import Column, Integer, String, JSON, ForeignKey
 from models.base import BaseModel
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class Dataset(BaseModel):

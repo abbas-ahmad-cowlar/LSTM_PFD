@@ -288,6 +288,7 @@ class ClassicalMLPipeline:
 
         # Save feature selector and normalizer
         import joblib
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
         joblib.dump(self.feature_selector, save_dir / 'feature_selector.pkl')
         joblib.dump(self.normalizer, save_dir / 'normalizer.pkl')
 

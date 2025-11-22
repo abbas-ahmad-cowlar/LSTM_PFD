@@ -18,6 +18,7 @@ Created as part of critical refactoring to eliminate magic numbers
 
 from typing import List, Dict, Tuple
 from pathlib import Path
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 # ==============================================================================
 # SIGNAL PARAMETERS

@@ -160,6 +160,7 @@ class SMTPProvider(EmailProvider):
         import smtplib
         from email.mime.multipart import MIMEMultipart
         from email.mime.text import MIMEText
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
         try:
             from_email = from_email or self.default_from_email
