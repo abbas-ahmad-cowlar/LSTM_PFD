@@ -30,7 +30,7 @@ Note: This implements a simplified GNN without requiring torch_geometric.
 For production use with large graphs, consider using torch_geometric.
 """
 
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, FAULT_LABELS
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -39,8 +39,8 @@ import numpy as np
 
 
 from models.base_model import BaseModel
-from resnet.resnet_1d import ResNet1D
-from cnn.cnn_1d import CNN1D
+from models.resnet.resnet_1d import ResNet1D
+from models.cnn.cnn_1d import CNN1D
 
 
 class FaultKnowledgeGraph:
@@ -53,20 +53,8 @@ class FaultKnowledgeGraph:
     - Similar frequency signatures (e.g., inner race vs outer race)
     """
 
-    # Fault type names (for reference)
-    FAULT_NAMES = [
-        'healthy',        # 0
-        'misalignment',   # 1
-        'imbalance',      # 2
-        'outer_race',     # 3
-        'inner_race',     # 4
-        'ball',           # 5
-        'looseness',      # 6
-        'oil_whirl',      # 7
-        'cavitation',     # 8
-        'wear',           # 9
-        'lubrication'     # 10
-    ]
+    # Fault type names (use centralized definition from constants)
+    FAULT_NAMES = [FAULT_LABELS[i] for i in range(NUM_CLASSES)]
 
     def __init__(self):
         """Initialize fault knowledge graph."""
