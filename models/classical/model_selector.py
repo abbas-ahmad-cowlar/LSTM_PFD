@@ -5,7 +5,7 @@ Purpose:
     Train all classical models and select the best performer based on
     validation accuracy or other metrics.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

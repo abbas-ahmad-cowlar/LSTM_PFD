@@ -3,7 +3,7 @@ Integration Tests for End-to-End Pipelines
 
 Tests complete workflows from data loading to prediction.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

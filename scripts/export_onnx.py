@@ -24,7 +24,7 @@ Usage:
         --output models/model_int8.onnx \\
         --quantize
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

@@ -3,7 +3,7 @@ Comprehensive Benchmarking Suite
 
 Benchmarks for all phases of the project.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 
 Usage:

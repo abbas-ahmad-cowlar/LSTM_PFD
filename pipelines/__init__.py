@@ -4,7 +4,7 @@ Pipeline integration for classical ML and feature extraction.
 This module provides end-to-end pipelines for feature extraction,
 model training, and evaluation.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

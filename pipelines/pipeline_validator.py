@@ -4,7 +4,7 @@ Pipeline validation utilities.
 Purpose:
     Validate pipeline correctness and compare with baselines.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

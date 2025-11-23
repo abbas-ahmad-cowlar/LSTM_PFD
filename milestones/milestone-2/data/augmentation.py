@@ -9,7 +9,7 @@ Purpose:
     - Mixup between signals
     - Adding synthetic noise profiles
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

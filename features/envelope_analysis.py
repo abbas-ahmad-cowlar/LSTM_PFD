@@ -7,7 +7,7 @@ Purpose:
 
 Reference: Section 8.2.2 of technical report
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 
