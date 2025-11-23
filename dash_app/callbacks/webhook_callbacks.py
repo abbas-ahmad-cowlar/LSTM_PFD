@@ -3,7 +3,7 @@ Webhook Management Callbacks (Feature #4).
 Handles UI interactions for webhook configuration management.
 """
 import json
-from dash import Input, Output, State, html, callback_context, ALL, MATCH
+from dash import Input, Output, State, html, ALL, MATCH, ctx
 import dash_bootstrap_components as dbc
 from datetime import datetime
 
@@ -205,7 +205,6 @@ def register_webhook_callbacks(app):
     def manage_webhook_modal(add_clicks, edit_clicks, cancel_clicks, save_clicks,
                             selected_id, name, provider, url, description, events, is_active):
         """Handle webhook modal open/close and form management."""
-        ctx = callback_context
         if not ctx.triggered:
             return False, "Add Webhook", False, "", "slack", "", "", ['training.complete', 'training.failed'], True
 
@@ -402,7 +401,6 @@ def register_webhook_callbacks(app):
     )
     def toggle_webhook_handler(n_clicks):
         """Toggle webhook active status."""
-        ctx = callback_context
         if not ctx.triggered or not any(n_clicks):
             return html.Div()
 
@@ -449,7 +447,6 @@ def register_webhook_callbacks(app):
     )
     def manage_delete_webhook_modal(delete_clicks, cancel_clicks, confirm_clicks, selected_id):
         """Handle delete webhook confirmation modal."""
-        ctx = callback_context
         if not ctx.triggered:
             return False, "", None
 
@@ -494,7 +491,6 @@ def register_webhook_callbacks(app):
     )
     def manage_webhook_details_modal(view_clicks, close_clicks):
         """Handle webhook details modal."""
-        ctx = callback_context
         if not ctx.triggered:
             return False, "", ""
 
