@@ -17,7 +17,7 @@ class SignalService:
     """Service for signal processing operations."""
 
     @staticmethod
-    def compute_fft(signal_data: np.ndarray, fs: int = 20480) -> Tuple[np.ndarray, np.ndarray]:
+    def compute_fft(signal_data: np.ndarray, fs: int = SAMPLING_RATE) -> Tuple[np.ndarray, np.ndarray]:
         """Compute FFT of signal."""
         n = len(signal_data)
         freq = np.fft.rfftfreq(n, d=1/fs)
@@ -27,7 +27,7 @@ class SignalService:
     @staticmethod
     def compute_spectrogram(
         signal_data: np.ndarray,
-        fs: int = 20480,
+        fs: int = SAMPLING_RATE,
         nperseg: int = 256
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Compute spectrogram using STFT."""
@@ -40,7 +40,7 @@ class SignalService:
         return f, t, Sxx
 
     @staticmethod
-    def extract_basic_features(signal_data: np.ndarray, fs: int = 20480) -> Dict[str, float]:
+    def extract_basic_features(signal_data: np.ndarray, fs: int = SAMPLING_RATE) -> Dict[str, float]:
         """Extract basic statistical features."""
         features = {
             "rms": float(np.sqrt(np.mean(signal_data**2))),
