@@ -13,6 +13,7 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import numpy as np
 import torch
 from typing import Dict, List, Union, Tuple
+from scipy.signal import find_peaks
 from .bearing_dynamics import BearingDynamics
 
 
@@ -363,7 +364,6 @@ class FaultSignatureDatabase:
         expected_freqs = self.get_expected_frequencies(predicted_class, rpm, top_k=5)
 
         # Find actual peaks in spectrum
-        from scipy.signal import find_peaks
         peaks, properties = find_peaks(spectrum, height=0.1 * np.max(spectrum))
         peak_freqs = freq_bins[peaks]
 
