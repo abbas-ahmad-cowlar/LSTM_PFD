@@ -193,10 +193,10 @@ def main():
         print(f"  Test: {stats['splits']['test']}")
 
     print("\nNext steps:")
-    print("  1. Train a CNN model:")
+    print("  1. Train baseline CNN:")
     print("     python scripts/train_cnn.py --model cnn1d --data-dir data/raw/bearing_data --epochs 50")
-    print("  2. Or train ResNet-34 for best accuracy:")
-    print("     python scripts/train_cnn.py --model resnet34 --data-dir data/raw/bearing_data --epochs 100 --mixed-precision")
+    print("  2. Or train Attention CNN for better accuracy:")
+    print("     python scripts/train_cnn.py --model attention --data-dir data/raw/bearing_data --epochs 100 --mixed-precision")
     print("=" * 60)
 
 
