@@ -372,6 +372,9 @@ def test_cnn_trainer():
     print("Testing CNN Trainer")
     print("=" * 60)
 
+    # Import constants
+    from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+
     # Create dummy data
     from data.cnn_dataset import RawSignalDataset, create_cnn_datasets_from_arrays
     from data.cnn_dataloader import create_cnn_dataloaders
