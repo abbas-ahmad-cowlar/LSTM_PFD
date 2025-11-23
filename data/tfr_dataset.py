@@ -287,9 +287,10 @@ class MultiTFRDataset(Dataset):
 
 
 def create_tfr_dataloaders(
-    train_spectrogram_file: str,
-    val_spectrogram_file: str,
-    test_spectrogram_file: str,
+    data_dir: Optional[str] = None,
+    train_spectrogram_file: Optional[str] = None,
+    val_spectrogram_file: Optional[str] = None,
+    test_spectrogram_file: Optional[str] = None,
     batch_size: int = 32,
     num_workers: int = 4,
     train_transform: Optional[callable] = None,
@@ -299,9 +300,10 @@ def create_tfr_dataloaders(
     Create DataLoaders for train/val/test sets.
 
     Args:
-        train_spectrogram_file: Path to training spectrograms
-        val_spectrogram_file: Path to validation spectrograms
-        test_spectrogram_file: Path to test spectrograms
+        data_dir: Directory containing train/val/test .npz files (alternative to individual paths)
+        train_spectrogram_file: Path to training spectrograms (alternative to data_dir)
+        val_spectrogram_file: Path to validation spectrograms (alternative to data_dir)
+        test_spectrogram_file: Path to test spectrograms (alternative to data_dir)
         batch_size: Batch size
         num_workers: Number of data loading workers
         train_transform: Augmentation for training set
@@ -309,7 +311,37 @@ def create_tfr_dataloaders(
 
     Returns:
         Tuple of (train_loader, val_loader, test_loader)
+
+    Raises:
+        ValueError: If neither data_dir nor all three file paths are provided
+        FileNotFoundError: If specified files don't exist
     """
+    # If data_dir provided, construct file paths
+    if data_dir is not None:
+        data_path = Path(data_dir)
+        train_spectrogram_file = str(data_path / 'train_spectrograms.npz')
+        val_spectrogram_file = str(data_path / 'val_spectrograms.npz')
+        test_spectrogram_file = str(data_path / 'test_spectrograms.npz')
+
+    # Validate that all file paths are provided
+    if not all([train_spectrogram_file, val_spectrogram_file, test_spectrogram_file]):
+        raise ValueError(
+            "Must provide either 'data_dir' or all three file paths "
+            "(train_spectrogram_file, val_spectrogram_file, test_spectrogram_file)"
+        )
+
+    # Validate files exist
+    for file_path, name in [
+        (train_spectrogram_file, 'train'),
+        (val_spectrogram_file, 'val'),
+        (test_spectrogram_file, 'test')
+    ]:
+        if not Path(file_path).exists():
+            raise FileNotFoundError(
+                f"{name.capitalize()} spectrogram file not found: {file_path}\n"
+                f"Please run: python scripts/precompute_spectrograms.py"
+            )
+
     # Create datasets
     train_dataset = SpectrogramDataset(
         train_spectrogram_file,
