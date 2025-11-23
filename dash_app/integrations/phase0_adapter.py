@@ -69,6 +69,11 @@ class Phase0Adapter:
             data_config.signal = SignalConfig()
 
             # Configure fault types
+            # Import mapping from config
+            import sys
+            sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+            from config import DASHBOARD_TO_PHASE0_FAULT_MAP
+
             fault_config = FaultConfig()
             selected_faults = config.get('fault_types', [])
 
@@ -79,21 +84,24 @@ class Phase0Adapter:
             for fault in fault_config.mixed_faults:
                 fault_config.mixed_faults[fault] = False
 
-            # Enable selected faults
-            for fault in selected_faults:
-                if fault == 'sain':
+            # Enable selected faults (convert from dashboard names to Phase 0 names)
+            for dashboard_fault in selected_faults:
+                # Convert dashboard name to Phase 0 name
+                phase0_fault = DASHBOARD_TO_PHASE0_FAULT_MAP.get(dashboard_fault, dashboard_fault)
+
+                if phase0_fault == 'sain':
                     fault_config.include_healthy = True
-                elif fault.startswith('mixed_'):
+                elif phase0_fault.startswith('mixed_'):
                     # Remove 'mixed_' prefix for the dict key
-                    fault_key = fault.replace('mixed_', '')
+                    fault_key = phase0_fault.replace('mixed_', '')
                     if fault_key in fault_config.mixed_faults:
                         fault_config.include_single = True  # Need single faults for mixed
                         fault_config.include_mixed = True
                         fault_config.mixed_faults[fault_key] = True
                 else:
-                    if fault in fault_config.single_faults:
+                    if phase0_fault in fault_config.single_faults:
                         fault_config.include_single = True
-                        fault_config.single_faults[fault] = True
+                        fault_config.single_faults[phase0_fault] = True
 
             data_config.fault = fault_config
 
