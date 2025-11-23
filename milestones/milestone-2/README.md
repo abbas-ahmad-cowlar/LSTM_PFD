@@ -120,11 +120,11 @@ Bearing vibration signals are **time-series data** where:
 
 - **Direct .MAT file loading** (no preprocessing needed)
 - **Flexible sequence processing** (full 102,400 samples or downsampled)
-- **Mixed precision training** (FP16 for faster training)
+- **Mixed precision training** (FP16 for faster training - use `--mixed-precision` flag)
 - **Multiple optimizers** (Adam, AdamW, SGD, RMSprop)
 - **Learning rate scheduling** (Cosine, Step, ReduceLROnPlateau)
 - **Early stopping** to prevent overfitting
-- **Gradient clipping** for stable training
+- **Gradient clipping** for stable training (use `--gradient-clip` option)
 
 ### 📈 **Evaluation & Visualization**
 
@@ -311,8 +311,9 @@ python scripts/train_lstm.py --model bilstm --hidden-size 256 --epochs 75 --mixe
 python scripts/train_lstm.py [OPTIONS]
 
 Required:
-  --model {vanilla_lstm,bilstm}     LSTM architecture
-  --data-dir PATH                   Directory with .MAT files
+  --model {vanilla_lstm,lstm,bilstm}  LSTM architecture
+                                      (vanilla_lstm/lstm are equivalent)
+  --data-dir PATH                     Directory with .MAT files
 
 Model Architecture:
   --hidden-size INT                 LSTM hidden size (default: 128)
@@ -385,15 +386,17 @@ python scripts/train_lstm.py \
     --mixed-precision
 ```
 
-### Expected Training Time
+### Estimated Training Time
 
-| Model | Hidden Size | Epochs | GPU (RTX 3090) | CPU (16 cores) |
-|-------|-------------|--------|----------------|----------------|
+**Note**: These are rough estimates. Actual times vary based on hardware, data size, and configuration.
+
+| Model | Hidden Size | Epochs | GPU (Estimated) | CPU (Estimated) |
+|-------|-------------|--------|-----------------|-----------------|
 | Vanilla LSTM | 128 | 50 | 1-2 hours | 10-15 hours |
 | BiLSTM | 128 | 75 | 2-3 hours | 15-20 hours |
 | BiLSTM | 256 | 100 | 3-5 hours | 25-35 hours |
 
-**Note**: Training time depends on hardware. GPU highly recommended!
+**Recommendation**: GPU highly recommended for training. CPU training will be significantly slower.
 
 ---
 
@@ -402,27 +405,32 @@ python scripts/train_lstm.py \
 ### Evaluate Trained Model
 
 ```bash
+# After training, your best model will be in:
+# results/checkpoints/bilstm/<timestamp>/best_model.pth
+
 python scripts/evaluate_lstm.py \
-    --model-checkpoint results/checkpoints/bilstm/best_model.pth \
+    --checkpoint results/checkpoints/bilstm/<timestamp>/best_model.pth \
+    --model bilstm \
     --data-dir data/raw/bearing_data \
-    --output-dir results/evaluation/bilstm
+    --output-dir results/evaluation/bilstm \
+    --plot-confusion \
+    --per-class-metrics
 ```
 
 ### Evaluation Outputs
 
-1. **Classification Report** (`classification_report.txt`)
-   - Precision, recall, F1-score per fault type
-   - Overall accuracy
+The evaluation script provides:
+
+1. **Console Output**
+   - Overall accuracy, precision, recall, F1-score
+   - Per-class metrics (with `--per-class-metrics` flag)
+   - Failure analysis (with `--analyze-failures` flag)
 
 2. **Confusion Matrix** (`confusion_matrix.png`)
-   - Heatmap of predicted vs. actual classes
+   - Heatmap visualization (with `--plot-confusion` flag)
 
-3. **Per-Class Metrics** (`per_class_metrics.csv`)
-   - Detailed performance metrics
-
-4. **Model Summary** (`model_summary.txt`)
-   - Model parameters
-   - Inference time
+3. **Predictions** (`predictions.npz`)
+   - Saved predictions and probabilities (with `--save-predictions` flag)
 
 ---
 

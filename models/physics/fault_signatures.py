@@ -9,10 +9,11 @@ Each fault type has characteristic frequencies in the vibration spectrum that
 can be predicted from bearing geometry and operating conditions.
 """
 
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, FAULT_LABELS
 import numpy as np
 import torch
 from typing import Dict, List, Union, Tuple
+from scipy.signal import find_peaks
 from .bearing_dynamics import BearingDynamics
 
 
@@ -51,20 +52,8 @@ class FaultSignatureDatabase:
     frequency signatures based on bearing physics and vibration analysis theory.
     """
 
-    # Fault type mappings (consistent with dataset labels)
-    FAULT_TYPES = {
-        0: 'healthy',
-        1: 'misalignment',
-        2: 'imbalance',
-        3: 'outer_race',
-        4: 'inner_race',
-        5: 'ball',
-        6: 'looseness',
-        7: 'oil_whirl',
-        8: 'cavitation',
-        9: 'wear',
-        10: 'lubrication'
-    }
+    # Fault type mappings (use centralized definition from constants)
+    FAULT_TYPES = FAULT_LABELS
 
     def __init__(self):
         """Initialize fault signature database."""
@@ -363,7 +352,6 @@ class FaultSignatureDatabase:
         expected_freqs = self.get_expected_frequencies(predicted_class, rpm, top_k=5)
 
         # Find actual peaks in spectrum
-        from scipy.signal import find_peaks
         peaks, properties = find_peaks(spectrum, height=0.1 * np.max(spectrum))
         peak_freqs = freq_bins[peaks]
 

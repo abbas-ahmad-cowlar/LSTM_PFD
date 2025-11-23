@@ -112,17 +112,18 @@ class DualStreamCNN(BaseModel):
 
         # Create spectrogram generator (for on-the-fly TFR)
         if tfr_type == 'stft':
-            from data.spectrogram_generator import STFTSpectrogram
-            self.tfr_generator = STFTSpectrogram(
-                n_fft=256,
-                hop_length=128,
-                win_length=256
+            from data.spectrogram_generator import SpectrogramGenerator
+            self.tfr_generator = SpectrogramGenerator(
+                fs=20480,
+                nperseg=256,
+                noverlap=128
             )
         elif tfr_type == 'cwt':
-            from data.wavelet_transform import CWTTransform
-            self.tfr_generator = CWTTransform(
+            from data.wavelet_transform import WaveletTransform
+            self.tfr_generator = WaveletTransform(
                 wavelet='morl',
-                scales=128
+                scales=128,
+                fs=20480
             )
         else:
             self.tfr_generator = None
