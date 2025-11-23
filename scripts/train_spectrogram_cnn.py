@@ -37,7 +37,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from models.spectrogram_cnn import get_model
-from data.tfr_dataset import load_spectrograms, create_spectrogram_dataloaders
+from data.tfr_dataset import load_spectrograms, create_tfr_dataloaders
 from training.spectrogram_trainer import SpectrogramTrainer
 from evaluation.spectrogram_evaluator import SpectrogramEvaluator
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
@@ -218,7 +218,7 @@ def main():
     print(f"\nLoading {args.tfr_type.upper()} spectrograms from {args.data_dir}...")
 
     try:
-        train_loader, val_loader, test_loader = create_spectrogram_dataloaders(
+        train_loader, val_loader, test_loader = create_tfr_dataloaders(
             data_dir=args.data_dir / args.tfr_type,
             batch_size=args.batch_size,
             num_workers=args.num_workers
