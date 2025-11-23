@@ -39,6 +39,8 @@ import io
 # Add parent directory for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
+from utils.constants import NUM_CLASSES
+
 # Import all XAI methods
 from explainability.integrated_gradients import IntegratedGradientsExplainer
 from explainability.shap_explainer import SHAPExplainer

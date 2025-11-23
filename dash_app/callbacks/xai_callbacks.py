@@ -3,6 +3,7 @@ XAI Dashboard Callbacks.
 Connects XAI dashboard UI to backend explanation services.
 """
 import numpy as np
+import dash
 from dash import Input, Output, State, html, dcc, callback_context
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -184,7 +185,7 @@ def register_xai_callbacks(app):
                 'signal_id': signal_id,
                 'method': method,
                 'params': {},
-                'user_id': get_current_user_id()
+                'user_id': get_current_user_id() or 1  # Fallback to user 1 if no session
             }
 
             # Add method-specific parameters
