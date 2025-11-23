@@ -5,7 +5,7 @@ Purpose:
     Extract and cache features separately from model training.
     Useful for avoiding recomputation during hyperparameter tuning.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

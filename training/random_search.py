@@ -5,7 +5,7 @@ Purpose:
     Random sampling from hyperparameter distributions.
     More efficient than grid search for large search spaces.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

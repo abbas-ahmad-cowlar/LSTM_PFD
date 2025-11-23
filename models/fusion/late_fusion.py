@@ -9,7 +9,7 @@ Fusion strategies:
 - Product: Product rule (multiply probabilities)
 - Borda Count: Rank-based voting
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

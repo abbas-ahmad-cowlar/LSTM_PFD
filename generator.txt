@@ -16,7 +16,7 @@
 %   - Data augmentation options
 %   - Comprehensive metadata logging
 %
-% Author: PFD Diagnostics Team
+% Author: Syed Abbas Ahmad
 % Version: Production v2.0
 % Date: October 30, 2025
 % ========================================================================

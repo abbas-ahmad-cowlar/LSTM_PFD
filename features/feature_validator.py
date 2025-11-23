@@ -5,7 +5,7 @@ Purpose:
     Validate extracted features for correctness, check for NaN/Inf values,
     and warn about constant or suspicious features.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

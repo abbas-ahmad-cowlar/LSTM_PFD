@@ -6,7 +6,7 @@ Combines predictions from multiple models using voting strategies:
 - Hard voting: Majority class vote
 - Weighted voting: Models have different importance
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

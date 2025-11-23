@@ -8,7 +8,7 @@ Purpose:
     Architecture: 5 conv blocks → Global pooling → 2 FC layers
     Target: 93-96% test accuracy (match classical ML baseline)
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

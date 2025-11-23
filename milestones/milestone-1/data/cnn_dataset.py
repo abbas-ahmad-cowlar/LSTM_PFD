@@ -9,7 +9,7 @@ Purpose:
 
     Difference from Phase 1: No feature extraction, raw waveforms only
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

@@ -1,7 +1,7 @@
 """
 Visualization module for classical ML results and XAI methods.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 Updated: 2025-11-20 (Phase 7: XAI)
 """

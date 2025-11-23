@@ -9,7 +9,7 @@ Purpose:
     - Calculated operating conditions (Sommerfeld number)
     - Data augmentation
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 Reference: generator.m (MATLAB Production v2.0)
 """

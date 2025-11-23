@@ -7,7 +7,7 @@ Tools for optimizing models for deployment:
 - Knowledge distillation
 - Model profiling and statistics
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

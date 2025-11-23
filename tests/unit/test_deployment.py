@@ -3,7 +3,7 @@ Unit Tests for Deployment Module
 
 Tests for deployment utilities (quantization, ONNX, inference).
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

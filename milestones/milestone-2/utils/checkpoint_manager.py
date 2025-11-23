@@ -9,7 +9,7 @@ Purpose:
     - Load pretrained weights
     - Automatic old checkpoint cleanup
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

@@ -4,7 +4,7 @@ Classical machine learning models for bearing fault classification.
 This module contains implementations of SVM, Random Forest, Neural Network,
 Gradient Boosting, and ensemble methods.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

@@ -8,7 +8,7 @@ Purpose:
     - Attention mechanisms: SE blocks, CBAM
     - Model variants: Shallow, deep, residual architectures
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

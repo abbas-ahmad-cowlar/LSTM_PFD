@@ -7,7 +7,7 @@ Tools for exporting PyTorch models to ONNX format for cross-platform deployment:
 - ONNX optimization
 - Runtime inference with ONNX Runtime
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 
