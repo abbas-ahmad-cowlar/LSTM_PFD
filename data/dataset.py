@@ -370,6 +370,11 @@ class CachedBearingDataset(Dataset):
 
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
+        # Initialize label mapping
+        from utils.constants import FAULT_TYPES
+        self.label_to_idx = {label: idx for idx, label in enumerate(FAULT_TYPES)}
+        self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
+
         # Check if cache exists
         self.index_path = self.cache_dir / 'index.pkl'
         if self.index_path.exists() and not regenerate:
@@ -432,8 +437,13 @@ class CachedBearingDataset(Dataset):
 
         signal = torch.FloatTensor(sample['signal'])
 
-        # Convert label to index (simplified for now)
-        label = 0  # TODO: Proper label encoding
+        # Convert label string to index using label_to_idx mapping
+        label_str = sample['label']
+        if label_str not in self.label_to_idx:
+            logger.warning(f"Unknown label '{label_str}', defaulting to 0")
+            label = 0
+        else:
+            label = self.label_to_idx[label_str]
 
         if self.transform:
             signal = self.transform(signal)
