@@ -181,7 +181,7 @@ def main():
         print(f"  Size: {info['model_size_mb']:.2f} MB\n")
 
     # Create optimizer and loss
-    optimizer = create_optimizer(args.optimizer, model.parameters(), lr=args.lr)
+    optimizer = create_optimizer(model.parameters(), args.optimizer, lr=args.lr)
     criterion = create_loss_function('cross_entropy', num_classes=11)
 
     # Create scheduler
