@@ -3,6 +3,7 @@ Signal processing service.
 """
 import numpy as np
 from scipy import signal as scipy_signal
+from scipy import stats as scipy_stats
 from typing import Dict, Any, Tuple
 
 from services.data_service import DataService
@@ -43,8 +44,8 @@ class SignalService:
         """Extract basic statistical features."""
         features = {
             "rms": float(np.sqrt(np.mean(signal_data**2))),
-            "kurtosis": float(scipy_signal.kurtosis(signal_data)),
-            "skewness": float(scipy_signal.skew(signal_data)),
+            "kurtosis": float(scipy_stats.kurtosis(signal_data)),
+            "skewness": float(scipy_stats.skew(signal_data)),
             "peak_value": float(np.max(np.abs(signal_data))),
             "mean": float(np.mean(signal_data)),
             "std": float(np.std(signal_data))
