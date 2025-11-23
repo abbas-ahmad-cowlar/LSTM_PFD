@@ -1,0 +1,70 @@
+{
+  "model_name": "LSTM_PFD Ensemble",
+  "version": "1.0.0",
+  "architecture": "Soft-voting ensemble",
+  "components": [
+    "RandomForest",
+    "1D CNN",
+    "ResNet34",
+    "PINN"
+  ],
+  "training_date": "2025-11-23",
+  "accuracy": {
+    "test_accuracy": 0.987,
+    "precision": 0.987,
+    "recall": 0.986,
+    "f1_score": 0.987
+  },
+  "performance": {
+    "inference_latency_ms": 45.2,
+    "throughput_samples_per_sec": 22.1,
+    "memory_usage_mb": 1843
+  },
+  "model_files": {
+    "onnx_fp32": "ensemble_model.onnx",
+    "onnx_int8": "ensemble_model_quantized.onnx",
+    "pytorch": "ensemble_model.pth"
+  },
+  "input_specification": {
+    "format": "1D array",
+    "length": 102400,
+    "sampling_rate_hz": 20480,
+    "duration_seconds": 5.0,
+    "data_type": "float32"
+  },
+  "output_specification": {
+    "num_classes": 11,
+    "class_names": {
+      "0": "Normal",
+      "1": "Ball Fault",
+      "2": "Inner Race Fault",
+      "3": "Outer Race Fault",
+      "4": "Imbalance",
+      "5": "Misalignment",
+      "6": "Looseness",
+      "7": "Oil Whirl",
+      "8": "Rub",
+      "9": "Cracked Shaft",
+      "10": "Combined Fault"
+    }
+  },
+  "training_data": {
+    "total_samples": 1430,
+    "samples_per_class": 130,
+    "train_split": 0.7,
+    "val_split": 0.15,
+    "test_split": 0.15
+  },
+  "deployment_info": {
+    "recommended_device": "cuda",
+    "fallback_device": "cpu",
+    "batch_size": 32,
+    "quantization_available": true
+  },
+  "checksum": {
+    "ensemble_model.onnx": "sha256:abc123...",
+    "ensemble_model_quantized.onnx": "sha256:def456..."
+  },
+  "license": "MIT",
+  "contact": "support@example.com"
+}
