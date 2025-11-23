@@ -214,10 +214,10 @@ class BearingDynamics:
             N = speed / 60.0
             P = load / (2.0 * R * L)
 
-            # Add small epsilon to prevent division by zero
-            P = np.maximum(P, 1e-6)
+            # Add small epsilon to prevent division by zero (standardized to 1e-8)
+            P = np.maximum(P, 1e-8)
 
-            S = (viscosity * N / P) * (R / C) ** 2
+            S = (viscosity * N / (P + 1e-8)) * (R / C) ** 2
 
             if return_torch:
                 S = torch.tensor(S, dtype=torch.float32)
