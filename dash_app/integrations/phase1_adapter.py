@@ -83,22 +83,26 @@ class Phase1Adapter:
             if progress_callback:
                 progress_callback(1, {
                     "status": "Training complete",
-                    "accuracy": results["test_accuracy"],
-                    "f1_score": results.get("test_f1", 0)
+                    "accuracy": results["test_accuracy"]
                 })
 
             logger.info(f"Phase 1 training complete. Test accuracy: {results['test_accuracy']:.4f}")
+
+            # Calculate overall metrics from classification_report
+            classification_report = results.get("classification_report", {})
+            weighted_avg = classification_report.get("weighted avg", {})
 
             return {
                 "success": True,
                 "model_type": model_type,
                 "test_accuracy": results["test_accuracy"],
-                "test_f1": results.get("test_f1", 0),
-                "test_precision": results.get("test_precision", 0),
-                "test_recall": results.get("test_recall", 0),
+                "test_f1": weighted_avg.get("f1-score", 0),
+                "test_precision": weighted_avg.get("precision", 0),
+                "test_recall": weighted_avg.get("recall", 0),
                 "confusion_matrix": results.get("confusion_matrix", []),
-                "feature_importance": results.get("feature_importance", {}),
-                "training_time": results.get("training_time", 0),
+                "selected_features": results.get("selected_features", []),
+                "training_time": results.get("elapsed_time_seconds", 0),
+                "best_model": results.get("best_model", model_type),
             }
 
         except Exception as e:
