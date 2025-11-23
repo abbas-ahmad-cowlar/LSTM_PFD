@@ -278,8 +278,16 @@ class HybridPINN(BaseModel):
         """
         batch_size = signal.shape[0]
 
-        # If no metadata provided, use defaults
+        # If no metadata provided, use defaults (with warning)
         if metadata is None:
+            import warnings
+            warnings.warn(
+                "No metadata provided, using default operating conditions "
+                "(3600 RPM, 500N load, 0.03 Pa·s viscosity). "
+                "For production use, provide actual operating conditions.",
+                UserWarning,
+                stacklevel=2
+            )
             metadata = {
                 'rpm': torch.tensor([3600.0] * batch_size),
                 'load': torch.tensor([500.0] * batch_size),
