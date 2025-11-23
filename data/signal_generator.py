@@ -21,6 +21,7 @@ from dataclasses import dataclass, asdict
 import time
 from scipy import signal as sp_signal
 from scipy.io import savemat
+from sklearn.model_selection import train_test_split
 import h5py
 import json
 from datetime import datetime
@@ -704,7 +705,7 @@ class SignalGenerator:
         self,
         dataset: Dict,
         output_dir: Optional[Path] = None,
-        format: str = 'mat',  # DEFAULT='mat' for backward compatibility
+        format: str = 'hdf5',  # DEFAULT='hdf5' (recommended for performance)
         train_val_test_split: Tuple[float, float, float] = (0.7, 0.15, 0.15)
     ) -> Dict[str, Path]:
         """
@@ -713,7 +714,8 @@ class SignalGenerator:
         Args:
             dataset: Dataset from generate_dataset()
             output_dir: Output directory (uses config if None)
-            format: Output format - 'mat', 'hdf5', or 'both' (default: 'mat')
+            format: Output format - 'mat', 'hdf5', or 'both' (default: 'hdf5')
+                HDF5 is recommended: 25× faster loading, 30% smaller, single file
             train_val_test_split: Train/val/test split ratios for HDF5 format
 
         Returns:
@@ -826,8 +828,6 @@ class SignalGenerator:
             ...     Path('data/processed/dataset.h5')
             ... )
         """
-        from sklearn.model_selection import train_test_split
-
         signals = dataset['signals']
         labels_str = dataset['labels']
         metadata = dataset['metadata']
