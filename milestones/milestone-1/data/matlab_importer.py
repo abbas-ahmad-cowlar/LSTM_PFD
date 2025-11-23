@@ -378,3 +378,118 @@ def load_matlab_reference(
         logger.info(f"  Range: [{np.min(data.signal):.6f}, {np.max(data.signal):.6f}]")
 
     return data
+
+
+def load_mat_dataset(
+    data_dir: str,
+    verbose: bool = True
+) -> Tuple[np.ndarray, np.ndarray, List[str]]:
+    """
+    Load entire MAT dataset organized by fault type subdirectories.
+
+    Expected directory structure:
+        data_dir/
+        ├── sain/              # Healthy (label 0)
+        │   ├── sample_001.mat
+        │   └── ...
+        ├── desalignement/     # Misalignment (label 1)
+        ├── desequilibre/      # Imbalance (label 2)
+        └── ...
+
+    Args:
+        data_dir: Root directory containing fault type subdirectories
+        verbose: Print loading progress
+
+    Returns:
+        (signals, labels, label_names) tuple:
+        - signals: (N, 102400) numpy array of signals
+        - labels: (N,) numpy array of integer labels
+        - label_names: List of fault type names in label order
+
+    Example:
+        >>> signals, labels, names = load_mat_dataset('data/raw/bearing_data')
+        >>> print(f"Loaded {len(signals)} signals, {len(names)} classes")
+    """
+    data_path = Path(data_dir)
+
+    # Fault type to label mapping (must match generate_dataset.py)
+    FAULT_TYPE_MAP = {
+        'sain': 0,                          # Healthy
+        'desalignement': 1,                 # Misalignment
+        'desequilibre': 2,                  # Imbalance
+        'jeu': 3,                           # Bearing Clearance
+        'lubrification': 4,                 # Lubrication Issue
+        'cavitation': 5,                    # Cavitation
+        'usure': 6,                         # Wear
+        'oilwhirl': 7,                      # Oil Whirl
+        'mixed_misalign_imbalance': 8,      # Mixed Fault 1
+        'mixed_wear_lube': 9,               # Mixed Fault 2
+        'mixed_cavit_jeu': 10               # Mixed Fault 3
+    }
+
+    # Find all subdirectories
+    fault_dirs = [d for d in data_path.iterdir() if d.is_dir()]
+
+    if not fault_dirs:
+        raise ValueError(f"No subdirectories found in {data_dir}")
+
+    all_signals = []
+    all_labels = []
+    importer = MatlabImporter()
+
+    if verbose:
+        logger.info(f"Loading MAT files from {data_dir}")
+
+    for fault_dir in sorted(fault_dirs):
+        fault_type = fault_dir.name
+
+        if fault_type not in FAULT_TYPE_MAP:
+            logger.warning(f"Skipping unknown fault type: {fault_type}")
+            continue
+
+        label = FAULT_TYPE_MAP[fault_type]
+
+        # Find all .mat files in this directory
+        mat_files = list(fault_dir.glob('*.mat'))
+
+        if not mat_files:
+            logger.warning(f"No .mat files found in {fault_dir}")
+            continue
+
+        if verbose:
+            logger.info(f"  Loading {len(mat_files)} files from {fault_type}/ (label={label})")
+
+        for mat_file in sorted(mat_files):
+            try:
+                data = importer.load_mat_file(mat_file)
+                all_signals.append(data.signal)
+                all_labels.append(label)
+            except Exception as e:
+                logger.error(f"Failed to load {mat_file.name}: {e}")
+                continue
+
+    # Convert to numpy arrays
+    signals = np.array(all_signals, dtype=np.float32)
+    labels = np.array(all_labels, dtype=np.int64)
+
+    # Get label names in order
+    label_names = [k for k, v in sorted(FAULT_TYPE_MAP.items(), key=lambda x: x[1])]
+
+    if verbose:
+        logger.info(f"Loaded {len(signals)} signals from {len(np.unique(labels))} classes")
+        logger.info(f"Signal shape: {signals.shape}")
+
+    return signals, labels, label_names
+
+
+def load_mat_signals(mat_path: str) -> Dict:
+    """
+    Load a single .mat file and return raw data dictionary.
+
+    Args:
+        mat_path: Path to .mat file
+
+    Returns:
+        Dictionary from scipy.io.loadmat
+    """
+    return sio.loadmat(mat_path, squeeze_me=True)
