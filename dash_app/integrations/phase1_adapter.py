@@ -10,7 +10,7 @@ import json
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from utils.logger import setup_logger
-from utils.constants import SAMPLING_RATE, NUM_CLASSES, SIGNAL_LENGTH
+from utils.constants import SAMPLING_RATE
 
 logger = setup_logger(__name__)
 
