@@ -132,14 +132,17 @@ class AdaptiveBoosting:
             errors = (train_predictions != train_labels).astype(float)
             weighted_error = np.sum(sample_weights * errors)
 
+            # Clip weighted error to prevent numerical issues
+            epsilon = 1e-10
+            weighted_error = np.clip(weighted_error, epsilon, 1 - epsilon)
+
             if weighted_error > 0.5:
                 if verbose:
                     print(f"Model {iteration+1} error > 0.5 ({weighted_error:.4f}), stopping boosting")
                 break
 
-            # Compute model weight
-            epsilon = 1e-10  # Avoid division by zero
-            model_weight = self.learning_rate * 0.5 * np.log((1 - weighted_error + epsilon) / (weighted_error + epsilon))
+            # Compute model weight with numerical stability
+            model_weight = self.learning_rate * 0.5 * np.log((1 - weighted_error) / weighted_error)
 
             # Update sample weights
             sample_weights *= np.exp(model_weight * (2 * errors - 1))
