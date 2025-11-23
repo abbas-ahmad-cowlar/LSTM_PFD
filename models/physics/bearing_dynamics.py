@@ -173,10 +173,23 @@ class BearingDynamics:
             Simplified for journal bearing:
             S = (μ * N) / P * (R / C)^2
         """
+        # Input validation (check for positive values)
+        def validate_positive(val, name):
+            if isinstance(val, (int, float)) and val <= 0:
+                raise ValueError(f"{name} must be positive, got {val}")
+            elif isinstance(val, np.ndarray) and np.any(val <= 0):
+                raise ValueError(f"{name} must be positive (found non-positive values)")
+            elif isinstance(val, torch.Tensor) and torch.any(val <= 0):
+                raise ValueError(f"{name} must be positive (found non-positive values)")
+
+        validate_positive(load, "Load")
+        validate_positive(speed, "Speed")
+        validate_positive(viscosity, "Viscosity")
+
         R = self.params['shaft_radius'] / 1000.0  # Convert mm to m
         C = self.params['radial_clearance'] / 1e6  # Convert μm to m
 
-        # Assumed bearing length (SKF 6205: 15mm width)
+        # Assumed bearing length (SKF 6205: 15mm width) - TODO: make this configurable
         L = 0.015  # m
 
         # Check if inputs are torch tensors
