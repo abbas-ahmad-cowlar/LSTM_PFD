@@ -48,9 +48,34 @@ python -c "import torch; print(f'✓ PyTorch {torch.__version__} installed | CUD
 
 ---
 
-### 2. Prepare Your Data (2 minutes)
+### 2. Generate Dataset (Optional - 2-5 minutes)
 
-Organize your .MAT files in this structure:
+If you don't have .MAT files, generate a synthetic bearing fault dataset:
+
+```bash
+# Quick test dataset (10 samples × 11 classes = 110 total) - Fast!
+python scripts/generate_dataset.py --quick
+
+# Standard dataset (130 samples × 11 classes = 1,430 total) - Recommended
+python scripts/generate_dataset.py --output-dir data/raw/bearing_data
+
+# Minimal dataset for testing (5 samples × 11 classes = 55 total)
+python scripts/generate_dataset.py --minimal
+```
+
+**What this does:**
+- Generates physics-based bearing vibration signals
+- Creates 11 fault classes (Healthy + 10 fault types)
+- Applies realistic 7-layer noise model
+- Saves as .MAT files in correct format for CNN training
+
+**Skip this step** if you already have .MAT files from real sensors.
+
+---
+
+### 3. Prepare Your Data (2 minutes)
+
+If you have your own .MAT files, organize them in this structure:
 
 ```
 data/raw/bearing_data/
@@ -86,7 +111,7 @@ python scripts/import_mat_dataset.py \
 
 ---
 
-### 3. Train Your First Model (2 minutes to start)
+### 4. Train Your First Model (2 minutes to start)
 
 #### Option A: Fast Baseline (CNN1D - 30 minutes training)
 
@@ -137,7 +162,7 @@ python scripts/train_cnn.py \
 
 ---
 
-### 4. Monitor Training (Real-time)
+### 5. Monitor Training (Real-time)
 
 While training is running, open another terminal:
 
@@ -158,7 +183,7 @@ You'll see:
 
 ---
 
-### 5. Evaluate Your Model (1 minute)
+### 6. Evaluate Your Model (1 minute)
 
 After training completes:
 
@@ -189,13 +214,16 @@ source venv/bin/activate
 pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 pip install -r requirements.txt
 
-# 2. Validate data
+# 2. Generate dataset (if you don't have .MAT files)
+python scripts/generate_dataset.py --output-dir data/raw/bearing_data
+
+# 3. Validate data
 python scripts/import_mat_dataset.py \
     --mat-dir data/raw/bearing_data \
     --output data/processed/dataset_info.json \
     --validate
 
-# 3. Train ResNet-34 (recommended)
+# 4. Train ResNet-34 (recommended)
 python scripts/train_cnn.py \
     --model resnet34 \
     --data-dir data/raw/bearing_data \
@@ -209,13 +237,13 @@ python scripts/train_cnn.py \
     --mixed-precision \
     --checkpoint-dir results/checkpoints/resnet34
 
-# 4. Evaluate
+# 5. Evaluate
 python scripts/evaluate_cnn.py \
     --model-checkpoint results/checkpoints/resnet34/best_model.pth \
     --data-dir data/raw/bearing_data \
     --output-dir results/evaluation/resnet34
 
-# 5. View results
+# 6. View results
 cat results/evaluation/resnet34/classification_report.txt
 open results/evaluation/resnet34/confusion_matrix.png  # or xdg-open on Linux
 ```
