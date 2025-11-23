@@ -1,6 +1,6 @@
 -- Migration: Add indexes for XAI explanations table
 -- Description: Performance indexes for explanation caching and retrieval
--- Date: 2024-11-22
+-- Date: 2025-11-22
 
 -- Add composite index for cache lookups
 CREATE INDEX IF NOT EXISTS idx_explanations_exp_signal_method
