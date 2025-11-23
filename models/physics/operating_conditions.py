@@ -249,12 +249,12 @@ class OperatingConditionsValidator:
             N = speed / 60.0  # RPM to rev/s
             P = load / (2 * R * L)  # Bearing pressure
 
-            # Sommerfeld number
-            S = (viscosity * N / P) * (R / C) ** 2
+            # Sommerfeld number (with epsilon for numerical stability)
+            S = (viscosity * N / (P + 1e-8)) * (R / C) ** 2
 
             # Eccentricity ratio (from Sommerfeld number)
             # Approximate relation: ε ≈ 1 - 1/sqrt(1 + S)
-            epsilon = 1.0 - 1.0 / torch.sqrt(1.0 + S + 1e-6)
+            epsilon = 1.0 - 1.0 / torch.sqrt(1.0 + S + 1e-8)
 
             # Minimum film thickness
             h_min = C * (1.0 - epsilon) * 1e6  # Convert to μm
@@ -269,10 +269,10 @@ class OperatingConditionsValidator:
 
             N = speed / 60.0
             P = load / (2 * R * L)
-            P = np.maximum(P, 1e-6)
+            P = np.maximum(P, 1e-8)
 
-            S = (viscosity * N / P) * (R / C) ** 2
-            epsilon = 1.0 - 1.0 / np.sqrt(1.0 + S + 1e-6)
+            S = (viscosity * N / (P + 1e-8)) * (R / C) ** 2
+            epsilon = 1.0 - 1.0 / np.sqrt(1.0 + S + 1e-8)
             h_min = C * (1.0 - epsilon) * 1e6
 
         return h_min
@@ -348,8 +348,8 @@ class OperatingConditionsValidator:
         if isinstance(Re, torch.Tensor):
             Re = Re.cpu().numpy()
 
-        # Petroff equation for friction
-        f = 2 * np.pi * viscosity * U / (load / L + 1e-6) * (R / C)
+        # Petroff equation for friction (with epsilon for numerical stability)
+        f = 2 * np.pi * viscosity * U / (load / L + 1e-8) * (R / C)
 
         # Power dissipation (Watts)
         power = f * load * U
