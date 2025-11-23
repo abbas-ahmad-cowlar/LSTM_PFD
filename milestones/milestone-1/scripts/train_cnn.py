@@ -179,29 +179,16 @@ def load_data(args: argparse.Namespace, logger):
     """Load and prepare data"""
     logger.info(f"Loading data from {args.data_dir}...")
 
-    # For this implementation, we'll assume signals are generated on-the-fly
-    # In practice, you would load from disk or generate once and cache
+    # Load .mat files from directory
+    from data.matlab_importer import load_mat_dataset
 
-    from data.signal_generator import SignalGenerator
-    from config.data_config import DataConfig
+    # Load dataset
+    logger.info("Loading .MAT files...")
+    signals, labels, label_names = load_mat_dataset(args.data_dir)
 
-    # Create data config
-    data_config = DataConfig(
-        num_signals_per_fault=150,  # 150 * 11 = 1,650 total
-        rng_seed=args.seed
-    )
-
-    # Generate dataset
-    logger.info("Generating synthetic signals...")
-    generator = SignalGenerator(data_config)
-    dataset = generator.generate_dataset()
-
-    signals = dataset['signals']  # [N, 102400]
-    labels = dataset['labels']    # [N]
-
-    logger.info(f"✓ Generated {len(signals)} signals")
+    logger.info(f"✓ Loaded {len(signals)} signals")
     logger.info(f"  Signal shape: {signals.shape}")
-    logger.info(f"  Classes: {np.unique(labels)}")
+    logger.info(f"  Classes: {len(np.unique(labels))} ({', '.join(label_names[:5])}...)")
 
     # Create dataloaders
     train_loader, val_loader, test_loader = create_cnn_dataloaders(

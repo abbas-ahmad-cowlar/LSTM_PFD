@@ -214,11 +214,25 @@ python -c "import torch; print(f'PyTorch {torch.__version__} | CUDA: {torch.cuda
 
 ## 🏁 Quick Start
 
-### End-to-End Example (3 Steps)
+### End-to-End Example (4 Steps)
+
+#### Step 0: Generate Dataset (Optional)
+
+If you don't have .MAT files, generate a synthetic dataset:
+
+```bash
+# Standard dataset (130 samples × 11 classes = 1,430 total)
+python scripts/generate_dataset.py --output-dir data/raw/bearing_data
+
+# Or quick test dataset (10 samples × 11 classes = 110 total)
+python scripts/generate_dataset.py --quick
+```
+
+This creates physics-based bearing fault signals with realistic noise. Skip this step if you already have .MAT files.
 
 #### Step 1: Prepare Your Data
 
-Place your .MAT files in the following structure:
+If you have your own data, place your .MAT files in the following structure:
 
 ```
 data/raw/bearing_data/
@@ -329,6 +343,52 @@ This will:
 - Validate signal lengths and quality
 - Generate train/val/test splits (70/15/15)
 - Create a dataset summary report
+
+### Generating Synthetic Dataset
+
+If you don't have .MAT files, you can generate a synthetic bearing fault dataset using our physics-based signal generator:
+
+```bash
+# Generate standard dataset (130 samples per class = 1,430 total)
+python scripts/generate_dataset.py \
+    --output-dir data/raw/bearing_data
+
+# Quick test dataset (10 samples per class = 110 total)
+python scripts/generate_dataset.py --quick
+
+# Minimal dataset (5 samples per class = 55 total)
+python scripts/generate_dataset.py --minimal
+
+# Custom dataset with augmentation
+python scripts/generate_dataset.py \
+    --samples-per-class 200 \
+    --augmentation-ratio 0.3 \
+    --output-dir data/raw/bearing_data \
+    --seed 42
+```
+
+**Dataset Generation Features:**
+- **11 fault classes**: Healthy + 10 fault types (single and mixed faults)
+- **Physics-based simulation**: Realistic bearing vibration signatures
+- **7-layer noise model**: Measurement noise, EMI, pink noise, drift, quantization, sensor drift, impulse noise
+- **Data augmentation**: Time shift, amplitude scaling, noise injection (optional)
+- **Standard format**: Generates .MAT files compatible with the CNN dataloader
+
+**Generated dataset structure:**
+```
+data/raw/bearing_data/
+├── sain/                    # Healthy (130 samples)
+├── desalignement/           # Misalignment (130 samples)
+├── desequilibre/            # Imbalance (130 samples)
+├── jeu/                     # Bearing Clearance (130 samples)
+├── lubrification/           # Lubrication (130 samples)
+├── cavitation/              # Cavitation (130 samples)
+├── usure/                   # Wear (130 samples)
+├── oilwhirl/                # Oil Whirl (130 samples)
+├── mixed_misalign_imbalance/ # Mixed Fault 1 (130 samples)
+├── mixed_wear_lube/         # Mixed Fault 2 (130 samples)
+└── mixed_cavit_jeu/         # Mixed Fault 3 (130 samples)
+```
 
 ---
 
