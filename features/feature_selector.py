@@ -8,7 +8,7 @@ Purpose:
 
 Reference: Section 8.4 of technical report (Innovation #5)
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

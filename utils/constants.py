@@ -11,7 +11,7 @@ Purpose:
     - Default hyperparameters
     - File paths and directory names
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-21
 Created as part of critical refactoring to eliminate magic numbers
 """
@@ -598,5 +598,5 @@ DEFAULT_LOCAL_HOST: str = "localhost"  # Default hostname
 # ==============================================================================
 
 __version__ = '1.0.0'
-__author__ = 'LSTM_PFD Team'
+__author__ = 'Syed Abbas Ahmad'
 __date__ = '2025-11-21'

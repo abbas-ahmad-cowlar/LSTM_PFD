@@ -9,7 +9,7 @@ Purpose:
     - RandomAmplitudeScale: Multiply by random factor
     - AddGaussianNoise: Inject noise for robustness
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

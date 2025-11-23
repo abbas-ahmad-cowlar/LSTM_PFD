@@ -3,7 +3,7 @@ FastAPI Main Application
 
 REST API server for bearing fault diagnosis.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 
 Usage:

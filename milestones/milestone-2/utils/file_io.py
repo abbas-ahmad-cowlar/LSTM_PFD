@@ -8,7 +8,7 @@ Purpose:
     - YAML operations
     - Directory management
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

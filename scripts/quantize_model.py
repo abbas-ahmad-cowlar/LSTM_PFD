@@ -24,7 +24,7 @@ Usage:
         --quantization-type static \\
         --calibration-data data/processed/signals_cache.h5
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

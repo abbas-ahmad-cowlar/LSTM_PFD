@@ -5,7 +5,7 @@ Purpose:
     Comprehensive tests for signal generation, validation, and data loading.
     Ensures correctness, reproducibility, and numerical accuracy.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

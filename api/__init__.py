@@ -3,7 +3,7 @@ REST API for LSTM_PFD Bearing Fault Diagnosis
 
 FastAPI-based REST API for model inference and prediction.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

@@ -4,7 +4,7 @@ MATLAB compatibility layer for importing/exporting data.
 Purpose:
     Interface with existing MATLAB code and data.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

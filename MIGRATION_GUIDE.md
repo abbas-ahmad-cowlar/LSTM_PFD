@@ -250,4 +250,4 @@ specific indexes that might need to be recreated.
 ---
 
 **Last Updated**: 2025-11-22
-**Author**: Database Performance Optimization Team
+**Author**: Syed Abbas Ahmad

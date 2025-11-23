@@ -23,7 +23,7 @@ Usage:
         --profile \\
         --num-runs 1000
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

@@ -10,7 +10,7 @@ Purpose:
     - Checkpoint management
     - Experiment tracking (MLflow integration ready)
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

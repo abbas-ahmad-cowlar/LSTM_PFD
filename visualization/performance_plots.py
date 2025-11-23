@@ -5,7 +5,7 @@ Purpose:
     Visualize model performance, confusion matrices, ROC curves.
     Reproduces Figures 7, 8, 9 from technical report.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

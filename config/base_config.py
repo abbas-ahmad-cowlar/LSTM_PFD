@@ -8,7 +8,7 @@ Purpose:
     - Configuration merging
     - Type-safe dataclass-based configs
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

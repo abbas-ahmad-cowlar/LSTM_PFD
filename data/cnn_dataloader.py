@@ -8,7 +8,7 @@ Purpose:
     - Persistent workers to reduce overhead
     - Custom collate functions for batching
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

@@ -22,7 +22,7 @@
 %   - mixed_wear_lube
 %   - mixed_cavit_jeu
 %
-% Author: PFD Diagnostics Team
+% Author: Syed Abbas Ahmad
 % Version: Production v2.0
 % Date: October 30, 2025
 % ========================================================================
@@ -1665,7 +1665,7 @@ fprintf('\n✓ Step 4 results saved to: step4_results.mat\n');
 %% INPUTS:  step4_results.mat (from Step 4)
 %% OUTPUTS: Calibrated model, test metrics, confusion matrix, ROC curves
 %%
-%% Author: PFD Diagnostics Team
+%% Author: Syed Abbas Ahmad
 %% Version: Production v2.0
 %% Date: October 30, 2025
 %% ========================================================================
@@ -2337,7 +2337,7 @@ end
 %% INPUTS:  step4_results.mat, step5a_results.mat
 %% OUTPUTS: Learning curves, feature importance, misclassification report
 %%
-%% Author: PFD Diagnostics Team
+%% Author: Syed Abbas Ahmad
 %% Version: Production v2.0
 %% Date: October 30, 2025
 %% ========================================================================
@@ -2966,7 +2966,7 @@ fprintf('=======================================================================
 %% INPUTS:  step4_results.mat, step5a_results.mat, step5b_results.mat
 %% OUTPUTS: Saved model, inference function, production report, final figures
 %%
-%% Author: PFD Diagnostics Team
+%% Author: Syed Abbas Ahmad
 %% Version: Production v2.0
 %% Date: October 30, 2025
 %% ========================================================================
