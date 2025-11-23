@@ -2,7 +2,7 @@
 Notification settings callbacks.
 Handles notification preference management, email configuration, and notification history.
 """
-from dash import callback_context, html, no_update
+from dash import html, no_update, ctx
 from dash.dependencies import Input, Output, State, ALL
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -150,12 +150,12 @@ def register_notification_callbacks(app):
 
         This callback fires whenever any preference is changed.
         """
-        if not callback_context.triggered:
+        if not ctx.triggered:
             raise PreventUpdate
 
         try:
             # Determine which input triggered the callback
-            trigger_id = callback_context.triggered[0]['prop_id']
+            trigger_id = ctx.triggered[0]['prop_id']
 
             # Extract event type from trigger
             if 'notif-email-toggle' in trigger_id:
