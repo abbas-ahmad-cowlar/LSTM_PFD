@@ -22,6 +22,8 @@ Date: 2025-11-20
 import sys
 from pathlib import Path
 
+from torch.nn import attention
+
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
