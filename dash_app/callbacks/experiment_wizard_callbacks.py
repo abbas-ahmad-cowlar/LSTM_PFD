@@ -397,10 +397,11 @@ def register_experiment_wizard_callbacks(app):
         [Input("dataset-dropdown", "value"),
          Input({"type": "hyperparam", "name": ALL}, "value"),
          Input("num-epochs", "value"),
-         Input("batch-size", "value"),
-         Input("optimizer", "value"),
+         Input("batch-size-dropdown", "value"),
+         Input("optimizer-dropdown", "value"),
          Input("learning-rate", "value"),
-         Input("augmentation-options", "value"),
+         Input("scheduler-dropdown", "value"),
+         Input("augmentation-checklist", "value"),
          # Advanced options
          Input("enable-distillation", "value"),
          Input("teacher-model-select", "value"),
@@ -419,7 +420,7 @@ def register_experiment_wizard_callbacks(app):
     )
     def collect_training_config(
         dataset_id, hyperparam_values, num_epochs, batch_size, optimizer,
-        learning_rate, augmentation,
+        learning_rate, scheduler, augmentation,
         enable_distillation, teacher_model_id, distill_temp, distill_alpha,
         mixed_precision, enable_adv_aug, aug_mag, aug_prob,
         enable_progressive, prog_start, prog_end,
@@ -435,6 +436,7 @@ def register_experiment_wizard_callbacks(app):
         config["batch_size"] = batch_size or 32
         config["optimizer"] = optimizer or "adam"
         config["learning_rate"] = learning_rate or DEFAULT_LEARNING_RATE_FALLBACK
+        config["scheduler"] = scheduler or "plateau"
         config["augmentation"] = augmentation or []
 
         # Collect hyperparameters
