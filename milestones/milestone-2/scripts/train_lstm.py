@@ -113,8 +113,8 @@ def parse_args() -> argparse.Namespace:
                        help='Enable FP16 mixed precision training')
 
     # Output
-    parser.add_argument('--checkpoint-dir', type=str, default='results/checkpoints/lstm',
-                       help='Checkpoint save directory')
+    parser.add_argument('--checkpoint-dir', type=str, default='results/checkpoints',
+                       help='Checkpoint base directory (model name will be appended)')
     parser.add_argument('--save-every', type=int, default=0,
                        help='Save checkpoint every N epochs (0 to save only best)')
 
