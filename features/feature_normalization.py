@@ -5,7 +5,7 @@ Purpose:
     Normalize features to zero mean and unit variance for classical ML models.
     Prevents features with large magnitudes from dominating the learning.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

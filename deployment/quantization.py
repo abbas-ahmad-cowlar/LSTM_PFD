@@ -7,7 +7,7 @@ Provides tools for quantizing PyTorch models to reduce size and improve inferenc
 - FP16 conversion
 - Quantization-aware training (QAT) preparation
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

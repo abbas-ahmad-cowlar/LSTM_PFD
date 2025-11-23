@@ -8,7 +8,7 @@ Purpose:
     - Log levels (DEBUG, INFO, WARNING, ERROR)
     - System information logging
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

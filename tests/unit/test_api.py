@@ -3,7 +3,7 @@ Unit Tests for REST API
 
 Tests for api/main.py endpoints.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

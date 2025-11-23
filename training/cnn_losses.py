@@ -7,7 +7,7 @@ Purpose:
     - FocalLoss: Address class imbalance (focus on hard examples)
     - SupConLoss: Supervised contrastive learning (optional)
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

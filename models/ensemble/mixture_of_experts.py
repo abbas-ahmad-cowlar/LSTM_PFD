@@ -11,7 +11,7 @@ Architecture:
              ↓
   Weighted Sum: ∑ gate_weight_i × expert_i_prediction
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

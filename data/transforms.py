@@ -8,7 +8,7 @@ Purpose:
     - Filtering (bandpass, lowpass, highpass)
     - Composable transform pipeline
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 
