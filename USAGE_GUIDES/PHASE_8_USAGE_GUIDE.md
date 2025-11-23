@@ -102,7 +102,7 @@ Find optimal weights automatically:
 """
 optimize_ensemble_weights.py - Find optimal ensemble weights
 """
-from models.ensemble.voting_ensemble import optimize_weights
+from models.ensemble import optimize_ensemble_weights
 import torch.nn.functional as F
 
 # Load validation data
@@ -146,6 +146,7 @@ ensemble_optimized = VotingEnsemble(
 )
 
 # Evaluate on test set
+from models.ensemble import evaluate
 test_accuracy = evaluate(ensemble_optimized, test_loader)
 print(f"\nOptimized Ensemble Accuracy: {test_accuracy:.2f}%")
 ```
@@ -365,8 +366,8 @@ print(f"\nMixture of Experts Test Accuracy: {test_accuracy:.2f}%")
 
 # Analyze expert usage
 print("\nExpert Usage Statistics:")
-expert_usage = moe_ensemble.get_expert_usage(test_loader)
-for i, usage in enumerate(expert_usage):
+expert_usage_stats = moe_ensemble.get_expert_usage(test_loader)
+for i, usage in enumerate(expert_usage_stats['usage_proportion']):
     print(f"  Expert {i+1}: {usage:.2%}")
 
 # Save MoE
@@ -524,7 +525,7 @@ Choose diverse models for better ensemble performance:
 """
 model_selection.py - Select diverse models for ensemble
 """
-from models.ensemble.model_selector import DiversityBasedSelector
+from models.ensemble import DiversityBasedSelector
 import numpy as np
 
 # Get predictions from all available models
@@ -589,6 +590,7 @@ ensemble = VotingEnsemble(
     voting='soft'
 )
 
+from models.ensemble import evaluate
 test_accuracy = evaluate(ensemble, test_loader)
 print(f"\nDiversity-based Ensemble Test Accuracy: {test_accuracy:.2f}%")
 ```
