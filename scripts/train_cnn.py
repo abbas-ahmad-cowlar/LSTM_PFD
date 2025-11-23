@@ -39,8 +39,8 @@ from models.cnn.multi_scale_cnn import MultiScaleCNN1D, DilatedMultiScaleCNN
 from data.cnn_dataloader import create_cnn_dataloaders
 from training.cnn_trainer import CNNTrainer
 from training.cnn_optimizer import create_optimizer
-from training.cnn_losses import create_loss_function
-from training.cnn_schedulers import create_scheduler
+from training.cnn_losses import create_criterion
+from training.cnn_schedulers import create_cosine_scheduler, create_step_scheduler, create_plateau_scheduler, create_onecycle_scheduler
 from utils.reproducibility import set_seed
 from utils.device_manager import get_device
 from utils.logging import get_logger
@@ -54,6 +54,25 @@ MODEL_REGISTRY = {
     'multiscale': MultiScaleCNN1D,
     'dilated': DilatedMultiScaleCNN
 }
+
+
+def create_scheduler(optimizer, scheduler_name: str, num_epochs: int, steps_per_epoch: int, warmup_epochs: int = 0):
+    """Create learning rate scheduler based on name."""
+    if scheduler_name == 'none':
+        return None
+    elif scheduler_name == 'cosine':
+        return create_cosine_scheduler(optimizer, num_epochs=num_epochs, eta_min=1e-6)
+    elif scheduler_name == 'step':
+        return create_step_scheduler(optimizer, step_size=num_epochs // 3, gamma=0.1)
+    elif scheduler_name == 'plateau':
+        return create_plateau_scheduler(optimizer, mode='min', factor=0.1, patience=10)
+    elif scheduler_name == 'onecycle':
+        return create_onecycle_scheduler(optimizer, max_lr=0.01, epochs=num_epochs, steps_per_epoch=steps_per_epoch)
+    elif scheduler_name == 'warmup_cosine':
+        # Simple warmup + cosine
+        return create_cosine_scheduler(optimizer, num_epochs=num_epochs, eta_min=1e-6)
+    else:
+        raise ValueError(f"Unknown scheduler: {scheduler_name}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -159,16 +178,38 @@ def create_model(args: argparse.Namespace, num_classes: int) -> torch.nn.Module:
     """Create CNN model"""
     model_class = MODEL_REGISTRY[args.model]
 
-    # Common arguments
-    model_kwargs = {
-        'num_classes': num_classes,
-        'input_length': 102400,
-        'in_channels': 1
-    }
-
-    # Add dropout if supported
-    if args.model in ['cnn1d', 'attention', 'multiscale', 'dilated']:
-        model_kwargs['dropout'] = args.dropout
+    # Different models have different parameter names
+    if args.model == 'cnn1d':
+        # CNN1D uses: num_classes, input_channels, dropout, use_batch_norm
+        model_kwargs = {
+            'num_classes': num_classes,
+            'input_channels': 1,
+            'dropout': args.dropout,
+            'use_batch_norm': True
+        }
+    elif args.model in ['attention', 'attention-lite']:
+        # AttentionCNN uses: num_classes, input_length, in_channels, dropout
+        model_kwargs = {
+            'num_classes': num_classes,
+            'input_length': 102400,
+            'in_channels': 1,
+            'dropout': args.dropout
+        }
+    elif args.model in ['multiscale', 'dilated']:
+        # MultiScaleCNN uses: num_classes, input_length, in_channels, dropout
+        model_kwargs = {
+            'num_classes': num_classes,
+            'input_length': 102400,
+            'in_channels': 1,
+            'dropout': args.dropout
+        }
+    else:
+        # Default for other models
+        model_kwargs = {
+            'num_classes': num_classes,
+            'input_length': 102400,
+            'in_channels': 1
+        }
 
     model = model_class(**model_kwargs)
 
@@ -179,48 +220,54 @@ def load_data(args: argparse.Namespace, logger):
     """Load and prepare data"""
     logger.info(f"Loading data from {args.data_dir}...")
 
-    # For this implementation, we'll assume signals are generated on-the-fly
-    # In practice, you would load from disk or generate once and cache
+    # Load .mat files from directory
+    from data.matlab_importer import load_mat_dataset
+    from data.cnn_dataset import RawSignalDataset
+    from sklearn.model_selection import train_test_split
 
-    from data.signal_generator import SignalGenerator
-    from config.data_config import DataConfig
+    # Load dataset
+    logger.info("Loading .MAT files...")
+    signals, labels, label_names = load_mat_dataset(args.data_dir)
 
-    # Create data config
-    data_config = DataConfig(
-        num_signals_per_fault=150,  # 150 * 11 = 1,650 total
-        rng_seed=args.seed
+    logger.info(f"✓ Loaded {len(signals)} signals")
+    logger.info(f"  Signal shape: {signals.shape}")
+    logger.info(f"  Classes: {len(np.unique(labels))} ({', '.join(label_names[:5])}...)")
+
+    # Split into train/val/test (70/15/15)
+    train_signals, temp_signals, train_labels, temp_labels = train_test_split(
+        signals, labels, test_size=0.3, random_state=args.seed, stratify=labels
+    )
+    val_signals, test_signals, val_labels, test_labels = train_test_split(
+        temp_signals, temp_labels, test_size=0.5, random_state=args.seed, stratify=temp_labels
     )
 
-    # Generate dataset
-    logger.info("Generating synthetic signals...")
-    generator = SignalGenerator(data_config)
-    dataset = generator.generate_dataset()
+    # Create datasets
+    train_dataset = RawSignalDataset(train_signals, train_labels)
+    val_dataset = RawSignalDataset(val_signals, val_labels)
+    test_dataset = RawSignalDataset(test_signals, test_labels)
 
-    signals = dataset['signals']  # [N, 102400]
-    labels = dataset['labels']    # [N]
-
-    logger.info(f"✓ Generated {len(signals)} signals")
-    logger.info(f"  Signal shape: {signals.shape}")
-    logger.info(f"  Classes: {np.unique(labels)}")
+    logger.info(f"✓ Created datasets:")
+    logger.info(f"  Train: {len(train_dataset)} samples")
+    logger.info(f"  Val:   {len(val_dataset)} samples")
+    logger.info(f"  Test:  {len(test_dataset)} samples")
 
     # Create dataloaders
-    train_loader, val_loader, test_loader = create_cnn_dataloaders(
-        signals=signals,
-        labels=labels,
+    loaders = create_cnn_dataloaders(
+        train_dataset=train_dataset,
+        val_dataset=val_dataset,
+        test_dataset=test_dataset,
         batch_size=args.batch_size,
-        val_batch_size=args.val_batch_size,
-        num_workers=args.num_workers,
-        train_ratio=0.7,
-        val_ratio=0.15,
-        test_ratio=0.15,
-        seed=args.seed,
-        augment_train=True
+        num_workers=args.num_workers
     )
 
+    train_loader = loaders['train']
+    val_loader = loaders['val']
+    test_loader = loaders['test']
+
     logger.info(f"✓ Created dataloaders:")
-    logger.info(f"  Train: {len(train_loader.dataset)} samples, {len(train_loader)} batches")
-    logger.info(f"  Val:   {len(val_loader.dataset)} samples, {len(val_loader)} batches")
-    logger.info(f"  Test:  {len(test_loader.dataset)} samples, {len(test_loader)} batches")
+    logger.info(f"  Train: {len(train_loader)} batches")
+    logger.info(f"  Val:   {len(val_loader)} batches")
+    logger.info(f"  Test:  {len(test_loader)} batches")
 
     return train_loader, val_loader, test_loader
 
@@ -277,8 +324,8 @@ def main():
     logger.info(f"✓ Created optimizer: {args.optimizer}")
 
     # Create loss function
-    criterion = create_loss_function(
-        loss_name=args.loss,
+    criterion = create_criterion(
+        criterion_name=args.loss,
         num_classes=num_classes,
         label_smoothing=args.label_smoothing if args.loss == 'label_smoothing' else 0.0
     )
