@@ -5,11 +5,18 @@ This module provides transformer-based architectures for bearing fault diagnosis
 - SignalTransformer: Standard transformer with global average pooling
 - VisionTransformer1D: ViT-style transformer with [CLS] token
 
-Import from parent models module:
+Usage:
     from models.transformer import SignalTransformer, create_transformer
-    from models.transformer.vision_transformer_1d import VisionTransformer1D, create_vit_1d
+    from models.transformer import VisionTransformer1D, create_vit_1d
 """
 
+# Original SignalTransformer implementation
+from .signal_transformer import (
+    SignalTransformer,
+    create_transformer
+)
+
+# Vision Transformer 1D with CLS token
 from .vision_transformer_1d import (
     VisionTransformer1D,
     create_vit_1d,
@@ -19,6 +26,11 @@ from .vision_transformer_1d import (
 )
 
 __all__ = [
+    # Original SignalTransformer
+    'SignalTransformer',
+    'create_transformer',
+
+    # VisionTransformer1D variants
     'VisionTransformer1D',
     'create_vit_1d',
     'vit_tiny_1d',
