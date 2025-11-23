@@ -832,9 +832,28 @@ class SignalGenerator:
         labels_str = dataset['labels']
         metadata = dataset['metadata']
 
+        # Convert signals to numpy array if it's a list
+        if isinstance(signals, list):
+            signals = np.array(signals, dtype=np.float32)
+        elif not isinstance(signals, np.ndarray):
+            raise TypeError(f"Signals must be list or numpy array, got {type(signals)}")
+
+        # Validate signals array
+        if len(signals) == 0:
+            raise ValueError("Cannot save empty dataset - no signals generated")
+
+        if signals.ndim != 2:
+            raise ValueError(f"Signals must be 2D array (num_samples, signal_length), got shape {signals.shape}")
+
         # Convert string labels to integers using FAULT_TYPES mapping
         label_to_idx = {label: idx for idx, label in enumerate(FAULT_TYPES)}
-        labels = np.array([label_to_idx[label] for label in labels_str])
+
+        # Validate all labels are known
+        unknown_labels = set(labels_str) - set(FAULT_TYPES)
+        if unknown_labels:
+            raise ValueError(f"Unknown fault types in dataset: {unknown_labels}. Valid types: {FAULT_TYPES}")
+
+        labels = np.array([label_to_idx[label] for label in labels_str], dtype=np.int64)
 
         # Create stratified splits to ensure each split has all classes
         train_ratio, val_ratio, test_ratio = split_ratios
@@ -863,7 +882,7 @@ class SignalGenerator:
             # Store global attributes
             f.attrs['num_classes'] = NUM_CLASSES
             f.attrs['sampling_rate'] = SAMPLING_RATE
-            f.attrs['signal_length'] = signals.shape[1]
+            f.attrs['signal_length'] = int(signals.shape[1])
             f.attrs['generation_date'] = datetime.now().isoformat()
             f.attrs['split_ratios'] = split_ratios
             f.attrs['rng_seed'] = self.config.rng_seed
