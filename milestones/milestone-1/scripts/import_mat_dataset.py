@@ -117,15 +117,22 @@ def import_mat_dataset(
         hf.attrs['signal_length'] = all_signals.shape[1]
         hf.attrs['fault_type_map'] = json.dumps(fault_type_map)
 
-    # Save metadata JSON
-    metadata_file = output_path.parent / 'metadata' / 'file_index.json'
-    metadata_file.parent.mkdir(parents=True, exist_ok=True)
+    # Save summary JSON
+    summary_file = output_path.parent / 'dataset_summary.json'
+    summary_file.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(metadata_file, 'w') as f:
+    with open(summary_file, 'w') as f:
         json.dump({
-            'files': [str(meta['file']) for meta in all_metadata],
-            'fault_types': [meta['fault_type'] for meta in all_metadata],
-            'labels': all_labels.tolist()
+            'num_samples': len(all_signals),
+            'num_classes': len(fault_type_map),
+            'signal_length': all_signals.shape[1],
+            'fault_types': label_names,
+            'class_distribution': {label_names[i]: int(count) for i, count in enumerate(counts)},
+            'splits': {
+                'train': len(train_idx) if generate_splits else None,
+                'val': len(val_idx) if generate_splits else None,
+                'test': len(test_idx) if generate_splits else None
+            }
         }, f, indent=2)
 
     print("✓ Import complete!")
