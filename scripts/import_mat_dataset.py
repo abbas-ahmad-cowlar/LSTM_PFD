@@ -25,7 +25,7 @@ from typing import Dict, List, Tuple
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from data.matlab_importer import load_mat_signals, convert_matlab_to_pytorch, extract_metadata
+from data.matlab_importer import load_mat_dataset as load_dataset_fn
 
 
 def import_mat_dataset(
@@ -51,113 +51,20 @@ def import_mat_dataset(
     print(f"Importing MAT dataset from: {mat_dir}")
     print(f"Output: {output_file}\n")
 
-    mat_dir_path = Path(mat_dir)
-
-    # Find all MAT files
-    mat_files = list(mat_dir_path.rglob("*.mat"))
-    print(f"Found {len(mat_files)} MAT files")
-
-    if len(mat_files) == 0:
-        raise ValueError(f"No MAT files found in {mat_dir}")
-
-    # Load all MAT files
-    all_signals = []
-    all_labels = []
-    all_metadata = []
-
-    # Fault type mapping (modify based on your directory structure)
-    fault_type_map = {
-        'normal': 0,
-        'ball_fault': 1,
-        'inner_race': 2,
-        'outer_race': 3,
-        'combined': 4,
-        'imbalance': 5,
-        'misalignment': 6,
-        'oil_whirl': 7,
-        'cavitation': 8,
-        'looseness': 9,
-        'oil_deficiency': 10
-    }
-
-    print("\nLoading MAT files...")
-    for mat_file in tqdm(mat_files, desc="Importing"):
-        try:
-            # Determine fault type from directory structure
-            # Assumes structure: mat_dir/fault_type/file.mat
-            fault_type_name = mat_file.parent.name
-
-            if fault_type_name not in fault_type_map:
-                print(f"Warning: Unknown fault type '{fault_type_name}', skipping {mat_file}")
-                continue
-
-            label = fault_type_map[fault_type_name]
-
-            # Load MAT file
-            mat_data = load_mat_signals(str(mat_file))
-
-            # Extract signal (assumes MAT contains 'signal' or 'data' field)
-            if isinstance(mat_data, dict):
-                if 'signal' in mat_data:
-                    signal = mat_data['signal'].flatten()
-                elif 'data' in mat_data:
-                    signal = mat_data['data'].flatten()
-                elif 'x' in mat_data:
-                    signal = mat_data['x'].flatten()
-                else:
-                    # Take first array-like field
-                    for key, value in mat_data.items():
-                        if isinstance(value, np.ndarray) and value.size > 1000:
-                            signal = value.flatten()
-                            break
-            else:
-                signal = mat_data.flatten()
-
-            # Validate signal
-            if validate:
-                if len(signal) < 10000:
-                    print(f"Warning: Signal too short ({len(signal)} samples), skipping {mat_file}")
-                    continue
-
-                if np.all(signal == 0):
-                    print(f"Warning: Signal is all zeros, skipping {mat_file}")
-                    continue
-
-            # Truncate or pad to standard length (102400 samples)
-            target_length = 102400
-            if len(signal) > target_length:
-                signal = signal[:target_length]
-            elif len(signal) < target_length:
-                signal = np.pad(signal, (0, target_length - len(signal)))
-
-            # Store
-            all_signals.append(signal.astype(np.float32))
-            all_labels.append(label)
-
-            # Metadata
-            metadata = {
-                'file': mat_file.name,
-                'fault_type': fault_type_name,
-                'label': label
-            }
-            all_metadata.append(metadata)
-
-        except Exception as e:
-            print(f"Error loading {mat_file}: {e}")
-            continue
-
-    # Convert to arrays
-    all_signals = np.array(all_signals, dtype=np.float32)
-    all_labels = np.array(all_labels, dtype=np.int32)
+    # Use the load_mat_dataset function from matlab_importer
+    all_signals, all_labels, label_names = load_dataset_fn(mat_dir, verbose=True)
 
     print(f"\nLoaded {len(all_signals)} signals")
     print(f"Signal shape: {all_signals.shape}")
+
+    # Fault type mapping
+    fault_type_map = {name: idx for idx, name in enumerate(label_names)}
 
     # Class distribution
     print("\nClass distribution:")
     unique, counts = np.unique(all_labels, return_counts=True)
     for fault_idx, count in zip(unique, counts):
-        fault_name = [k for k, v in fault_type_map.items() if v == fault_idx][0]
+        fault_name = label_names[fault_idx]
         print(f"  {fault_name} ({fault_idx}): {count} samples")
 
     # Generate train/val/test splits
@@ -278,8 +185,10 @@ def main():
         print(f"  Test: {stats['splits']['test']}")
 
     print("\nNext steps:")
-    print("  1. Verify the cache: python scripts/verify_cache.py")
-    print("  2. Precompute spectrograms: python scripts/precompute_spectrograms.py")
+    print("  1. Train a CNN model:")
+    print("     python scripts/train_cnn.py --model cnn1d --data-dir data/raw/bearing_data --epochs 50")
+    print("  2. Or train with different architecture:")
+    print("     python scripts/train_cnn.py --model attention --data-dir data/raw/bearing_data --epochs 100")
     print("=" * 60)
 
 
