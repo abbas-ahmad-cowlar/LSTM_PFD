@@ -90,7 +90,7 @@ class PINNTrainer(Trainer):
         lambda_temporal: float = 0.0,
         adaptive_lambda: bool = True,
         lambda_schedule: str = 'linear',
-        sample_rate: int = 51200,
+        sample_rate: int = 20480,
         metadata_keys: List[str] = None
     ):
         """
