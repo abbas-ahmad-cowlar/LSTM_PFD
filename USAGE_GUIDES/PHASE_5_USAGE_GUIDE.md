@@ -195,9 +195,11 @@ python scripts/precompute_spectrograms.py \
 
 ```bash
 python scripts/train_spectrogram_cnn.py \
-    --config config/phase_5_config.yaml \
-    --model resnet2d \
-    --spectrogram_dir data/spectrograms/stft/
+    --model resnet18_2d \
+    --data_dir data/spectrograms \
+    --tfr_type stft \
+    --epochs 100 \
+    --batch_size 32
 ```
 
 **Expected Training Output:**
@@ -235,8 +237,10 @@ Test set evaluation:
 
 ```bash
 python scripts/train_spectrogram_cnn.py \
-    --model efficientnet2d \
-    --config config/phase_5_config.yaml
+    --model efficientnet_b0 \
+    --data_dir data/spectrograms \
+    --tfr_type stft \
+    --epochs 100
 ```
 
 **Benefits:**
