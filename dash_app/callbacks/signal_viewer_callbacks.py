@@ -35,7 +35,7 @@ def register_signal_viewer_callbacks(app):
             features = signal_info["features"]
 
             # Time domain plot
-            time = np.arange(len(signal_data)) / 20480  # fs = SAMPLING_RATE
+            time = np.arange(len(signal_data)) / SAMPLING_RATE
             time_fig = create_time_series_plot(time, signal_data)
 
             # Frequency domain plot
@@ -51,7 +51,7 @@ def register_signal_viewer_callbacks(app):
             metadata = html.Div([
                 html.P([html.Strong("Signal ID: "), signal_id]),
                 html.P([html.Strong("Length: "), f"{len(signal_data)} samples"]),
-                html.P([html.Strong("Duration: "), f"{len(signal_data)/20480:.2f} s"]),
+                html.P([html.Strong("Duration: "), f"{len(signal_data)/SAMPLING_RATE:.2f} s"]),
                 html.P([html.Strong("RMS: "), f"{features['rms']:.4f}"]),
                 html.P([html.Strong("Kurtosis: "), f"{features['kurtosis']:.4f}"]),
             ])
