@@ -336,6 +336,9 @@ def test_optimizers():
     print("Testing CNN Optimizers")
     print("=" * 60)
 
+    # Import constants
+    from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+
     # Create dummy model
     from models.cnn.cnn_1d import CNN1D
     model = CNN1D(num_classes=NUM_CLASSES)
