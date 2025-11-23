@@ -114,27 +114,13 @@ def mock_h5_cache(temp_data_dir, sample_batch_signals):
 
 @pytest.fixture
 def simple_cnn_model():
-    """Create simple CNN model for testing."""
-    import torch.nn as nn
+    """
+    Create simple CNN model for testing.
 
-    class SimpleCNN(nn.Module):
-        def __init__(self, num_classes=NUM_CLASSES):
-            super().__init__()
-            self.conv1 = nn.Conv1d(1, 32, kernel_size=7, padding=3)
-            self.pool = nn.MaxPool1d(2)
-            self.conv2 = nn.Conv1d(32, 64, kernel_size=5, padding=2)
-            self.fc = nn.Linear(64, num_classes)
-
-        def forward(self, x):
-            # x: [B, 1, T]
-            x = torch.relu(self.conv1(x))
-            x = self.pool(x)
-            x = torch.relu(self.conv2(x))
-            x = torch.adaptive_avg_pool1d(x, 1)
-            x = x.squeeze(-1)
-            x = self.fc(x)
-            return x
-
+    Uses importable SimpleCNN class from tests.models module
+    so it can be properly pickled for ONNX export tests.
+    """
+    from tests.models import SimpleCNN
     return SimpleCNN()
 
 
