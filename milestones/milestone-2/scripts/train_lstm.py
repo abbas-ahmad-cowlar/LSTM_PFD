@@ -34,7 +34,7 @@ from datetime import datetime
 from models import create_model
 from data.lstm_dataloader import create_lstm_dataloaders
 from training.lstm_trainer import LSTMTrainer
-from training.optimizers import create_optimizer
+from training.optimizers import create_optimizer, create_scheduler
 from training.losses import create_loss_function
 from utils.reproducibility import set_seed
 from utils.device_manager import get_device
@@ -113,8 +113,8 @@ def parse_args() -> argparse.Namespace:
                        help='Enable FP16 mixed precision training')
 
     # Output
-    parser.add_argument('--checkpoint-dir', type=str, default='results/checkpoints/lstm',
-                       help='Checkpoint save directory')
+    parser.add_argument('--checkpoint-dir', type=str, default='results/checkpoints',
+                       help='Checkpoint base directory (model name will be appended)')
     parser.add_argument('--save-every', type=int, default=0,
                        help='Save checkpoint every N epochs (0 to save only best)')
 
@@ -128,37 +128,31 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def create_scheduler(optimizer, args):
-    """Create learning rate scheduler."""
-    if args.scheduler == 'cosine':
-        return torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer,
-            T_max=args.epochs,
-            eta_min=args.lr * 0.01
-        )
-    elif args.scheduler == 'step':
-        return torch.optim.lr_scheduler.StepLR(
-            optimizer,
-            step_size=args.epochs // 3,
-            gamma=0.1
-        )
-    elif args.scheduler == 'plateau':
-        return torch.optim.lr_scheduler.ReduceLROnPlateau(
-            optimizer,
-            mode='min',
-            factor=args.lr_factor,
-            patience=args.lr_patience,
-            verbose=True
-        )
-    elif args.scheduler == 'none':
-        return None
-    else:
-        raise ValueError(f"Unknown scheduler: {args.scheduler}")
-
-
 def main():
     """Main training function."""
     args = parse_args()
+
+    # Validate arguments
+    if not Path(args.data_dir).exists():
+        raise FileNotFoundError(f"Data directory not found: {args.data_dir}")
+
+    if args.hidden_size <= 0 or args.num_layers <= 0:
+        raise ValueError("hidden_size and num_layers must be positive integers")
+
+    if not 0 <= args.dropout <= 1:
+        raise ValueError(f"dropout must be in range [0, 1], got {args.dropout}")
+
+    if args.lr <= 0:
+        raise ValueError(f"learning rate must be positive, got {args.lr}")
+
+    if args.weight_decay < 0:
+        raise ValueError(f"weight_decay must be non-negative, got {args.weight_decay}")
+
+    if args.epochs <= 0:
+        raise ValueError(f"epochs must be positive, got {args.epochs}")
+
+    if args.batch_size <= 0:
+        raise ValueError(f"batch_size must be positive, got {args.batch_size}")
 
     # Set random seed
     set_seed(args.seed)
@@ -222,8 +216,8 @@ def main():
 
     # Create optimizer
     optimizer = create_optimizer(
+        model_params=model.parameters(),
         optimizer_name=args.optimizer,
-        model_parameters=model.parameters(),
         lr=args.lr,
         weight_decay=args.weight_decay,
         momentum=args.momentum
@@ -237,7 +231,16 @@ def main():
     )
 
     # Create scheduler
-    scheduler = create_scheduler(optimizer, args)
+    if args.scheduler != 'none':
+        scheduler = create_scheduler(
+            optimizer=optimizer,
+            scheduler_name=args.scheduler,
+            num_epochs=args.epochs,
+            patience=args.lr_patience,
+            factor=args.lr_factor
+        )
+    else:
+        scheduler = None
 
     # Create checkpoint directory
     checkpoint_dir = Path(args.checkpoint_dir) / args.model / datetime.now().strftime('%Y%m%d_%H%M%S')
