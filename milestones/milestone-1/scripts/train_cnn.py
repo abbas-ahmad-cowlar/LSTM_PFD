@@ -90,6 +90,8 @@ def parse_args() -> argparse.Namespace:
     # Data arguments
     parser.add_argument('--data-dir', type=str, default='data/processed',
                        help='Directory with processed data')
+    parser.add_argument('--signal-length', type=int, default=102400,
+                       help='Signal length (downsample for faster CPU training, e.g., 25600)')
     parser.add_argument('--num-workers', type=int, default=4,
                        help='Number of data loading workers')
 
@@ -191,7 +193,7 @@ def create_model(args: argparse.Namespace, num_classes: int) -> torch.nn.Module:
         # AttentionCNN uses: num_classes, input_length, in_channels, dropout
         model_kwargs = {
             'num_classes': num_classes,
-            'input_length': 102400,
+            'input_length': args.signal_length,
             'in_channels': 1,
             'dropout': args.dropout
         }
@@ -199,7 +201,7 @@ def create_model(args: argparse.Namespace, num_classes: int) -> torch.nn.Module:
         # MultiScaleCNN uses: num_classes, input_length, in_channels, dropout
         model_kwargs = {
             'num_classes': num_classes,
-            'input_length': 102400,
+            'input_length': args.signal_length,
             'in_channels': 1,
             'dropout': args.dropout
         }
@@ -207,7 +209,7 @@ def create_model(args: argparse.Namespace, num_classes: int) -> torch.nn.Module:
         # Default for other models
         model_kwargs = {
             'num_classes': num_classes,
-            'input_length': 102400,
+            'input_length': args.signal_length,
             'in_channels': 1
         }
 
@@ -232,6 +234,20 @@ def load_data(args: argparse.Namespace, logger):
     logger.info(f"✓ Loaded {len(signals)} signals")
     logger.info(f"  Signal shape: {signals.shape}")
     logger.info(f"  Classes: {len(np.unique(labels))} ({', '.join(label_names[:5])}...)")
+
+    # Downsample signals if needed (for faster CPU training)
+    original_length = signals.shape[1]
+    target_length = args.signal_length
+
+    if target_length < original_length:
+        logger.info(f"Downsampling signals from {original_length} to {target_length}...")
+        # Simple decimation: take every Nth sample
+        downsample_factor = original_length // target_length
+        signals = signals[:, ::downsample_factor][:, :target_length]
+        logger.info(f"✓ Downsampled signal shape: {signals.shape}")
+    elif target_length > original_length:
+        logger.warning(f"Target length {target_length} > original {original_length}. Using original length.")
+        args.signal_length = original_length
 
     # Split into train/val/test (70/15/15)
     train_signals, temp_signals, train_labels, temp_labels = train_test_split(
