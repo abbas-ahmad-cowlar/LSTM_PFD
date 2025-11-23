@@ -36,8 +36,7 @@ train_transformer.py - Train Transformer model for fault diagnosis
 """
 import torch
 from torch.utils.data import DataLoader
-from transformers import create_signal_transformer
-from transformers.advanced.vision_transformer import VisionTransformer1D
+from models.transformer import create_transformer
 from data.cnn_dataloader import SignalDataset
 import h5py
 
@@ -56,16 +55,16 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True, num_worker
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4)
 
 # Create Transformer model
-model = create_signal_transformer(
-    input_length=102400,      # Signal length
+model = create_transformer(
     num_classes=11,           # 11 fault types
-    d_model=256,              # Embedding dimension
-    nhead=8,                  # Number of attention heads
-    num_layers=6,             # Number of transformer blocks
-    dim_feedforward=1024,     # FFN hidden dimension
-    dropout=0.1,              # Dropout rate
+    input_channels=1,         # Mono signal
     patch_size=512,           # Patch size (102400/512 = 200 patches)
-    positional_encoding='learnable'  # or 'sinusoidal'
+    d_model=256,              # Embedding dimension
+    num_heads=8,              # Number of attention heads
+    num_layers=6,             # Number of transformer blocks
+    d_ff=1024,                # FFN hidden dimension
+    dropout=0.1,              # Dropout rate
+    learnable_pe=True         # Use learnable positional encoding
 )
 
 # Setup training
@@ -178,24 +177,23 @@ print(f'\nTraining complete! Best validation accuracy: {best_val_acc:.2f}%')
 
 Use a learnable classification token instead of global average pooling:
 
+> **Note**: VisionTransformer1D is not yet fully implemented. The standard SignalTransformer uses global average pooling for classification. To implement ViT-style classification with a [CLS] token, you would need to modify the SignalTransformer class to add a learnable token at the beginning of the patch sequence.
+
 ```python
-from transformers.advanced.vision_transformer import VisionTransformer1D
-
-model = VisionTransformer1D(
-    input_length=102400,
-    num_classes=11,
-    patch_size=512,
-    d_model=256,
-    nhead=8,
-    num_layers=6,
-    dim_feedforward=1024,
-    dropout=0.1,
-    use_cls_token=True  # Use [CLS] token for classification
-)
-
-# Train as usual
-# The model will prepend a learnable [CLS] token to the patch sequence
-# and use its output for classification
+# Example concept (not yet implemented):
+# from models.transformer import SignalTransformer
+#
+# # You would need to modify SignalTransformer to support use_cls_token parameter
+# model = SignalTransformer(
+#     num_classes=11,
+#     patch_size=512,
+#     d_model=256,
+#     num_heads=8,
+#     num_layers=6,
+#     d_ff=1024,
+#     dropout=0.1,
+#     # use_cls_token=True  # Not yet supported - requires modification
+# )
 ```
 
 ### Option 2: CNN-Transformer Hybrid (Best Performance)
@@ -255,25 +253,26 @@ model = CNNTransformerHybrid(num_classes=11)
 
 ### Option 3: Efficient Attention (for Longer Signals)
 
-For signals longer than 102,400 samples, use efficient attention mechanisms:
+For signals longer than 102,400 samples, use larger patch sizes to reduce memory:
+
+> **Note**: Efficient attention mechanisms (Performer, Linformer, etc.) are not yet implemented. For longer signals, use larger patch sizes to reduce the number of patches and memory requirements.
 
 ```python
-# Note: This requires the performer-pytorch library
-# pip install performer-pytorch
+from models.transformer import create_transformer
 
-from transformers.advanced.attention_mechanisms import create_performer
-
-model = create_performer(
-    input_length=204800,  # Longer signal
+# For longer signals, increase patch_size to keep sequence length manageable
+model = create_transformer(
     num_classes=11,
+    patch_size=1024,      # Larger patches: 204800/1024 = 200 patches (same as before)
     d_model=256,
-    nhead=8,
+    num_heads=8,
     num_layers=6,
-    patch_size=1024,  # Larger patches for longer signals
-    use_efficient_attention=True  # Linear complexity O(n) instead of O(n²)
+    d_ff=1024,
+    dropout=0.1
 )
 
-# Train as usual - similar accuracy with 10x faster attention computation
+# Alternative: Use fewer patches with larger patch size
+# patch_size=2048 → 102 patches (lower memory, faster)
 ```
 
 ---
@@ -289,11 +288,11 @@ visualize_attention.py - Visualize attention patterns
 import torch
 import matplotlib.pyplot as plt
 import numpy as np
-from transformers import load_trained_transformer
+from models.transformer import create_transformer
 
 # Load trained model
 checkpoint = torch.load('checkpoints/phase4/best_transformer.pth')
-model = create_signal_transformer(input_length=102400, num_classes=11)
+model = create_transformer(num_classes=11, patch_size=512)
 model.load_state_dict(checkpoint['model_state_dict'])
 model.eval()
 
@@ -359,14 +358,18 @@ attention_dashboard.py - Interactive Streamlit dashboard
 """
 import streamlit as st
 import torch
-from transformers import load_trained_transformer
+import numpy as np
+from models.transformer import create_transformer
 
 # Note: Run with: streamlit run attention_dashboard.py
 
 st.title("Transformer Attention Visualization")
 
 # Load model
-model = load_trained_transformer('checkpoints/phase4/best_transformer.pth')
+checkpoint = torch.load('checkpoints/phase4/best_transformer.pth')
+model = create_transformer(num_classes=11, patch_size=512)
+model.load_state_dict(checkpoint['model_state_dict'])
+model.eval()
 
 # Upload signal
 uploaded_file = st.file_uploader("Upload signal (.npy file)", type=['npy'])
@@ -407,15 +410,23 @@ Compare Transformer with CNN models:
 """
 compare_models.py - Compare Transformer vs ResNet vs Hybrid
 """
-from models.resnet import load_resnet34
-from transformers import load_trained_transformer
-from models.hybrid import CNNTransformerHybrid
+import torch
+from models.transformer import create_transformer
+from models.resnet_1d import create_resnet34_1d
+from models.model_factory import load_pretrained
 from evaluation.evaluator import evaluate_model
 
 # Load models
-transformer = load_trained_transformer('checkpoints/phase4/transformer.pth')
-resnet34 = load_resnet34('checkpoints/phase3/resnet34.pth')
-hybrid = torch.load('checkpoints/phase4/cnn_transformer_hybrid.pth')
+# Transformer
+transformer_checkpoint = torch.load('checkpoints/phase4/transformer.pth')
+transformer = create_transformer(num_classes=11, patch_size=512)
+transformer.load_state_dict(transformer_checkpoint['model_state_dict'])
+
+# ResNet-34
+resnet34 = load_pretrained('resnet34', 'checkpoints/phase3/resnet34.pth', num_classes=11)
+
+# CNN-Transformer Hybrid (if available)
+# hybrid = torch.load('checkpoints/phase4/cnn_transformer_hybrid.pth')
 
 # Evaluate on test set
 models = {
@@ -468,12 +479,14 @@ def objective(trial):
     warmup_epochs = trial.suggest_int('warmup_epochs', 5, 15)
 
     # Create model
-    model = create_signal_transformer(
-        input_length=102400,
+    from models.transformer import create_transformer
+    model = create_transformer(
         num_classes=11,
+        patch_size=512,
         d_model=d_model,
-        nhead=nhead,
+        num_heads=nhead,
         num_layers=num_layers,
+        d_ff=d_model * 4,  # Standard ratio
         dropout=dropout
     )
 
@@ -495,11 +508,12 @@ print(f"Best validation accuracy: {study.best_value:.4f}")
 
 **Recommended Starting Values:**
 - `d_model`: 256 (good balance between capacity and speed)
-- `nhead`: 8 (standard choice)
+- `num_heads`: 8 (standard choice)
 - `num_layers`: 6 (proven effective for time series)
+- `d_ff`: 1024 (4x d_model)
 - `dropout`: 0.1 (prevent overfitting)
 - `lr`: 1e-4 with 10-epoch warmup (critical!)
-- `patch_size`: 512 (results in 200 patches)
+- `patch_size`: 512 (results in 200 patches, default value)
 
 ---
 
