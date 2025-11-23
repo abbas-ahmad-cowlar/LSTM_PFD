@@ -68,7 +68,7 @@ project_root/
   - `CallbackConfig`: Early stopping, checkpointing
   - `DataLoaderConfig`: Batch size, num_workers
 - **Key Functions**:
-  - `create_optimizer(model_params)`: Initialize optimizer
+  - `create_optimizer(optimizer_type, model_params, **kwargs)`: Initialize optimizer
   - `create_scheduler(optimizer)`: Learning rate scheduler
 - **Dependencies**: `base_config.py`, `torch.optim`
 
@@ -295,13 +295,28 @@ project_root/
   - `compute_class_weights(dataset)`: For weighted loss
 - **Dependencies**: `torch.nn`
 
-**`training/optimizers.py`**
-- **Purpose**: Optimizer wrappers with learning rate schedules
+**`training/cnn_optimizer.py`**
+- **Purpose**: Optimizer configurations for CNN training (RECOMMENDED)
 - **Key Functions**:
-  - `create_optimizer(model_params, config)`: Initialize optimizer
-  - `create_scheduler(optimizer, config)`: Cosine annealing, step decay
-  - `get_lr(epoch)`: Current learning rate
+  - `create_optimizer(optimizer_type, model_params, lr, weight_decay, **kwargs)`: Factory for optimizers
+  - `create_adamw_optimizer(model_params, lr, weight_decay, ...)`: Create AdamW optimizer
+  - `create_sgd_optimizer(model_params, lr, momentum, ...)`: Create SGD with Nesterov momentum
+  - `create_rmsprop_optimizer(model_params, lr, ...)`: Create RMSprop optimizer
+  - `get_parameter_groups(model, lr, weight_decay, no_decay_bias)`: Separate weight decay for biases/norms
+- **Key Classes**:
+  - `OptimizerConfig`: Predefined configurations (default, fast_convergence, strong_regularization, sgd_baseline)
 - **Dependencies**: `torch.optim`
+- **Note**: This is the primary optimizer module; use instead of training.optimizers.create_optimizer()
+
+**`training/optimizers.py`**
+- **Purpose**: Optimizer wrappers with learning rate schedules (DEPRECATED: use cnn_optimizer.py)
+- **Key Functions**:
+  - `create_optimizer(model_params, optimizer_name, **kwargs)`: DEPRECATED, delegates to cnn_optimizer
+  - `create_scheduler(optimizer, scheduler_name, **kwargs)`: Cosine annealing, step decay
+  - `get_lr(optimizer)`: Current learning rate
+  - `set_lr(optimizer, lr)`: Set learning rate
+- **Note**: Use `training.cnn_optimizer.create_optimizer(optimizer_type, model_params, ...)` instead
+- **Dependencies**: `torch.optim`, `training.cnn_optimizer`
 
 **`training/metrics.py`**
 - **Purpose**: Training metrics computation

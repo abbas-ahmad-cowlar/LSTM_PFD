@@ -204,9 +204,32 @@ class BearingFaultDataset(Dataset):
         """
         Load dataset from HDF5 file.
 
-        Expects HDF5 structure created by signal_generator._save_as_hdf5():
-            - f[split]['signals']: (N, signal_length) array
-            - f[split]['labels']: (N,) array of integer labels
+        HDF5 File Structure (created by signal_generator._save_as_hdf5()):
+        ----------------------------------------------------------------
+        Dataset Groups:
+            f['train']/          - Training split
+                'signals'        - (N_train, signal_length) float32 array
+                'labels'         - (N_train,) int64 array of fault type indices
+            f['val']/            - Validation split
+                'signals'        - (N_val, signal_length) float32 array
+                'labels'         - (N_val,) int64 array
+            f['test']/           - Test split
+                'signals'        - (N_test, signal_length) float32 array
+                'labels'         - (N_test,) int64 array
+
+        File Attributes:
+            f.attrs['num_classes']      - Total number of fault classes (int)
+            f.attrs['fault_types']      - List of fault type names (strings)
+            f.attrs['signal_length']    - Length of each signal (int, e.g., 102400)
+            f.attrs['sampling_rate']    - Sampling rate in Hz (int, e.g., 20480)
+            f.attrs['train_samples']    - Number of training samples (int)
+            f.attrs['val_samples']      - Number of validation samples (int)
+            f.attrs['test_samples']     - Number of test samples (int)
+
+        Label Encoding:
+            Labels are stored as integers (0 to num_classes-1) corresponding to
+            indices in utils.constants.FAULT_TYPES. Use label_to_idx mapping to
+            convert between string names and integer indices.
 
         Args:
             hdf5_path: Path to HDF5 file
@@ -214,7 +237,7 @@ class BearingFaultDataset(Dataset):
             transform: Optional transform to apply to signals
 
         Returns:
-            BearingFaultDataset instance
+            BearingFaultDataset instance with loaded signals and labels
 
         Raises:
             FileNotFoundError: If HDF5 file doesn't exist
@@ -234,6 +257,13 @@ class BearingFaultDataset(Dataset):
             ...     split='val',
             ...     transform=my_transform
             ... )
+
+            >>> # Check HDF5 file attributes
+            >>> import h5py
+            >>> with h5py.File('data/processed/dataset.h5', 'r') as f:
+            ...     print(f"Classes: {f.attrs['num_classes']}")
+            ...     print(f"Signal length: {f.attrs['signal_length']}")
+            ...     print(f"Fault types: {list(f.attrs['fault_types'])}")
         """
         import h5py
 
@@ -370,6 +400,11 @@ class CachedBearingDataset(Dataset):
 
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
+        # Initialize label mapping
+        from utils.constants import FAULT_TYPES
+        self.label_to_idx = {label: idx for idx, label in enumerate(FAULT_TYPES)}
+        self.idx_to_label = {idx: label for label, idx in self.label_to_idx.items()}
+
         # Check if cache exists
         self.index_path = self.cache_dir / 'index.pkl'
         if self.index_path.exists() and not regenerate:
@@ -432,8 +467,13 @@ class CachedBearingDataset(Dataset):
 
         signal = torch.FloatTensor(sample['signal'])
 
-        # Convert label to index (simplified for now)
-        label = 0  # TODO: Proper label encoding
+        # Convert label string to index using label_to_idx mapping
+        label_str = sample['label']
+        if label_str not in self.label_to_idx:
+            logger.warning(f"Unknown label '{label_str}', defaulting to 0")
+            label = 0
+        else:
+            label = self.label_to_idx[label_str]
 
         if self.transform:
             signal = self.transform(signal)
