@@ -1,16 +1,17 @@
 """
 MAT Dataset Importer Script
 
-One-time script to import all 1430 MAT files into HDF5 cache for fast access.
-This should be run once after placing MAT files in data/raw/bearing_data/
+One-time script to import all MAT files into HDF5 cache for fast access.
+This should be run once after placing/generating MAT files in data/raw/bearing_data/
 
 Usage:
     python scripts/import_mat_dataset.py \
-        --mat_dir data/raw/bearing_data/ \
-        --output data/processed/signals_cache.h5
+        --mat-dir data/raw/bearing_data \
+        --output data/processed/dataset_info.json \
+        --validate
 
 Author: AI Assistant
-Date: 2025-11-20
+Date: 2025-11-23
 """
 
 import argparse
@@ -65,19 +66,19 @@ def import_mat_dataset(
     all_labels = []
     all_metadata = []
 
-    # Fault type mapping (modify based on your directory structure)
+    # Fault type mapping (matches generate_dataset.py output)
     fault_type_map = {
-        'normal': 0,
-        'ball_fault': 1,
-        'inner_race': 2,
-        'outer_race': 3,
-        'combined': 4,
-        'imbalance': 5,
-        'misalignment': 6,
-        'oil_whirl': 7,
-        'cavitation': 8,
-        'looseness': 9,
-        'oil_deficiency': 10
+        'sain': 0,                          # Healthy
+        'desalignement': 1,                 # Misalignment
+        'desequilibre': 2,                  # Imbalance
+        'jeu': 3,                           # Bearing Clearance
+        'lubrification': 4,                 # Lubrication Issue
+        'cavitation': 5,                    # Cavitation
+        'usure': 6,                         # Wear
+        'oilwhirl': 7,                      # Oil Whirl
+        'mixed_misalign_imbalance': 8,      # Mixed Fault 1
+        'mixed_wear_lube': 9,               # Mixed Fault 2
+        'mixed_cavit_jeu': 10               # Mixed Fault 3
     }
 
     print("\nLoading MAT files...")
@@ -238,14 +239,14 @@ def import_mat_dataset(
 
 def main():
     parser = argparse.ArgumentParser(description="Import MAT dataset to HDF5")
-    parser.add_argument('--mat_dir', type=str, default='data/raw/bearing_data/',
+    parser.add_argument('--mat-dir', type=str, default='data/raw/bearing_data/',
                       help='Directory containing MAT files')
     parser.add_argument('--output', type=str, default='data/processed/signals_cache.h5',
                       help='Output HDF5 file')
+    parser.add_argument('--validate', action='store_true',
+                      help='Validate signal quality')
     parser.add_argument('--no-splits', action='store_true',
                       help='Do not generate train/val/test splits')
-    parser.add_argument('--no-validate', action='store_true',
-                      help='Skip signal validation')
     parser.add_argument('--split-ratios', type=float, nargs=3, default=[0.7, 0.15, 0.15],
                       help='Train/val/test split ratios')
 
@@ -257,7 +258,7 @@ def main():
         output_file=args.output,
         generate_splits=not args.no_splits,
         split_ratios=tuple(args.split_ratios),
-        validate=not args.no_validate
+        validate=args.validate
     )
 
     # Print summary
