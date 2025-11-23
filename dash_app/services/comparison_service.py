@@ -10,7 +10,7 @@ from pathlib import Path
 from scipy import stats
 from scipy.stats import chi2, friedmanchisquare
 
-from database.connection import get_session
+from database.connection import get_db_session
 from models.experiment import Experiment, ExperimentStatus
 from models.training_run import TrainingRun
 from config import STORAGE_RESULTS_DIR, FAULT_CLASSES
@@ -44,11 +44,10 @@ class ComparisonService:
             return False, "Duplicate experiment IDs not allowed"
 
         # Validate existence
-        session = get_session()
-        experiments = session.query(Experiment).filter(
-            Experiment.id.in_(experiment_ids)
-        ).all()
-        session.close()
+        with get_db_session() as session:
+            experiments = session.query(Experiment).filter(
+                Experiment.id.in_(experiment_ids)
+            ).all()
 
         if len(experiments) != len(experiment_ids):
             found_ids = {e.id for e in experiments}
@@ -100,26 +99,23 @@ class ComparisonService:
         """
         from sqlalchemy.orm import selectinload
 
-        session = get_session()
+        with get_db_session() as session:
+            # Load experiments with eager loading to prevent N+1 queries
+            experiments = session.query(Experiment).options(
+                selectinload(Experiment.training_runs)
+            ).filter(
+                Experiment.id.in_(experiment_ids)
+            ).order_by(Experiment.id).all()
 
-        # Load experiments with eager loading to prevent N+1 queries
-        experiments = session.query(Experiment).options(
-            selectinload(Experiment.training_runs)
-        ).filter(
-            Experiment.id.in_(experiment_ids)
-        ).order_by(Experiment.id).all()
+            comparison_data = {
+                'experiments': [],
+                'statistical_tests': {}
+            }
 
-        comparison_data = {
-            'experiments': [],
-            'statistical_tests': {}
-        }
-
-        # Load detailed data for each experiment
-        for exp in experiments:
-            experiment_data = ComparisonService._load_experiment_data(exp, session)
-            comparison_data['experiments'].append(experiment_data)
-
-        session.close()
+            # Load detailed data for each experiment
+            for exp in experiments:
+                experiment_data = ComparisonService._load_experiment_data(exp, session)
+                comparison_data['experiments'].append(experiment_data)
 
         # Run statistical tests
         if len(experiments) == 2:
