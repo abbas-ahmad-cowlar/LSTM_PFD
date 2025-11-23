@@ -1,0 +1,94 @@
+# Kubernetes Deployment for LSTM_PFD
+# Version: 1.0.0
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lstm-pfd
+  labels:
+    app: lstm-pfd
+    version: v1.0.0
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: lstm-pfd
+  template:
+    metadata:
+      labels:
+        app: lstm-pfd
+        version: v1.0.0
+    spec:
+      containers:
+      - name: lstm-pfd-api
+        image: lstm_pfd:v1.0.0
+        ports:
+        - containerPort: 8000
+          name: http
+        env:
+        - name: MODEL_PATH
+          value: "/app/models/ensemble_model.onnx"
+        - name: DEVICE
+          value: "cuda"
+        - name: BATCH_SIZE
+          value: "32"
+        - name: LOG_LEVEL
+          value: "INFO"
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "2"
+            nvidia.com/gpu: "1"
+          limits:
+            memory: "8Gi"
+            cpu: "4"
+            nvidia.com/gpu: "1"
+        volumeMounts:
+        - name: models
+          mountPath: /app/models
+          readOnly: true
+        - name: logs
+          mountPath: /app/logs
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: lstm-pfd-models-pvc
+      - name: logs
+        emptyDir: {}
+      nodeSelector:
+        gpu: "true"
+      tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: lstm-pfd-models-pvc
+spec:
+  accessModes:
+    - ReadOnlyMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: fast-ssd

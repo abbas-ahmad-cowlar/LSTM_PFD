@@ -2,7 +2,7 @@
 Security Settings Callbacks (Phase 6, Feature 3).
 Handles UI interactions for security settings (password, 2FA, sessions).
 """
-from dash import Input, Output, State, html, callback_context
+from dash import Input, Output, State, html, ctx
 import dash_bootstrap_components as dbc
 from datetime import datetime
 import re
@@ -371,7 +371,6 @@ def register_security_callbacks(app):
     )
     def manage_2fa_setup(enable_clicks, cancel_clicks, verify_clicks):
         """Handle 2FA setup modal."""
-        ctx = callback_context
         if not ctx.triggered:
             return False, "", ""
 

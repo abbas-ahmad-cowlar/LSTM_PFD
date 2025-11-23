@@ -39,16 +39,18 @@ def prune_model(
         model: PyTorch model
         pruning_amount: Fraction of weights to prune (0.0 to 1.0)
         pruning_type: 'l1_unstructured', 'l1_structured', 'random'
-        layers_to_prune: List of (module, param_name) tuples (default: all Conv/Linear layers)
+        layers_to_prune: List of (module, param_name) tuples to prune
+                        (default: all Conv/Linear layers with 'weight' param)
         inplace: If False, creates a deep copy before pruning
 
     Returns:
-        Pruned model
+        Pruned model (use calculate_model_stats() to get sparsity metrics)
 
     Example:
         >>> model = load_pretrained('checkpoints/best_model.pth')
         >>> pruned_model = prune_model(model, pruning_amount=0.3)
-        >>> # Model now has 30% of weights set to zero
+        >>> stats = calculate_model_stats(pruned_model)
+        >>> print(f"Sparsity: {stats['sparsity']*100:.1f}%")
     """
     logger.info(f"Pruning model: {pruning_amount*100}% ({pruning_type})")
 
