@@ -5,6 +5,11 @@ Provides utilities for:
 - Creating optimizers from config
 - Learning rate schedulers
 - Adaptive learning rate strategies
+
+DEPRECATION NOTICE:
+    create_optimizer() in this module is deprecated.
+    Use training.cnn_optimizer.create_optimizer() instead for consistent parameter order.
+    This wrapper is maintained for backward compatibility only.
 """
 
 import torch
@@ -18,6 +23,7 @@ from torch.optim.lr_scheduler import (
     CosineAnnealingWarmRestarts
 )
 from typing import Dict, Any, Optional
+import warnings
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
@@ -31,6 +37,10 @@ def create_optimizer(
     """
     Create optimizer from name and parameters.
 
+    DEPRECATED: Use training.cnn_optimizer.create_optimizer() instead.
+    This function is maintained for backward compatibility but delegates to
+    the new implementation.
+
     Args:
         model_params: Model parameters to optimize
         optimizer_name: Name of optimizer ('adam', 'sgd', 'adamw', 'rmsprop')
@@ -42,55 +52,36 @@ def create_optimizer(
         Optimizer instance
 
     Example:
+        >>> # Old way (deprecated):
         >>> optimizer = create_optimizer(
         ...     model.parameters(),
         ...     optimizer_name='adam',
-        ...     lr=1e-3,
-        ...     weight_decay=1e-4
+        ...     lr=1e-3
         ... )
+        >>>
+        >>> # New way (preferred):
+        >>> from training.cnn_optimizer import create_optimizer
+        >>> optimizer = create_optimizer('adam', model.parameters(), lr=1e-3)
     """
-    optimizer_name = optimizer_name.lower()
+    # Issue deprecation warning
+    warnings.warn(
+        "training.optimizers.create_optimizer() is deprecated. "
+        "Use training.cnn_optimizer.create_optimizer() instead. "
+        "Note: The new function has parameter order (optimizer_type, model_params, ...) "
+        "instead of (model_params, optimizer_name, ...)",
+        DeprecationWarning,
+        stacklevel=2
+    )
 
-    if optimizer_name == 'adam':
-        optimizer = Adam(
-            model_params,
-            lr=lr,
-            weight_decay=weight_decay,
-            **kwargs
-        )
-
-    elif optimizer_name == 'adamw':
-        optimizer = AdamW(
-            model_params,
-            lr=lr,
-            weight_decay=weight_decay,
-            **kwargs
-        )
-
-    elif optimizer_name == 'sgd':
-        momentum = kwargs.pop('momentum', 0.9)
-        nesterov = kwargs.pop('nesterov', True)
-        optimizer = SGD(
-            model_params,
-            lr=lr,
-            momentum=momentum,
-            weight_decay=weight_decay,
-            nesterov=nesterov,
-            **kwargs
-        )
-
-    elif optimizer_name == 'rmsprop':
-        optimizer = RMSprop(
-            model_params,
-            lr=lr,
-            weight_decay=weight_decay,
-            **kwargs
-        )
-
-    else:
-        raise ValueError(f"Unknown optimizer: {optimizer_name}")
-
-    return optimizer
+    # Delegate to the new implementation with correct parameter order
+    from training.cnn_optimizer import create_optimizer as new_create_optimizer
+    return new_create_optimizer(
+        optimizer_type=optimizer_name,
+        model_params=model_params,
+        lr=lr,
+        weight_decay=weight_decay,
+        **kwargs
+    )
 
 
 def create_scheduler(
