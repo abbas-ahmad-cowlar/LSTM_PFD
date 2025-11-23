@@ -22,8 +22,8 @@ from features.feature_extractor import FeatureExtractor
 from features.feature_selector import FeatureSelector
 from features.feature_normalization import FeatureNormalizer
 from models.classical.model_selector import ModelSelector
+from models.classical import RandomForestClassifier
 from training.bayesian_optimizer import BayesianOptimizer
-from evaluation.evaluator import Evaluator
 
 
 class ClassicalMLPipeline:
@@ -136,7 +136,7 @@ class ClassicalMLPipeline:
         # Step 7: Evaluation
         print("\n[7/7] Evaluating best model on test set...")
         test_results = self._evaluate_best_model(
-            X_test_norm, y_test, model_results
+            X_train_norm, y_train, X_test_norm, y_test, model_results
         )
 
         # Compile results
@@ -209,8 +209,6 @@ class ClassicalMLPipeline:
                                   X_val: np.ndarray, y_val: np.ndarray,
                                   n_trials: int) -> Dict:
         """Optimize hyperparameters using Bayesian optimization."""
-        from models.classical import RandomForestClassifier
-
         optimizer = BayesianOptimizer(random_state=self.random_state)
         best_params = optimizer.optimize(
             RandomForestClassifier,
@@ -235,15 +233,20 @@ class ClassicalMLPipeline:
 
         return results
 
-    def _evaluate_best_model(self, X_test: np.ndarray, y_test: np.ndarray,
+    def _evaluate_best_model(self, X_train: np.ndarray, y_train: np.ndarray,
+                            X_test: np.ndarray, y_test: np.ndarray,
                             model_results: Dict) -> Dict:
-        """Evaluate best model on test set."""
+        """Evaluate best model on train and test sets."""
         # Select best model
         selector = ModelSelector(random_state=self.random_state)
         best_model_info = selector.select_best_model(model_results)
 
         self.best_model = best_model_info['model']
         best_model_name = best_model_info['name']
+
+        # Evaluate on train set
+        train_predictions = self.best_model.predict(X_train)
+        train_accuracy = np.mean(train_predictions == y_train)
 
         # Evaluate on test set
         test_predictions = self.best_model.predict(X_test)
@@ -255,10 +258,7 @@ class ClassicalMLPipeline:
         cm = confusion_matrix(y_test, test_predictions)
         report = classification_report(y_test, test_predictions, output_dict=True)
 
-        # Also get train and val accuracy
-        # Note: We need to get X_train_norm and X_val_norm from cache
-        # For now, just use validation accuracy from model_results
-        train_accuracy = 0.0  # Placeholder
+        # Val accuracy from validation during training
         val_accuracy = best_model_info['accuracy']
 
         return {
@@ -280,6 +280,9 @@ class ClassicalMLPipeline:
         with open(results_file, 'w') as f:
             # Convert numpy arrays to lists for JSON serialization
             results_copy = self.results.copy()
+            # Convert confusion matrix from numpy array to list
+            if 'confusion_matrix' in results_copy and isinstance(results_copy['confusion_matrix'], np.ndarray):
+                results_copy['confusion_matrix'] = results_copy['confusion_matrix'].tolist()
             json.dump(results_copy, f, indent=2)
 
         # Save best model

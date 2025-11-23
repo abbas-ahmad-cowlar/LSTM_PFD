@@ -11,13 +11,16 @@ Port and enhance the existing MATLAB classical ML pipeline (`pipeline.m` → Pyt
 - **Purpose**: Main orchestrator for 36-feature extraction (Section 8.2)
 - **Key Classes**:
   - `FeatureExtractor`: Manages all feature extraction
-- **Key Functions**:
-  - `extract_features(signal, fs)`: Returns 36-dim feature vector
-  - `extract_time_domain(signal)`: 7 time features (RMS, kurtosis, etc.)
-  - `extract_frequency_domain(signal, fs)`: 9 spectral features
-  - `extract_envelope_features(signal, fs)`: 4 envelope features
-  - `extract_wavelet_features(signal)`: 7 wavelet features
-  - `extract_bispectrum_features(signal)`: 6 higher-order features
+- **FeatureExtractor Class Methods**:
+  - `extract_features(signal)`: Returns 36-dim feature vector (numpy array)
+  - `extract_time_domain_features(signal)`: Returns dict with 7 time features
+  - `extract_frequency_domain_features(signal)`: Returns dict with 12 frequency features
+- **Module-Level Functions** (in separate files):
+  - `extract_time_domain_features(signal)`: 7 time features (time_domain.py)
+  - `extract_frequency_domain_features(signal, fs)`: 12 frequency features (frequency_domain.py)
+  - `extract_envelope_features(signal, fs)`: 4 envelope features (envelope_analysis.py)
+  - `extract_wavelet_features(signal, fs)`: 7 wavelet features (wavelet_features.py)
+  - `extract_bispectrum_features(signal)`: 6 bispectrum features (bispectrum.py)
 - **Dependencies**: `numpy`, `scipy.signal`, `scipy.fft`, `pywt`
 
 **`features/time_domain.py`**
@@ -42,7 +45,7 @@ Port and enhance the existing MATLAB classical ML pipeline (`pipeline.m` → Pyt
   - `compute_spectral_entropy(psd)`: Shannon entropy of spectrum
   - `compute_band_energy(psd, freqs, band_range)`: Energy in frequency band
   - `compute_harmonic_ratios(psd, freqs, f0)`: 2X/1X, 3X/1X ratios
-- **Returns**: Dict with 12 features (9 spectral + 3 harmonic)
+- **Returns**: Dict with 12 frequency-domain features
 - **Dependencies**: `numpy`, `scipy.signal`, `scipy.fft`
 
 **`features/envelope_analysis.py`**
@@ -128,8 +131,9 @@ Port and enhance the existing MATLAB classical ML pipeline (`pipeline.m` → Pyt
 - **Hyperparameters**: Learning rate, n_estimators, max_depth
 - **Dependencies**: `sklearn.ensemble.GradientBoostingClassifier`
 
-**`models/classical/stacked_ensemble.py`**
+**`models/classical/stacked_ensemble.py`** ⚠️ *Not integrated - manual use only*
 - **Purpose**: Meta-learner combining base models (Section 9.1)
+- **Status**: NOT trained by ModelSelector (only SVM, RF, NN, GBM are auto-trained)
 - **Key Classes**:
   - `StackedEnsemble`: Stacking with logistic regression meta-learner
 - **Key Functions**:
@@ -161,23 +165,27 @@ Port and enhance the existing MATLAB classical ML pipeline (`pipeline.m` → Pyt
   - NN: learning_rate ∈ [1e-4, 1e-1] (log scale), dropout ∈ [0.1, 0.5]
 - **Dependencies**: `optuna`, `sklearn`
 
-**`training/grid_search.py`**
+**`training/grid_search.py`** ⚠️ *Not integrated - manual use only*
 - **Purpose**: Grid search for exhaustive hyperparameter search
+- **Status**: NOT used in pipeline (only BayesianOptimizer is integrated)
 - **Key Functions**:
   - `grid_search(model_class, X_train, y_train, param_grid, cv=5)`: Grid search
 - **Usage**: When search space is discrete/small
 - **Dependencies**: `sklearn.model_selection.GridSearchCV`
 
-**`training/random_search.py`**
+**`training/random_search.py`** ⚠️ *Not integrated - manual use only*
 - **Purpose**: Random search as baseline optimizer
+- **Status**: NOT used in pipeline (only BayesianOptimizer is integrated)
 - **Key Functions**:
   - `random_search(model_class, X_train, y_train, param_distributions, n_iter)`: Random sampling
 - **Dependencies**: `sklearn.model_selection.RandomizedSearchCV`
 
 #### **4. Feature Engineering Enhancements (4 files)**
 
-**`features/advanced_features.py`**
+**`features/advanced_features.py`** ⚠️ *Not integrated - manual use only*
 - **Purpose**: Optional 16 advanced features (Section 8.3) - expensive to compute
+- **Status**: Implemented but NOT integrated in FeatureExtractor or pipeline
+- **Usage**: Can be imported and used manually for research purposes
 - **Key Functions**:
   - `extract_cwt_features(signal)`: Continuous wavelet transform energy
   - `extract_wpt_features(signal)`: Wavelet packet decomposition
@@ -198,15 +206,17 @@ Port and enhance the existing MATLAB classical ML pipeline (`pipeline.m` → Pyt
   - `inverse_transform(X)`: Revert normalization
 - **Dependencies**: `sklearn.preprocessing.StandardScaler`
 
-**`features/feature_validator.py`**
+**`features/feature_validator.py`** ⚠️ *Not integrated - manual use only*
 - **Purpose**: Validate extracted features
+- **Status**: NOT called in pipeline (no automatic validation)
 - **Key Functions**:
   - `validate_feature_vector(features, expected_dim=36)`: Check shape/NaN/Inf
   - `check_feature_distribution(features)`: Warn if constant features
 - **Dependencies**: `numpy`
 
-**`features/feature_importance.py`**
+**`features/feature_importance.py`** ⚠️ *Not integrated - manual use only*
 - **Purpose**: Analyze feature importance from trained models
+- **Status**: NOT used in pipeline (results don't include importance analysis)
 - **Key Functions**:
   - `get_random_forest_importances(rf_model)`: Gini importances
   - `get_permutation_importances(model, X_val, y_val)`: Permutation importance
