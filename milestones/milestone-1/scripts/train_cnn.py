@@ -344,11 +344,15 @@ def main():
     # Create trainer
     trainer = CNNTrainer(
         model=model,
+        train_loader=train_loader,
+        val_loader=val_loader,
         optimizer=optimizer,
         criterion=criterion,
         device=device,
+        lr_scheduler=scheduler,
+        max_grad_norm=args.grad_clip,
         mixed_precision=args.mixed_precision,
-        grad_clip=args.grad_clip if args.grad_clip > 0 else None
+        checkpoint_dir=args.checkpoint_dir
     )
     logger.info(f"✓ Created trainer")
 
@@ -385,16 +389,17 @@ def main():
     patience_counter = 0
 
     for epoch in range(start_epoch, args.epochs):
+        trainer.current_epoch = epoch
         logger.info(f"\nEpoch {epoch+1}/{args.epochs}")
         logger.info("-" * 80)
 
         # Train
-        train_metrics = trainer.train_epoch(train_loader, epoch)
+        train_metrics = trainer.train_epoch()
         logger.info(f"Train - Loss: {train_metrics['loss']:.4f}, "
                    f"Acc: {train_metrics['accuracy']:.4f}")
 
         # Validate
-        val_metrics = trainer.validate(val_loader)
+        val_metrics = trainer.validate()
         logger.info(f"Val   - Loss: {val_metrics['loss']:.4f}, "
                    f"Acc: {val_metrics['accuracy']:.4f}")
 
@@ -455,8 +460,9 @@ def main():
     logger.info(f"✓ Loaded best model (epoch {best_checkpoint['epoch']+1}, "
                f"val_acc={best_checkpoint['val_acc']:.4f})")
 
-    # Evaluate
-    test_metrics = trainer.validate(test_loader)
+    # Evaluate on test set (temporarily replace val_loader with test_loader)
+    trainer.val_loader = test_loader
+    test_metrics = trainer.validate()
     logger.info(f"\nTest Results:")
     logger.info(f"  Loss:     {test_metrics['loss']:.4f}")
     logger.info(f"  Accuracy: {test_metrics['accuracy']:.4f}")
