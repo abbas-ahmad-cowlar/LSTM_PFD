@@ -22,8 +22,8 @@ from features.feature_extractor import FeatureExtractor
 from features.feature_selector import FeatureSelector
 from features.feature_normalization import FeatureNormalizer
 from models.classical.model_selector import ModelSelector
+from models.classical import RandomForestClassifier
 from training.bayesian_optimizer import BayesianOptimizer
-from evaluation.evaluator import Evaluator
 
 
 class ClassicalMLPipeline:
@@ -209,8 +209,6 @@ class ClassicalMLPipeline:
                                   X_val: np.ndarray, y_val: np.ndarray,
                                   n_trials: int) -> Dict:
         """Optimize hyperparameters using Bayesian optimization."""
-        from models.classical import RandomForestClassifier
-
         optimizer = BayesianOptimizer(random_state=self.random_state)
         best_params = optimizer.optimize(
             RandomForestClassifier,
@@ -280,6 +278,9 @@ class ClassicalMLPipeline:
         with open(results_file, 'w') as f:
             # Convert numpy arrays to lists for JSON serialization
             results_copy = self.results.copy()
+            # Convert confusion matrix from numpy array to list
+            if 'confusion_matrix' in results_copy and isinstance(results_copy['confusion_matrix'], np.ndarray):
+                results_copy['confusion_matrix'] = results_copy['confusion_matrix'].tolist()
             json.dump(results_copy, f, indent=2)
 
         # Save best model
