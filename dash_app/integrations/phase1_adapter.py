@@ -10,6 +10,7 @@ import json
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from utils.logger import setup_logger
+from utils.constants import SAMPLING_RATE
 
 logger = setup_logger(__name__)
 
@@ -45,7 +46,7 @@ class Phase1Adapter:
             # Load dataset from HDF5 cache
             cache_path = config.get("cache_path", "data/processed/signals_cache.h5")
             with h5py.File(cache_path, 'r') as f:
-                # Load train/val/test splits
+                # Load all data (pipeline will do its own splitting)
                 X_train = f['train']['signals'][:]
                 y_train = f['train']['labels'][:]
                 X_val = f['val']['signals'][:]
@@ -54,10 +55,13 @@ class Phase1Adapter:
                 y_test = f['test']['labels'][:]
                 fs = f.attrs.get('sampling_rate', SAMPLING_RATE)
 
+                # Combine all splits (ClassicalMLPipeline does its own train/val/test split)
+                signals = np.concatenate([X_train, X_val, X_test])
+                labels = np.concatenate([y_train, y_val, y_test])
+
             # Initialize pipeline
             model_type = config["model_type"]
             pipeline = ClassicalMLPipeline(
-                model_type=model_type,
                 random_state=config.get("random_state", 42)
             )
 
@@ -67,13 +71,9 @@ class Phase1Adapter:
 
             # Run training pipeline
             results = pipeline.run(
-                signals=X_train,
-                labels=y_train,
+                signals=signals,
+                labels=labels,
                 fs=fs,
-                val_signals=X_val,
-                val_labels=y_val,
-                test_signals=X_test,
-                test_labels=y_test,
                 optimize_hyperparams=config.get("optimize_hyperparams", False),
                 n_trials=config.get("n_trials", 50)
             )
@@ -88,16 +88,34 @@ class Phase1Adapter:
 
             logger.info(f"Phase 1 training complete. Test accuracy: {results['test_accuracy']:.4f}")
 
+            # Extract metrics from classification_report
+            # ClassicalMLPipeline returns classification_report as a dict
+            classification_report = results.get("classification_report", {})
+            if isinstance(classification_report, dict):
+                macro_avg = classification_report.get("macro avg", {})
+                test_precision = macro_avg.get("precision", 0)
+                test_recall = macro_avg.get("recall", 0)
+                test_f1 = macro_avg.get("f1-score", 0)
+            else:
+                # Fallback if classification_report is a string
+                test_precision = 0
+                test_recall = 0
+                test_f1 = 0
+
             return {
                 "success": True,
                 "model_type": model_type,
                 "test_accuracy": results["test_accuracy"],
-                "test_f1": results.get("test_f1", 0),
-                "test_precision": results.get("test_precision", 0),
-                "test_recall": results.get("test_recall", 0),
+                "test_loss": 0,  # Classical ML doesn't have loss
+                "best_val_loss": 0,
+                "precision": test_precision,
+                "recall": test_recall,
+                "f1_score": test_f1,
                 "confusion_matrix": results.get("confusion_matrix", []),
                 "feature_importance": results.get("feature_importance", {}),
-                "training_time": results.get("training_time", 0),
+                "training_time": results.get("elapsed_time_seconds", 0),
+                "total_epochs": 1,  # Classical ML trains in one shot
+                "best_epoch": 1,
             }
 
         except Exception as e:
