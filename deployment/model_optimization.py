@@ -14,7 +14,7 @@ Date: 2025-11-20
 import torch
 import torch.nn as nn
 import torch.nn.utils.prune as prune
-from typing import Optional, Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple, Any
 import numpy as np
 import logging
 from collections import OrderedDict
@@ -29,7 +29,7 @@ def prune_model(
     model: nn.Module,
     pruning_amount: float = 0.3,
     pruning_type: str = 'l1_unstructured',
-    layers_to_prune: Optional[List[str]] = None,
+    layers_to_prune: Optional[List[Tuple[nn.Module, str]]] = None,
     inplace: bool = True
 ) -> nn.Module:
     """
@@ -39,16 +39,18 @@ def prune_model(
         model: PyTorch model
         pruning_amount: Fraction of weights to prune (0.0 to 1.0)
         pruning_type: 'l1_unstructured', 'l1_structured', 'random'
-        layers_to_prune: List of layer names (default: all Conv/Linear layers)
+        layers_to_prune: List of (module, param_name) tuples to prune
+                        (default: all Conv/Linear layers with 'weight' param)
         inplace: If False, creates a deep copy before pruning
 
     Returns:
-        Pruned model
+        Pruned model (use calculate_model_stats() to get sparsity metrics)
 
     Example:
         >>> model = load_pretrained('checkpoints/best_model.pth')
         >>> pruned_model = prune_model(model, pruning_amount=0.3)
-        >>> # Model now has 30% of weights set to zero
+        >>> stats = calculate_model_stats(pruned_model)
+        >>> print(f"Sparsity: {stats['sparsity']*100:.1f}%")
     """
     logger.info(f"Pruning model: {pruning_amount*100}% ({pruning_type})")
 
@@ -200,7 +202,7 @@ def optimize_for_deployment(
     return model
 
 
-def calculate_model_stats(model: nn.Module) -> Dict[str, any]:
+def calculate_model_stats(model: nn.Module) -> Dict[str, Any]:
     """
     Calculate comprehensive model statistics.
 
@@ -269,7 +271,7 @@ def calculate_model_stats(model: nn.Module) -> Dict[str, any]:
     return stats
 
 
-def print_model_stats(stats: Dict[str, any]):
+def print_model_stats(stats: Dict[str, Any]):
     """
     Pretty print model statistics.
 
