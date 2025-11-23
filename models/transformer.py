@@ -127,24 +127,29 @@ class TransformerEncoderBlock(nn.Module):
     def forward(
         self,
         x: torch.Tensor,
-        attn_mask: Optional[torch.Tensor] = None
-    ) -> torch.Tensor:
+        attn_mask: Optional[torch.Tensor] = None,
+        return_attention: bool = False
+    ) -> tuple:
         """
         Args:
             x: Input tensor [B, L, D]
             attn_mask: Attention mask [L, L] or [B*num_heads, L, L]
+            return_attention: If True, return attention weights
 
         Returns:
-            Output tensor [B, L, D]
+            If return_attention=False: Output tensor [B, L, D]
+            If return_attention=True: (output tensor [B, L, D], attention weights [B, num_heads, L, L])
         """
         # Self-attention with residual connection
-        attn_out, _ = self.self_attn(x, x, x, attn_mask=attn_mask)
+        attn_out, attn_weights = self.self_attn(x, x, x, attn_mask=attn_mask)
         x = self.norm1(x + self.dropout(attn_out))
 
         # Feedforward with residual connection
         ff_out = self.ff(x)
         x = self.norm2(x + ff_out)
 
+        if return_attention:
+            return x, attn_weights
         return x
 
 
@@ -162,7 +167,7 @@ class SignalTransformer(BaseModel):
     Args:
         num_classes: Number of output classes (default: 11)
         input_channels: Number of input channels (default: 1)
-        patch_size: Size of each patch (default: 16)
+        patch_size: Size of each patch (default: 512)
         d_model: Dimension of embeddings (default: 256)
         num_heads: Number of attention heads (default: 8)
         num_layers: Number of transformer blocks (default: 6)
@@ -175,7 +180,7 @@ class SignalTransformer(BaseModel):
         self,
         num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
-        patch_size: int = 16,
+        patch_size: int = 512,
         d_model: int = 256,
         num_heads: int = 8,
         num_layers: int = 6,
@@ -282,6 +287,81 @@ class SignalTransformer(BaseModel):
         logits = self.classifier(x)
 
         return logits
+
+    def get_attention_weights(
+        self,
+        x: torch.Tensor,
+        layer_idx: int = -1
+    ) -> torch.Tensor:
+        """
+        Extract attention weights from a specific transformer layer.
+
+        Args:
+            x: Input tensor of shape [B, C, T]
+            layer_idx: Index of layer to extract attention from (-1 for last layer)
+
+        Returns:
+            Attention weights of shape [B, num_heads, L, L] where L is sequence length
+        """
+        # Ensure input is 3D
+        if x.dim() == 2:
+            x = x.unsqueeze(1)  # [B, T] -> [B, 1, T]
+
+        # Patch embedding
+        x = self.patch_embedding(x)  # [B, d_model, L]
+
+        # Transpose for transformer: [B, L, d_model]
+        x = x.transpose(1, 2)
+
+        # Add positional encoding
+        x = self.pos_encoding(x)
+
+        # Handle negative indexing
+        if layer_idx < 0:
+            layer_idx = len(self.transformer_blocks) + layer_idx
+
+        # Pass through transformer blocks up to target layer
+        for idx, block in enumerate(self.transformer_blocks):
+            if idx == layer_idx:
+                # Extract attention weights from this layer
+                _, attn_weights = block(x, return_attention=True)
+                return attn_weights
+            else:
+                x = block(x, return_attention=False)
+
+        # If we get here, layer_idx was out of range
+        raise IndexError(f"Layer index {layer_idx} out of range for {len(self.transformer_blocks)} layers")
+
+    def get_all_attention_weights(self, x: torch.Tensor) -> list:
+        """
+        Extract attention weights from all transformer layers.
+
+        Args:
+            x: Input tensor of shape [B, C, T]
+
+        Returns:
+            List of attention weights, one per layer, each of shape [B, num_heads, L, L]
+        """
+        # Ensure input is 3D
+        if x.dim() == 2:
+            x = x.unsqueeze(1)  # [B, T] -> [B, 1, T]
+
+        # Patch embedding
+        x = self.patch_embedding(x)  # [B, d_model, L]
+
+        # Transpose for transformer: [B, L, d_model]
+        x = x.transpose(1, 2)
+
+        # Add positional encoding
+        x = self.pos_encoding(x)
+
+        # Collect attention weights from all layers
+        all_attention_weights = []
+        for block in self.transformer_blocks:
+            x, attn_weights = block(x, return_attention=True)
+            all_attention_weights.append(attn_weights)
+
+        return all_attention_weights
 
     def get_feature_extractor(self) -> nn.Module:
         """
