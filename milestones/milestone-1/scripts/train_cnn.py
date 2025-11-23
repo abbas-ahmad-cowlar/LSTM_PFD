@@ -415,7 +415,7 @@ def main():
                    f"Acc: {train_metrics['accuracy']:.4f}")
 
         # Validate
-        val_metrics = trainer.validate()
+        val_metrics = trainer.validate_epoch()
         logger.info(f"Val   - Loss: {val_metrics['loss']:.4f}, "
                    f"Acc: {val_metrics['accuracy']:.4f}")
 
@@ -478,7 +478,7 @@ def main():
 
     # Evaluate on test set (temporarily replace val_loader with test_loader)
     trainer.val_loader = test_loader
-    test_metrics = trainer.validate()
+    test_metrics = trainer.validate_epoch()
     logger.info(f"\nTest Results:")
     logger.info(f"  Loss:     {test_metrics['loss']:.4f}")
     logger.info(f"  Accuracy: {test_metrics['accuracy']:.4f}")
