@@ -160,11 +160,12 @@ class ModelSelector:
 
         results = {}
 
-        # SVM
+        # SVM - cross-validate on UNTRAINED model
         print(f"Cross-validating SVM ({cv} folds)...")
-        svm = SVMClassifier(random_state=self.random_state)
-        svm.train(X, y, hyperparams=hyperparams.get('svm', None))
-        svm_scores = cross_val_score(svm.model, X, y, cv=cv, n_jobs=-1)
+        svm_params = hyperparams.get('svm', {}) or {'C': 1.0, 'gamma': 'scale', 'kernel': 'rbf'}
+        from sklearn.svm import SVC
+        svm_model = SVC(**svm_params, random_state=self.random_state)
+        svm_scores = cross_val_score(svm_model, X, y, cv=cv, n_jobs=-1)
         results['SVM'] = {
             'mean_accuracy': np.mean(svm_scores),
             'std_accuracy': np.std(svm_scores),
@@ -172,11 +173,12 @@ class ModelSelector:
         }
         print(f"  SVM: {np.mean(svm_scores):.4f} +/- {np.std(svm_scores):.4f}")
 
-        # Random Forest
+        # Random Forest - cross-validate on UNTRAINED model
         print(f"Cross-validating Random Forest ({cv} folds)...")
-        rf = RandomForestClassifier(random_state=self.random_state)
-        rf.train(X, y, hyperparams=hyperparams.get('rf', None))
-        rf_scores = cross_val_score(rf.model, X, y, cv=cv, n_jobs=-1)
+        rf_params = hyperparams.get('rf', {}) or {'n_estimators': 100, 'max_depth': None}
+        from sklearn.ensemble import RandomForestClassifier as SklearnRF
+        rf_model = SklearnRF(**rf_params, random_state=self.random_state)
+        rf_scores = cross_val_score(rf_model, X, y, cv=cv, n_jobs=-1)
         results['RandomForest'] = {
             'mean_accuracy': np.mean(rf_scores),
             'std_accuracy': np.std(rf_scores),
@@ -184,11 +186,12 @@ class ModelSelector:
         }
         print(f"  Random Forest: {np.mean(rf_scores):.4f} +/- {np.std(rf_scores):.4f}")
 
-        # Neural Network
+        # Neural Network - cross-validate on UNTRAINED model
         print(f"Cross-validating Neural Network ({cv} folds)...")
-        nn = MLPClassifier(random_state=self.random_state)
-        nn.train(X, y, hyperparams=hyperparams.get('nn', None))
-        nn_scores = cross_val_score(nn.model, X, y, cv=cv, n_jobs=-1)
+        nn_params = hyperparams.get('nn', {}) or {'hidden_layer_sizes': (20, 10), 'max_iter': 500}
+        from sklearn.neural_network import MLPClassifier as SklearnMLP
+        nn_model = SklearnMLP(**nn_params, random_state=self.random_state)
+        nn_scores = cross_val_score(nn_model, X, y, cv=cv, n_jobs=-1)
         results['NeuralNetwork'] = {
             'mean_accuracy': np.mean(nn_scores),
             'std_accuracy': np.std(nn_scores),
@@ -196,11 +199,12 @@ class ModelSelector:
         }
         print(f"  Neural Network: {np.mean(nn_scores):.4f} +/- {np.std(nn_scores):.4f}")
 
-        # Gradient Boosting
+        # Gradient Boosting - cross-validate on UNTRAINED model
         print(f"Cross-validating Gradient Boosting ({cv} folds)...")
-        gbm = GradientBoostingClassifier(random_state=self.random_state)
-        gbm.train(X, y, hyperparams=hyperparams.get('gbm', None))
-        gbm_scores = cross_val_score(gbm.model, X, y, cv=cv, n_jobs=-1)
+        gbm_params = hyperparams.get('gbm', {}) or {'n_estimators': 100, 'learning_rate': 0.1}
+        from sklearn.ensemble import GradientBoostingClassifier as SklearnGBM
+        gbm_model = SklearnGBM(**gbm_params, random_state=self.random_state)
+        gbm_scores = cross_val_score(gbm_model, X, y, cv=cv, n_jobs=-1)
         results['GradientBoosting'] = {
             'mean_accuracy': np.mean(gbm_scores),
             'std_accuracy': np.std(gbm_scores),
