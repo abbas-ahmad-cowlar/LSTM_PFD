@@ -316,6 +316,10 @@ def register_experiment_wizard_callbacks(app):
                 session.add(experiment)
                 session.flush()
                 experiment_id = experiment.id
+                session.commit()  # Commit to persist the experiment
+
+            # Add experiment_id to config for the training task
+            config["experiment_id"] = experiment_id
 
             # Launch Celery task
             task = train_model_task.delay(config)

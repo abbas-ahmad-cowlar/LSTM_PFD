@@ -153,9 +153,29 @@ class DeepLearningAdapter:
                 model, test_loader, criterion, device
             )
 
+            # Calculate detailed metrics (precision, recall, f1)
+            from sklearn.metrics import precision_recall_fscore_support
+
+            model.eval()
+            all_preds = []
+            all_targets = []
+
+            with torch.no_grad():
+                for inputs, targets in test_loader:
+                    inputs = inputs.to(device)
+                    outputs = model(inputs)
+                    _, preds = outputs.max(1)
+                    all_preds.extend(preds.cpu().numpy())
+                    all_targets.extend(targets.numpy())
+
+            # Calculate macro-averaged metrics
+            precision, recall, f1, _ = precision_recall_fscore_support(
+                all_targets, all_preds, average='macro', zero_division=0
+            )
+
             total_time = time.time() - start_time
 
-            logger.info(f"Training complete. Test Accuracy: {test_acc:.2%}")
+            logger.info(f"Training complete. Test Accuracy: {test_acc:.2%}, F1: {f1:.2%}")
 
             return {
                 "success": True,
@@ -165,6 +185,9 @@ class DeepLearningAdapter:
                 "test_accuracy": test_acc,
                 "test_loss": test_loss,
                 "best_val_loss": best_val_loss,
+                "precision": precision,
+                "recall": recall,
+                "f1_score": f1,
                 "training_time": total_time,
                 "history": training_history,
             }
