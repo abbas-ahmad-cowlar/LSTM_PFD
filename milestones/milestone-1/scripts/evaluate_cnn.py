@@ -46,6 +46,7 @@ from evaluation.cnn_evaluator import CNNEvaluator
 from data.cnn_dataloader import create_cnn_dataloaders
 from utils.device_manager import get_device
 from utils.logging import get_logger
+from utils.constants import NUM_CLASSES
 
 
 # Model registry
@@ -146,11 +147,43 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
             if 'classifier' in key and 'weight' in key and key.endswith('.weight'):
                 num_classes = state_dict[key].shape[0]
                 break
+        else:
+            num_classes = NUM_CLASSES  # Default if not found
     else:
-        num_classes=NUM_CLASSES  # Default
+        num_classes = NUM_CLASSES  # Default
 
-    # Create model
-    model = model_class(num_classes=num_classes, input_length=102400, in_channels=1)
+    # Create model with correct parameters for each architecture
+    if model_type == 'cnn1d':
+        # CNN1D uses: num_classes, input_channels, dropout, use_batch_norm
+        model = model_class(
+            num_classes=num_classes,
+            input_channels=1,
+            dropout=0.3,
+            use_batch_norm=True
+        )
+    elif model_type in ['attention', 'attention-lite']:
+        # AttentionCNN uses: num_classes, input_length, in_channels, dropout
+        model = model_class(
+            num_classes=num_classes,
+            input_length=102400,
+            in_channels=1,
+            dropout=0.3
+        )
+    elif model_type in ['multiscale', 'dilated']:
+        # MultiScaleCNN uses: num_classes, input_length, in_channels, dropout
+        model = model_class(
+            num_classes=num_classes,
+            input_length=102400,
+            in_channels=1,
+            dropout=0.3
+        )
+    else:
+        # Default for other models
+        model = model_class(
+            num_classes=num_classes,
+            input_length=102400,
+            in_channels=1
+        )
 
     # Load weights
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -164,36 +197,41 @@ def load_test_data(args, logger):
     """Load test data"""
     logger.info("Loading test data...")
 
-    from data.signal_generator import SignalGenerator
-    from config.data_config import DataConfig
+    from data.matlab_importer import load_mat_dataset
+    from data.cnn_dataset import RawSignalDataset
+    from sklearn.model_selection import train_test_split
 
-    # Create data config
-    data_config = DataConfig(
-        num_signals_per_fault=150,
-        rng_seed=args.seed
+    # Load .mat files
+    logger.info("Loading .MAT files...")
+    signals, labels, label_names = load_mat_dataset(args.data_dir)
+
+    logger.info(f"✓ Loaded {len(signals)} signals")
+    logger.info(f"  Signal shape: {signals.shape}")
+    logger.info(f"  Classes: {len(np.unique(labels))}")
+
+    # Split into train/val/test (70/15/15) - we only need test
+    train_signals, temp_signals, train_labels, temp_labels = train_test_split(
+        signals, labels, test_size=0.3, random_state=args.seed, stratify=labels
+    )
+    _, test_signals, _, test_labels = train_test_split(
+        temp_signals, temp_labels, test_size=0.5, random_state=args.seed, stratify=temp_labels
     )
 
-    # Generate dataset
-    generator = SignalGenerator(data_config)
-    dataset = generator.generate_dataset()
+    # Create test dataset
+    test_dataset = RawSignalDataset(test_signals, test_labels)
 
-    signals = dataset['signals']
-    labels = dataset['labels']
+    logger.info(f"✓ Created test dataset: {len(test_dataset)} samples")
 
-    # Create dataloaders
-    _, _, test_loader = create_cnn_dataloaders(
-        signals=signals,
-        labels=labels,
+    # Create test dataloader
+    loaders = create_cnn_dataloaders(
+        train_dataset=test_dataset,  # Using test as train to get a dataloader
         batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        train_ratio=0.7,
-        val_ratio=0.15,
-        test_ratio=0.15,
-        seed=args.seed,
-        augment_train=False
+        num_workers=args.num_workers
     )
 
-    logger.info(f"✓ Loaded {len(test_loader.dataset)} test samples")
+    test_loader = loaders['train']
+
+    logger.info(f"✓ Test loader ready: {len(test_loader)} batches")
 
     return test_loader
 
