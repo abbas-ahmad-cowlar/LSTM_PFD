@@ -17,7 +17,6 @@ import numpy as np
 from utils.early_stopping import EarlyStopping
 from utils.checkpoint_manager import CheckpointManager
 from utils.device_manager import get_device
-from .metrics import calculate_metrics
 
 
 class LSTMTrainer:
@@ -269,10 +268,13 @@ class LSTMTrainer:
 
                 self.checkpoint_manager.save_checkpoint(
                     epoch=epoch,
-                    model=self.model,
-                    optimizer=self.optimizer,
-                    scheduler=self.scheduler,
-                    metrics=val_metrics,
+                    metric_value=val_metrics['accuracy'],
+                    metric_name='val_acc',
+                    additional_info={
+                        'val_loss': val_metrics['loss'],
+                        'train_loss': train_metrics['loss'],
+                        'train_acc': train_metrics['accuracy']
+                    },
                     is_best=is_best
                 )
 
