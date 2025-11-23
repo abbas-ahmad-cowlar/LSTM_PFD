@@ -423,6 +423,10 @@ def generate_dataset(
         if verbose:
             print(f"\nGenerating fault: {fault_label} ({fault_type})")
 
+        # Create subdirectory for this fault type
+        fault_dir = output_path / fault_type
+        fault_dir.mkdir(parents=True, exist_ok=True)
+
         # Calculate samples for this fault
         num_base = samples_per_class
         num_augmented = int(num_base * augmentation_ratio) if augmentation_ratio > 0 else 0
@@ -444,13 +448,13 @@ def generate_dataset(
                 metadata['is_augmented'] = False
 
             # Determine filename
-            sample_idx = (i % num_base) + 1
+            sample_idx = i + 1
             if is_augmented:
-                filename = f"{fault_label}_{sample_idx:03d}_aug.mat"
+                filename = f"sample_{sample_idx:03d}_aug.mat"
             else:
-                filename = f"{fault_label}_{sample_idx:03d}.mat"
+                filename = f"sample_{sample_idx:03d}.mat"
 
-            filepath = output_path / filename
+            filepath = fault_dir / filename
 
             # Prepare MATLAB-compatible structure
             mat_data = {
@@ -481,7 +485,15 @@ def generate_dataset(
         print(f"Generation time: {generation_time:.2f} s ({total_signals/generation_time:.2f} signals/s)")
         print(f"Output directory: {output_path}")
         print("=" * 70)
-        print("\nPer-class breakdown:")
+        print("\nDataset structure:")
+        print(f"{output_path}/")
+        for fault_type in FAULT_CLASSES.keys():
+            fault_dir = output_path / fault_type
+            if fault_dir.exists():
+                num_files = len(list(fault_dir.glob('*.mat')))
+                print(f"  ├── {fault_type}/ ({num_files} files)")
+        print("\n" + "=" * 70)
+        print("Per-class breakdown:")
         for fault_label, count in fault_counts.items():
             print(f"  {fault_label:<25} {count:>5} signals")
         print("=" * 70)
@@ -523,8 +535,17 @@ Examples:
   python scripts/generate_dataset.py --minimal
 
 Output:
-  .mat files in format: {FaultClass}_{NNN}.mat
-  Each file contains:
+  .mat files organized by fault type in subdirectories:
+    data/raw/bearing_data/
+    ├── sain/                    # Healthy
+    │   ├── sample_001.mat
+    │   ├── sample_002.mat
+    │   └── ...
+    ├── desalignement/           # Misalignment
+    ├── desequilibre/            # Imbalance
+    └── [other fault types]/
+
+  Each .mat file contains:
     - x: vibration signal (102,400 samples at 20.48 kHz)
     - fs: sampling frequency
     - fault: fault class label
