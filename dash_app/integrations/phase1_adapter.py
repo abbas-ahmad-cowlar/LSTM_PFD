@@ -46,7 +46,8 @@ class Phase1Adapter:
             # Load dataset from HDF5 cache
             cache_path = config.get("cache_path", "data/processed/signals_cache.h5")
             with h5py.File(cache_path, 'r') as f:
-                # Load train/val/test splits
+                # Load train/val/test splits and concatenate them
+                # ClassicalMLPipeline will split internally
                 X_train = f['train']['signals'][:]
                 y_train = f['train']['labels'][:]
                 X_val = f['val']['signals'][:]
@@ -55,10 +56,13 @@ class Phase1Adapter:
                 y_test = f['test']['labels'][:]
                 fs = f.attrs.get('sampling_rate', SAMPLING_RATE)
 
-            # Initialize pipeline
-            model_type = config["model_type"]
+            # Concatenate all signals for pipeline (it will split internally)
+            all_signals = np.concatenate([X_train, X_val, X_test], axis=0)
+            all_labels = np.concatenate([y_train, y_val, y_test], axis=0)
+
+            # Initialize pipeline (model_type not needed - auto-selected)
+            model_type = config.get("model_type", "rf")  # For reporting only
             pipeline = ClassicalMLPipeline(
-                model_type=model_type,
                 random_state=config.get("random_state", 42)
             )
 
@@ -68,13 +72,9 @@ class Phase1Adapter:
 
             # Run training pipeline
             results = pipeline.run(
-                signals=X_train,
-                labels=y_train,
+                signals=all_signals,
+                labels=all_labels,
                 fs=fs,
-                val_signals=X_val,
-                val_labels=y_val,
-                test_signals=X_test,
-                test_labels=y_test,
                 optimize_hyperparams=config.get("optimize_hyperparams", False),
                 n_trials=config.get("n_trials", 50)
             )
@@ -83,22 +83,26 @@ class Phase1Adapter:
             if progress_callback:
                 progress_callback(1, {
                     "status": "Training complete",
-                    "accuracy": results["test_accuracy"],
-                    "f1_score": results.get("test_f1", 0)
+                    "accuracy": results["test_accuracy"]
                 })
 
             logger.info(f"Phase 1 training complete. Test accuracy: {results['test_accuracy']:.4f}")
+
+            # Calculate overall metrics from classification_report
+            classification_report = results.get("classification_report", {})
+            weighted_avg = classification_report.get("weighted avg", {})
 
             return {
                 "success": True,
                 "model_type": model_type,
                 "test_accuracy": results["test_accuracy"],
-                "test_f1": results.get("test_f1", 0),
-                "test_precision": results.get("test_precision", 0),
-                "test_recall": results.get("test_recall", 0),
+                "test_f1": weighted_avg.get("f1-score", 0),
+                "test_precision": weighted_avg.get("precision", 0),
+                "test_recall": weighted_avg.get("recall", 0),
                 "confusion_matrix": results.get("confusion_matrix", []),
-                "feature_importance": results.get("feature_importance", {}),
-                "training_time": results.get("training_time", 0),
+                "selected_features": results.get("selected_features", []),
+                "training_time": results.get("elapsed_time_seconds", 0),
+                "best_model": results.get("best_model", model_type),
             }
 
         except Exception as e:

@@ -157,6 +157,8 @@ def check_data_loading():
     """Test data loading."""
     try:
         from data.cnn_dataloader import create_cnn_dataloaders
+        from data.matlab_importer import MatlabImporter
+        from data.cnn_dataset import create_cnn_datasets_from_arrays
 
         data_dir = project_root / 'data' / 'raw' / 'bearing_data'
 
@@ -164,11 +166,34 @@ def check_data_loading():
             print_check("Skipping data loading test (no data)", True)
             return True
 
-        train_loader, val_loader, test_loader = create_cnn_dataloaders(
-            data_dir=str(data_dir),
+        # Load .mat files
+        importer = MatlabImporter()
+        batch_data = importer.load_batch(data_dir, pattern='*.mat')
+        signals, labels = importer.extract_signals_and_labels(batch_data)
+
+        # Create datasets
+        train_dataset, val_dataset, test_dataset = create_cnn_datasets_from_arrays(
+            signals=signals,
+            labels=labels,
+            train_ratio=0.7,
+            val_ratio=0.15,
+            test_ratio=0.15,
+            augment_train=False,
+            random_seed=42
+        )
+
+        # Create dataloaders
+        loaders = create_cnn_dataloaders(
+            train_dataset=train_dataset,
+            val_dataset=val_dataset,
+            test_dataset=test_dataset,
             batch_size=4,
             num_workers=0
         )
+
+        train_loader = loaders['train']
+        val_loader = loaders['val']
+        test_loader = loaders['test']
 
         print_check("Data loading successful", True)
         print_check(f"  Train loader: {len(train_loader.dataset)} samples", True)

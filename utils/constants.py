@@ -434,9 +434,6 @@ DEFAULT_LOAD_RANGE_MAX_PERCENT: int = 100  # Default maximum load percentage
 DEFAULT_TEMP_RANGE_MIN: int = 40  # Default minimum temperature (°C)
 DEFAULT_TEMP_RANGE_MAX: int = 80  # Default maximum temperature (°C)
 
-# Random seed defaults
-DEFAULT_RANDOM_SEED: int = 42  # Default random seed for reproducibility
-
 # Estimation constants
 SIGNALS_PER_MINUTE_GENERATION: int = 50  # Estimated signals generated per minute
 FILES_PER_MINUTE_IMPORT: int = 10  # Estimated files imported per minute
