@@ -1,13 +1,25 @@
 """
-Dataset Management Layout.
+Dataset Management Layout (Phase 11A).
 List, view, and manage datasets.
+
+Note: This implements the 'dataset_manager' functionality described in Phase_11A.md.
+The file is named 'datasets.py' instead of 'dataset_manager.py' for consistency
+with other layout files (data_explorer.py, signal_viewer.py, etc.).
 """
 import dash_bootstrap_components as dbc
 from dash import html, dcc, dash_table
 
 
 def create_datasets_layout():
-    """Create datasets management page."""
+    """
+    Create datasets management page.
+
+    This page provides CRUD operations for datasets:
+    - Create new datasets via Phase 0 data generation
+    - Upload existing datasets
+    - View dataset details and statistics
+    - Delete datasets
+    """
     return dbc.Container([
         # Header
         dbc.Row([

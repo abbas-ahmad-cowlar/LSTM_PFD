@@ -21,6 +21,7 @@ from dataclasses import dataclass, asdict
 import time
 from scipy import signal as sp_signal
 from scipy.io import savemat
+from sklearn.model_selection import train_test_split
 import h5py
 import json
 from datetime import datetime
@@ -704,7 +705,7 @@ class SignalGenerator:
         self,
         dataset: Dict,
         output_dir: Optional[Path] = None,
-        format: str = 'mat',  # DEFAULT='mat' for backward compatibility
+        format: str = 'hdf5',  # DEFAULT='hdf5' (recommended for performance)
         train_val_test_split: Tuple[float, float, float] = (0.7, 0.15, 0.15)
     ) -> Dict[str, Path]:
         """
@@ -713,7 +714,8 @@ class SignalGenerator:
         Args:
             dataset: Dataset from generate_dataset()
             output_dir: Output directory (uses config if None)
-            format: Output format - 'mat', 'hdf5', or 'both' (default: 'mat')
+            format: Output format - 'mat', 'hdf5', or 'both' (default: 'hdf5')
+                HDF5 is recommended: 25× faster loading, 30% smaller, single file
             train_val_test_split: Train/val/test split ratios for HDF5 format
 
         Returns:
@@ -826,15 +828,32 @@ class SignalGenerator:
             ...     Path('data/processed/dataset.h5')
             ... )
         """
-        from sklearn.model_selection import train_test_split
-
         signals = dataset['signals']
         labels_str = dataset['labels']
         metadata = dataset['metadata']
 
+        # Convert signals to numpy array if it's a list
+        if isinstance(signals, list):
+            signals = np.array(signals, dtype=np.float32)
+        elif not isinstance(signals, np.ndarray):
+            raise TypeError(f"Signals must be list or numpy array, got {type(signals)}")
+
+        # Validate signals array
+        if len(signals) == 0:
+            raise ValueError("Cannot save empty dataset - no signals generated")
+
+        if signals.ndim != 2:
+            raise ValueError(f"Signals must be 2D array (num_samples, signal_length), got shape {signals.shape}")
+
         # Convert string labels to integers using FAULT_TYPES mapping
         label_to_idx = {label: idx for idx, label in enumerate(FAULT_TYPES)}
-        labels = np.array([label_to_idx[label] for label in labels_str])
+
+        # Validate all labels are known
+        unknown_labels = set(labels_str) - set(FAULT_TYPES)
+        if unknown_labels:
+            raise ValueError(f"Unknown fault types in dataset: {unknown_labels}. Valid types: {FAULT_TYPES}")
+
+        labels = np.array([label_to_idx[label] for label in labels_str], dtype=np.int64)
 
         # Create stratified splits to ensure each split has all classes
         train_ratio, val_ratio, test_ratio = split_ratios
@@ -863,7 +882,7 @@ class SignalGenerator:
             # Store global attributes
             f.attrs['num_classes'] = NUM_CLASSES
             f.attrs['sampling_rate'] = SAMPLING_RATE
-            f.attrs['signal_length'] = signals.shape[1]
+            f.attrs['signal_length'] = int(signals.shape[1])
             f.attrs['generation_date'] = datetime.now().isoformat()
             f.attrs['split_ratios'] = split_ratios
             f.attrs['rng_seed'] = self.config.rng_seed

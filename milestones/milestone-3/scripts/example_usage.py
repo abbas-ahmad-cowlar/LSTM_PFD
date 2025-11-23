@@ -185,7 +185,7 @@ def example_5_training_setup():
 
     # Create optimizer and loss
     print("Creating optimizer and loss function...")
-    optimizer = create_optimizer('adam', model.parameters(), lr=0.001)
+    optimizer = create_optimizer(model.parameters(), 'adam', lr=0.001)
     criterion = create_loss_function('cross_entropy', num_classes=11)
 
     print(f"  Optimizer: {optimizer.__class__.__name__}")

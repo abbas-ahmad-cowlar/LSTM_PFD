@@ -369,7 +369,7 @@ def test_cnn_dataset():
     # Test __getitem__
     signal, label = dataset[0]
     print(f"   Sample 0: signal shape={signal.shape}, label={label}")
-    assert signal.shape == (1, signal_length), f"Expected [1, {signal_length}], got {signal.shape}"
+    assert signal.shape == (1, SIGNAL_LENGTH), f"Expected [1, {SIGNAL_LENGTH}], got {signal.shape}"
     assert isinstance(label, (int, np.integer))
 
     # Test batch loading
@@ -379,7 +379,7 @@ def test_cnn_dataset():
     batch_signals, batch_labels = next(iter(loader))
     print(f"   Batch signals: {batch_signals.shape}")
     print(f"   Batch labels: {batch_labels.shape}")
-    assert batch_signals.shape == (8, 1, signal_length)
+    assert batch_signals.shape == (8, 1, SIGNAL_LENGTH)
     assert batch_labels.shape == (8,)
 
     # Test create_cnn_datasets_from_arrays

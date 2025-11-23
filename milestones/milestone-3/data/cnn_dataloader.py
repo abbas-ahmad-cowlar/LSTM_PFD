@@ -292,7 +292,7 @@ def test_cnn_dataloader():
     batch_signals, batch_labels = next(iter(loader))
     print(f"   Batch signals: {batch_signals.shape}")
     print(f"   Batch labels: {batch_labels.shape}")
-    assert batch_signals.shape == (16, 1, signal_length)
+    assert batch_signals.shape == (16, 1, SIGNAL_LENGTH)
     assert batch_labels.shape == (16,)
 
     # Test full iteration

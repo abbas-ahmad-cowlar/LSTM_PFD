@@ -75,6 +75,11 @@ def generate_explanation_task(self, config: dict):
                 num_samples=config.get('params', {}).get('num_samples', 100)
             )
 
+            # Check if background data is available
+            if background_data is None:
+                logger.warning(f"No background data available for experiment {experiment_id}, using empty baseline")
+                # SHAP can handle None background_data, will use zeros as baseline
+
             result = XAIService.generate_shap_explanation(
                 model=model,
                 signal=signal,
