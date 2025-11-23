@@ -39,8 +39,8 @@ import numpy as np
 
 
 from models.base_model import BaseModel
-from resnet.resnet_1d import ResNet1D
-from cnn.cnn_1d import CNN1D
+from models.resnet.resnet_1d import ResNet1D
+from models.cnn.cnn_1d import CNN1D
 
 
 class FaultKnowledgeGraph:
