@@ -18,7 +18,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional
-from .base_model import BaseModel
+from ..base_model import BaseModel
 
 
 class PositionalEncoding(nn.Module):
