@@ -457,22 +457,26 @@ def convert_and_quantize_onnx(
     logger.info(f"Quantizing ONNX model ({quantization_type})...")
 
     if quantization_type == 'dynamic':
+        # Get original size before deletion
+        original_size = Path(temp_path).stat().st_size / (1024 * 1024) if Path(temp_path).exists() else 0
+
         quantize_dynamic(
             model_input=temp_path,
             model_output=save_path,
             weight_type=QuantType.QUInt8
         )
+
+        # Clean up temporary file
+        if Path(temp_path).exists():
+            Path(temp_path).unlink()
+
+        quantized_size = Path(save_path).stat().st_size / (1024 * 1024)
     else:
         logger.warning("Static quantization not yet implemented for ONNX")
         return Path(temp_path)
 
-    # Clean up temporary file
-    Path(temp_path).unlink()
-
-    original_size = Path(temp_path).stat().st_size / (1024 * 1024) if Path(temp_path).exists() else 0
-    quantized_size = Path(save_path).stat().st_size / (1024 * 1024)
-
     logger.info(f"✓ Quantized ONNX model saved to {save_path}")
-    logger.info(f"✓ Model size: {quantized_size:.2f} MB")
+    logger.info(f"✓ Original size: {original_size:.2f} MB")
+    logger.info(f"✓ Quantized size: {quantized_size:.2f} MB")
 
     return Path(save_path)
