@@ -400,8 +400,8 @@ def generate_dataset(
     # Set seed
     set_seed(seed)
 
-    # Create output directory
-    output_path = Path(output_dir)
+    # Create output directory (normalize path to use forward slashes)
+    output_path = Path(output_dir.replace('\\', '/'))
     output_path.mkdir(parents=True, exist_ok=True)
 
     if verbose:
