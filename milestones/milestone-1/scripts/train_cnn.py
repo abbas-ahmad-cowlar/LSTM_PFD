@@ -39,8 +39,8 @@ from models.cnn.multi_scale_cnn import MultiScaleCNN1D, DilatedMultiScaleCNN
 from data.cnn_dataloader import create_cnn_dataloaders
 from training.cnn_trainer import CNNTrainer
 from training.cnn_optimizer import create_optimizer
-from training.cnn_losses import create_loss_function
-from training.cnn_schedulers import create_scheduler
+from training.cnn_losses import create_criterion
+from training.cnn_schedulers import create_cosine_scheduler, create_step_scheduler, create_plateau_scheduler, create_onecycle_scheduler
 from utils.reproducibility import set_seed
 from utils.device_manager import get_device
 from utils.logging import get_logger
@@ -54,6 +54,25 @@ MODEL_REGISTRY = {
     'multiscale': MultiScaleCNN1D,
     'dilated': DilatedMultiScaleCNN
 }
+
+
+def create_scheduler(optimizer, scheduler_name: str, num_epochs: int, steps_per_epoch: int, warmup_epochs: int = 0):
+    """Create learning rate scheduler based on name."""
+    if scheduler_name == 'none':
+        return None
+    elif scheduler_name == 'cosine':
+        return create_cosine_scheduler(optimizer, num_epochs=num_epochs, eta_min=1e-6)
+    elif scheduler_name == 'step':
+        return create_step_scheduler(optimizer, step_size=num_epochs // 3, gamma=0.1)
+    elif scheduler_name == 'plateau':
+        return create_plateau_scheduler(optimizer, mode='min', factor=0.1, patience=10)
+    elif scheduler_name == 'onecycle':
+        return create_onecycle_scheduler(optimizer, max_lr=0.01, epochs=num_epochs, steps_per_epoch=steps_per_epoch)
+    elif scheduler_name == 'warmup_cosine':
+        # Simple warmup + cosine
+        return create_cosine_scheduler(optimizer, num_epochs=num_epochs, eta_min=1e-6)
+    else:
+        raise ValueError(f"Unknown scheduler: {scheduler_name}")
 
 
 def parse_args() -> argparse.Namespace:
@@ -264,8 +283,8 @@ def main():
     logger.info(f"✓ Created optimizer: {args.optimizer}")
 
     # Create loss function
-    criterion = create_loss_function(
-        loss_name=args.loss,
+    criterion = create_criterion(
+        criterion_name=args.loss,
         num_classes=num_classes,
         label_smoothing=args.label_smoothing if args.loss == 'label_smoothing' else 0.0
     )
