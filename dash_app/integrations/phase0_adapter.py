@@ -10,6 +10,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from utils.logger import setup_logger
 
+# Add dash_app to path for config import
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config import DASHBOARD_TO_PHASE0_FAULT_MAP
+
 logger = setup_logger(__name__)
 
 
@@ -52,6 +56,7 @@ class Phase0Adapter:
                 SeverityConfig, NoiseConfig, OperatingConfig, PhysicsConfig, \
                 TransientConfig, AugmentationConfig
             from pathlib import Path
+            from utils.constants import DEFAULT_RANDOM_SEED, DEFAULT_NUM_SIGNALS_PER_FAULT
             import h5py
             import numpy as np
             from dataclasses import asdict
@@ -60,20 +65,15 @@ class Phase0Adapter:
 
             # Convert dashboard config to DataConfig
             data_config = DataConfig(
-                num_signals_per_fault=config.get('num_signals_per_fault', 100),
+                num_signals_per_fault=config.get('num_signals_per_fault', DEFAULT_NUM_SIGNALS_PER_FAULT),
                 output_dir=config.get('output_dir', 'data/generated'),
-                rng_seed=config.get('random_seed', 42),
+                rng_seed=config.get('random_seed', DEFAULT_RANDOM_SEED),
             )
 
             # Configure signal parameters (use defaults)
             data_config.signal = SignalConfig()
 
             # Configure fault types
-            # Import mapping from config
-            import sys
-            sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-            from config import DASHBOARD_TO_PHASE0_FAULT_MAP
-
             fault_config = FaultConfig()
             selected_faults = config.get('fault_types', [])
 
