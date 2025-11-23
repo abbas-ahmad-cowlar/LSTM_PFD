@@ -8,7 +8,7 @@ Purpose:
     - Automatic best model tracking
     - Delta threshold for improvement detection
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

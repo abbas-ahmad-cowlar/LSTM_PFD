@@ -3,7 +3,7 @@ API Schemas
 
 Pydantic models for request/response validation.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 
