@@ -8,13 +8,13 @@ import numpy as np
 from typing import List, Dict, Optional, Tuple
 from pathlib import Path
 from scipy import stats
-from scipy.stats import chi2, friedmanchisquare
 
 from database.connection import get_db_session
 from models.experiment import Experiment, ExperimentStatus
 from models.training_run import TrainingRun
 from config import STORAGE_RESULTS_DIR, FAULT_CLASSES
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+from utils.statistical_tests import mcnemar_test, friedman_test
 
 
 class ComparisonService:
@@ -311,50 +311,18 @@ class ComparisonService:
                 'significant': False
             }
 
-        # Build contingency table
-        correct1 = (y_pred1 == y_true)
-        correct2 = (y_pred2 == y_true)
+        # Use the statistical_tests utility
+        result = mcnemar_test(y_true, y_pred1, y_pred2)
 
-        a = np.sum(correct1 & correct2)  # Both correct
-        b = np.sum(correct1 & ~correct2)  # Model 1 correct, Model 2 wrong
-        c = np.sum(~correct1 & correct2)  # Model 1 wrong, Model 2 correct
-        d = np.sum(~correct1 & ~correct2)  # Both wrong
-
-        contingency_table = [[int(a), int(b)], [int(c), int(d)]]
-
-        # McNemar's test statistic
-        if b + c == 0:
-            # No disagreements, models are identical
-            return {
-                'test_statistic': 0.0,
-                'p_value': 1.0,
-                'contingency_table': contingency_table,
-                'interpretation': 'Models make identical predictions (no disagreements).',
-                'significant': False
-            }
-
-        test_statistic = (b - c) ** 2 / (b + c)
-
-        # p-value from chi-square distribution (1 degree of freedom)
-        p_value = 1 - chi2.cdf(test_statistic, df=1)
-
-        # Interpretation
-        if p_value < 0.05:
-            if b > c:
+        # Customize interpretation for experiment IDs
+        if result['significant']:
+            if result.get('disagreements', {}).get('model1_better', 0) > result.get('disagreements', {}).get('model2_better', 0):
                 winner = f"Experiment {exp1_id}"
             else:
                 winner = f"Experiment {exp2_id}"
-            interpretation = f"{winner} performs significantly better (p = {p_value:.4f})."
-        else:
-            interpretation = f"No significant difference between models (p = {p_value:.4f})."
+            result['interpretation'] = f"{winner} performs significantly better (p = {result['p_value']:.4f})."
 
-        return {
-            'test_statistic': float(test_statistic),
-            'p_value': float(p_value),
-            'contingency_table': contingency_table,
-            'interpretation': interpretation,
-            'significant': p_value < 0.05
-        }
+        return result
 
     @staticmethod
     def _run_friedman_test(experiment_ids: List[int]) -> Dict:
@@ -406,43 +374,19 @@ class ComparisonService:
                     'significant': False
                 }
 
-        # Compute correctness for each model on each sample
-        correctness = []
-        for preds in all_predictions:
-            correctness.append((preds == y_true).astype(int))
+        # Use the statistical_tests utility
+        result = friedman_test(y_true, all_predictions)
 
-        # Run Friedman test
-        statistic, p_value = friedmanchisquare(*correctness)
+        # Customize interpretation for experiment IDs
+        if result['significant']:
+            best_model_idx = np.argmin(result['rankings'])
+            result['interpretation'] = (
+                f"Significant difference exists (p = {result['p_value']:.4f}). "
+                f"Experiment {experiment_ids[best_model_idx]} ranks best "
+                f"(avg rank: {result['rankings'][best_model_idx]:.2f})."
+            )
 
-        # Compute average rankings
-        n_samples = len(y_true)
-        n_models = len(experiment_ids)
-
-        sample_ranks = []
-        for i in range(n_samples):
-            sample_correctness = [correctness[m][i] for m in range(n_models)]
-            # Rank: Lower rank for correct (higher correctness), higher rank for incorrect
-            # We negate to rank correctly (1 is best)
-            ranks = stats.rankdata([-c for c in sample_correctness], method='average')
-            sample_ranks.append(ranks)
-
-        # Average rank per model
-        avg_ranks = np.mean(sample_ranks, axis=0).tolist()
-
-        # Interpretation
-        if p_value < 0.05:
-            best_model_idx = np.argmin(avg_ranks)
-            interpretation = f"Significant difference exists (p = {p_value:.4f}). Experiment {experiment_ids[best_model_idx]} ranks best (avg rank: {avg_ranks[best_model_idx]:.2f})."
-        else:
-            interpretation = f"No significant difference among models (p = {p_value:.4f})."
-
-        return {
-            'test_statistic': float(statistic),
-            'p_value': float(p_value),
-            'rankings': avg_ranks,
-            'interpretation': interpretation,
-            'significant': p_value < 0.05
-        }
+        return result
 
     @staticmethod
     def identify_key_differences(comparison_data: Dict) -> List[str]:
