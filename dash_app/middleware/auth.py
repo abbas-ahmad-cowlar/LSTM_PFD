@@ -38,7 +38,7 @@ ALGORITHM = "HS256"
 TOKEN_EXPIRY_HOURS = 24
 
 # Password hashing configuration
-# Bcrypt rounds: higher = more secure but slower (10-14 recommended for 2024)
+# Bcrypt rounds: higher = more secure but slower (10-14 recommended for 2025)
 # Each increment doubles the computation time
 BCRYPT_ROUNDS = int(os.getenv("BCRYPT_ROUNDS", "12"))
 
