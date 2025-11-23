@@ -22,13 +22,15 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
-from typing import Optional, Tuple, List, Union
+from typing import Optional, Tuple, List, Union, Dict
 import matplotlib.pyplot as plt
 from pathlib import Path
 import sys
 
 # Add parent directory for imports
 sys.path.append(str(Path(__file__).parent.parent))
+
+from utils.constants import NUM_CLASSES
 
 
 class CounterfactualGenerator:
