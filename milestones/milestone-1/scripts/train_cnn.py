@@ -178,16 +178,38 @@ def create_model(args: argparse.Namespace, num_classes: int) -> torch.nn.Module:
     """Create CNN model"""
     model_class = MODEL_REGISTRY[args.model]
 
-    # Common arguments
-    model_kwargs = {
-        'num_classes': num_classes,
-        'input_length': 102400,
-        'in_channels': 1
-    }
-
-    # Add dropout if supported
-    if args.model in ['cnn1d', 'attention', 'multiscale', 'dilated']:
-        model_kwargs['dropout'] = args.dropout
+    # Different models have different parameter names
+    if args.model == 'cnn1d':
+        # CNN1D uses: num_classes, input_channels, dropout, use_batch_norm
+        model_kwargs = {
+            'num_classes': num_classes,
+            'input_channels': 1,
+            'dropout': args.dropout,
+            'use_batch_norm': True
+        }
+    elif args.model in ['attention', 'attention-lite']:
+        # AttentionCNN uses: num_classes, input_length, in_channels, dropout
+        model_kwargs = {
+            'num_classes': num_classes,
+            'input_length': 102400,
+            'in_channels': 1,
+            'dropout': args.dropout
+        }
+    elif args.model in ['multiscale', 'dilated']:
+        # MultiScaleCNN uses: num_classes, input_length, in_channels, dropout
+        model_kwargs = {
+            'num_classes': num_classes,
+            'input_length': 102400,
+            'in_channels': 1,
+            'dropout': args.dropout
+        }
+    else:
+        # Default for other models
+        model_kwargs = {
+            'num_classes': num_classes,
+            'input_length': 102400,
+            'in_channels': 1
+        }
 
     model = model_class(**model_kwargs)
 
