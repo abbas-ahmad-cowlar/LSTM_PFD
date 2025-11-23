@@ -23,14 +23,15 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
 from typing import Dict, Optional, Tuple
 
 
 from models.base_model import BaseModel
-from resnet.resnet_1d import ResNet1D
-from cnn.cnn_1d import CNN1D
-from physics.bearing_dynamics import BearingDynamics
-from physics.fault_signatures import FaultSignatureDatabase
+from models.resnet.resnet_1d import ResNet1D
+from models.cnn.cnn_1d import CNN1D
+from models.physics.bearing_dynamics import BearingDynamics
+from models.physics.fault_signatures import FaultSignatureDatabase
 
 
 class PhysicsConstrainedCNN(BaseModel):
@@ -52,7 +53,7 @@ class PhysicsConstrainedCNN(BaseModel):
         input_length: int = SIGNAL_LENGTH,
         backbone: str = 'resnet18',
         dropout: float = 0.3,
-        sample_rate: int = 51200,
+        sample_rate: int = 20480,
         bearing_params: Optional[Dict[str, float]] = None
     ):
         """
@@ -292,7 +293,7 @@ class AdaptivePhysicsConstrainedCNN(PhysicsConstrainedCNN):
         input_length: int = SIGNAL_LENGTH,
         backbone: str = 'resnet18',
         dropout: float = 0.3,
-        sample_rate: int = 51200,
+        sample_rate: int = 20480,
         bearing_params: Optional[Dict[str, float]] = None,
         lambda_physics_schedule: str = 'linear',  # 'linear', 'exponential', 'step'
         lambda_physics_max: float = 1.0
@@ -421,7 +422,7 @@ if __name__ == "__main__":
         num_classes=NUM_CLASSES,
         backbone='resnet18',
         dropout=0.3,
-        sample_rate=51200
+        sample_rate=20480
     )
 
     print("\nModel Architecture:")
