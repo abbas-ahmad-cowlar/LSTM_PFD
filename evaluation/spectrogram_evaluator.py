@@ -28,6 +28,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent))
 
 from evaluator import ModelEvaluator
+from utils.constants import NUM_CLASSES
 
 
 class SpectrogramEvaluator(ModelEvaluator):
