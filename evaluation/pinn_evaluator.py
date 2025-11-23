@@ -43,7 +43,7 @@ class PINNEvaluator(ModelEvaluator):
         self,
         model: nn.Module,
         device: str = 'cuda',
-        sample_rate: int = 51200
+        sample_rate: int = 20480
     ):
         """
         Initialize PINN evaluator.
