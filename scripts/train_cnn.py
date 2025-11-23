@@ -315,8 +315,8 @@ def main():
 
     # Create optimizer
     optimizer = create_optimizer(
-        model.parameters(),
-        optimizer_name=args.optimizer,
+        args.optimizer,  # optimizer_type (first positional arg)
+        model.parameters(),  # model_params (second positional arg)
         lr=args.lr,
         weight_decay=args.weight_decay,
         momentum=args.momentum
