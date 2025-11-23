@@ -8,7 +8,7 @@ Provides high-performance inference engines for production deployment:
 - Batched inference with automatic batching
 - Benchmarking utilities
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

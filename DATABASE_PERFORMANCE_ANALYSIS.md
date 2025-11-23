@@ -297,4 +297,4 @@ ORDER BY index_count DESC;
 
 **Document Version**: 1.0
 **Last Updated**: 2025-11-22
-**Author**: Database Performance Audit
+**Author**: Syed Abbas Ahmad

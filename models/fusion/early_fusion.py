@@ -14,7 +14,7 @@ Architecture:
           ↓ FC layers
         [B, 256] → [B, 11]
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

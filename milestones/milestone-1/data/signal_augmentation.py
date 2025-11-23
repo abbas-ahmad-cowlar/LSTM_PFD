@@ -14,7 +14,7 @@ Purpose:
     These augmentations help prevent overfitting and improve generalization
     to unseen fault conditions and sensor variations.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

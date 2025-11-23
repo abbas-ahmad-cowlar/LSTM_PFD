@@ -4,7 +4,7 @@ Feature engineering module for bearing fault diagnosis.
 This module provides feature extraction, selection, and normalization
 for classical ML models.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

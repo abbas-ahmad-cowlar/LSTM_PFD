@@ -3,7 +3,7 @@ API Configuration
 
 Configuration settings for the FastAPI application.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

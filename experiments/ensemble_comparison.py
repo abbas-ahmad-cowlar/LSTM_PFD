@@ -13,7 +13,7 @@ Compare all ensemble methods:
 
 Output comprehensive benchmarking table with accuracy and diversity metrics.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

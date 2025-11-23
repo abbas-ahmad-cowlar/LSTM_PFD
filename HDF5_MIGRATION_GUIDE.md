@@ -448,4 +448,4 @@ If you encounter issues:
 
 **Last Updated:** 2025-11-22
 **Version:** 1.0
-**Author:** LSTM_PFD Team
+**Author:** Syed Abbas Ahmad

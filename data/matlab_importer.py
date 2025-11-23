@@ -5,7 +5,7 @@ Purpose:
     Load MATLAB-generated signals and metadata for comparing against
     Python implementation. Ensures numerical equivalence within 1% tolerance.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

@@ -3,7 +3,7 @@ Unit Tests for Feature Extraction
 
 Tests for features/feature_extractor.py
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

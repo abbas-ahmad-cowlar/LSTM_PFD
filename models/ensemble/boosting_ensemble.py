@@ -4,7 +4,7 @@ Boosting Ensemble for Bearing Fault Diagnosis
 Sequential training where each model focuses on samples previous models got wrong.
 Implements Adaptive Boosting (AdaBoost) for neural networks.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 

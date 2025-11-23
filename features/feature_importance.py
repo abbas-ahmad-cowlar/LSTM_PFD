@@ -5,7 +5,7 @@ Purpose:
     Analyze and visualize feature importance from trained models.
     Supports Random Forest Gini importance and permutation importance.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 

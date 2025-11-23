@@ -5,7 +5,7 @@ Purpose:
     Visualize time-domain signals, frequency spectra, spectrograms.
     Reproduces Figures 2, 3 from technical report.
 
-Author: LSTM_PFD Team
+Author: Syed Abbas Ahmad
 Date: 2025-11-19
 """
 
