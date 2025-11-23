@@ -438,10 +438,14 @@ def benchmark_inference(
     """
     Benchmark inference across multiple backends.
 
+    WARNING: This function currently only supports ONNX models.
+    PyTorch backend benchmarking requires model_class parameter which is not yet implemented.
+    Use scripts/benchmark_inference.py for full PyTorch model benchmarking.
+
     Args:
-        model_path: Path to model (PyTorch or ONNX)
+        model_path: Path to ONNX model
         input_shape: Input tensor shape
-        backends: List of backends to test (default: all available)
+        backends: List of backends to test (currently only 'onnx' works)
         num_runs: Number of inference runs
 
     Returns:
@@ -449,9 +453,9 @@ def benchmark_inference(
 
     Example:
         >>> results = benchmark_inference(
-        ...     'checkpoints/best_model.pth',
+        ...     'models/model.onnx',
         ...     (1, 1, SIGNAL_LENGTH),
-        ...     backends=['torch', 'torch_fp16', 'onnx']
+        ...     backends=['onnx']
         ... )
         >>> for backend, stats in results.items():
         ...     print(f"{backend}: {stats['mean_latency_ms']:.2f} ms")
@@ -467,17 +471,12 @@ def benchmark_inference(
             logger.info(f"Benchmarking: {backend}")
             logger.info(f"{'='*60}")
 
-            if backend == 'torch':
-                config = InferenceConfig(use_amp=False)
-                engine = TorchInferenceEngine(config)
-                # Assume we can load the model directly
-                # In practice, you'd need to pass model_class
-                # engine.load_model(model_path)
-
-            elif backend == 'torch_fp16':
-                config = InferenceConfig(use_amp=True, device='cuda')
-                engine = TorchInferenceEngine(config)
-                # engine.load_model(model_path)
+            if backend == 'torch' or backend == 'torch_fp16':
+                logger.warning(
+                    f"Skipping {backend} benchmark: PyTorch model loading not implemented. "
+                    f"Use scripts/benchmark_inference.py instead."
+                )
+                continue
 
             elif backend == 'onnx':
                 if not model_path.endswith('.onnx'):
