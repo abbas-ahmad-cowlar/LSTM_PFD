@@ -42,6 +42,7 @@ from models.cnn.multi_scale_cnn import MultiScaleCNN1D, DilatedMultiScaleCNN
 from data.cnn_transforms import normalize_signal
 from utils.device_manager import get_device
 from utils.logging import get_logger
+from utils.constants import NUM_CLASSES
 
 
 # Model registry
@@ -135,11 +136,43 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
             if 'classifier' in key and 'weight' in key and key.endswith('.weight'):
                 num_classes = state_dict[key].shape[0]
                 break
+        else:
+            num_classes = NUM_CLASSES  # Default if not found
     else:
-        num_classes=NUM_CLASSES
+        num_classes = NUM_CLASSES  # Default
 
-    # Create model
-    model = model_class(num_classes=num_classes, input_length=102400, in_channels=1)
+    # Create model with correct parameters for each architecture
+    if model_type == 'cnn1d':
+        # CNN1D uses: num_classes, input_channels, dropout, use_batch_norm
+        model = model_class(
+            num_classes=num_classes,
+            input_channels=1,
+            dropout=0.3,
+            use_batch_norm=True
+        )
+    elif model_type in ['attention', 'attention-lite']:
+        # AttentionCNN uses: num_classes, input_length, in_channels, dropout
+        model = model_class(
+            num_classes=num_classes,
+            input_length=102400,
+            in_channels=1,
+            dropout=0.3
+        )
+    elif model_type in ['multiscale', 'dilated']:
+        # MultiScaleCNN uses: num_classes, input_length, in_channels, dropout
+        model = model_class(
+            num_classes=num_classes,
+            input_length=102400,
+            in_channels=1,
+            dropout=0.3
+        )
+    else:
+        # Default for other models
+        model = model_class(
+            num_classes=num_classes,
+            input_length=102400,
+            in_channels=1
+        )
 
     # Load weights
     model.load_state_dict(checkpoint['model_state_dict'])
