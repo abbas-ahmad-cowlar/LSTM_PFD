@@ -200,6 +200,8 @@ def load_data(args: argparse.Namespace, logger):
 
     # Load .mat files from directory
     from data.matlab_importer import load_mat_dataset
+    from data.cnn_dataset import RawSignalDataset
+    from sklearn.model_selection import train_test_split
 
     # Load dataset
     logger.info("Loading .MAT files...")
@@ -209,24 +211,41 @@ def load_data(args: argparse.Namespace, logger):
     logger.info(f"  Signal shape: {signals.shape}")
     logger.info(f"  Classes: {len(np.unique(labels))} ({', '.join(label_names[:5])}...)")
 
-    # Create dataloaders
-    train_loader, val_loader, test_loader = create_cnn_dataloaders(
-        signals=signals,
-        labels=labels,
-        batch_size=args.batch_size,
-        val_batch_size=args.val_batch_size,
-        num_workers=args.num_workers,
-        train_ratio=0.7,
-        val_ratio=0.15,
-        test_ratio=0.15,
-        seed=args.seed,
-        augment_train=True
+    # Split into train/val/test (70/15/15)
+    train_signals, temp_signals, train_labels, temp_labels = train_test_split(
+        signals, labels, test_size=0.3, random_state=args.seed, stratify=labels
+    )
+    val_signals, test_signals, val_labels, test_labels = train_test_split(
+        temp_signals, temp_labels, test_size=0.5, random_state=args.seed, stratify=temp_labels
     )
 
+    # Create datasets
+    train_dataset = RawSignalDataset(train_signals, train_labels)
+    val_dataset = RawSignalDataset(val_signals, val_labels)
+    test_dataset = RawSignalDataset(test_signals, test_labels)
+
+    logger.info(f"✓ Created datasets:")
+    logger.info(f"  Train: {len(train_dataset)} samples")
+    logger.info(f"  Val:   {len(val_dataset)} samples")
+    logger.info(f"  Test:  {len(test_dataset)} samples")
+
+    # Create dataloaders
+    loaders = create_cnn_dataloaders(
+        train_dataset=train_dataset,
+        val_dataset=val_dataset,
+        test_dataset=test_dataset,
+        batch_size=args.batch_size,
+        num_workers=args.num_workers
+    )
+
+    train_loader = loaders['train']
+    val_loader = loaders['val']
+    test_loader = loaders['test']
+
     logger.info(f"✓ Created dataloaders:")
-    logger.info(f"  Train: {len(train_loader.dataset)} samples, {len(train_loader)} batches")
-    logger.info(f"  Val:   {len(val_loader.dataset)} samples, {len(val_loader)} batches")
-    logger.info(f"  Test:  {len(test_loader.dataset)} samples, {len(test_loader)} batches")
+    logger.info(f"  Train: {len(train_loader)} batches")
+    logger.info(f"  Val:   {len(val_loader)} batches")
+    logger.info(f"  Test:  {len(test_loader)} batches")
 
     return train_loader, val_loader, test_loader
 
