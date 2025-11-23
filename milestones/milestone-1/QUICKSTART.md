@@ -126,39 +126,39 @@ python scripts/train_cnn.py \
 
 **Expected accuracy**: 93-95%
 
-#### Option B: High Accuracy (ResNet-34 - 2-4 hours training)
+#### Option B: Attention-Based (Attention CNN - 1-2 hours training)
 
 ```bash
 python scripts/train_cnn.py \
-    --model resnet34 \
+    --model attention \
     --data-dir data/raw/bearing_data \
     --epochs 100 \
     --batch-size 64 \
     --lr 0.001 \
     --optimizer adamw \
     --scheduler cosine \
-    --augment \
     --mixed-precision \
-    --checkpoint-dir results/checkpoints/resnet34_best
+    --checkpoint-dir results/checkpoints/attention_best
 ```
 
-**Expected accuracy**: 96-97% ⭐
+**Expected accuracy**: 94-96% ⭐
 
-#### Option C: Efficient & Accurate (EfficientNet-B2 - 1-2 hours training)
+#### Option C: Multi-Scale Features (Multi-Scale CNN - 1-2 hours training)
 
 ```bash
 python scripts/train_cnn.py \
-    --model efficientnet_b2 \
+    --model multiscale \
     --data-dir data/raw/bearing_data \
-    --epochs 75 \
-    --batch-size 48 \
+    --epochs 100 \
+    --batch-size 64 \
     --lr 0.001 \
-    --augment \
+    --optimizer adamw \
+    --scheduler cosine \
     --mixed-precision \
-    --checkpoint-dir results/checkpoints/efficientnet_b2
+    --checkpoint-dir results/checkpoints/multiscale_best
 ```
 
-**Expected accuracy**: 96-97%, only 9M parameters ⭐
+**Expected accuracy**: 95-96%, captures multi-scale patterns ⭐
 
 ---
 
@@ -189,10 +189,12 @@ After training completes:
 
 ```bash
 python scripts/evaluate_cnn.py \
-    --model-checkpoint results/checkpoints/resnet34_best/best_model.pth \
+    --checkpoint results/checkpoints/attention_best/best_model.pth \
     --data-dir data/raw/bearing_data \
-    --output-dir results/evaluation/resnet34 \
-    --batch-size 128
+    --batch-size 128 \
+    --per-class-metrics \
+    --plot-confusion \
+    --plot-roc
 ```
 
 **Outputs generated:**
@@ -223,29 +225,29 @@ python scripts/import_mat_dataset.py \
     --output data/processed/dataset_info.json \
     --validate
 
-# 4. Train ResNet-34 (recommended)
+# 4. Train Attention CNN (recommended)
 python scripts/train_cnn.py \
-    --model resnet34 \
+    --model attention \
     --data-dir data/raw/bearing_data \
     --epochs 100 \
     --batch-size 64 \
     --lr 0.001 \
     --optimizer adamw \
     --scheduler cosine \
-    --augment \
-    --mixup \
     --mixed-precision \
-    --checkpoint-dir results/checkpoints/resnet34
+    --checkpoint-dir results/checkpoints/attention
 
 # 5. Evaluate
 python scripts/evaluate_cnn.py \
-    --model-checkpoint results/checkpoints/resnet34/best_model.pth \
+    --checkpoint results/checkpoints/attention/best_model.pth \
     --data-dir data/raw/bearing_data \
-    --output-dir results/evaluation/resnet34
+    --per-class-metrics \
+    --plot-confusion \
+    --plot-roc
 
-# 6. View results
-cat results/evaluation/resnet34/classification_report.txt
-open results/evaluation/resnet34/confusion_matrix.png  # or xdg-open on Linux
+# 6. View results (Windows)
+type results/evaluation/confusion_matrix.png
+# On Linux/Mac use: cat or open
 ```
 
 ---
