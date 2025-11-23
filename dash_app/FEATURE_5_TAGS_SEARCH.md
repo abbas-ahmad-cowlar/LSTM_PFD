@@ -316,7 +316,7 @@ For questions or issues:
 
 ## Contributors
 
-- Backend Implementation: Claude (AI Assistant)
+- Backend Implementation: Syed Abbas Ahmad
 - Feature Specification: Feature #5 Document
 - Database Design: Based on industry best practices
 
