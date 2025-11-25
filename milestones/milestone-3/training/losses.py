@@ -180,12 +180,13 @@ def create_loss_function(
 
     Args:
         loss_name: Type of loss function
-            - 'cross_entropy': Standard cross-entropy loss
+            - 'cross_entropy' or 'ce': Standard cross-entropy loss
             - 'focal': Focal loss for class imbalance
-            - 'label_smoothing': Cross-entropy with label smoothing
-            - 'physics': Physics-informed loss (for PINN models)
+            - 'label_smoothing' or 'ls': Cross-entropy with label smoothing
+            - 'physics' or 'pinn': Physics-informed loss (for PINN models)
         num_classes: Number of output classes (default: 11)
         **kwargs: Loss-specific arguments
+            For 'cross_entropy': weight (class weights)
             For 'focal': alpha, gamma
             For 'label_smoothing': smoothing
             For 'physics': data_weight, physics_weight
@@ -216,7 +217,7 @@ def create_loss_function(
         smoothing = kwargs.get('smoothing', 0.1)
         return LabelSmoothingCrossEntropy(smoothing=smoothing)
 
-    elif loss_name in ['physics', 'physics_informed']:
+    elif loss_name in ['physics', 'physics_informed', 'pinn']:
         # Physics-informed loss
         data_weight = kwargs.get('data_weight', 1.0)
         physics_weight = kwargs.get('physics_weight', 0.1)
