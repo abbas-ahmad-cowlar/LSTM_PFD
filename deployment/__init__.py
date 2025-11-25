@@ -22,7 +22,8 @@ from .onnx_export import (
     export_to_onnx,
     validate_onnx_export,
     optimize_onnx_model,
-    ONNXExportConfig
+    ONNXExportConfig,
+    ONNXInferenceSession
 )
 
 from .inference import (
@@ -51,6 +52,7 @@ __all__ = [
     'validate_onnx_export',
     'optimize_onnx_model',
     'ONNXExportConfig',
+    'ONNXInferenceSession',
 
     # Inference
     'OptimizedInferenceEngine',
