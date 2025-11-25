@@ -37,9 +37,13 @@ from typing import Dict, List
 
 # Import project modules
 from models import create_model, list_available_models
+from data.matlab_importer import MatlabImporter
+from data.cnn_dataset import create_cnn_datasets_from_arrays
 from data.cnn_dataloader import create_cnn_dataloaders
 from utils.device_manager import get_device
+from utils.constants import FAULT_TYPES
 from utils.logging import get_logger
+from sklearn.metrics import classification_report, confusion_matrix
 
 
 # Available hybrid models
@@ -75,9 +79,22 @@ def parse_args() -> argparse.Namespace:
                        choices=AVAILABLE_MODELS,
                        help='Hybrid model architecture (e.g., recommended_1, recommended_2, recommended_3, custom)')
 
+    # Custom model arguments (for custom hybrid)
+    parser.add_argument('--cnn-type', type=str, default='resnet34',
+                       help='CNN backbone (for custom hybrid)')
+    parser.add_argument('--lstm-type', type=str, default='bilstm',
+                       help='LSTM type (for custom hybrid)')
+    parser.add_argument('--lstm-hidden-size', type=int, default=256,
+                       help='LSTM hidden size (for custom hybrid)')
+    parser.add_argument('--lstm-num-layers', type=int, default=2,
+                       help='Number of LSTM layers (for custom hybrid)')
+    parser.add_argument('--pooling', type=str, default='mean',
+                       choices=['mean', 'max', 'last', 'attention'],
+                       help='Temporal pooling method (for custom hybrid)')
+
     # Data arguments
-    parser.add_argument('--data-dir', type=str, default='data/processed',
-                       help='Directory with processed data')
+    parser.add_argument('--data-dir', type=str, default='data/raw/bearing_data',
+                       help='Directory containing .mat files')
     parser.add_argument('--batch-size', type=int, default=64,
                        help='Batch size for evaluation')
     parser.add_argument('--num-workers', type=int, default=4,
@@ -111,37 +128,30 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def load_model(checkpoint_path: str, model_type: str = None, device: torch.device = None):
+def load_model(checkpoint_path: str, model_type: str, device: torch.device, args = None):
     """Load model from checkpoint"""
     checkpoint = torch.load(checkpoint_path, map_location=device)
 
-    # Try to detect model type from checkpoint
-    if model_type is None:
-        if 'args' in checkpoint and 'model' in checkpoint['args']:
-            model_type = checkpoint['args']['model']
-        else:
-            raise ValueError("Model type not specified and cannot be auto-detected. "
-                           "Please specify --model argument.")
-
-    # Get model class
-    model_class = MODEL_REGISTRY[model_type]
-
-    # Get number of classes from checkpoint
-    if 'model_state_dict' in checkpoint:
-        state_dict = checkpoint['model_state_dict']
-        # Find classifier layer
-        for key in state_dict.keys():
-            if 'classifier' in key and 'weight' in key and key.endswith('.weight'):
-                num_classes = state_dict[key].shape[0]
-                break
+    # Create model based on type
+    if model_type == 'custom' and args:
+        model = create_model(
+            'custom',
+            cnn_type=args.cnn_type,
+            lstm_type=args.lstm_type,
+            lstm_hidden_size=args.lstm_hidden_size,
+            lstm_num_layers=args.lstm_num_layers,
+            pooling_method=args.pooling
+        )
     else:
-        num_classes=NUM_CLASSES  # Default
-
-    # Create model
-    model = model_class(num_classes=num_classes, input_length=102400, in_channels=1)
+        # Use recommended configuration
+        model = create_model(model_type)
 
     # Load weights
-    model.load_state_dict(checkpoint['model_state_dict'])
+    if 'model_state_dict' in checkpoint:
+        model.load_state_dict(checkpoint['model_state_dict'])
+    else:
+        model.load_state_dict(checkpoint)
+
     model.to(device)
     model.eval()
 
@@ -290,7 +300,7 @@ def main():
 
     # Load model
     logger.info(f"Loading model from {args.checkpoint}...")
-    model, checkpoint = load_model(args.checkpoint, args.model, device)
+    model, checkpoint = load_model(args.checkpoint, args.model, device, args)
     logger.info(f"✓ Model loaded")
     logger.info(f"  Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
@@ -302,16 +312,52 @@ def main():
     # Load test data
     test_loader = load_test_data(args, logger)
 
-    # Create evaluator
-    evaluator = CNNEvaluator(model, device=device)
-
-    # Run evaluation
+    # Run evaluation (manual since CNNEvaluator doesn't exist yet)
     logger.info("\nRunning evaluation...")
-    results = evaluator.evaluate(
-        test_loader,
-        class_names=CLASS_NAMES,
-        compute_roc=args.plot_roc
+    model.eval()
+    all_preds = []
+    all_labels = []
+    all_probs = []
+
+    with torch.no_grad():
+        for signals, labels in test_loader:
+            signals = signals.to(device)
+            outputs = model(signals)
+            probs = torch.softmax(outputs, dim=1)
+            preds = outputs.argmax(dim=1)
+
+            all_preds.append(preds.cpu().numpy())
+            all_labels.append(labels.numpy())
+            all_probs.append(probs.cpu().numpy())
+
+    all_preds = np.concatenate(all_preds)
+    all_labels = np.concatenate(all_labels)
+    all_probs = np.concatenate(all_probs)
+
+    # Compute metrics
+    from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+
+    accuracy = accuracy_score(all_labels, all_preds)
+    precision, recall, f1, support = precision_recall_fscore_support(
+        all_labels, all_preds, average=None, zero_division=0
     )
+    macro_precision, macro_recall, macro_f1, _ = precision_recall_fscore_support(
+        all_labels, all_preds, average='macro', zero_division=0
+    )
+
+    cm = confusion_matrix(all_labels, all_preds)
+
+    results = {
+        'accuracy': accuracy,
+        'precision': precision,
+        'recall': recall,
+        'f1': f1,
+        'support': support,
+        'macro_precision': macro_precision,
+        'macro_recall': macro_recall,
+        'macro_f1': macro_f1,
+        'confusion_matrix': cm
+    }
 
     # Print results
     print("\n" + "=" * 80)
@@ -344,21 +390,26 @@ def main():
     # Analyze failure cases
     if args.analyze_failures:
         logger.info("\nAnalyzing failure cases...")
-        failure_analysis = evaluator.analyze_failures(
-            test_loader,
-            class_names=CLASS_NAMES,
-            num_cases=20
-        )
+
+        misclassified = all_preds != all_labels
+        num_failures = misclassified.sum()
+        error_rate = num_failures / len(all_labels)
 
         print("\n" + "=" * 80)
         print("Failure Case Analysis")
         print("=" * 80)
-        print(f"Total misclassifications: {failure_analysis['num_failures']}")
-        print(f"Error rate: {failure_analysis['error_rate']*100:.2f}%")
+        print(f"Total misclassifications: {num_failures}")
+        print(f"Error rate: {error_rate*100:.2f}%")
 
-        if failure_analysis['most_confused_pairs']:
+        # Find most confused pairs
+        from collections import Counter
+        confused_pairs = Counter()
+        for true_label, pred_label in zip(all_labels[misclassified], all_preds[misclassified]):
+            confused_pairs[(true_label, pred_label)] += 1
+
+        if confused_pairs:
             print("\nMost confused pairs:")
-            for (true_idx, pred_idx), count in failure_analysis['most_confused_pairs'][:5]:
+            for (true_idx, pred_idx), count in confused_pairs.most_common(5):
                 print(f"  {CLASS_NAMES[true_idx]:>20} → {CLASS_NAMES[pred_idx]:<20}: {count} cases")
 
     # Save predictions
@@ -366,26 +417,11 @@ def main():
         pred_path = output_dir / 'predictions.npz'
         logger.info(f"\nSaving predictions to {pred_path}...")
 
-        all_preds = []
-        all_labels = []
-        all_probs = []
-
-        with torch.no_grad():
-            for signals, labels in test_loader:
-                signals = signals.to(device)
-                outputs = model(signals)
-                probs = torch.softmax(outputs, dim=1)
-                preds = outputs.argmax(dim=1)
-
-                all_preds.append(preds.cpu().numpy())
-                all_labels.append(labels.numpy())
-                all_probs.append(probs.cpu().numpy())
-
         np.savez(
             pred_path,
-            predictions=np.concatenate(all_preds),
-            labels=np.concatenate(all_labels),
-            probabilities=np.concatenate(all_probs)
+            predictions=all_preds,
+            labels=all_labels,
+            probabilities=all_probs
         )
         logger.info(f"✓ Saved predictions to {pred_path}")
 
