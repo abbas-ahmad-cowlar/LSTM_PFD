@@ -185,7 +185,7 @@ def example_5_training_setup():
 
     # Create optimizer and loss
     print("Creating optimizer and loss function...")
-    optimizer = create_optimizer('adam', model.parameters(), lr=0.001)
+    optimizer = create_optimizer(model.parameters(), 'adam', lr=0.001)
     criterion = create_loss_function('cross_entropy', num_classes=11)
 
     print(f"  Optimizer: {optimizer.__class__.__name__}")
@@ -200,22 +200,33 @@ def example_5_training_setup():
     device = get_device()
     print(f"\nDevice: {device}")
 
+    # Create dummy dataloaders for demonstration
+    print("\nCreating dummy dataloaders for demonstration...")
+    from torch.utils.data import TensorDataset, DataLoader
+    dummy_signals = torch.randn(32, 1, 102400)
+    dummy_labels = torch.randint(0, 11, (32,))
+    dummy_dataset = TensorDataset(dummy_signals, dummy_labels)
+    dummy_train_loader = DataLoader(dummy_dataset, batch_size=8)
+    dummy_val_loader = DataLoader(dummy_dataset, batch_size=8)
+    print("  Dummy dataloaders created (32 samples)")
+
     # Create trainer
     print("\nCreating trainer...")
     trainer = CNNTrainer(
         model=model,
-        criterion=criterion,
+        train_loader=dummy_train_loader,
+        val_loader=dummy_val_loader,
         optimizer=optimizer,
+        criterion=criterion,
         device=device,
-        scheduler=scheduler,
-        early_stopping_patience=15,
-        checkpoint_dir='results/checkpoints/hybrid/example',
+        lr_scheduler=scheduler,
+        checkpoint_dir=Path('results/checkpoints/hybrid/example'),
         mixed_precision=True
     )
 
     print("  Trainer created successfully!")
     print("\nTo start training, you would call:")
-    print("  trainer.train(train_loader, val_loader, num_epochs=75, verbose=True)")
+    print("  trainer.fit(num_epochs=75, save_best=True, verbose=True)")
 
 
 def example_6_model_inference():
