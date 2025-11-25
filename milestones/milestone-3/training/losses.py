@@ -168,3 +168,62 @@ def compute_class_weights(targets: torch.Tensor, num_classes: int) -> torch.Tens
     weights = total / (num_classes * class_counts + 1e-10)
 
     return weights
+
+
+def create_loss_function(
+    loss_name: str = 'cross_entropy',
+    num_classes: int = NUM_CLASSES,
+    **kwargs
+) -> nn.Module:
+    """
+    Factory function to create loss function by name.
+
+    Args:
+        loss_name: Type of loss function
+            - 'cross_entropy': Standard cross-entropy loss
+            - 'focal': Focal loss for class imbalance
+            - 'label_smoothing': Cross-entropy with label smoothing
+            - 'physics': Physics-informed loss (for PINN models)
+        num_classes: Number of output classes (default: 11)
+        **kwargs: Loss-specific arguments
+            For 'focal': alpha, gamma
+            For 'label_smoothing': smoothing
+            For 'physics': data_weight, physics_weight
+
+    Returns:
+        Loss function module
+
+    Example:
+        >>> criterion = create_loss_function('cross_entropy')
+        >>> criterion = create_loss_function('focal', gamma=2.0)
+        >>> criterion = create_loss_function('label_smoothing', smoothing=0.1)
+    """
+    loss_name = loss_name.lower()
+
+    if loss_name in ['cross_entropy', 'ce']:
+        # Standard cross-entropy loss
+        weight = kwargs.get('weight', None)
+        return nn.CrossEntropyLoss(weight=weight)
+
+    elif loss_name == 'focal':
+        # Focal loss for class imbalance
+        alpha = kwargs.get('alpha', None)
+        gamma = kwargs.get('gamma', 2.0)
+        return FocalLoss(alpha=alpha, gamma=gamma)
+
+    elif loss_name in ['label_smoothing', 'ls']:
+        # Label smoothing cross-entropy
+        smoothing = kwargs.get('smoothing', 0.1)
+        return LabelSmoothingCrossEntropy(smoothing=smoothing)
+
+    elif loss_name in ['physics', 'physics_informed']:
+        # Physics-informed loss
+        data_weight = kwargs.get('data_weight', 1.0)
+        physics_weight = kwargs.get('physics_weight', 0.1)
+        return PhysicsInformedLoss(data_weight=data_weight, physics_weight=physics_weight)
+
+    else:
+        raise ValueError(
+            f"Unknown loss function: {loss_name}. "
+            f"Available: 'cross_entropy', 'focal', 'label_smoothing', 'physics'"
+        )
