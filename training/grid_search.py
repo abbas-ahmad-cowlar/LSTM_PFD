@@ -65,7 +65,7 @@ class GridSearchOptimizer:
             Dictionary with best hyperparameters
         """
         # For our custom models, we need to access the underlying sklearn model
-        if hasattr(model, 'model'):
+        if hasattr(model, 'model') and model.model is not None:
             sklearn_model = model.model
         else:
             sklearn_model = model

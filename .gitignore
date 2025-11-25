@@ -86,3 +86,11 @@ results/
 outputs/
 mlruns/
 wandb/
+
+# Milestones generated data
+milestones/*/data/raw/
+milestones/*/data/processed/
+milestones/*/data/spectrograms/
+milestones/*/checkpoints/
+milestones/*/results/
+milestones/*/logs/

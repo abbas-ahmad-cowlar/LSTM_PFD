@@ -317,14 +317,40 @@ class DataConfig(BaseConfig):
         """
         Import configuration from MATLAB .mat file structure.
 
+        DEPRECATED: This method is not implemented.
+        Use data.matlab_importer.MatlabImporter instead for loading MATLAB data.
+
         Args:
             mat_config: Dictionary from scipy.io.loadmat
 
         Returns:
             DataConfig object
+
+        Raises:
+            NotImplementedError: This method is deprecated and not implemented.
+                Use MatlabImporter for MATLAB data loading.
+
+        Example:
+            >>> # Instead of this:
+            >>> # config = DataConfig.from_matlab_struct(mat_data)
+            >>>
+            >>> # Use this:
+            >>> from data.matlab_importer import MatlabImporter
+            >>> importer = MatlabImporter()
+            >>> data = importer.load_mat_file('path/to/file.mat')
         """
-        # TODO: Implement MATLAB struct parsing
-        raise NotImplementedError("MATLAB import coming in data/matlab_importer.py")
+        import warnings
+        warnings.warn(
+            "DataConfig.from_matlab_struct() is not implemented and deprecated. "
+            "Use data.matlab_importer.MatlabImporter for loading MATLAB files.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        raise NotImplementedError(
+            "This method is deprecated. "
+            "Use data.matlab_importer.MatlabImporter instead. "
+            "Example: importer = MatlabImporter(); data = importer.load_mat_file('file.mat')"
+        )
 
     def get_total_signals(self) -> int:
         """Calculate total number of signals to generate."""

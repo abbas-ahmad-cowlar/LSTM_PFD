@@ -34,6 +34,22 @@ from .legacy_ensemble import (
     create_stacked_ensemble
 )
 
+# Phase 4: Advanced Transformer Variants
+from .transformer.vision_transformer_1d import (
+    VisionTransformer1D,
+    create_vit_1d,
+    vit_tiny_1d,
+    vit_small_1d,
+    vit_base_1d
+)
+from .hybrid.cnn_transformer import (
+    CNNTransformerHybrid,
+    create_cnn_transformer_hybrid,
+    cnn_transformer_small,
+    cnn_transformer_base,
+    cnn_transformer_large
+)
+
 
 # Model registry: Maps model names to creation functions
 MODEL_REGISTRY = {
@@ -50,6 +66,20 @@ MODEL_REGISTRY = {
     # Transformer
     'transformer': create_transformer,
     'signal_transformer': create_transformer,
+
+    # Vision Transformer 1D
+    'vit_1d': create_vit_1d,
+    'vision_transformer_1d': create_vit_1d,
+    'vit_tiny_1d': vit_tiny_1d,
+    'vit_small_1d': vit_small_1d,
+    'vit_base_1d': vit_base_1d,
+
+    # CNN-Transformer Hybrid
+    'cnn_transformer': create_cnn_transformer_hybrid,
+    'cnn_transformer_hybrid': create_cnn_transformer_hybrid,
+    'cnn_transformer_small': cnn_transformer_small,
+    'cnn_transformer_base': cnn_transformer_base,
+    'cnn_transformer_large': cnn_transformer_large,
 
     # Physics-informed
     'pinn': create_hybrid_pinn,
