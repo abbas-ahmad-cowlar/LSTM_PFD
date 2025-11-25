@@ -3,6 +3,7 @@ HPO Campaign callbacks (Phase 11C).
 Callbacks for HPO campaign management and monitoring.
 """
 import json
+import dash
 from dash import Input, Output, State, html, callback_context
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -176,7 +177,7 @@ def register_hpo_callbacks(app):
                 num_trials=int(num_trials),
                 metric=metric,
                 direction=direction,
-                created_by=get_current_user_id()
+                created_by=get_current_user_id() or 1  # Fallback to user 1 if no session
             )
 
             if not campaign_id:
@@ -232,7 +233,3 @@ def register_hpo_callbacks(app):
         except Exception as e:
             logger.error(f"Failed to stop campaign {campaign_id}: {e}", exc_info=True)
             raise PreventUpdate
-
-
-# Import dash for pattern matching callbacks
-import dash

@@ -37,8 +37,8 @@ import sys
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from data.spectrogram_generator import generate_stft_spectrogram, generate_mel_spectrogram
-from data.wavelet_transform import generate_cwt_scalogram
+from data.spectrogram_generator import SpectrogramGenerator
+from data.wavelet_transform import WaveletTransform
 from data.wigner_ville import generate_wvd
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
@@ -122,15 +122,18 @@ def plot_spectrogram_comparison(
 
     for ax, tfr_type in zip(axes, tfr_types):
         if tfr_type == 'STFT':
-            spec, f, t = generate_stft_spectrogram(signal, fs)
+            gen = SpectrogramGenerator(fs=fs)
+            spec, f, t = gen.generate_stft_spectrogram(signal)
             title = 'STFT Spectrogram'
 
         elif tfr_type == 'Mel':
-            spec, f, t = generate_mel_spectrogram(signal, fs)
+            gen = SpectrogramGenerator(fs=fs)
+            spec, f, t = gen.generate_mel_spectrogram(signal)
             title = 'Mel Spectrogram'
 
         elif tfr_type == 'CWT':
-            spec, freqs = generate_cwt_scalogram(signal, fs)
+            cwt = WaveletTransform(wavelet='morl', scales=128, fs=fs)
+            spec, freqs = cwt.generate_cwt_scalogram(signal)
             title = 'CWT Scalogram'
 
         elif tfr_type == 'WVD':

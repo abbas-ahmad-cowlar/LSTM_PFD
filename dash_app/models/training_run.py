@@ -13,7 +13,10 @@ class TrainingRun(BaseModel):
     epoch = Column(Integer, nullable=False)
     train_loss = Column(Float, nullable=False)
     val_loss = Column(Float, nullable=False)
+    train_accuracy = Column(Float, nullable=False)
     val_accuracy = Column(Float, nullable=False)
+    learning_rate = Column(Float)
+    duration_seconds = Column(Float)
     checkpoint_path = Column(String(500))
 
     experiment = relationship("Experiment", back_populates="training_runs")

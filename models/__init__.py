@@ -12,6 +12,22 @@ from .legacy_ensemble import (
     create_voting_ensemble,
     create_stacked_ensemble
 )
+
+# Phase 4: Advanced Transformer Variants
+from .transformer.vision_transformer_1d import (
+    VisionTransformer1D,
+    create_vit_1d,
+    vit_tiny_1d,
+    vit_small_1d,
+    vit_base_1d
+)
+from .hybrid.cnn_transformer import (
+    CNNTransformerHybrid,
+    create_cnn_transformer_hybrid,
+    cnn_transformer_small,
+    cnn_transformer_base,
+    cnn_transformer_large
+)
 from .model_factory import (
     create_model,
     create_model_from_config,
@@ -82,6 +98,18 @@ __all__ = [
     # Transformer
     'SignalTransformer',
     'create_transformer',
+
+    # Phase 4: Advanced Transformer Variants
+    'VisionTransformer1D',
+    'create_vit_1d',
+    'vit_tiny_1d',
+    'vit_small_1d',
+    'vit_base_1d',
+    'CNNTransformerHybrid',
+    'create_cnn_transformer_hybrid',
+    'cnn_transformer_small',
+    'cnn_transformer_base',
+    'cnn_transformer_large',
 
     # Physics-informed
     'HybridPINN',

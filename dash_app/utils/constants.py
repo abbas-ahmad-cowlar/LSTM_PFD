@@ -1,8 +1,19 @@
 """
 Global constants for the Dash application.
 """
+import sys
+from pathlib import Path
+
+# Add parent directory to path to import from main project
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
 from config import FAULT_CLASSES, COLOR_PALETTE
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+import utils.constants as parent_constants
+
+# Import core constants from parent project
+NUM_CLASSES = parent_constants.NUM_CLASSES
+SIGNAL_LENGTH = parent_constants.SIGNAL_LENGTH
+SAMPLING_RATE = parent_constants.SAMPLING_RATE
 
 # Fault class to index mapping
 FAULT_CLASS_TO_IDX = {fault: idx for idx, fault in enumerate(FAULT_CLASSES)}
