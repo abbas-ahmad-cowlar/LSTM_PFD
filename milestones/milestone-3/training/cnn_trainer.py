@@ -378,6 +378,7 @@ def test_cnn_trainer():
     from models.cnn.cnn_1d import CNN1D
     from training.cnn_optimizer import create_adamw_optimizer
     from training.cnn_losses import LabelSmoothingCrossEntropy
+    from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
     num_samples = 100
     signal_length = SIGNAL_LENGTH
