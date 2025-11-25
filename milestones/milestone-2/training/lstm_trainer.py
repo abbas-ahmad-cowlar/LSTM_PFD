@@ -17,7 +17,6 @@ import numpy as np
 from utils.early_stopping import EarlyStopping
 from utils.checkpoint_manager import CheckpointManager
 from utils.device_manager import get_device
-from .metrics import calculate_metrics
 
 
 class LSTMTrainer:
