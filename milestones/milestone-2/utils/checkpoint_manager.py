@@ -291,8 +291,19 @@ class CheckpointManager:
         is_best: bool
     ) -> str:
         """Generate checkpoint filename."""
+        import math
+
+        # Sanitize metric value for filename (handle NaN, inf)
+        if math.isnan(metric_value):
+            metric_str = "nan"
+        elif math.isinf(metric_value):
+            metric_str = "inf" if metric_value > 0 else "neg_inf"
+        else:
+            # Format value and replace problematic characters
+            metric_str = f"{metric_value:.4f}".replace('.', '_').replace('-', 'neg')
+
         best_str = '_best' if is_best else ''
-        filename = f"{self.filename_prefix}_epoch{epoch:03d}_{metric_name}{metric_value:.4f}{best_str}.pth"
+        filename = f"{self.filename_prefix}_epoch{epoch:03d}_{metric_name}{metric_str}{best_str}.pth"
         return filename
 
     def _cleanup_old_checkpoints(self):
