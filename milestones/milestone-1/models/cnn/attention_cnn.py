@@ -16,7 +16,7 @@ Architecture:
 
 Expected Performance: 94-96% test accuracy (2-3% improvement over baseline CNN)
 
-Author: Phase 2 - CNN Implementation
+Author: Syed Abbas Ahmad
 Date: 2025-11-20
 """
 
