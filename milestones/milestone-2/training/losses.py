@@ -168,3 +168,55 @@ def compute_class_weights(targets: torch.Tensor, num_classes: int) -> torch.Tens
     weights = total / (num_classes * class_counts + 1e-10)
 
     return weights
+
+
+def create_loss_function(
+    loss_name: str = 'cross_entropy',
+    num_classes: int = NUM_CLASSES,
+    label_smoothing: float = 0.1,
+    **kwargs
+) -> nn.Module:
+    """
+    Factory function to create loss functions.
+
+    Args:
+        loss_name: Name of loss function ('cross_entropy', 'label_smoothing', 'focal')
+        num_classes: Number of output classes
+        label_smoothing: Label smoothing factor (for label_smoothing loss)
+        **kwargs: Additional loss-specific arguments
+
+    Returns:
+        Loss function instance
+
+    Example:
+        >>> criterion = create_loss_function('cross_entropy', num_classes=11)
+        >>> criterion = create_loss_function('label_smoothing', label_smoothing=0.1)
+        >>> criterion = create_loss_function('focal', gamma=2.0)
+    """
+    loss_name = loss_name.lower()
+
+    if loss_name == 'cross_entropy' or loss_name == 'ce':
+        return nn.CrossEntropyLoss(**kwargs)
+
+    elif loss_name == 'label_smoothing' or loss_name == 'ls':
+        smoothing = kwargs.pop('smoothing', label_smoothing)
+        return LabelSmoothingCrossEntropy(smoothing=smoothing, **kwargs)
+
+    elif loss_name == 'focal':
+        gamma = kwargs.pop('gamma', 2.0)
+        alpha = kwargs.pop('alpha', None)
+        return FocalLoss(alpha=alpha, gamma=gamma, **kwargs)
+
+    elif loss_name == 'physics' or loss_name == 'pinn':
+        data_weight = kwargs.pop('data_weight', 1.0)
+        physics_weight = kwargs.pop('physics_weight', 0.1)
+        return PhysicsInformedLoss(
+            data_weight=data_weight,
+            physics_weight=physics_weight
+        )
+
+    else:
+        raise ValueError(
+            f"Unknown loss function: {loss_name}. "
+            f"Available: 'cross_entropy', 'label_smoothing', 'focal', 'physics'"
+        )
