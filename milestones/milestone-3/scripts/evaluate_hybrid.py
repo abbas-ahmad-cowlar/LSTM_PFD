@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-CNN Evaluation Script - Comprehensive evaluation of trained CNN models
+Hybrid CNN-LSTM Evaluation Script - Comprehensive evaluation of trained hybrid models
 
-Evaluates CNN models on test data with detailed metrics:
+Evaluates hybrid CNN-LSTM models on test data with detailed metrics:
 - Overall accuracy, precision, recall, F1-score
 - Per-class performance metrics
 - Confusion matrix analysis
@@ -11,16 +11,13 @@ Evaluates CNN models on test data with detailed metrics:
 - Visualization of results
 
 Usage:
-    # Evaluate a trained model
-    python scripts/evaluate_cnn.py --checkpoint checkpoints/cnn1d/model_best.pth
+    # Evaluate a trained hybrid model
+    python scripts/evaluate_hybrid.py --checkpoint checkpoints/recommended_1/model_best.pth --model recommended_1
 
     # Evaluate with detailed analysis
-    python scripts/evaluate_cnn.py --checkpoint model.pth --analyze-failures --plot-confusion
+    python scripts/evaluate_hybrid.py --checkpoint model.pth --model recommended_1 --analyze-failures --plot-confusion
 
-    # Compare multiple models
-    python scripts/evaluate_cnn.py --checkpoints model1.pth model2.pth model3.pth --compare
-
-Author: Phase 2 - CNN Implementation
+Author: Milestone 3 - CNN-LSTM Hybrid
 Date: 2025-11-20
 """
 
@@ -39,23 +36,14 @@ import seaborn as sns
 from typing import Dict, List
 
 # Import project modules
-from models.cnn.cnn_1d import CNN1D
-from models.cnn.attention_cnn import AttentionCNN1D, LightweightAttentionCNN
-from models.cnn.multi_scale_cnn import MultiScaleCNN1D, DilatedMultiScaleCNN
-from evaluation.cnn_evaluator import CNNEvaluator
+from models import create_model, list_available_models
 from data.cnn_dataloader import create_cnn_dataloaders
 from utils.device_manager import get_device
 from utils.logging import get_logger
 
 
-# Model registry
-MODEL_REGISTRY = {
-    'cnn1d': CNN1D,
-    'attention': AttentionCNN1D,
-    'attention-lite': LightweightAttentionCNN,
-    'multiscale': MultiScaleCNN1D,
-    'dilated': DilatedMultiScaleCNN
-}
+# Available hybrid models
+AVAILABLE_MODELS = list_available_models()
 
 # Class names for bearing faults
 CLASS_NAMES = [
@@ -83,9 +71,9 @@ def parse_args() -> argparse.Namespace:
     # Model arguments
     parser.add_argument('--checkpoint', type=str, required=True,
                        help='Path to model checkpoint')
-    parser.add_argument('--model', type=str, default=None,
-                       choices=list(MODEL_REGISTRY.keys()),
-                       help='Model architecture (auto-detected if None)')
+    parser.add_argument('--model', type=str, required=True,
+                       choices=AVAILABLE_MODELS,
+                       help='Hybrid model architecture (e.g., recommended_1, recommended_2, recommended_3, custom)')
 
     # Data arguments
     parser.add_argument('--data-dir', type=str, default='data/processed',

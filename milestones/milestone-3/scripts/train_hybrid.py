@@ -119,7 +119,7 @@ def main():
         print(f"  Size: {info['model_size_mb']:.2f} MB\n")
 
     # Create optimizer and loss
-    optimizer = create_optimizer('adam', model.parameters(), lr=args.lr)
+    optimizer = create_optimizer(model.parameters(), 'adam', lr=args.lr)
     criterion = create_loss_function('cross_entropy', num_classes=11)
 
     # Create scheduler
@@ -135,12 +135,13 @@ def main():
     # Train
     trainer = CNNTrainer(
         model=model,
-        criterion=criterion,
+        train_loader=train_loader,
+        val_loader=val_loader,
         optimizer=optimizer,
+        criterion=criterion,
         device=device,
-        scheduler=scheduler,
-        early_stopping_patience=15,
-        checkpoint_dir=str(checkpoint_dir),
+        lr_scheduler=scheduler,
+        checkpoint_dir=checkpoint_dir,
         mixed_precision=args.mixed_precision
     )
 
@@ -148,22 +149,43 @@ def main():
     print("  Starting Training")
     print("="*70 + "\n")
 
-    history = trainer.train(train_loader, val_loader, args.epochs, verbose=True)
+    history = trainer.fit(num_epochs=args.epochs, save_best=True, verbose=True)
 
-    # Final evaluation
+    # Final evaluation on test set
     print("\n" + "="*70)
     print("  Final Evaluation on Test Set")
     print("="*70 + "\n")
 
-    test_metrics = trainer.validate(test_loader)
-    print(f"Test Loss: {test_metrics['loss']:.4f}")
-    print(f"Test Accuracy: {test_metrics['accuracy']:.2f}%\n")
+    # Manual test set evaluation
+    model.eval()
+    test_loss = 0.0
+    correct = 0
+    total = 0
+
+    with torch.no_grad():
+        for signals, labels in test_loader:
+            signals = signals.to(device)
+            labels = labels.to(device)
+
+            outputs = model(signals)
+            loss = criterion(outputs, labels)
+
+            test_loss += loss.item() * signals.size(0)
+            _, predicted = outputs.max(1)
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+
+    test_loss = test_loss / total
+    test_acc = 100. * correct / total
+
+    print(f"Test Loss: {test_loss:.4f}")
+    print(f"Test Accuracy: {test_acc:.2f}%\n")
 
     print("="*70)
     print("  Training Complete!")
     print("="*70)
     print(f"\nBest val accuracy: {max(history['val_acc']):.2f}%")
-    print(f"Final test accuracy: {test_metrics['accuracy']:.2f}%")
+    print(f"Final test accuracy: {test_acc:.2f}%")
     print(f"\nCheckpoints: {checkpoint_dir}\n")
 
 
