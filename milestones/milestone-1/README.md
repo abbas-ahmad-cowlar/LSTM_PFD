@@ -260,7 +260,7 @@ data/raw/bearing_data/
 #### Step 2: Train a CNN Model
 
 ```bash
-# Train basic CNN (fastest, good baseline)
+# Train baseline CNN (fastest, good baseline)
 python scripts/train_cnn.py \
     --model cnn1d \
     --data-dir data/raw/bearing_data \
@@ -268,20 +268,23 @@ python scripts/train_cnn.py \
     --batch-size 32 \
     --lr 0.001
 
-# Train ResNet-34 (best accuracy)
+# Train Attention CNN (best performance)
 python scripts/train_cnn.py \
-    --model resnet34 \
+    --model attention \
     --data-dir data/raw/bearing_data \
-    --epochs 100 \
-    --batch-size 64 \
-    --mixed-precision
+    --epochs 50 \
+    --batch-size 32 \
+    --lr 0.001 \
+    --scheduler cosine \
+    --early-stopping
 
-# Train EfficientNet-B2 (balanced performance)
+# Train MultiScale CNN (multi-resolution features)
 python scripts/train_cnn.py \
-    --model efficientnet_b2 \
+    --model multiscale \
     --data-dir data/raw/bearing_data \
-    --epochs 75 \
-    --batch-size 48
+    --epochs 50 \
+    --batch-size 24 \
+    --lr 0.001
 ```
 
 #### Step 3: Evaluate Performance
