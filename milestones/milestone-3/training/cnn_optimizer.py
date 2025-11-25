@@ -338,6 +338,7 @@ def test_optimizers():
 
     # Create dummy model
     from models.cnn.cnn_1d import CNN1D
+    from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
     model = CNN1D(num_classes=NUM_CLASSES)
 
     # Test AdamW

@@ -152,6 +152,7 @@ For programmatic usage in your own scripts:
 
 ```python
 import torch
+from pathlib import Path
 from models import create_model, list_available_cnn_backbones, list_available_lstm_types
 from data.cnn_dataloader import create_cnn_dataloaders
 from training.cnn_trainer import CNNTrainer
@@ -192,24 +193,37 @@ train_loader, val_loader, test_loader = create_cnn_dataloaders(
 
 # Setup training
 device = get_device()
-optimizer = create_optimizer('adam', model.parameters(), lr=0.001)
+optimizer = create_optimizer(model.parameters(), 'adam', lr=0.001)
 criterion = create_loss_function('cross_entropy', num_classes=11)
 
 # Create trainer
 trainer = CNNTrainer(
     model=model,
-    criterion=criterion,
+    train_loader=train_loader,
+    val_loader=val_loader,
     optimizer=optimizer,
+    criterion=criterion,
     device=device,
-    checkpoint_dir='results/checkpoints/my_hybrid'
+    checkpoint_dir=Path('results/checkpoints/my_hybrid')
 )
 
 # Train
-history = trainer.train(train_loader, val_loader, num_epochs=75, verbose=True)
+history = trainer.fit(num_epochs=75, save_best=True, verbose=True)
 
-# Evaluate
-test_metrics = trainer.validate(test_loader)
-print(f"Test Accuracy: {test_metrics['accuracy']:.2f}%")
+# Evaluate on test set
+model.eval()
+correct = 0
+total = 0
+with torch.no_grad():
+    for signals, labels in test_loader:
+        signals, labels = signals.to(device), labels.to(device)
+        outputs = model(signals)
+        _, predicted = outputs.max(1)
+        total += labels.size(0)
+        correct += predicted.eq(labels).sum().item()
+
+test_accuracy = 100. * correct / total
+print(f"Test Accuracy: {test_accuracy:.2f}%")
 ```
 
 ---
