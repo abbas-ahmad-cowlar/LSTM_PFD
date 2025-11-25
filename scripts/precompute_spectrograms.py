@@ -63,6 +63,13 @@ def precompute_spectrograms(
     print(f"Input: {signals_cache}")
     print(f"Output: {output_dir}\n")
 
+    # Validate input file exists
+    if not Path(signals_cache).exists():
+        raise FileNotFoundError(
+            f"Signals cache not found: {signals_cache}\n"
+            f"Please run: python scripts/import_mat_dataset.py first"
+        )
+
     # Create output directory
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -89,6 +96,18 @@ def precompute_spectrograms(
     # Load signals
     print("Loading signals...")
     with h5py.File(signals_cache, 'r') as hf:
+        # Validate HDF5 structure
+        if 'signals' not in hf:
+            raise ValueError(
+                f"Invalid cache file: missing 'signals' dataset\n"
+                f"File may be corrupted. Please regenerate with import_mat_dataset.py"
+            )
+        if 'labels' not in hf:
+            raise ValueError(
+                f"Invalid cache file: missing 'labels' dataset\n"
+                f"File may be corrupted. Please regenerate with import_mat_dataset.py"
+            )
+
         signals = hf['signals'][:]
         labels = hf['labels'][:]
 
@@ -100,6 +119,7 @@ def precompute_spectrograms(
             use_splits = True
         else:
             use_splits = False
+            print("Warning: No train/val/test splits found in cache. All data will be processed together.")
 
     print(f"Loaded {len(signals)} signals")
 

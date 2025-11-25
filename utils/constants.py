@@ -88,6 +88,25 @@ MIXED_FAULT_TYPES: List[str] = [
     'mixed_misalign_imbalance', 'mixed_wear_lube', 'mixed_cavit_jeu'
 ]
 
+# Phase 6 PINN-compatible fault labels (English naming for physics models)
+# These map to the same indices as FAULT_TYPES but use English/physics terminology
+FAULT_LABELS_PINN = {
+    0: 'healthy',
+    1: 'misalignment',
+    2: 'imbalance',
+    3: 'outer_race',
+    4: 'inner_race',
+    5: 'ball',
+    6: 'looseness',
+    7: 'oil_whirl',
+    8: 'cavitation',
+    9: 'wear',
+    10: 'lubrication'
+}
+
+# Use PINN labels as default alias for backward compatibility with Phase 6
+FAULT_LABELS = FAULT_LABELS_PINN
+
 
 # ==============================================================================
 # MODEL ARCHITECTURE DEFAULTS
@@ -433,9 +452,6 @@ DEFAULT_LOAD_RANGE_MAX_PERCENT: int = 100  # Default maximum load percentage
 # Temperature range defaults
 DEFAULT_TEMP_RANGE_MIN: int = 40  # Default minimum temperature (°C)
 DEFAULT_TEMP_RANGE_MAX: int = 80  # Default maximum temperature (°C)
-
-# Random seed defaults
-DEFAULT_RANDOM_SEED: int = 42  # Default random seed for reproducibility
 
 # Estimation constants
 SIGNALS_PER_MINUTE_GENERATION: int = 50  # Estimated signals generated per minute

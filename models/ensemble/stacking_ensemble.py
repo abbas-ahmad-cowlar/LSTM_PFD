@@ -208,7 +208,7 @@ def create_meta_features(
     all_features = []
     all_labels = []
 
-    for model in base_models:
+    for model_idx, model in enumerate(base_models):
         model.eval()
         model_outputs = []
 
@@ -230,8 +230,8 @@ def create_meta_features(
 
                 model_outputs.append(outputs.cpu().numpy())
 
-                # Collect labels only once
-                if len(all_labels) == 0 and y is not None:
+                # Collect labels from ALL batches, but only during first model iteration
+                if model_idx == 0 and y is not None:
                     all_labels.append(y.cpu().numpy())
 
         all_features.append(np.concatenate(model_outputs, axis=0))

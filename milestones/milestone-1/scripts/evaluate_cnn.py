@@ -37,6 +37,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from typing import Dict, List
+<<<<<<< HEAD
+=======
+from sklearn.metrics import roc_curve, auc
+from sklearn.preprocessing import label_binarize
+>>>>>>> run/milestone-1
 
 # Import project modules
 from models.cnn.cnn_1d import CNN1D
@@ -143,15 +148,46 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
     if 'model_state_dict' in checkpoint:
         state_dict = checkpoint['model_state_dict']
         # Find classifier layer
+<<<<<<< HEAD
         for key in state_dict.keys():
             if 'classifier' in key and 'weight' in key and key.endswith('.weight'):
                 num_classes = state_dict[key].shape[0]
                 break
+=======
+        classifier_keys = [k for k in state_dict.keys() if 'classifier' in k and 'weight' in k and k.endswith('.weight')]
+        if classifier_keys:
+            # Sort by index if possible (assuming classifier.N.weight)
+            try:
+                # Extract index from classifier.N.weight
+                classifier_keys.sort(key=lambda x: int(x.split('.')[-2]))
+                last_key = classifier_keys[-1]
+                num_classes = state_dict[last_key].shape[0]
+            except:
+                # Fallback: pick the one with size matching NUM_CLASSES (11) if exists
+                found = False
+                for key in classifier_keys:
+                    if state_dict[key].shape[0] == NUM_CLASSES:
+                        num_classes = NUM_CLASSES
+                        found = True
+                        break
+                if not found:
+                    # Fallback to the last one in the list
+                    num_classes = state_dict[classifier_keys[-1]].shape[0]
+>>>>>>> run/milestone-1
         else:
             num_classes = NUM_CLASSES  # Default if not found
     else:
         num_classes = NUM_CLASSES  # Default
 
+<<<<<<< HEAD
+=======
+    # Get signal length from checkpoint
+    signal_length = 102400
+    if 'args' in checkpoint and 'signal_length' in checkpoint['args']:
+        signal_length = checkpoint['args']['signal_length']
+        print(f"✓ Detected signal length from checkpoint: {signal_length}")
+
+>>>>>>> run/milestone-1
     # Create model with correct parameters for each architecture
     if model_type == 'cnn1d':
         # CNN1D uses: num_classes, input_channels, dropout, use_batch_norm
@@ -165,7 +201,11 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
         # AttentionCNN uses: num_classes, input_length, in_channels, dropout
         model = model_class(
             num_classes=num_classes,
+<<<<<<< HEAD
             input_length=102400,
+=======
+            input_length=signal_length,
+>>>>>>> run/milestone-1
             in_channels=1,
             dropout=0.3
         )
@@ -173,7 +213,11 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
         # MultiScaleCNN uses: num_classes, input_length, in_channels, dropout
         model = model_class(
             num_classes=num_classes,
+<<<<<<< HEAD
             input_length=102400,
+=======
+            input_length=signal_length,
+>>>>>>> run/milestone-1
             in_channels=1,
             dropout=0.3
         )
@@ -181,7 +225,11 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
         # Default for other models
         model = model_class(
             num_classes=num_classes,
+<<<<<<< HEAD
             input_length=102400,
+=======
+            input_length=signal_length,
+>>>>>>> run/milestone-1
             in_channels=1
         )
 
@@ -190,10 +238,17 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
     model.to(device)
     model.eval()
 
+<<<<<<< HEAD
     return model, checkpoint
 
 
 def load_test_data(args, logger):
+=======
+    return model, checkpoint, signal_length
+
+
+def load_test_data(args, logger, target_length=102400):
+>>>>>>> run/milestone-1
     """Load test data"""
     logger.info("Loading test data...")
 
@@ -209,6 +264,20 @@ def load_test_data(args, logger):
     logger.info(f"  Signal shape: {signals.shape}")
     logger.info(f"  Classes: {len(np.unique(labels))}")
 
+<<<<<<< HEAD
+=======
+    # Downsample signals if needed
+    original_length = signals.shape[1]
+    if target_length < original_length:
+        logger.info(f"Downsampling signals from {original_length} to {target_length}...")
+        # Simple decimation: take every Nth sample
+        downsample_factor = original_length // target_length
+        signals = signals[:, ::downsample_factor][:, :target_length]
+        logger.info(f"✓ Downsampled signal shape: {signals.shape}")
+    elif target_length > original_length:
+        logger.warning(f"Target length {target_length} > original {original_length}. Using original length.")
+
+>>>>>>> run/milestone-1
     # Split into train/val/test (70/15/15) - we only need test
     train_signals, temp_signals, train_labels, temp_labels = train_test_split(
         signals, labels, test_size=0.3, random_state=args.seed, stratify=labels
@@ -303,17 +372,30 @@ def print_per_class_metrics(metrics, class_names):
     print("-" * 80)
 
     for idx, class_name in enumerate(class_names):
+<<<<<<< HEAD
         precision = metrics['precision'][idx]
         recall = metrics['recall'][idx]
         f1 = metrics['f1'][idx]
         support = metrics['support'][idx]
+=======
+        precision = metrics['precision_per_class'][idx]
+        recall = metrics['recall_per_class'][idx]
+        f1 = metrics['f1_per_class'][idx]
+        support = metrics['support_per_class'][idx]
+>>>>>>> run/milestone-1
 
         print(f"{class_name:<25} {precision:>10.3f} {recall:>10.3f} {f1:>10.3f} {support:>10}")
 
     print("-" * 80)
+<<<<<<< HEAD
     print(f"{'Average (macro)':<25} {metrics['macro_precision']:>10.3f} "
           f"{metrics['macro_recall']:>10.3f} {metrics['macro_f1']:>10.3f} "
           f"{sum(metrics['support']):>10}")
+=======
+    print(f"{'Average (macro)':<25} {metrics['precision_macro']:>10.3f} "
+          f"{metrics['recall_macro']:>10.3f} {metrics['f1_macro']:>10.3f} "
+          f"{sum(metrics['support_per_class']):>10}")
+>>>>>>> run/milestone-1
     print("=" * 80)
 
 
@@ -340,8 +422,16 @@ def main():
 
     # Load model
     logger.info(f"Loading model from {args.checkpoint}...")
+<<<<<<< HEAD
     model, checkpoint = load_model(args.checkpoint, args.model, device)
     logger.info(f"✓ Model loaded")
+=======
+    model, checkpoint, signal_length = load_model(args.checkpoint, args.model, device)
+    logger.info("✓ Model loaded successfully")
+
+    # Load data
+    test_loader = load_test_data(args, logger, target_length=signal_length)
+>>>>>>> run/milestone-1
     logger.info(f"  Parameters: {sum(p.numel() for p in model.parameters()):,}")
 
     if 'epoch' in checkpoint:
@@ -353,24 +443,61 @@ def main():
     test_loader = load_test_data(args, logger)
 
     # Create evaluator
+<<<<<<< HEAD
     evaluator = CNNEvaluator(model, device=device)
+=======
+    evaluator = CNNEvaluator(model, device=device, class_names=CLASS_NAMES)
+>>>>>>> run/milestone-1
 
     # Run evaluation
     logger.info("\nRunning evaluation...")
     results = evaluator.evaluate(
+<<<<<<< HEAD
         test_loader,
         class_names=CLASS_NAMES,
         compute_roc=args.plot_roc
     )
 
+=======
+        test_loader
+    )
+
+    # Compute ROC if needed
+    if args.plot_roc:
+        logger.info("Computing ROC curves...")
+        # Get probabilities
+        all_preds, all_labels, all_probs = evaluator.predict(test_loader, return_labels=True, return_probs=True)
+        
+        # Binarize labels
+        y_test = label_binarize(all_labels, classes=range(len(CLASS_NAMES)))
+        n_classes = y_test.shape[1]
+        
+        roc_data = {'fpr': {}, 'tpr': {}, 'auc': {}}
+        
+        for i in range(n_classes):
+            fpr, tpr, _ = roc_curve(y_test[:, i], all_probs[:, i])
+            roc_auc = auc(fpr, tpr)
+            roc_data['fpr'][i] = fpr
+            roc_data['tpr'][i] = tpr
+            roc_data['auc'][i] = roc_auc
+            
+        results['roc_curves'] = roc_data
+
+>>>>>>> run/milestone-1
     # Print results
     print("\n" + "=" * 80)
     print("Evaluation Results")
     print("=" * 80)
     print(f"Overall Accuracy:  {results['accuracy']:.4f}")
+<<<<<<< HEAD
     print(f"Average Precision: {results['macro_precision']:.4f}")
     print(f"Average Recall:    {results['macro_recall']:.4f}")
     print(f"Average F1-Score:  {results['macro_f1']:.4f}")
+=======
+    print(f"Average Precision: {results['precision_macro']:.4f}")
+    print(f"Average Recall:    {results['recall_macro']:.4f}")
+    print(f"Average F1-Score:  {results['f1_macro']:.4f}")
+>>>>>>> run/milestone-1
     print("=" * 80)
 
     # Per-class metrics
@@ -409,7 +536,11 @@ def main():
         if failure_analysis['most_confused_pairs']:
             print("\nMost confused pairs:")
             for (true_idx, pred_idx), count in failure_analysis['most_confused_pairs'][:5]:
+<<<<<<< HEAD
                 print(f"  {CLASS_NAMES[true_idx]:>20} → {CLASS_NAMES[pred_idx]:<20}: {count} cases")
+=======
+                print(f"  {CLASS_NAMES[true_idx]:>20} → {CLASS_NAMES[pred_idx]:<20}: {count} cases") 
+>>>>>>> run/milestone-1
 
     # Save predictions
     if args.save_predictions:

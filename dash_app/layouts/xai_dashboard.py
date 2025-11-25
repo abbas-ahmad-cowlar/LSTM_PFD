@@ -5,6 +5,7 @@ Interactive dashboard for SHAP, LIME, and Grad-CAM explanations.
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+from config import FAULT_CLASSES
 
 
 def create_xai_dashboard_layout():
@@ -144,12 +145,7 @@ def create_xai_dashboard_layout():
 
 def create_xai_prediction_card(prediction, probabilities, true_label=None):
     """Create prediction display card."""
-    fault_classes = [
-        "Normal", "Ball Fault", "Inner Race", "Outer Race", "Combined",
-        "Imbalance", "Misalignment", "Oil Whirl", "Cavitation", "Looseness", "Oil Deficiency"
-    ]
-
-    predicted_class = fault_classes[prediction] if prediction < len(fault_classes) else f"Class {prediction}"
+    predicted_class = FAULT_CLASSES[prediction] if prediction < len(FAULT_CLASSES) else f"Class {prediction}"
     confidence = probabilities[prediction] if probabilities else 0
 
     return html.Div([
@@ -162,7 +158,7 @@ def create_xai_prediction_card(prediction, probabilities, true_label=None):
             dbc.Col([
                 html.H6("True Label" if true_label is not None else "Confidence"),
                 html.H4(
-                    fault_classes[true_label] if true_label is not None else f"{confidence:.2%}",
+                    FAULT_CLASSES[true_label] if true_label is not None else f"{confidence:.2%}",
                     className="text-success" if true_label == prediction else "text-danger"
                 ),
                 html.P(
@@ -177,7 +173,7 @@ def create_xai_prediction_card(prediction, probabilities, true_label=None):
         html.H6("Top 5 Predictions", className="mb-3"),
         html.Div([
             dbc.Row([
-                dbc.Col(f"{i+1}. {fault_classes[idx]}", width=6),
+                dbc.Col(f"{i+1}. {FAULT_CLASSES[idx]}", width=6),
                 dbc.Col(dbc.Progress(value=prob * 100, label=f"{prob:.1%}", size="sm"), width=6),
             ], className="mb-2")
             for i, (idx, prob) in enumerate(sorted(enumerate(probabilities), key=lambda x: x[1], reverse=True)[:5])

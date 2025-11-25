@@ -97,27 +97,39 @@ class FeatureExtractor:
             signal: Input vibration signal (1D array)
 
         Returns:
-            Dictionary with time-domain features (RMS, Kurtosis, etc.)
+            Dictionary with time-domain features in both naming conventions:
+            - Capitalized: 'RMS', 'Kurtosis', 'Skewness' (original format)
+            - Lowercase: 'rms', 'kurtosis', 'skewness' (for test compatibility)
+            - Additional: 'mean', 'std', 'peak' (basic statistics)
+
+        Note:
+            Dual naming convention is provided for backward compatibility.
+            New code should use lowercase names following Python conventions.
 
         Example:
             >>> features = extractor.extract_time_domain_features(signal)
             >>> print(features['mean'], features['std'], features['rms'])
+            >>> # Both work: features['RMS'] == features['rms']
         """
         time_features = extract_time_domain_features(signal)
-        # Add common aliases for test compatibility
+
+        # Create result with both naming conventions
         result = dict(time_features)
+
+        # Add basic statistics if not present
         if 'RMS' in result and 'mean' not in result:
-            # Calculate mean for test expectations
             result['mean'] = np.mean(signal)
             result['std'] = np.std(signal)
             result['peak'] = np.max(np.abs(signal))
-        # Map existing features to expected names
+
+        # Add lowercase aliases for Python convention
         if 'RMS' in result:
             result['rms'] = result['RMS']
         if 'Kurtosis' in result:
             result['kurtosis'] = result['Kurtosis']
         if 'Skewness' in result:
             result['skewness'] = result['Skewness']
+
         return result
 
     def extract_frequency_domain_features(self, signal: np.ndarray) -> Dict[str, float]:
@@ -128,19 +140,30 @@ class FeatureExtractor:
             signal: Input vibration signal (1D array)
 
         Returns:
-            Dictionary with frequency-domain features
+            Dictionary with frequency-domain features in both naming conventions:
+            - Capitalized: 'SpectralCentroid', 'SpectralEntropy' (original format)
+            - Lowercase: 'spectral_centroid', 'spectral_entropy' (for test compatibility)
+
+        Note:
+            Dual naming convention is provided for backward compatibility.
+            New code should use lowercase names following Python conventions.
 
         Example:
             >>> features = extractor.extract_frequency_domain_features(signal)
             >>> print(features['spectral_centroid'])
+            >>> # Both work: features['SpectralCentroid'] == features['spectral_centroid']
         """
         freq_features = extract_frequency_domain_features(signal, self.fs)
-        # Map to expected names for tests
+
+        # Create result with both naming conventions
         result = dict(freq_features)
+
+        # Add lowercase aliases for Python convention
         if 'SpectralCentroid' in result:
             result['spectral_centroid'] = result['SpectralCentroid']
         if 'SpectralEntropy' in result:
             result['spectral_entropy'] = result['SpectralEntropy']
+
         # Calculate spectral spread if not present
         if 'spectral_spread' not in result:
             # Approximate spectral spread from spectral std
@@ -148,6 +171,7 @@ class FeatureExtractor:
                 result['spectral_spread'] = result['SpectralStd']
             else:
                 result['spectral_spread'] = 0.0
+
         return result
 
     def extract_features_dict(self, signal: np.ndarray) -> Dict[str, float]:
