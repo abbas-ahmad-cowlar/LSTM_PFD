@@ -43,7 +43,7 @@ def create_optimizer(
 
     Example:
         >>> optimizer = create_optimizer(
-        ...     model.parameters(),
+        ...     model_params=model.parameters(),
         ...     optimizer_name='adam',
         ...     lr=1e-3,
         ...     weight_decay=1e-4

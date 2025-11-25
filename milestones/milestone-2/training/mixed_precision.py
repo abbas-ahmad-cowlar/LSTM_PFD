@@ -5,17 +5,23 @@ Provides support for FP16 training to:
 - Reduce memory usage
 - Speed up training
 - Maintain numerical stability
+
+DEPRECATION NOTICE:
+This module is currently not functional due to missing base Trainer class.
+For LSTM training with mixed precision, use LSTMTrainer with mixed_precision=True.
+
+Example:
+    >>> from training.lstm_trainer import LSTMTrainer
+    >>> trainer = LSTMTrainer(model, criterion, optimizer, mixed_precision=True)
 """
 
 import torch
 import torch.nn as nn
 from torch.cuda.amp import autocast, GradScaler
 from typing import Optional
-from .trainer import Trainer
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
-class MixedPrecisionTrainer(Trainer):
+class MixedPrecisionTrainer(object):
     """
     Trainer with mixed precision training support.
 
