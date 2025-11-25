@@ -37,7 +37,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from models.spectrogram_cnn import get_model
-from data.tfr_dataset import load_spectrograms, create_tfr_dataloaders
+from data.tfr_dataset import create_tfr_dataloaders
 from training.spectrogram_trainer import SpectrogramTrainer
 from evaluation.spectrogram_evaluator import SpectrogramEvaluator
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
@@ -219,7 +219,7 @@ def main():
 
     try:
         train_loader, val_loader, test_loader = create_tfr_dataloaders(
-            data_dir=args.data_dir / args.tfr_type,
+            data_dir=str(args.data_dir / args.tfr_type),
             batch_size=args.batch_size,
             num_workers=args.num_workers
         )
@@ -228,7 +228,7 @@ def main():
         print(f"Validation samples: {len(val_loader.dataset)}")
         print(f"Test samples: {len(test_loader.dataset)}")
 
-    except FileNotFoundError as e:
+    except (FileNotFoundError, ValueError) as e:
         print(f"\n❌ Error: {e}")
         print("\nPlease run the following command first to precompute spectrograms:")
         print(f"  python scripts/precompute_spectrograms.py --tfr_type {args.tfr_type}")

@@ -3,7 +3,7 @@ API Key Management Callbacks (Feature #1).
 Handles UI interactions for API key management.
 """
 import json
-from dash import Input, Output, State, html, callback_context
+from dash import Input, Output, State, html, ALL, ctx
 import dash_bootstrap_components as dbc
 from datetime import datetime
 
@@ -141,7 +141,6 @@ def register_api_key_callbacks(app):
     )
     def toggle_generate_modal(gen_clicks, cancel_clicks, confirm_clicks, is_open):
         """Toggle generate key modal."""
-        ctx = callback_context
         if not ctx.triggered:
             return is_open
 
@@ -243,9 +242,85 @@ def register_api_key_callbacks(app):
                 color="success"
             )
 
-            # Reload table
+            # Build updated table (inline to avoid calling callback directly)
             keys = APIKeyService.list_user_keys(user_id, include_inactive=True)
-            table = load_api_keys_table('api-keys')
+
+            # Build table inline
+            table_header = html.Thead(html.Tr([
+                html.Th("Name"),
+                html.Th("Key Prefix"),
+                html.Th("Rate Limit"),
+                html.Th("Scopes"),
+                html.Th("Status"),
+                html.Th("Last Used"),
+                html.Th("Created"),
+                html.Th("Actions")
+            ]))
+
+            table_rows = []
+            for key in keys:
+                # Status badge
+                if not key.is_active:
+                    status_badge = dbc.Badge("Revoked", color="danger", className="me-1")
+                elif key.is_expired():
+                    status_badge = dbc.Badge("Expired", color="warning", className="me-1")
+                else:
+                    status_badge = dbc.Badge("Active", color="success", className="me-1")
+
+                # Scopes badges
+                scope_badges = [
+                    dbc.Badge(scope, color="secondary", className="me-1")
+                    for scope in (key.scopes or [])
+                ]
+
+                # Last used
+                last_used = (
+                    key.last_used_at.strftime("%Y-%m-%d %H:%M")
+                    if key.last_used_at else "Never"
+                )
+
+                # Created at
+                created = key.created_at.strftime("%Y-%m-%d")
+
+                # Actions
+                actions = dbc.ButtonGroup([
+                    dbc.Button(
+                        html.I(className="bi bi-info-circle"),
+                        id={'type': 'view-key-btn', 'index': key.id},
+                        color="info",
+                        size="sm",
+                        title="View details"
+                    ),
+                    dbc.Button(
+                        html.I(className="bi bi-trash"),
+                        id={'type': 'revoke-key-btn', 'index': key.id},
+                        color="danger",
+                        size="sm",
+                        disabled=not key.is_active,
+                        title="Revoke key"
+                    )
+                ], size="sm")
+
+                row = html.Tr([
+                    html.Td(key.name),
+                    html.Td(html.Code(f"{key.prefix}...")),
+                    html.Td(f"{key.rate_limit:,}/hr"),
+                    html.Td(scope_badges),
+                    html.Td(status_badge),
+                    html.Td(last_used, className="text-muted small"),
+                    html.Td(created, className="text-muted small"),
+                    html.Td(actions)
+                ])
+                table_rows.append(row)
+
+            table_body = html.Tbody(table_rows)
+            table = dbc.Table(
+                [table_header, table_body],
+                bordered=True,
+                hover=True,
+                responsive=True,
+                striped=True
+            )
 
             return key_display, success_msg, table
 
@@ -270,7 +345,7 @@ def register_api_key_callbacks(app):
             Output('revoke-key-info', 'children')
         ],
         [
-            Input({'type': 'revoke-key-btn', 'index': dash.ALL}, 'n_clicks'),
+            Input({'type': 'revoke-key-btn', 'index': ALL}, 'n_clicks'),
             Input('cancel-revoke-btn', 'n_clicks'),
             Input('confirm-revoke-btn', 'n_clicks')
         ],
@@ -282,7 +357,6 @@ def register_api_key_callbacks(app):
     )
     def handle_revoke_key(revoke_clicks, cancel_clicks, confirm_clicks, is_open, selected_key_id):
         """Handle revoke key modal and action."""
-        ctx = callback_context
         if not ctx.triggered:
             return is_open, selected_key_id, html.Div()
 

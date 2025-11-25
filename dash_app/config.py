@@ -9,7 +9,7 @@ Security Note:
 """
 import os
 from pathlib import Path
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+from utils.constants import SIGNAL_LENGTH, SAMPLING_RATE
 
 # Import validator for lazy validation (only validates when config is imported)
 # This allows tests and scripts to run without full config
@@ -85,6 +85,25 @@ FAULT_CLASSES = [
     "imbalance", "misalignment", "oil_whirl", "cavitation", "looseness", "oil_deficiency"
 ]
 NUM_CLASSES = len(FAULT_CLASSES)
+
+# Mapping between Dashboard fault names and Phase 0 fault names
+# Dashboard uses English names, Phase 0 uses French names from data generation
+DASHBOARD_TO_PHASE0_FAULT_MAP = {
+    "normal": "sain",
+    "misalignment": "desalignement",
+    "imbalance": "desequilibre",
+    "looseness": "jeu",
+    "oil_deficiency": "lubrification",
+    "cavitation": "cavitation",
+    "ball_fault": "usure",  # Using 'wear' as closest match
+    "oil_whirl": "oilwhirl",
+    "inner_race": "mixed_wear_lube",  # These may need custom mapping
+    "outer_race": "mixed_cavit_jeu",
+    "combined": "mixed_misalign_imbalance"
+}
+
+# Reverse mapping for Phase 0 to Dashboard
+PHASE0_TO_DASHBOARD_FAULT_MAP = {v: k for k, v in DASHBOARD_TO_PHASE0_FAULT_MAP.items()}
 
 # Visualization Configuration
 PLOT_THEME = "plotly_white"

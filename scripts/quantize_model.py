@@ -139,7 +139,16 @@ def main():
 
     if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
         # Need to instantiate model class
-        logger.error("Checkpoint format requires model class. Please provide model architecture.")
+        logger.error(
+            "ERROR: Checkpoint contains state_dict, not the full model.\n"
+            "This script requires a checkpoint saved with the full model object.\n"
+            "\n"
+            "To fix this, save your checkpoint with:\n"
+            "  torch.save(model, 'model.pth')  # Save full model\n"
+            "\n"
+            "Instead of:\n"
+            "  torch.save({'model_state_dict': model.state_dict()}, 'model.pth')  # Don't use this format\n"
+        )
         return
 
     model = checkpoint
