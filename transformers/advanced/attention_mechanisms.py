@@ -67,10 +67,18 @@ class LinearAttention(nn.Module):
 
         # Linear attention computation
         # Instead of computing attention weights explicitly, we compute the numerator and denominator separately
-        k_cumsum = k.sum(dim=-2, keepdim=True)
-        kv = torch.einsum('bhnd,bhne->bhde', k, v)
-        z = 1.0 / (torch.einsum('bhnd,bhd->bhn', q, k_cumsum.squeeze(-2)) + 1e-6)
-        out = torch.einsum('bhnd,bhde,bhn->bhne', q, kv, z)
+        # Formula: out = (Q @ (K^T @ V)) / (Q @ K^T @ 1)
+        k_sum = k.sum(dim=-2)  # [B, heads, head_dim]
+        kv = torch.einsum('bhnd,bhne->bhde', k, v)  # [B, heads, head_dim, head_dim]
+
+        # Compute numerator: Q @ (K^T @ V)
+        numerator = torch.einsum('bhnd,bhde->bhne', q, kv)  # [B, heads, N, head_dim]
+
+        # Compute denominator: Q @ K^T @ 1
+        denominator = torch.einsum('bhnd,bhd->bhn', q, k_sum)  # [B, heads, N]
+
+        # Normalize: divide numerator by denominator
+        out = numerator / (denominator.unsqueeze(-1) + 1e-6)  # [B, heads, N, head_dim]
 
         # Reshape and project
         out = out.transpose(1, 2).reshape(B, N, C)
@@ -349,19 +357,18 @@ class SlidingWindowAttention(nn.Module):
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, self.head_dim).permute(2, 0, 3, 1, 4)
         q, k, v = qkv[0], qkv[1], qkv[2]
 
-        # For simplicity, we implement a basic sliding window using masking
-        # A more efficient implementation would use specialized kernels
+        # Compute attention scores
         attn = (q @ k.transpose(-2, -1)) * self.scale
 
-        # Create sliding window mask
-        window_mask = torch.ones(N, N, device=x.device)
-        for i in range(N):
-            start = max(0, i - self.window_size // 2)
-            end = min(N, i + self.window_size // 2 + 1)
-            window_mask[i, :start] = 0
-            window_mask[i, end:] = 0
+        # Create sliding window mask efficiently using vectorized operations
+        # Create position indices
+        positions = torch.arange(N, device=x.device)
+        # Compute pairwise distances: |i - j|
+        distance = torch.abs(positions.unsqueeze(0) - positions.unsqueeze(1))
+        # Mask out positions beyond window size
+        window_mask = distance <= (self.window_size // 2)
 
-        attn = attn.masked_fill(window_mask.unsqueeze(0).unsqueeze(0) == 0, float('-inf'))
+        attn = attn.masked_fill(~window_mask.unsqueeze(0).unsqueeze(0), float('-inf'))
 
         if mask is not None:
             attn = attn.masked_fill(mask == 0, float('-inf'))

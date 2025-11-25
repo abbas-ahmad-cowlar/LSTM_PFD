@@ -29,6 +29,8 @@ import torch
 from datetime import datetime
 
 from models import create_model
+from data.matlab_importer import MatlabImporter
+from data.cnn_dataset import create_cnn_datasets_from_arrays
 from data.cnn_dataloader import create_cnn_dataloaders
 from training.cnn_trainer import CNNTrainer
 from training.optimizers import create_optimizer
@@ -52,8 +54,9 @@ def parse_args():
                        choices=['mean', 'max', 'last', 'attention'])
     parser.add_argument('--freeze-cnn', action='store_true',
                        help='Freeze CNN weights')
-    
-    parser.add_argument('--data-dir', type=str, default='data/raw/bearing_data')
+
+    parser.add_argument('--data-dir', type=str, default='data/raw/bearing_data',
+                       help='Directory containing .mat files')
     parser.add_argument('--epochs', type=int, default=75)
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--lr', type=float, default=0.001)
@@ -63,6 +66,56 @@ def parse_args():
     parser.add_argument('--checkpoint-dir', type=str, default='results/checkpoints/hybrid')
     parser.add_argument('--seed', type=int, default=42)
     return parser.parse_args()
+
+
+def load_mat_files(data_dir: str, seed: int = 42):
+    """
+    Load .mat files from directory and prepare datasets.
+
+    Args:
+        data_dir: Directory containing .mat files
+        seed: Random seed for reproducibility
+
+    Returns:
+        (train_dataset, val_dataset, test_dataset) tuple
+    """
+    print(f"\nLoading .mat files from: {data_dir}")
+
+    data_path = Path(data_dir)
+    if not data_path.exists():
+        raise FileNotFoundError(
+            f"Data directory not found: {data_dir}\n"
+            f"Please ensure your .mat files are in this directory."
+        )
+
+    # Load all .mat files
+    importer = MatlabImporter()
+    batch_data = importer.load_batch(data_path, pattern='*.mat')
+
+    if not batch_data:
+        raise ValueError(f"No .mat files found in {data_dir}")
+
+    print(f"✓ Loaded {len(batch_data)} signals")
+
+    # Extract signals and labels as numpy arrays
+    signals, labels = importer.extract_signals_and_labels(batch_data)
+    print(f"✓ Signal array shape: {signals.shape}")
+    print(f"✓ Unique labels: {sorted(set(labels))}")
+
+    # Create train/val/test datasets
+    train_dataset, val_dataset, test_dataset = create_cnn_datasets_from_arrays(
+        signals=signals,
+        labels=labels,
+        train_ratio=0.7,
+        val_ratio=0.15,
+        test_ratio=0.15,
+        augment_train=True,
+        random_seed=seed
+    )
+
+    print(f"✓ Created datasets: train={len(train_dataset)}, val={len(val_dataset)}, test={len(test_dataset)}")
+
+    return train_dataset, val_dataset, test_dataset
 
 
 def main():
@@ -82,16 +135,25 @@ def main():
     print(f"  Freeze CNN: {args.freeze_cnn}")
     print(f"  Device: {device}\n")
 
-    # Create dataloaders
-    train_loader, val_loader, test_loader = create_cnn_dataloaders(
-        data_dir=args.data_dir,
+    # Load data from .mat files
+    train_dataset, val_dataset, test_dataset = load_mat_files(args.data_dir, args.seed)
+
+    # Create dataloaders from datasets
+    loaders = create_cnn_dataloaders(
+        train_dataset=train_dataset,
+        val_dataset=val_dataset,
+        test_dataset=test_dataset,
         batch_size=args.batch_size,
         num_workers=4,
-        random_seed=args.seed
+        pin_memory=True
     )
 
+    train_loader = loaders['train']
+    val_loader = loaders['val']
+    test_loader = loaders['test']
+
     # Create model
-    print(f"Creating {args.model} hybrid model...")
+    print(f"\nCreating {args.model} hybrid model...")
     if args.model == 'custom':
         model = create_model(
             'custom',
@@ -119,7 +181,7 @@ def main():
         print(f"  Size: {info['model_size_mb']:.2f} MB\n")
 
     # Create optimizer and loss
-    optimizer = create_optimizer(model.parameters(), 'adam', lr=args.lr)
+    optimizer = create_optimizer(model.parameters(), args.optimizer, lr=args.lr)
     criterion = create_loss_function('cross_entropy', num_classes=11)
 
     # Create scheduler
@@ -132,7 +194,7 @@ def main():
     checkpoint_dir = Path(args.checkpoint_dir) / args.model / datetime.now().strftime('%Y%m%d_%H%M%S')
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
 
-    # Train
+    # Train - FIXED: pass train_loader and val_loader to CNNTrainer
     trainer = CNNTrainer(
         model=model,
         train_loader=train_loader,
@@ -141,14 +203,15 @@ def main():
         criterion=criterion,
         device=device,
         lr_scheduler=scheduler,
-        checkpoint_dir=checkpoint_dir,
-        mixed_precision=args.mixed_precision
+        mixed_precision=args.mixed_precision,
+        checkpoint_dir=str(checkpoint_dir)
     )
 
     print("="*70)
     print("  Starting Training")
     print("="*70 + "\n")
 
+    # FIXED: use fit() instead of train()
     history = trainer.fit(num_epochs=args.epochs, save_best=True, verbose=True)
 
     # Final evaluation on test set
@@ -156,7 +219,7 @@ def main():
     print("  Final Evaluation on Test Set")
     print("="*70 + "\n")
 
-    # Manual test set evaluation
+    # FIXED: manually evaluate on test set since validate() takes no arguments
     model.eval()
     test_loss = 0.0
     correct = 0
@@ -176,17 +239,17 @@ def main():
             correct += predicted.eq(labels).sum().item()
 
     test_loss = test_loss / total
-    test_acc = 100. * correct / total
+    test_accuracy = 100.0 * correct / total
 
     print(f"Test Loss: {test_loss:.4f}")
-    print(f"Test Accuracy: {test_acc:.2f}%\n")
+    print(f"Test Accuracy: {test_accuracy:.2f}%\n")
 
     print("="*70)
     print("  Training Complete!")
     print("="*70)
     print(f"\nBest val accuracy: {max(history['val_acc']):.2f}%")
-    print(f"Final test accuracy: {test_acc:.2f}%")
-    print(f"\nCheckpoints: {checkpoint_dir}\n")
+    print(f"Final test accuracy: {test_accuracy:.2f}%")
+    print(f"\nCheckpoints saved to: {checkpoint_dir}\n")
 
 
 if __name__ == "__main__":
