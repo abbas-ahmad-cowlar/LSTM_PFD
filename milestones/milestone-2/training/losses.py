@@ -177,11 +177,11 @@ def create_loss_function(
     **kwargs
 ) -> nn.Module:
     """
-    Factory function to create loss functions.
+    Create loss function by name.
 
     Args:
-        loss_name: Name of loss function ('cross_entropy', 'label_smoothing', 'focal', 'physics_informed')
-        num_classes: Number of output classes
+        loss_name: Name of loss function ('cross_entropy', 'label_smoothing', 'focal')
+        num_classes: Number of classes
         label_smoothing: Label smoothing factor (for label_smoothing loss)
         **kwargs: Additional loss-specific arguments
 
@@ -189,31 +189,27 @@ def create_loss_function(
         Loss function instance
 
     Example:
-        >>> criterion = create_loss_function('cross_entropy', num_classes=11)
+        >>> criterion = create_loss_function('cross_entropy')
         >>> criterion = create_loss_function('label_smoothing', label_smoothing=0.1)
         >>> criterion = create_loss_function('focal', gamma=2.0)
     """
     loss_name = loss_name.lower()
 
-    if loss_name == 'cross_entropy' or loss_name == 'ce':
-        return nn.CrossEntropyLoss(**kwargs)
+    if loss_name == 'cross_entropy':
+        return nn.CrossEntropyLoss()
 
-    elif loss_name == 'label_smoothing' or loss_name == 'ls':
-        smoothing = kwargs.pop('smoothing', label_smoothing)
-        return LabelSmoothingCrossEntropy(smoothing=smoothing, **kwargs)
+    elif loss_name == 'label_smoothing':
+        return LabelSmoothingCrossEntropy(smoothing=label_smoothing)
 
     elif loss_name == 'focal':
-        gamma = kwargs.pop('gamma', 2.0)
-        alpha = kwargs.pop('alpha', None)
-        return FocalLoss(alpha=alpha, gamma=gamma, **kwargs)
+        alpha = kwargs.get('alpha', None)
+        gamma = kwargs.get('gamma', 2.0)
+        return FocalLoss(alpha=alpha, gamma=gamma)
 
-    elif loss_name in ('physics', 'pinn', 'physics_informed'):
-        data_weight = kwargs.pop('data_weight', 1.0)
-        physics_weight = kwargs.pop('physics_weight', 0.1)
-        return PhysicsInformedLoss(
-            data_weight=data_weight,
-            physics_weight=physics_weight
-        )
+    elif loss_name == 'physics_informed':
+        data_weight = kwargs.get('data_weight', 1.0)
+        physics_weight = kwargs.get('physics_weight', 0.1)
+        return PhysicsInformedLoss(data_weight=data_weight, physics_weight=physics_weight)
 
     else:
         raise ValueError(
