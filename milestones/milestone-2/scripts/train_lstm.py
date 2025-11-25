@@ -39,7 +39,6 @@ from training.losses import create_loss_function
 from utils.reproducibility import set_seed
 from utils.device_manager import get_device
 from utils.logging import get_logger
-from utils.constants import NUM_CLASSES
 
 
 def parse_args() -> argparse.Namespace:
@@ -182,15 +181,6 @@ def main():
     print(f"  Mixed precision: {args.mixed_precision}")
     print(f"  Random seed: {args.seed}\n")
 
-    # Validate data directory exists
-    data_path = Path(args.data_dir)
-    if not data_path.exists():
-        raise FileNotFoundError(
-            f"Data directory not found: {args.data_dir}\n"
-            f"Please specify a valid directory containing .MAT files using --data-dir\n"
-            f"Expected structure: {args.data_dir}/<fault_type>/*.mat"
-        )
-
     # Create dataloaders
     print("Creating dataloaders...")
     train_loader, val_loader, test_loader = create_lstm_dataloaders(
@@ -207,7 +197,7 @@ def main():
     print(f"Creating {args.model} model...")
     model = create_model(
         model_name=args.model,
-        num_classes=NUM_CLASSES,
+        num_classes=11,
         hidden_size=args.hidden_size,
         num_layers=args.num_layers,
         dropout=args.dropout
@@ -236,7 +226,7 @@ def main():
     # Create loss function
     criterion = create_loss_function(
         loss_name=args.loss,
-        num_classes=NUM_CLASSES,
+        num_classes=11,
         label_smoothing=args.label_smoothing
     )
 
