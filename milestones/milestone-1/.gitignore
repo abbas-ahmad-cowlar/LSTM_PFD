@@ -50,16 +50,26 @@ data/raw/
 data/processed/*.h5
 
 # Results and outputs
-results/checkpoints/*
-results/logs/*
-results/evaluation/*
-results/visualizations/*
+results/checkpoints/**
+results/checkpoints_full/**
+results/logs/**
+results/evaluation/**
+results/visualizations/**
+milestone-1-clean/results/checkpoints/**
+milestone-1-clean/results/checkpoints_full/**
+milestone-1-clean/results/logs/**
+milestone-1-clean/results/evaluation/**
+milestone-1-clean/results/visualizations/**
 
 # Keep directory structure
 !results/checkpoints/.gitkeep
 !results/logs/.gitkeep
 !results/evaluation/.gitkeep
 !results/visualizations/.gitkeep
+!milestone-1-clean/results/checkpoints/.gitkeep
+!milestone-1-clean/results/logs/.gitkeep
+!milestone-1-clean/results/evaluation/.gitkeep
+!milestone-1-clean/results/visualizations/.gitkeep
 
 # Logs
 *.log
