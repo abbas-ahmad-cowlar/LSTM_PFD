@@ -180,7 +180,7 @@ def create_loss_function(
     Factory function to create loss functions.
 
     Args:
-        loss_name: Name of loss function ('cross_entropy', 'label_smoothing', 'focal')
+        loss_name: Name of loss function ('cross_entropy', 'label_smoothing', 'focal', 'physics_informed')
         num_classes: Number of output classes
         label_smoothing: Label smoothing factor (for label_smoothing loss)
         **kwargs: Additional loss-specific arguments
@@ -207,7 +207,7 @@ def create_loss_function(
         alpha = kwargs.pop('alpha', None)
         return FocalLoss(alpha=alpha, gamma=gamma, **kwargs)
 
-    elif loss_name == 'physics' or loss_name == 'pinn':
+    elif loss_name in ('physics', 'pinn', 'physics_informed'):
         data_weight = kwargs.pop('data_weight', 1.0)
         physics_weight = kwargs.pop('physics_weight', 0.1)
         return PhysicsInformedLoss(
@@ -218,5 +218,5 @@ def create_loss_function(
     else:
         raise ValueError(
             f"Unknown loss function: {loss_name}. "
-            f"Available: 'cross_entropy', 'label_smoothing', 'focal', 'physics'"
+            f"Available: 'cross_entropy', 'label_smoothing', 'focal', 'physics_informed'"
         )

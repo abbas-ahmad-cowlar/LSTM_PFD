@@ -298,10 +298,10 @@ def create_hybrid_model(
         >>> # CNN1D + BiLSTM (lightweight)
         >>> model = create_hybrid_model('cnn1d', 'bilstm', lstm_hidden_size=128)
     """
-    # Import CNN models
-    from models.cnn.cnn_1d import CNN1D
-    from models.resnet import create_resnet18_1d, create_resnet34_1d, create_resnet50_1d
-    from models.efficientnet import create_efficientnet_b0, create_efficientnet_b2, create_efficientnet_b4
+    # Import CNN models (using relative imports)
+    from ..cnn.cnn_1d import CNN1D
+    from ..resnet.resnet_1d import create_resnet18_1d, create_resnet34_1d, create_resnet50_1d
+    from ..efficientnet.efficientnet_1d import create_efficientnet_b0, create_efficientnet_b2, create_efficientnet_b4
 
     # Create CNN backbone
     cnn_map = {

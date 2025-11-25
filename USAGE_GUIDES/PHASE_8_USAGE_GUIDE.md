@@ -38,7 +38,7 @@ voting_ensemble.py - Combine multiple models with voting
 import torch
 import torch.nn as nn
 import numpy as np
-from models.ensemble.voting_ensemble import VotingEnsemble
+from models.ensemble import VotingEnsemble, evaluate
 from torch.utils.data import DataLoader
 import h5py
 
@@ -52,7 +52,7 @@ model_pinn = torch.load('checkpoints/phase6/pinn.pth')
 # Create voting ensemble
 ensemble = VotingEnsemble(
     models=[model_cnn, model_resnet18, model_resnet34, model_transformer, model_pinn],
-    voting='soft',  # Options: 'soft' (average probabilities) or 'hard' (majority vote)
+    voting_type='soft',  # Options: 'soft' (average probabilities) or 'hard' (majority vote)
     weights=[0.15, 0.20, 0.25, 0.20, 0.20]  # Weight each model (must sum to 1.0)
 )
 
@@ -102,7 +102,7 @@ Find optimal weights automatically:
 """
 optimize_ensemble_weights.py - Find optimal ensemble weights
 """
-from models.ensemble.voting_ensemble import optimize_weights
+from models.ensemble import optimize_ensemble_weights
 import torch.nn.functional as F
 
 # Load validation data
@@ -128,10 +128,18 @@ for model in models:
     all_predictions.append(np.vstack(predictions))
 
 # Optimize weights on validation set
-optimal_weights = optimize_weights(
-    predictions=all_predictions,
-    targets=y_val,
-    method='differential_evolution'  # Options: 'grid', 'differential_evolution', 'bayesian'
+# Create validation dataloader
+val_dataset = torch.utils.data.TensorDataset(
+    torch.FloatTensor(X_val),
+    torch.LongTensor(y_val)
+)
+val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+
+optimal_weights = optimize_ensemble_weights(
+    models=models,
+    val_loader=val_loader,
+    device=device,
+    search_resolution=10  # Number of weight values to try per model
 )
 
 print(f"\nOptimal ensemble weights:")
@@ -141,11 +149,12 @@ for i, weight in enumerate(optimal_weights):
 # Create optimized ensemble
 ensemble_optimized = VotingEnsemble(
     models=models,
-    voting='soft',
-    weights=optimal_weights
+    voting_type='soft',
+    weights=optimal_weights.tolist()  # Convert numpy array to list
 )
 
 # Evaluate on test set
+from models.ensemble import evaluate
 test_accuracy = evaluate(ensemble_optimized, test_loader)
 print(f"\nOptimized Ensemble Accuracy: {test_accuracy:.2f}%")
 ```
@@ -162,7 +171,7 @@ Train a meta-learner on base model predictions:
 """
 stacked_ensemble.py - Two-level stacking with meta-learner
 """
-from models.ensemble.stacking_ensemble import StackedEnsemble
+from models.ensemble import StackingEnsemble, train_stacking, create_meta_features
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import GradientBoostingClassifier
 import xgboost as xgb
@@ -266,7 +275,7 @@ Dynamic expert selection based on input characteristics:
 """
 mixture_of_experts.py - Route inputs to specialized experts
 """
-from models.ensemble.mixture_of_experts import MixtureOfExperts
+from models.ensemble import MixtureOfExperts, evaluate
 import torch.nn as nn
 
 class ExpertRouter(nn.Module):
@@ -365,8 +374,8 @@ print(f"\nMixture of Experts Test Accuracy: {test_accuracy:.2f}%")
 
 # Analyze expert usage
 print("\nExpert Usage Statistics:")
-expert_usage = moe_ensemble.get_expert_usage(test_loader)
-for i, usage in enumerate(expert_usage):
+expert_usage_stats = moe_ensemble.get_expert_usage(test_loader)
+for i, usage in enumerate(expert_usage_stats['usage_proportion']):
     print(f"  Expert {i+1}: {usage:.2%}")
 
 # Save MoE
@@ -377,13 +386,19 @@ torch.save(moe_ensemble, 'checkpoints/phase8/moe_ensemble.pth')
 
 Sequential error correction:
 
+**Note**: The code below shows the concept. For production use, import the built-in `AdaptiveBoosting` and `train_boosting` from `models.ensemble`.
+
 ```python
 """
 boosting_ensemble.py - AdaBoost-style ensemble for neural networks
+
+This is a CONCEPTUAL EXAMPLE showing how boosting works.
+For actual use, import: from models.ensemble import AdaptiveBoosting, train_boosting
 """
-from models.ensemble.boosting_ensemble import BoostingEnsemble
+from models.ensemble import AdaptiveBoosting, train_boosting, evaluate
 import copy
 
+# EXAMPLE CLASS (for educational purposes - use AdaptiveBoosting in production)
 class NeuralBoostingEnsemble:
     """
     Boosting for neural networks:
@@ -497,20 +512,25 @@ class NeuralBoostingEnsemble:
         ensemble_probs = np.sum(predictions, axis=0)
         return ensemble_probs.argmax(axis=1)
 
-# Create and train boosting ensemble
+# For production use, use the built-in AdaptiveBoosting:
 def create_base_model():
-    from models import create_resnet18_1d
-    return create_resnet18_1d(num_classes=11)
+    from models.cnn import CNN1D
+    return CNN1D(num_classes=11)
 
-boosting_ensemble = NeuralBoostingEnsemble(
-    base_model_fn=create_base_model,
-    num_models=5
+# Train boosting ensemble using built-in function
+boosting_ensemble = train_boosting(
+    base_model_class=create_base_model,
+    train_loader=train_loader,
+    val_loader=val_loader,
+    n_estimators=5,
+    num_epochs_per_model=30,
+    lr=0.001,
+    device=device,
+    verbose=True
 )
 
-boosting_ensemble.train(train_loader, val_loader, device, epochs_per_model=30)
-
-# Evaluate
-test_accuracy = evaluate_boosting(boosting_ensemble, test_loader, device)
+# Evaluate (boosting_ensemble is a BoostingEnsemble nn.Module)
+test_accuracy = evaluate(boosting_ensemble, test_loader, device)
 print(f"\nBoosting Ensemble Test Accuracy: {test_accuracy:.2f}%")
 ```
 
@@ -524,7 +544,7 @@ Choose diverse models for better ensemble performance:
 """
 model_selection.py - Select diverse models for ensemble
 """
-from models.ensemble.model_selector import DiversityBasedSelector
+from models.ensemble import DiversityBasedSelector
 import numpy as np
 
 # Get predictions from all available models
@@ -586,9 +606,10 @@ for i, (name, score) in enumerate(selected_models):
 selected_model_objects = [all_models[name] for name, _ in selected_models]
 ensemble = VotingEnsemble(
     models=selected_model_objects,
-    voting='soft'
+    voting_type='soft'
 )
 
+from models.ensemble import evaluate
 test_accuracy = evaluate(ensemble, test_loader)
 print(f"\nDiversity-based Ensemble Test Accuracy: {test_accuracy:.2f}%")
 ```
@@ -611,12 +632,12 @@ ensembles = {
     'Best Single Model': model_resnet34,
     'Voting (Uniform)': VotingEnsemble(
         models=[model_cnn, model_resnet18, model_resnet34, model_transformer, model_pinn],
-        voting='soft',
+        voting_type='soft',
         weights=[0.2, 0.2, 0.2, 0.2, 0.2]
     ),
     'Voting (Optimized)': VotingEnsemble(
         models=[model_cnn, model_resnet18, model_resnet34, model_transformer, model_pinn],
-        voting='soft',
+        voting_type='soft',
         weights=optimal_weights  # From previous optimization
     ),
     'Stacked (XGBoost)': stacked_ensemble,
