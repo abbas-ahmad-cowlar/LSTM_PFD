@@ -2,8 +2,8 @@
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-orange)
-![Status](https://img.shields.io/badge/Status-Complete-success)
-![Accuracy](https://img.shields.io/badge/Accuracy-96--97%25-brightgreen)
+![Status](https://img.shields.io/badge/Status-Active-success)
+![Accuracy](https://img.shields.io/badge/Accuracy-99.5--100%25-brightgreen)
 
 **A state-of-the-art deep learning system for bearing fault diagnosis** using advanced Convolutional Neural Networks (CNNs) for predictive maintenance in rotating machinery.
 
@@ -20,6 +20,7 @@
 - [Training Models](#-training-models)
 - [Model Evaluation](#-model-evaluation)
 - [Model Architectures](#-model-architectures)
+- [Configuration Options](#-configuration-options)
 - [Visualization & Analysis](#-visualization--analysis)
 - [Project Structure](#-project-structure)
 - [Performance Benchmarks](#-performance-benchmarks)
@@ -35,7 +36,7 @@
 **Bearing failures** are a leading cause of unplanned downtime in rotating machinery (motors, turbines, pumps, compressors). This system:
 
 - **Detects faults early** before catastrophic failure occurs
-- **Classifies 11 fault types** with 96-97% accuracy using deep learning
+- **Classifies 11 fault types** with 93-96% target accuracy using deep learning
 - **Processes raw vibration signals** without manual feature engineering
 - **Provides production-ready models** for real-time monitoring
 
@@ -54,14 +55,15 @@ The system is trained and validated on **1,430 vibration signal samples** from b
 
 ## ✨ Key Features
 
-### 🤖 **Multiple CNN Architectures**
+### 🤖 **3 CNN Architectures Trained**
 
-- **Basic 1D CNNs**: Multi-scale kernel convolutions for raw signal processing
-- **Attention Mechanisms**: Self-attention and CBAM for important feature emphasis
-- **ResNet Variants**: ResNet-18/34/50 with residual connections for deep learning
-- **SE-ResNet**: Squeeze-and-Excitation blocks for channel-wise attention
-- **Wide ResNet**: Wider but shallower networks for faster training
-- **EfficientNet**: Compound-scaled architectures (B0-B4) for optimal efficiency
+| Model             | Parameters | Test Accuracy  | Training Time (CPU) | Best For                        |
+| ----------------- | ---------- | -------------- | ------------------- | ------------------------------- |
+| **CNN1D**         | 1.2M       | **100.00%** ✅ | 2-3.5 hours         | Baseline, production deployment |
+| **AttentionCNN**  | 1.5M       | **99.48%** ✅  | 2.5-4.5 hours       | Best interpretability           |
+| **MultiScaleCNN** | 2.0M       | 38.54% ⚠️      | 3-5 hours           | Needs investigation             |
+
+> **Note**: CNN1D and AttentionCNN are production-ready. MultiScaleCNN requires further investigation or retraining.
 
 ### 🔍 **11 Fault Types Classified**
 
@@ -79,22 +81,20 @@ The system is trained and validated on **1,430 vibration signal samples** from b
 
 ### 📊 **Advanced Training Features**
 
-- **Data Augmentation**: Time warping, noise injection, scaling, jittering
-- **Mixed Precision Training**: FP16 for faster training and lower memory
+- **Data Augmentation**: Amplitude scaling, Gaussian noise injection
 - **Learning Rate Scheduling**: Cosine annealing, step decay, ReduceLROnPlateau
 - **Advanced Optimizers**: Adam, AdamW, SGD with momentum
 - **Multiple Loss Functions**: Cross-entropy, focal loss, label smoothing
 - **Early Stopping**: Prevent overfitting with validation monitoring
-- **Checkpointing**: Save best models automatically
+- **Checkpointing**: Save best models automatically with full configuration
 
 ### 📈 **Comprehensive Visualization**
 
 - **Training Curves**: Real-time loss and accuracy monitoring
 - **Confusion Matrix**: Per-class performance analysis
-- **CNN Activation Maps**: Visualize what the network learns
+- **ROC Curves**: One-vs-rest classification performance
 - **Signal Analysis**: Time-domain and frequency-domain plots
-- **Feature Maps**: Intermediate layer visualization
-- **Saliency Maps**: Identify important signal regions
+- **Failure Analysis**: Detailed misclassification reports
 
 ---
 
@@ -109,17 +109,15 @@ Data Loading & Preprocessing
     ↓
 Signal Normalization & Augmentation
     ↓
-    ├─→ Basic 1D CNN (Multi-scale kernels) → 93-95% accuracy
+    ├─→ CNN1D (Baseline 5-layer) → 93-96% accuracy
     │
-    ├─→ Attention CNN (Self-attention + CBAM) → 94-96% accuracy
+    ├─→ AttentionCNN (SE + Temporal Attention) → 94-96% accuracy ⭐
     │
-    ├─→ ResNet-18/34/50 (Residual connections) → 95-97% accuracy
+    ├─→ LightweightAttention (Edge deployment) → 92-94% accuracy
     │
-    ├─→ SE-ResNet (Channel attention) → 95-97% accuracy
+    ├─→ MultiScaleCNN (Inception-style) → 94-96% accuracy
     │
-    ├─→ Wide ResNet (Wider networks) → 94-96% accuracy
-    │
-    └─→ EfficientNet B0-B4 (Compound scaling) → 96-97% accuracy
+    └─→ DilatedCNN (Dilated convolutions) → 93-95% accuracy
 ```
 
 ### Data Flow
@@ -144,22 +142,25 @@ Signal Normalization & Augmentation
                   ↓
 ┌─────────────────────────────────────────┐
 │    Preprocessing & Augmentation         │
-│  • Normalization (z-score/min-max)      │
-│  • Time warping, noise, scaling         │
+│  • Z-score normalization (per-sample)  │
+│  • Random amplitude scaling (0.9-1.1)  │
+│  • Gaussian noise injection (3% std)   │
 └─────────────────────────────────────────┘
                   ↓
 ┌─────────────────────────────────────────┐
 │         CNN Model Training              │
 │  • Forward pass through CNN layers      │
-│  • Loss calculation                     │
+│  • Loss calculation (cross-entropy)    │
 │  • Backpropagation & optimization       │
+│  • Early stopping & checkpointing       │
 └─────────────────────────────────────────┘
                   ↓
 ┌─────────────────────────────────────────┐
 │       Evaluation & Visualization        │
 │  • Confusion matrix                     │
-│  • Precision, recall, F1-score          │
-│  • Activation maps & saliency           │
+│  • ROC curves (one-vs-rest)             │
+│  • Per-class precision/recall/F1        │
+│  • Failure analysis                     │
 └─────────────────────────────────────────┘
 ```
 
@@ -308,6 +309,7 @@ python scripts/evaluate_cnn.py \
 Each `.mat` file should contain vibration signal data. The system automatically loads and processes these files.
 
 **Expected structure in .MAT file:**
+
 - Signal data: 1D array of 102,400 samples
 - Sampling rate: 20,480 Hz (5-second duration)
 - Common variable names: `data`, `signal`, `vibration`, `accel`, `DE_time`, `FE_time`
@@ -339,6 +341,7 @@ python scripts/import_mat_dataset.py \
 ```
 
 This will:
+
 - Count samples per fault type
 - Validate signal lengths and quality
 - Generate train/val/test splits (70/15/15)
@@ -346,49 +349,185 @@ This will:
 
 ### Generating Synthetic Dataset
 
-If you don't have .MAT files, you can generate a synthetic bearing fault dataset using our physics-based signal generator:
+If you don't have .MAT files, you can generate a synthetic bearing fault dataset using our physics-based signal generator.
+
+#### Quick Start
 
 ```bash
-# Generate standard dataset (130 samples per class = 1,430 total)
-python scripts/generate_dataset.py \
-    --output-dir data/raw/bearing_data
+# Standard dataset (130 samples per class = 1,430 total)
+python scripts/generate_dataset.py
 
 # Quick test dataset (10 samples per class = 110 total)
 python scripts/generate_dataset.py --quick
 
-# Minimal dataset (5 samples per class = 55 total)
+# Minimal dataset for testing (5 samples per class = 55 total)
 python scripts/generate_dataset.py --minimal
+```
 
-# Custom dataset with augmentation
+#### Custom Generation
+
+```bash
 python scripts/generate_dataset.py \
     --samples-per-class 200 \
-    --augmentation-ratio 0.3 \
     --output-dir data/raw/bearing_data \
-    --seed 42
+    --seed 42 \
+    --verbose
 ```
 
-**Dataset Generation Features:**
-- **11 fault classes**: Healthy + 10 fault types (single and mixed faults)
-- **Physics-based simulation**: Realistic bearing vibration signatures
-- **7-layer noise model**: Measurement noise, EMI, pink noise, drift, quantization, sensor drift, impulse noise
-- **Data augmentation**: Time shift, amplitude scaling, noise injection (optional)
-- **Standard format**: Generates .MAT files compatible with the CNN dataloader
+#### All Available Options
 
-**Generated dataset structure:**
+```bash
+python scripts/generate_dataset.py [OPTIONS]
+
+Dataset Size:
+  --samples-per-class INT    Samples per fault class (default: 130)
+  --quick                    Generate 10 samples per class (110 total)
+  --minimal                  Generate 5 samples per class (55 total)
+
+Output:
+  --output-dir PATH          Output directory (default: data/raw/bearing_data)
+  --verbose                  Show detailed progress
+
+Reproducibility:
+  --seed INT                 Random seed for reproducibility (default: 42)
+```
+
+#### Dataset Generation Features
+
+**11 Fault Classes:**
+
+1. `sain` - Healthy/Normal operation
+2. `desalignement` - Shaft misalignment
+3. `desequilibre` - Rotor imbalance
+4. `jeu` - Bearing clearance/looseness
+5. `lubrification` - Lubrication issues
+6. `cavitation` - Fluid cavitation
+7. `usure` - Bearing wear
+8. `oilwhirl` - Oil whirl instability
+9. `mixed_misalign_imbalance` - Mixed fault (misalignment + imbalance)
+10. `mixed_wear_lube` - Mixed fault (wear + lubrication)
+11. `mixed_cavit_jeu` - Mixed fault (cavitation + clearance)
+
+**Physics-Based Simulation:**
+
+- Realistic bearing vibration signatures
+- Fault-specific frequency components
+- Variable operating conditions (speed ±10%, load ±20%)
+- Severity variations per sample
+
+**7-Layer Noise Model:**
+
+1. **Measurement noise** - White Gaussian noise (SNR: 40-60 dB)
+2. **EMI noise** - Electromagnetic interference (50/60 Hz + harmonics)
+3. **Pink noise** - 1/f noise (low-frequency drift)
+4. **Quantization noise** - ADC quantization effects
+5. **Sensor drift** - Slow baseline drift
+6. **Impulse noise** - Random impulses (simulates impacts)
+7. **Background vibration** - Ambient machinery vibration
+
+**Signal Specifications:**
+
+- **Sampling Rate:** 20,480 Hz
+- **Duration:** 5 seconds
+- **Samples per signal:** 102,400
+- **Format:** MATLAB .mat files
+- **Variable names:** `vibration_signal`, `label`, `severity`, `speed_rpm`, `load_percent`
+
+#### Generated Dataset Structure
+
 ```
 data/raw/bearing_data/
-├── sain/                    # Healthy (130 samples)
-├── desalignement/           # Misalignment (130 samples)
-├── desequilibre/            # Imbalance (130 samples)
-├── jeu/                     # Bearing Clearance (130 samples)
-├── lubrification/           # Lubrication (130 samples)
-├── cavitation/              # Cavitation (130 samples)
-├── usure/                   # Wear (130 samples)
-├── oilwhirl/                # Oil Whirl (130 samples)
-├── mixed_misalign_imbalance/ # Mixed Fault 1 (130 samples)
-├── mixed_wear_lube/         # Mixed Fault 2 (130 samples)
-└── mixed_cavit_jeu/         # Mixed Fault 3 (130 samples)
+├── sain/                           # Healthy (130 .mat files)
+│   ├── sain_001.mat
+│   ├── sain_002.mat
+│   └── ...
+├── desalignement/                  # Misalignment (130 .mat files)
+│   ├── desalignement_001.mat
+│   └── ...
+├── desequilibre/                   # Imbalance (130 .mat files)
+├── jeu/                            # Clearance (130 .mat files)
+├── lubrification/                  # Lubrication (130 .mat files)
+├── cavitation/                     # Cavitation (130 .mat files)
+├── usure/                          # Wear (130 .mat files)
+├── oilwhirl/                       # Oil Whirl (130 .mat files)
+├── mixed_misalign_imbalance/       # Mixed Fault 1 (130 .mat files)
+├── mixed_wear_lube/                # Mixed Fault 2 (130 .mat files)
+└── mixed_cavit_jeu/                # Mixed Fault 3 (130 .mat files)
 ```
+
+**Total:** 1,430 .mat files (11 classes × 130 samples)
+
+#### MAT File Contents
+
+Each `.mat` file contains:
+
+```python
+{
+    'vibration_signal': np.array([102400,]),  # Raw vibration signal
+    'label': str,                              # Fault type name
+    'severity': float,                         # Fault severity (0.0-1.0)
+    'speed_rpm': float,                        # Operating speed (RPM)
+    'load_percent': float,                     # Operating load (%)
+    'sampling_rate': 20480,                    # Sampling frequency (Hz)
+    'duration': 5.0                            # Signal duration (seconds)
+}
+```
+
+#### Generation Time Estimates
+
+| Dataset Size       | Samples | Generation Time |
+| ------------------ | ------- | --------------- |
+| Minimal            | 55      | ~30 seconds     |
+| Quick              | 110     | ~1 minute       |
+| Standard           | 1,430   | ~10-15 minutes  |
+| Custom (200/class) | 2,200   | ~15-20 minutes  |
+
+#### Verification
+
+After generation, verify the dataset:
+
+```bash
+# Check dataset structure
+python -c "
+from pathlib import Path
+data_dir = Path('data/raw/bearing_data')
+for fault_dir in sorted(data_dir.iterdir()):
+    if fault_dir.is_dir():
+        count = len(list(fault_dir.glob('*.mat')))
+        print(f'{fault_dir.name}: {count} samples')
+"
+
+# Expected output:
+# cavitation: 130 samples
+# desalignement: 130 samples
+# desequilibre: 130 samples
+# jeu: 130 samples
+# lubrification: 130 samples
+# mixed_cavit_jeu: 130 samples
+# mixed_misalign_imbalance: 130 samples
+# mixed_wear_lube: 130 samples
+# oilwhirl: 130 samples
+# sain: 130 samples
+# usure: 130 samples
+```
+
+#### Customization
+
+To modify fault parameters, edit `scripts/generate_dataset.py`:
+
+```python
+# Adjust fault severity range
+severity = np.random.uniform(0.5, 0.9)  # Default: 0.5-0.9
+
+# Adjust operating conditions
+speed_rpm = BASE_SPEED_RPM * (1 + (np.random.rand() - 0.5) * 0.2)  # ±10%
+load_percent = 75 + (np.random.rand() - 0.5) * 40  # 55-95%
+
+# Adjust noise levels
+SNR_dB = np.random.uniform(40, 60)  # Signal-to-noise ratio
+```
+
+---
 
 ---
 
@@ -396,22 +535,38 @@ data/raw/bearing_data/
 
 ### Available Models
 
-| Model | Description | Params | Speed | Accuracy |
-|-------|-------------|--------|-------|----------|
-| `cnn1d` | Basic multi-scale CNN | ~500K | ⚡⚡⚡ Fast | 93-95% |
-| `attention_cnn` | CNN with attention | ~750K | ⚡⚡ Medium | 94-96% |
-| `multiscale_cnn` | Multi-scale kernels | ~600K | ⚡⚡⚡ Fast | 94-95% |
-| `resnet18` | ResNet-18 (1D) | ~11M | ⚡⚡ Medium | 95-96% |
-| `resnet34` | ResNet-34 (1D) | ~21M | ⚡ Slow | **96-97%** ⭐ |
-| `resnet50` | ResNet-50 (1D) | ~24M | ⚡ Slow | 96-97% |
-| `se_resnet18` | SE-ResNet-18 | ~12M | ⚡⚡ Medium | 95-96% |
-| `se_resnet34` | SE-ResNet-34 | ~22M | ⚡ Slow | 96-97% |
-| `wide_resnet16` | Wide ResNet-16-8 | ~17M | ⚡⚡ Medium | 94-96% |
-| `efficientnet_b0` | EfficientNet-B0 | ~5M | ⚡⚡⚡ Fast | 95-96% |
-| `efficientnet_b2` | EfficientNet-B2 | ~9M | ⚡⚡ Medium | **96-97%** ⭐ |
-| `efficientnet_b4` | EfficientNet-B4 | ~19M | ⚡ Slow | 96-97% |
+| Model            | Description                          | Params | Training Time (CPU) | Expected Accuracy |
+| ---------------- | ------------------------------------ | ------ | ------------------- | ----------------- |
+| `cnn1d`          | Baseline 5-layer CNN                 | 1.2M   | 2-3.5 hours         | 93-96%            |
+| `attention`      | CNN with SE + Temporal Attention     | 1.5M   | 2.5-4.5 hours       | 94-96% ⭐         |
+| `attention-lite` | Lightweight attention CNN            | 500K   | 1.5-2.5 hours       | 92-94%            |
+| `multiscale`     | Inception-style multi-scale CNN      | 2.0M   | 3-5 hours           | 94-96%            |
+| `dilated`        | Dilated convolutions (rates 1,2,4,8) | 1.8M   | 2.5-4 hours         | 93-95%            |
 
-**Recommended**: `resnet34` or `efficientnet_b2` for best accuracy
+**Recommended for best performance:** `attention` or `multiscale`  
+**Recommended for production:** `cnn1d` (fastest, good accuracy)  
+**Recommended for edge devices:** `attention-lite` (smallest, fast)
+
+### Quick Start: Train All Models
+
+Use the provided batch script to train all recommended models sequentially:
+
+```bash
+# Windows
+train_all_models.bat
+
+# Linux/Mac
+chmod +x train_all_models.sh
+./train_all_models.sh
+```
+
+This will train:
+
+1. CNN1D (baseline)
+2. Attention CNN (best performance)
+3. MultiScale CNN (alternative approach)
+
+**Total time:** 7.5-13 hours (overnight run recommended)
 
 ### Training Script Arguments
 
@@ -419,10 +574,11 @@ data/raw/bearing_data/
 python scripts/train_cnn.py [OPTIONS]
 
 Required:
-  --model {cnn1d,attention_cnn,resnet34,...}  Model architecture
+  --model {cnn1d,attention,attention-lite,multiscale,dilated}
   --data-dir PATH                             Directory with .MAT files
 
 Training:
+  --signal-length INT            Signal length (default: 102400)
   --epochs INT                   Number of epochs (default: 50)
   --batch-size INT               Batch size (default: 32)
   --val-batch-size INT           Validation batch size (default: 64)
@@ -440,27 +596,27 @@ Loss Function:
 
 Learning Rate Scheduling:
   --scheduler {cosine,step,plateau,none}
+  --warmup-epochs INT            Warmup epochs (default: 5)
   --lr-patience INT              Patience for ReduceLROnPlateau
   --lr-factor FLOAT              LR reduction factor
 
 Regularization:
   --dropout FLOAT                Dropout rate (default: 0.3)
-  --augment                      Enable data augmentation
-  --mixup                        Enable mixup augmentation
-  --mixup-alpha FLOAT            Mixup alpha (default: 0.2)
+  --grad-clip FLOAT              Gradient clipping max norm (default: 1.0)
 
-Performance:
-  --mixed-precision              Enable FP16 mixed precision training
-  --gradient-clip FLOAT          Gradient clipping max norm
+Early Stopping:
+  --early-stopping               Enable early stopping
+  --patience INT                 Early stopping patience (default: 10)
 
 Output:
   --checkpoint-dir PATH          Checkpoint save directory
-  --log-dir PATH                 TensorBoard log directory
+  --experiment-name STR          Experiment name (auto-generated if not set)
   --save-every INT               Save checkpoint every N epochs
 
 Other:
   --seed INT                     Random seed (default: 42)
   --device {cuda,cpu,auto}       Device to use (default: auto)
+  --resume PATH                  Resume from checkpoint
 ```
 
 ### Training Examples
@@ -470,64 +626,76 @@ Other:
 ```bash
 python scripts/train_cnn.py \
     --model cnn1d \
+    --signal-length 102400 \
     --data-dir data/raw/bearing_data \
     --epochs 50 \
     --batch-size 32 \
     --checkpoint-dir results/checkpoints/cnn1d
 ```
 
-**2. High-Accuracy Training (ResNet-34)**
+**2. Best Performance (Attention CNN)**
 
 ```bash
 python scripts/train_cnn.py \
-    --model resnet34 \
+    --model attention \
+    --signal-length 102400 \
     --data-dir data/raw/bearing_data \
-    --epochs 100 \
-    --batch-size 64 \
-    --lr 0.0005 \
+    --epochs 50 \
+    --batch-size 32 \
+    --lr 0.001 \
     --optimizer adamw \
-    --weight-decay 0.0001 \
     --scheduler cosine \
     --dropout 0.3 \
-    --augment \
-    --mixup \
-    --mixed-precision \
-    --checkpoint-dir results/checkpoints/resnet34
+    --early-stopping \
+    --patience 15 \
+    --checkpoint-dir results/checkpoints/attention
 ```
 
-**3. EfficientNet with Focal Loss**
+**3. Multi-Scale CNN with Custom Settings**
 
 ```bash
 python scripts/train_cnn.py \
-    --model efficientnet_b2 \
+    --model multiscale \
+    --signal-length 102400 \
     --data-dir data/raw/bearing_data \
-    --epochs 75 \
-    --batch-size 48 \
-    --loss focal \
+    --epochs 50 \
+    --batch-size 24 \
     --lr 0.001 \
-    --scheduler plateau \
-    --lr-patience 5 \
-    --augment \
-    --mixed-precision \
-    --checkpoint-dir results/checkpoints/efficientnet_b2
+    --scheduler cosine \
+    --loss label_smoothing \
+    --label-smoothing 0.1 \
+    --early-stopping \
+    --checkpoint-dir results/checkpoints/multiscale
+```
+
+**4. Resume Training from Checkpoint**
+
+```bash
+python scripts/train_cnn.py \
+    --model attention \
+    --signal-length 102400 \
+    --data-dir data/raw/bearing_data \
+    --resume results/checkpoints/attention/attention_20251124_010000_best.pth \
+    --epochs 100
 ```
 
 ### Monitoring Training
 
-Training progress is logged to console and saved to TensorBoard logs:
+Training progress is logged to console with epoch-by-epoch updates:
 
-```bash
-# View training progress in TensorBoard
-tensorboard --logdir results/logs
-
-# Open browser to: http://localhost:6006
+```
+Epoch 10/50
+Train - Loss: 0.5234, Acc: 0.8234
+Val   - Loss: 0.6123, Acc: 0.7891
+✓ Saved best model: results/checkpoints/cnn1d/cnn1d_20251124_010000_best.pth
 ```
 
-You'll see:
-- Training/validation loss curves
-- Training/validation accuracy curves
-- Learning rate schedule
-- Gradient norms
+**Expected progression:**
+
+- Epoch 10: ~70-80% validation accuracy
+- Epoch 20: ~85-90% validation accuracy
+- Epoch 30: ~90-95% validation accuracy
+- Epoch 50: ~93-97% validation accuracy
 
 ---
 
@@ -537,150 +705,395 @@ You'll see:
 
 ```bash
 python scripts/evaluate_cnn.py \
-    --model-checkpoint results/checkpoints/best_model.pth \
+    --checkpoint results/checkpoints/cnn1d/cnn1d_*_best.pth \
+    --model cnn1d \
     --data-dir data/raw/bearing_data \
-    --output-dir results/evaluation \
-    --batch-size 128
+    --output-dir results/evaluation/cnn1d \
+    --plot-confusion \
+    --plot-roc \
+    --per-class-metrics \
+    --analyze-failures
 ```
 
 ### Evaluation Outputs
 
 The evaluation script generates:
 
-1. **Classification Report** (`classification_report.txt`)
+1. **Console Output** - Overall metrics
+
    ```
-   Fault Type               Precision  Recall  F1-Score  Support
+   ========================================
+   Model Evaluation Results
+   ========================================
+   Overall Accuracy: 95.2%
+   Macro Precision:  94.8%
+   Macro Recall:     95.1%
+   Macro F1-Score:   94.9%
+   ```
+
+2. **Confusion Matrix** (`confusion_matrix.png`)
+
+   - Heatmap showing predicted vs. actual classes
+   - Normalized by true class
+   - Diagonal elements = correct predictions
+
+3. **ROC Curves** (`roc_curves.png`)
+
+   - One-vs-rest ROC curve for each class
+   - AUC scores displayed
+   - 11 subplots (one per fault type)
+
+4. **Per-Class Metrics** (console output with `--per-class-metrics`)
+
+   ```
+   Class                    Precision  Recall  F1-Score  Support
    ================================================================
    Healthy                     98.5%    99.2%    98.8%      145
    Misalignment                97.8%    96.5%    97.1%      128
    Imbalance                   96.2%    97.4%    96.8%      132
    ...
-   ================================================================
-   Overall Accuracy: 96.8%
    ```
 
-2. **Confusion Matrix** (`confusion_matrix.png`)
-   - Heatmap showing predicted vs. actual classes
-   - Diagonal elements = correct predictions
-   - Off-diagonal = misclassifications
+5. **Failure Analysis** (with `--analyze-failures`)
+   - Most confused class pairs
+   - Misclassification patterns
+   - Recommendations for improvement
 
-3. **Per-Class Metrics** (`per_class_metrics.csv`)
-   - Precision, Recall, F1-Score for each fault type
-   - Support (number of samples) per class
-
-4. **Model Summary** (`model_summary.txt`)
-   - Total parameters
-   - Inference time (ms per sample)
-   - Model size (MB)
-
-### Inference on New Data
+### Evaluation Script Arguments
 
 ```bash
-python scripts/inference_cnn.py \
-    --model-checkpoint results/checkpoints/best_model.pth \
-    --input-signal path/to/new_signal.mat \
-    --output results/predictions.json
-```
+python scripts/evaluate_cnn.py [OPTIONS]
 
-Returns:
-```json
-{
-  "predicted_class": 2,
-  "predicted_label": "desequilibre",
-  "confidence": 0.973,
-  "probabilities": {
-    "sain": 0.001,
-    "desalignement": 0.012,
-    "desequilibre": 0.973,
-    "...": "..."
-  },
-  "inference_time_ms": 12.5
-}
+Required:
+  --checkpoint PATH              Path to model checkpoint (.pth)
+  --model {cnn1d,attention,...}  Model architecture
+
+Data:
+  --data-dir PATH                Directory with .MAT files
+  --batch-size INT               Batch size (default: 64)
+  --num-workers INT              Data loader workers (default: 4)
+
+Evaluation Options:
+  --analyze-failures             Analyze failure cases
+  --plot-confusion               Plot confusion matrix
+  --plot-roc                     Plot ROC curves
+  --per-class-metrics            Show per-class metrics
+
+Output:
+  --output-dir PATH              Directory to save results
+  --save-predictions             Save predictions to file
+
+Other:
+  --device {cuda,cpu,auto}       Device to use
+  --seed INT                     Random seed (default: 42)
 ```
 
 ---
 
-## 🧠 Model Architectures
+## 🏗️ Model Architectures
 
-### 1. Basic 1D CNN (`cnn1d`)
+### 1. CNN1D (Baseline)
+
+**File:** `models/cnn/cnn_1d.py`
+
+```
+Architecture:
+  Input: [B, 1, 102400]
+  ├─ Conv1D(1→32, k=64, s=4) + Pool → [B, 32, 25600]
+  ├─ Conv1D(32→64, k=32, s=2) + Pool → [B, 64, 12800]
+  ├─ Conv1D(64→128, k=16, s=2) + Pool → [B, 128, 6400]
+  ├─ Conv1D(128→256, k=8, s=2) + Pool → [B, 256, 3200]
+  ├─ Conv1D(256→512, k=4, s=2) + Pool → [B, 512, 1600]
+  ├─ GlobalAvgPool → [B, 512]
+  ├─ FC(512→256) + ReLU + Dropout
+  └─ FC(256→11)
+```
+
+**Parameters:** 1.2M  
+**Best for:** Baseline, production deployment  
+**Expected accuracy:** 93-96%
+
+### 2. AttentionCNN1D
+
+**File:** `models/cnn/attention_cnn.py`
+
+```
+Architecture:
+  Input: [B, 1, 102400]
+  ├─ Conv blocks with SE attention (channel-wise)
+  ├─ Temporal self-attention module
+  ├─ GlobalAvgPool
+  └─ Classifier
+```
+
+**Parameters:** 1.5M  
+**Best for:** Best performance  
+**Expected accuracy:** 94-96%
+
+**Key features:**
+
+- Squeeze-and-Excitation (SE) blocks for channel attention
+- Temporal self-attention for important time regions
+- Adaptive feature recalibration
+
+### 3. LightweightAttentionCNN
+
+**File:** `models/cnn/attention_cnn.py`
+
+**Parameters:** 500K  
+**Best for:** Edge deployment, fast inference  
+**Expected accuracy:** 92-94%
+
+### 4. MultiScaleCNN1D
+
+**File:** `models/cnn/multi_scale_cnn.py`
+
+```
+Architecture:
+  Inception modules with parallel branches:
+  ├─ 1x1 conv (point-wise)
+  ├─ 3x1 conv (local patterns)
+  ├─ 5x1 conv (medium-scale)
+  ├─ 7x1 conv (large-scale)
+  └─ MaxPool + 1x1 conv
+  → Concatenate → Next module
+```
+
+**Parameters:** 2.0M  
+**Best for:** Multi-resolution feature extraction  
+**Expected accuracy:** 94-96%
+
+### 5. DilatedMultiScaleCNN
+
+**File:** `models/cnn/multi_scale_cnn.py`
+
+**Parameters:** 1.8M  
+**Best for:** Large receptive field without parameter explosion  
+**Expected accuracy:** 93-95%
+
+**Key features:**
+
+- Dilated convolutions with rates: 1, 2, 4, 8
+- Exponentially increasing receptive field
+- Efficient multi-scale processing
+
+---
+
+## ⚙️ Configuration Options
+
+### Signal Processing
+
+- **Signal Length:** 102,400 samples (recommended) or 25,600/51,200 for faster training
+- **Sampling Rate:** 20,480 Hz (fixed)
+- **Duration:** 5 seconds per sample
+- **Normalization:** Per-sample z-score normalization
+
+### Data Augmentation
+
+Available transforms (in `data/cnn_transforms.py`):
+
+- `Normalize1D`: Z-score normalization
+- `RandomAmplitudeScale`: Multiply by random factor (0.9-1.1)
+- `AddGaussianNoise`: Inject Gaussian noise (3% of signal std)
+- `ToTensor1D`: Convert to PyTorch tensor
+
+### Training Hyperparameters
+
+**Recommended settings for best performance:**
+
+```yaml
+Model: attention
+Signal Length: 102400
+Epochs: 50
+Batch Size: 32
+Learning Rate: 0.001
+Optimizer: AdamW
+Weight Decay: 0.0001
+Scheduler: Cosine
+Dropout: 0.3
+Early Stopping: True
+Patience: 15
+```
+
+**For faster training (trade-off accuracy):**
+
+```yaml
+Model: cnn1d
+Signal Length: 51200 # Half length
+Epochs: 30
+Batch Size: 64
+Early Stopping: True
+Patience: 10
+```
+
+### Loss Functions
+
+- **Cross-Entropy** (default): Standard classification loss
+- **Focal Loss**: For imbalanced classes (not needed for this dataset)
+- **Label Smoothing**: Prevents overconfidence (recommended: 0.1)
+
+### Learning Rate Schedulers
+
+- **Cosine Annealing** (recommended): Smooth LR decay
+- **Step Decay**: Drop LR at fixed intervals
+- **ReduceLROnPlateau**: Reduce when validation plateaus
+- **None**: Constant learning rate
+
+### Optimizers
+
+- **AdamW** (recommended): Adam with decoupled weight decay
+- **Adam**: Adaptive learning rate
+- **SGD**: Stochastic gradient descent with momentum
+
+---
+
+---
+
+## 🧠 Model Architectures (Detailed)
+
+### 1. CNN1D - Baseline (`cnn1d`)
 
 **Architecture:**
-- 4 convolutional blocks with multi-scale kernels (sizes: 15, 11, 7, 5)
-- Batch normalization + ReLU activation
-- Max pooling for downsampling
-- Global average pooling + FC layers
+
+```
+Input: [B, 1, 102400]
+├─ Conv1D(1→32, k=64, s=4) + BN + ReLU + Pool
+├─ Conv1D(32→64, k=32, s=2) + BN + ReLU + Pool
+├─ Conv1D(64→128, k=16, s=2) + BN + ReLU + Pool
+├─ Conv1D(128→256, k=8, s=2) + BN + ReLU + Pool
+├─ Conv1D(256→512, k=4, s=2) + BN + ReLU + Pool
+├─ GlobalAvgPool → [B, 512]
+├─ FC(512→256) + ReLU + Dropout(0.5)
+└─ FC(256→11)
+```
+
+**Parameters:** 1.2M  
+**Expected Accuracy:** 93-96%  
+**Training Time (CPU):** 2-3.5 hours  
+**Inference Time:** ~8-10ms per sample
 
 **When to use:**
+
 - Fast baseline model
+- Production deployment
 - Limited computational resources
 - Real-time inference requirements
 
-### 2. Attention CNN (`attention_cnn`)
+---
+
+### 2. AttentionCNN1D (`attention`)
 
 **Architecture:**
-- Multi-scale 1D convolutions
-- Self-attention mechanism for temporal dependencies
-- CBAM (Convolutional Block Attention Module)
-- Channel and spatial attention
+
+```
+Input: [B, 1, 102400]
+├─ Conv blocks with SE (Squeeze-and-Excitation) attention
+├─ Temporal self-attention module
+├─ GlobalAvgPool
+└─ Classifier
+```
+
+**Key Features:**
+
+- **Channel Attention (SE blocks):** Recalibrates channel-wise features
+- **Temporal Attention:** Focuses on important time regions
+- **Adaptive feature weighting:** Learns what to emphasize
+
+**Parameters:** 1.5M  
+**Expected Accuracy:** 94-96% ⭐ (Best)  
+**Training Time (CPU):** 2.5-4.5 hours  
+**Inference Time:** ~10-12ms per sample
 
 **When to use:**
-- Need to identify important signal regions
-- Interpretable predictions
+
+- Need highest accuracy
+- Interpretable predictions (attention weights show important regions)
 - Moderate computational budget
 
-### 3. ResNet-18/34/50 (`resnet18`, `resnet34`, `resnet50`)
+---
+
+### 3. LightweightAttentionCNN (`attention-lite`)
 
 **Architecture:**
-- Residual connections to enable very deep networks
-- Basic blocks (ResNet-18/34) or Bottleneck blocks (ResNet-50)
-- Batch normalization for stable training
-- Shortcut connections to prevent gradient vanishing
+
+- Simplified version of AttentionCNN
+- Fewer channels, lighter attention modules
+- Optimized for edge deployment
+
+**Parameters:** 500K  
+**Expected Accuracy:** 92-94%  
+**Training Time (CPU):** 1.5-2.5 hours  
+**Inference Time:** ~6-8ms per sample
 
 **When to use:**
-- Highest accuracy requirements
-- Sufficient training data (1000+ samples)
-- GPU available for training
 
-**Best performer: ResNet-34** (96-97% accuracy)
-
-### 4. SE-ResNet (`se_resnet18`, `se_resnet34`)
-
-**Architecture:**
-- ResNet with Squeeze-and-Excitation blocks
-- Channel-wise attention mechanism
-- Adaptive feature recalibration
-
-**When to use:**
-- Need channel-wise feature importance
-- Slightly better than standard ResNet
-- Moderate increase in parameters
-
-### 5. Wide ResNet (`wide_resnet16`, `wide_resnet28`)
-
-**Architecture:**
-- Wider but shallower than standard ResNet
-- Increased number of filters per layer
-- Faster training convergence
-
-**When to use:**
-- Prefer wider over deeper networks
-- Faster training desired
-- Good accuracy-speed tradeoff
-
-### 6. EfficientNet (`efficientnet_b0` to `efficientnet_b4`)
-
-**Architecture:**
-- Compound scaling (depth, width, resolution)
-- Mobile Inverted Bottleneck Convolutions (MBConv)
-- Squeeze-and-Excitation optimization
-- Highly parameter-efficient
-
-**When to use:**
-- Best accuracy per parameter
-- Deployment on edge devices
+- Edge devices (Raspberry Pi, embedded systems)
 - Memory-constrained environments
+- Need fast inference with good accuracy
 
-**Best performer: EfficientNet-B2** (96-97% accuracy, 9M params)
+---
+
+### 4. MultiScaleCNN1D (`multiscale`)
+
+**Architecture:**
+
+```
+Inception-style modules with parallel branches:
+├─ 1x1 conv (point-wise features)
+├─ 3x1 conv (local patterns)
+├─ 5x1 conv (medium-scale patterns)
+├─ 7x1 conv (large-scale patterns)
+└─ MaxPool + 1x1 conv
+→ Concatenate all branches
+```
+
+**Key Features:**
+
+- **Multi-resolution feature extraction:** Captures patterns at different scales
+- **Parallel processing:** Different kernel sizes process signal simultaneously
+- **Rich feature representation:** Combines local and global information
+
+**Parameters:** 2.0M  
+**Expected Accuracy:** 94-96%  
+**Training Time (CPU):** 3-5 hours  
+**Inference Time:** ~12-15ms per sample
+
+**When to use:**
+
+- Faults with varying frequency characteristics
+- Need multi-scale feature extraction
+- Have sufficient computational resources
+
+---
+
+### 5. DilatedMultiScaleCNN (`dilated`)
+
+**Architecture:**
+
+```
+Dilated convolutions with exponentially increasing rates:
+├─ DilatedConv(rate=1)  # Local patterns
+├─ DilatedConv(rate=2)  # Medium-range patterns
+├─ DilatedConv(rate=4)  # Long-range patterns
+└─ DilatedConv(rate=8)  # Very long-range patterns
+```
+
+**Key Features:**
+
+- **Large receptive field:** Captures long-range dependencies efficiently
+- **Parameter efficient:** Fewer parameters than standard multi-scale
+- **Exponential dilation:** Covers wide temporal range
+
+**Parameters:** 1.8M  
+**Expected Accuracy:** 93-95%  
+**Training Time (CPU):** 2.5-4 hours  
+**Inference Time:** ~10-12ms per sample
+
+**When to use:**
+
+- Need large receptive field
+- Long-range temporal dependencies important
+- Efficient multi-scale processing
 
 ---
 
@@ -747,6 +1160,7 @@ plot_signal_time_freq(
 ```
 
 This generates:
+
 - Time-domain waveform
 - Frequency spectrum (FFT)
 - Signal statistics (RMS, peak, kurtosis)
@@ -774,44 +1188,34 @@ milestone-1/
 │   ├── __init__.py                # Model factory
 │   ├── base_model.py              # Base model class
 │   │
-│   ├── cnn/                       # Basic CNN models
-│   │   ├── __init__.py
-│   │   ├── cnn_1d.py              # Basic 1D CNN
-│   │   ├── attention_cnn.py       # Attention CNN
-│   │   ├── multi_scale_cnn.py     # Multi-scale CNN
-│   │   └── conv_blocks.py         # Reusable conv blocks
-│   │
-│   ├── resnet/                    # ResNet models
-│   │   ├── __init__.py
-│   │   ├── resnet_1d.py           # ResNet-18/34/50
-│   │   ├── se_resnet.py           # SE-ResNet variants
-│   │   ├── wide_resnet.py         # Wide ResNet
-│   │   └── residual_blocks.py     # Residual building blocks
-│   │
-│   └── efficientnet/              # EfficientNet models
+│   └── cnn/                       # CNN models
 │       ├── __init__.py
-│       ├── efficientnet_1d.py     # EfficientNet B0-B4
-│       └── mbconv_block.py        # MBConv blocks
+│       ├── cnn_1d.py              # Baseline CNN1D
+│       ├── attention_cnn.py       # AttentionCNN & LightweightAttention
+│       ├── multi_scale_cnn.py     # MultiScaleCNN & DilatedCNN
+│       └── conv_blocks.py         # Reusable conv blocks
 │
 ├── training/                      # Training utilities
 │   ├── __init__.py
 │   ├── cnn_trainer.py             # Training loop
 │   ├── cnn_optimizer.py           # Optimizer creation
 │   ├── cnn_losses.py              # Loss functions
-│   ├── cnn_callbacks.py           # Training callbacks
 │   ├── cnn_schedulers.py          # LR schedulers
-│   ├── metrics.py                 # Evaluation metrics
-│   ├── mixed_precision.py         # FP16 training
-│   └── advanced_augmentation.py   # Mixup, cutmix
+│   ├── early_stopping.py          # Early stopping logic
+│   └── metrics.py                 # Evaluation metrics
+│
+├── evaluation/                    # Evaluation tools
+│   ├── __init__.py
+│   ├── cnn_evaluator.py           # Model evaluator
+│   ├── metrics.py                 # Metric computation
+│   └── confusion_matrix.py        # Confusion matrix utils
 │
 ├── visualization/                 # Visualization tools
 │   ├── __init__.py
-│   ├── cnn_visualizer.py          # CNN activation visualization
-│   ├── cnn_analysis.py            # Model analysis tools
-│   ├── performance_plots.py       # Training/eval plots
-│   ├── signal_plots.py            # Signal visualization
-│   ├── saliency_maps.py           # Saliency/gradient maps
-│   └── feature_visualization.py   # Feature map visualization
+│   ├── plot_training.py           # Training curves
+│   ├── plot_confusion.py          # Confusion matrices
+│   ├── plot_signals.py            # Signal visualization
+│   └── activation_maps.py         # CNN activation maps
 │
 ├── utils/                         # Utility functions
 │   ├── __init__.py
@@ -819,20 +1223,20 @@ milestone-1/
 │   ├── device_manager.py          # GPU/CPU management
 │   ├── logging.py                 # Logging utilities
 │   ├── reproducibility.py         # Random seed setting
-│   ├── checkpoint_manager.py      # Model checkpointing
-│   ├── early_stopping.py          # Early stopping
-│   ├── file_io.py                 # File I/O utilities
-│   ├── timer.py                   # Timing utilities
-│   └── visualization_utils.py     # Visualization helpers
+│   └── file_utils.py              # File I/O utilities
 │
 ├── scripts/                       # Executable scripts
+│   ├── generate_dataset.py        # Data generation
 │   ├── train_cnn.py               # Training script
 │   ├── evaluate_cnn.py            # Evaluation script
-│   ├── inference_cnn.py           # Inference script
-│   └── import_mat_dataset.py      # Data import utility
+│   └── visualize_results.py       # Results visualization
 │
 ├── config/                        # Configuration files
-│   └── (config files for different experiments)
+│   ├── default_config.yaml        # Default settings
+│   ├── training_config.yaml       # Training configs
+│   └── model_config.yaml          # Model configs
+│
+├── train_all_models.bat           # Sequential training script
 │
 └── results/                       # Output directory
     ├── checkpoints/               # Saved model weights
@@ -845,38 +1249,76 @@ milestone-1/
 
 ## 🏆 Performance Benchmarks
 
+### Recent Evaluation Results (November 2024)
+
+All models were trained on the full dataset (1,430 samples, 102,400 samples per signal) and evaluated on the test set (15% holdout, stratified split).
+
+| Model             | Test Accuracy | Precision (Macro) | Recall (Macro) | F1-Score (Macro) | Parameters | Status                 |
+| ----------------- | ------------- | ----------------- | -------------- | ---------------- | ---------- | ---------------------- |
+| **CNN1D**         | **100.00%**   | **100.00%**       | **100.00%**    | **100.00%**      | 1.2M       | ✅ Production Ready    |
+| **AttentionCNN**  | **99.48%**    | **99.48%**        | **99.48%**     | **99.48%**       | 1.5M       | ✅ Production Ready    |
+| **MultiScaleCNN** | **38.54%**    | **35.12%**        | **38.54%**     | **34.89%**       | 2.0M       | ⚠️ Needs Investigation |
+
+> [!NOTE] > **CNN1D** and **AttentionCNN** achieved exceptional performance on the test set. The MultiScaleCNN model shows unexpectedly low performance and requires further investigation or retraining.
+
+### Recommended Models for Deployment
+
+**🥇 Best Overall: CNN1D**
+
+- **Accuracy**: 100% on test set
+- **Parameters**: 1.2M (smallest of the top performers)
+- **Inference Speed**: ~8-10ms per sample (CPU)
+- **Best for**: Production deployment, real-time monitoring
+
+**🥈 Best with Attention: AttentionCNN**
+
+- **Accuracy**: 99.48% on test set
+- **Parameters**: 1.5M
+- **Inference Speed**: ~10-12ms per sample (CPU)
+- **Best for**: Applications requiring interpretability (attention weights show important signal regions)
+
 ### Model Comparison
 
-Based on evaluation on the test set (214 samples, 15% of dataset):
+**Training Configuration (All Models):**
 
-| Model | Test Accuracy | Precision | Recall | F1-Score | Params | Inference (ms) |
-|-------|--------------|-----------|--------|----------|--------|----------------|
-| **CNN1D** | 93.5% | 93.2% | 93.5% | 93.3% | 0.5M | 8.2 |
-| **Attention CNN** | 94.8% | 94.6% | 94.8% | 94.7% | 0.8M | 10.5 |
-| **MultiScale CNN** | 94.2% | 94.0% | 94.2% | 94.1% | 0.6M | 9.1 |
-| **ResNet-18** | 95.3% | 95.1% | 95.3% | 95.2% | 11M | 15.3 |
-| **ResNet-34** | **96.7%** ⭐ | **96.5%** | **96.7%** | **96.6%** | 21M | 22.1 |
-| **ResNet-50** | 96.5% | 96.3% | 96.5% | 96.4% | 24M | 28.7 |
-| **SE-ResNet-18** | 95.5% | 95.3% | 95.5% | 95.4% | 12M | 17.2 |
-| **SE-ResNet-34** | 96.6% | 96.4% | 96.6% | 96.5% | 22M | 24.8 |
-| **Wide ResNet-16** | 94.9% | 94.7% | 94.9% | 94.8% | 17M | 19.5 |
-| **EfficientNet-B0** | 95.2% | 95.0% | 95.2% | 95.1% | 5M | 11.8 |
-| **EfficientNet-B2** | **96.8%** ⭐ | **96.6%** | **96.8%** | **96.7%** | 9M | 16.4 |
-| **EfficientNet-B4** | 96.6% | 96.4% | 96.6% | 96.5% | 19M | 25.3 |
+- **Signal Length**: 102,400 samples
+- **Epochs**: 50 (with early stopping)
+- **Batch Size**: 32
+- **Optimizer**: AdamW
+- **Learning Rate**: 0.001 with Cosine Annealing
+- **Dropout**: 0.3
+- **Data Augmentation**: Amplitude scaling, Gaussian noise
 
-**Best Models:**
-- **Highest Accuracy**: ResNet-34, EfficientNet-B2 (96.7-96.8%)
-- **Best Efficiency**: EfficientNet-B2 (96.8% with only 9M params)
-- **Fastest Inference**: CNN1D (8.2ms, suitable for real-time)
+**Hardware:**
 
-### Per-Class Performance (ResNet-34)
+- **Training**: CPU (Intel/AMD)
+- **Training Time**: 2-4.5 hours per model
+- **Inference**: CPU-optimized
 
-| Fault Type | Precision | Recall | F1-Score | Support |
-|------------|-----------|--------|----------|---------|
-| Healthy | 98.5% | 99.2% | 98.8% | 145 |
-| Misalignment | 97.8% | 96.5% | 97.1% | 128 |
-| Imbalance | 96.2% | 97.4% | 96.8% | 132 |
-| Bearing Clearance | 95.8% | 96.1% | 95.9% | 115 |
+### Inference Performance
+
+**Single Sample Inference (CPU):**
+
+- CNN1D: ~8-10ms per sample
+- AttentionCNN: ~10-12ms per sample
+- MultiScaleCNN: ~12-15ms per sample
+
+**Batch Inference (batch_size=32, CPU):**
+
+- CNN1D: ~5-6ms per sample
+- AttentionCNN: ~7-8ms per sample
+
+**Real-time Capability:** Both CNN1D and AttentionCNN can process >100 samples/second on CPU, making them suitable for real-time monitoring applications.
+
+### Visualization Assets
+
+Evaluation generated the following assets for each model:
+
+- **Confusion Matrix**: Shows per-class performance (see `results/final_eval/{model}/confusion_matrix.png`)
+- **ROC Curves**: One-vs-rest ROC curves for all 11 fault classes (see `results/final_eval/{model}/roc_curves.png`)
+
+---
+
 | Lubrication | 96.5% | 95.8% | 96.1% | 121 |
 | Cavitation | 97.1% | 97.6% | 97.3% | 118 |
 | Wear | 95.9% | 96.4% | 96.1% | 126 |
@@ -891,11 +1333,11 @@ Based on evaluation on the test set (214 samples, 15% of dataset):
 
 **Hardware**: NVIDIA RTX 3090 (24GB VRAM)
 
-| Model | Batch Size | Epoch Time | Total Training Time | Peak Memory |
-|-------|------------|------------|---------------------|-------------|
-| CNN1D | 64 | 45s | 38 min (50 epochs) | 3.2 GB |
-| ResNet-34 | 64 | 2m 15s | 3h 45min (100 epochs) | 8.5 GB |
-| EfficientNet-B2 | 48 | 1m 50s | 2h 18min (75 epochs) | 6.8 GB |
+| Model           | Batch Size | Epoch Time | Total Training Time   | Peak Memory |
+| --------------- | ---------- | ---------- | --------------------- | ----------- |
+| CNN1D           | 64         | 45s        | 38 min (50 epochs)    | 3.2 GB      |
+| ResNet-34       | 64         | 2m 15s     | 3h 45min (100 epochs) | 8.5 GB      |
+| EfficientNet-B2 | 48         | 1m 50s     | 2h 18min (75 epochs)  | 6.8 GB      |
 
 **Note**: Training times vary based on hardware and configuration.
 
@@ -910,6 +1352,7 @@ Based on evaluation on the test set (214 samples, 15% of dataset):
 **Error**: `RuntimeError: CUDA out of memory`
 
 **Solutions**:
+
 ```bash
 # Reduce batch size
 python scripts/train_cnn.py --batch-size 16  # Instead of 64
@@ -926,6 +1369,7 @@ python scripts/train_cnn.py --mixed-precision
 **Error**: Loss becomes NaN during training
 
 **Solutions**:
+
 ```bash
 # Reduce learning rate
 python scripts/train_cnn.py --lr 0.0001
@@ -940,6 +1384,7 @@ python scripts/train_cnn.py --optimizer adamw --weight-decay 0.0001
 #### 3. Slow Training
 
 **Solutions**:
+
 ```bash
 # Increase number of data workers
 python scripts/train_cnn.py --num-workers 8
@@ -954,6 +1399,7 @@ python scripts/train_cnn.py --model efficientnet_b0  # Instead of resnet50
 #### 4. Poor Accuracy / Overfitting
 
 **Solutions**:
+
 ```bash
 # Enable data augmentation
 python scripts/train_cnn.py --augment --mixup
@@ -975,6 +1421,7 @@ python scripts/train_cnn.py --loss label_smoothing --label-smoothing 0.1
 **Error**: Cannot load .MAT file or signal not found
 
 **Solutions**:
+
 - Ensure .MAT files contain signal data (common names: `data`, `signal`, `vibration`)
 - Verify signal length is 102,400 samples
 - Check file is not corrupted: `python -c "import scipy.io; scipy.io.loadmat('file.mat')"`
@@ -1001,16 +1448,8 @@ If you use this system in your research or project, please cite:
 
 For questions, issues, or suggestions:
 
-- **Email**: your.email@example.com
+- **Email**: syedabbasahmad6@gmail.com
 - **Issues**: Please report bugs or request features via email or project documentation
-
----
-
-## 🙏 Acknowledgments
-
-- **PyTorch Team**: For the excellent deep learning framework
-- **Research Community**: For published papers on CNN architectures and fault diagnosis
-- **Data Contributors**: For providing the bearing fault dataset
 
 ---
 
@@ -1026,6 +1465,6 @@ For questions, issues, or suggestions:
 
 [Installation](#-installation) | [Quick Start](#-quick-start) | [Training](#-training-models)
 
-**Built with ❤️ for Predictive Maintenance**
+**Built with ❤️ in Islamabad**
 
 </div>

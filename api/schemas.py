@@ -9,8 +9,8 @@ Date: 2025-11-20
 
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict
-from datetime import datetime
-from utils.constants import SIGNAL_LENGTH
+from datetime import datetime, timezone
+from utils.constants import SIGNAL_LENGTH, FAULT_TYPES, FAULT_TYPE_DISPLAY_NAMES
 
 
 class PredictionRequest(BaseModel):
@@ -37,6 +37,11 @@ class PredictionRequest(BaseModel):
     def validate_signal(cls, v):
         if len(v) == 0:
             raise ValueError("Signal cannot be empty")
+        if len(v) != SIGNAL_LENGTH:
+            raise ValueError(
+                f"Signal must be exactly {SIGNAL_LENGTH} samples long. "
+                f"Got {len(v)} samples. Please resample or pad your signal."
+            )
         return v
 
 
@@ -69,7 +74,7 @@ class PredictionResponse(BaseModel):
     )
 
     timestamp: datetime = Field(
-        default_factory=datetime.utcnow,
+        default_factory=lambda: datetime.now(timezone.utc),
         description="Prediction timestamp"
     )
 
@@ -146,7 +151,7 @@ class HealthResponse(BaseModel):
     """Health check response schema."""
 
     status: str = Field(..., description="Service status")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     model_loaded: bool = Field(..., description="Whether model is loaded")
     device: str = Field(..., description="Inference device (cuda/cpu)")
     version: str = Field(..., description="API version")
@@ -157,20 +162,11 @@ class ErrorResponse(BaseModel):
 
     error: str = Field(..., description="Error message")
     detail: Optional[str] = Field(None, description="Detailed error information")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
-# Fault class names
+# Fault class names - Generated from constants to ensure consistency
 FAULT_CLASS_NAMES = {
-    0: "Normal",
-    1: "Ball Fault",
-    2: "Inner Race Fault",
-    3: "Outer Race Fault",
-    4: "Combined Fault",
-    5: "Imbalance",
-    6: "Misalignment",
-    7: "Oil Whirl",
-    8: "Cavitation",
-    9: "Looseness",
-    10: "Oil Deficiency"
+    i: FAULT_TYPE_DISPLAY_NAMES[fault]
+    for i, fault in enumerate(FAULT_TYPES)
 }

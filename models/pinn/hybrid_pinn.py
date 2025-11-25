@@ -28,9 +28,9 @@ from typing import Dict, Optional, Tuple
 
 
 from models.base_model import BaseModel
-from resnet.resnet_1d import ResNet1D
-from cnn.cnn_1d import CNN1D
-from physics.bearing_dynamics import BearingDynamics
+from models.resnet.resnet_1d import ResNet1D
+from models.cnn.cnn_1d import CNN1D
+from models.physics.bearing_dynamics import BearingDynamics
 
 
 class HybridPINN(BaseModel):
@@ -178,23 +178,24 @@ class HybridPINN(BaseModel):
         """
         device = next(self.parameters()).device
 
-        # Extract metadata
-        rpm = metadata.get('rpm', torch.tensor(3600.0))
-        load = metadata.get('load', torch.tensor(500.0))
-        viscosity = metadata.get('viscosity', torch.tensor(0.03))
+        # Extract metadata with defaults
+        rpm = metadata.get('rpm', 3600.0)
+        load = metadata.get('load', 500.0)
+        viscosity = metadata.get('viscosity', 0.03)
 
-        # Convert to tensors if needed
+        # Convert to tensors directly on the correct device for efficiency
         if not isinstance(rpm, torch.Tensor):
-            rpm = torch.tensor(rpm, dtype=torch.float32)
+            rpm = torch.tensor(rpm, dtype=torch.float32, device=device)
+        else:
+            rpm = rpm.to(device)
         if not isinstance(load, torch.Tensor):
-            load = torch.tensor(load, dtype=torch.float32)
+            load = torch.tensor(load, dtype=torch.float32, device=device)
+        else:
+            load = load.to(device)
         if not isinstance(viscosity, torch.Tensor):
-            viscosity = torch.tensor(viscosity, dtype=torch.float32)
-
-        # Move to device
-        rpm = rpm.to(device)
-        load = load.to(device)
-        viscosity = viscosity.to(device)
+            viscosity = torch.tensor(viscosity, dtype=torch.float32, device=device)
+        else:
+            viscosity = viscosity.to(device)
 
         # Ensure batch dimension
         if rpm.dim() == 0:
@@ -277,8 +278,16 @@ class HybridPINN(BaseModel):
         """
         batch_size = signal.shape[0]
 
-        # If no metadata provided, use defaults
+        # If no metadata provided, use defaults (with warning)
         if metadata is None:
+            import warnings
+            warnings.warn(
+                "No metadata provided, using default operating conditions "
+                "(3600 RPM, 500N load, 0.03 Pa·s viscosity). "
+                "For production use, provide actual operating conditions.",
+                UserWarning,
+                stacklevel=2
+            )
             metadata = {
                 'rpm': torch.tensor([3600.0] * batch_size),
                 'load': torch.tensor([500.0] * batch_size),

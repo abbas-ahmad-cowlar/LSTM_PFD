@@ -40,6 +40,7 @@ from training.physics_loss_functions import (
     TemporalSmoothnessLoss,
     PhysicalConstraintLoss
 )
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 class PINNTrainingState(TrainingState):
@@ -90,7 +91,7 @@ class PINNTrainer(Trainer):
         lambda_temporal: float = 0.0,
         adaptive_lambda: bool = True,
         lambda_schedule: str = 'linear',
-        sample_rate: int = 51200,
+        sample_rate: int = 20480,
         metadata_keys: List[str] = None
     ):
         """
@@ -210,9 +211,13 @@ class PINNTrainer(Trainer):
             metadata = None
         elif len(batch) == 3:
             inputs, targets, metadata = batch
-            # Filter metadata to only include needed keys
+            # Filter metadata to only include needed keys and validate
             if metadata is not None and isinstance(metadata, dict):
-                metadata = {k: v for k, v in metadata.items() if k in self.metadata_keys}
+                metadata = {k: v for k, v in metadata.items()
+                           if k in self.metadata_keys and v is not None}
+                # If empty after filtering, set to None
+                if not metadata:
+                    metadata = None
         else:
             raise ValueError(f"Unexpected batch format with {len(batch)} elements")
 
