@@ -39,6 +39,8 @@ import warnings
 # Add parent directory for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
+from utils.constants import NUM_CLASSES
+
 
 class ConceptActivationVector:
     """

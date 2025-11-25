@@ -38,7 +38,7 @@ class FrequencyConsistencyLoss(nn.Module):
 
     def __init__(
         self,
-        sample_rate: int = 51200,
+        sample_rate: int = 20480,
         n_fft: int = 2048,
         top_k: int = 5,
         tolerance: float = 0.1
@@ -289,7 +289,7 @@ class PhysicalConstraintLoss(nn.Module):
         lambda_freq: float = 1.0,
         lambda_sommerfeld: float = 0.5,
         lambda_temporal: float = 0.1,
-        sample_rate: int = 51200
+        sample_rate: int = 20480
     ):
         """
         Initialize combined physics constraint loss.
@@ -365,7 +365,7 @@ class SpectralDistanceLoss(nn.Module):
     the full spectrum rather than just peak frequencies.
     """
 
-    def __init__(self, sample_rate: int = 51200, n_fft: int = 2048):
+    def __init__(self, sample_rate: int = 20480, n_fft: int = 2048):
         """
         Initialize spectral distance loss.
 
@@ -417,7 +417,7 @@ class SpectralDistanceLoss(nn.Module):
         # Normalize
         observed_spectrum = observed_spectrum / (torch.max(observed_spectrum, dim=-1, keepdim=True)[0] + 1e-6)
 
-        # Frequency bins
+        # Frequency bins (use numpy for compatibility with signature_db)
         freq_bins = np.fft.rfftfreq(self.n_fft, d=1.0/self.sample_rate)
 
         # Compute expected spectrum for each sample
@@ -446,7 +446,7 @@ def frequency_consistency_loss(
     signal: torch.Tensor,
     predictions: torch.Tensor,
     metadata: Optional[Dict[str, torch.Tensor]] = None,
-    sample_rate: int = 51200
+    sample_rate: int = 20480
 ) -> torch.Tensor:
     """
     Convenience function for frequency consistency loss.
@@ -523,7 +523,7 @@ if __name__ == "__main__":
     }
 
     print("\nTesting Frequency Consistency Loss:")
-    freq_loss_fn = FrequencyConsistencyLoss(sample_rate=51200, n_fft=2048)
+    freq_loss_fn = FrequencyConsistencyLoss(sample_rate=20480, n_fft=2048)
     freq_loss = freq_loss_fn(signal, predictions, metadata)
     print(f"   Loss value: {freq_loss.item():.4f}")
 

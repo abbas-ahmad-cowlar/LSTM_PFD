@@ -264,6 +264,23 @@ def optimize_ensemble_weights(
     """
     num_models = len(models)
 
+    # Input validation
+    if num_models < 2:
+        raise ValueError(f"Need at least 2 models for ensemble, got {num_models}")
+
+    if search_resolution < 2:
+        raise ValueError(f"search_resolution must be >= 2, got {search_resolution}")
+
+    # Warn about computational cost
+    total_combinations = search_resolution ** num_models
+    if total_combinations > 100000:
+        import warnings
+        warnings.warn(
+            f"Large search space: {search_resolution}^{num_models} = {total_combinations:,} combinations. "
+            f"This may take a long time. Consider reducing search_resolution or using fewer models.",
+            UserWarning
+        )
+
     # Get predictions from all models
     print("Generating predictions from all models...")
     all_predictions = []

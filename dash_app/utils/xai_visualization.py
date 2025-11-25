@@ -6,16 +6,14 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import List, Optional, Dict, Any, Tuple
+from config import FAULT_CLASSES as FAULT_CLASSES_CONFIG
 
 
 class XAIVisualization:
     """Utility class for creating XAI visualizations in Plotly."""
 
-    # Fault class names for labeling
-    FAULT_CLASSES = [
-        "Normal", "Ball Fault", "Inner Race", "Outer Race", "Combined",
-        "Imbalance", "Misalignment", "Oil Whirl", "Cavitation", "Looseness", "Oil Deficiency"
-    ]
+    # Fault class names for labeling (imported from config)
+    FAULT_CLASSES = FAULT_CLASSES_CONFIG
 
     @staticmethod
     def create_shap_signal_plot(
