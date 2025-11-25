@@ -103,7 +103,11 @@ class EarlyStopping:
         if self.is_better(metric_value, self.best_score):
             # Improvement found
             if self.verbose:
-                improvement = metric_value - self.best_score
+                # Calculate improvement based on mode
+                if self.mode == 'min':
+                    improvement = self.best_score - metric_value  # Reduction is good
+                else:
+                    improvement = metric_value - self.best_score  # Increase is good
                 logger.info(
                     f"Validation metric improved: {self.best_score:.4f} → {metric_value:.4f} "
                     f"(Δ={improvement:+.4f})"
