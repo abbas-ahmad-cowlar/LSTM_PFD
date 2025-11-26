@@ -8,7 +8,7 @@ Purpose:
     - Memory monitoring
     - Multi-GPU support
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-19
 """
 

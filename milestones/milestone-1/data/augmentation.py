@@ -9,7 +9,7 @@ Purpose:
     - Mixup between signals
     - Adding synthetic noise profiles
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-19
 """
 

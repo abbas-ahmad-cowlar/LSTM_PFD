@@ -5,7 +5,7 @@ Purpose:
     Ensure Python implementation matches MATLAB generator.m within 1% tolerance.
     Performs statistical and signal-level comparisons to validate correctness.
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-19
 """
 

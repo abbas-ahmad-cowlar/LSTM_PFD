@@ -11,7 +11,7 @@ Purpose:
     - Default hyperparameters
     - File paths and directory names
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-21
 Created as part of critical refactoring to eliminate magic numbers
 """
@@ -339,5 +339,5 @@ def validate_signal_length(length: int) -> bool:
 # ==============================================================================
 
 __version__ = '1.0.0'
-__author__ = 'Syed Abbas Ahmad'
+__author__ = 'Author Name'
 __date__ = '2025-11-21'

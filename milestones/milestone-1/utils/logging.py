@@ -8,7 +8,7 @@ Purpose:
     - Log levels (DEBUG, INFO, WARNING, ERROR)
     - System information logging
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-19
 """
 

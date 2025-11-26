@@ -16,7 +16,7 @@ Architecture:
 
 Expected Performance: 94-96% test accuracy (2-3% improvement over baseline CNN)
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-20
 """
 

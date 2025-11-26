@@ -9,7 +9,7 @@ Purpose:
     - Automatic checkpointing and early stopping
     - MLflow logging integration
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-20
 """
 
