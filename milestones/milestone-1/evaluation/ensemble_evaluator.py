@@ -7,7 +7,7 @@ Comprehensive evaluation of ensemble methods including:
 - Per-class performance analysis
 - Ensemble vs individual model comparison
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-20
 """
 

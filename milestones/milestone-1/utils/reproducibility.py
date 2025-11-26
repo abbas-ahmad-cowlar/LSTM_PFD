@@ -7,7 +7,7 @@ Purpose:
     - NumPy random number generation
     - PyTorch CPU and CUDA operations
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-19
 """
 

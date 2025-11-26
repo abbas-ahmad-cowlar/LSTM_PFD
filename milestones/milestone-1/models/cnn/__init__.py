@@ -8,7 +8,7 @@ Purpose:
     - Attention mechanisms: SE blocks, CBAM
     - Model variants: Shallow, deep, residual architectures
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-20
 """
 

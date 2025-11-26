@@ -9,7 +9,7 @@ Purpose:
     - RandomAmplitudeScale: Multiply by random factor
     - AddGaussianNoise: Inject noise for robustness
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-20
 """
 

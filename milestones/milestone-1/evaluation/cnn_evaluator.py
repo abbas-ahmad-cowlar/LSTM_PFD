@@ -9,7 +9,7 @@ Purpose:
     - Model inference and predictions
     - Support for both single models and ensembles
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-20
 """
 
