@@ -372,15 +372,15 @@ def test_checkpoint_manager():
     print("Testing Checkpoint Manager")
     print("=" * 60)
 
-    from models.cnn.cnn_1d import CNN1D
+    from models import create_model
     import tempfile
 
     # Create temporary directory for testing
     with tempfile.TemporaryDirectory() as tmpdir:
         checkpoint_dir = Path(tmpdir) / 'checkpoints'
 
-        # Create model and optimizer
-        model = CNN1D(num_classes=NUM_CLASSES)
+        # Create model and optimizer (using LSTM for milestone-2)
+        model = create_model('vanilla_lstm', num_classes=NUM_CLASSES, hidden_size=64)
         optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
 
         print("\n1. Creating checkpoint manager...")
@@ -419,7 +419,7 @@ def test_checkpoint_manager():
 
         # Test weight-only loading
         print("\n6. Testing weight-only loading...")
-        new_model = CNN1D(num_classes=NUM_CLASSES)
+        new_model = create_model('vanilla_lstm', num_classes=NUM_CLASSES, hidden_size=64)
         new_ckpt_manager = CheckpointManager(
             checkpoint_dir=checkpoint_dir,
             model=new_model,
