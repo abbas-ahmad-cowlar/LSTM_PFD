@@ -9,7 +9,7 @@ Purpose:
     - Step decay and exponential decay
     - ReduceLROnPlateau for adaptive scheduling
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-20
 """
 

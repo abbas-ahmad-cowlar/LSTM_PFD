@@ -5,7 +5,7 @@ Purpose:
     Visualize feature distributions, correlations, and t-SNE clustering.
     Reproduces Figures 4, 5, 6 from technical report.
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-19
 """
 

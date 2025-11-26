@@ -8,7 +8,7 @@ Purpose:
     - Persistent workers to reduce overhead
     - Custom collate functions for batching
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-20
 """
 
