@@ -5,7 +5,7 @@ Purpose:
     Visualize model performance, confusion matrices, ROC curves.
     Reproduces Figures 7, 8, 9 from technical report.
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-19
 """
 

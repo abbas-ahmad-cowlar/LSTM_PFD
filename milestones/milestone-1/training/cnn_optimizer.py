@@ -7,7 +7,7 @@ Purpose:
     - SGD: Stochastic Gradient Descent with momentum
     - RMSprop: Adaptive learning rate method
 
-Author: Syed Abbas Ahmad
+Author: Author Name
 Date: 2025-11-20
 """
 
