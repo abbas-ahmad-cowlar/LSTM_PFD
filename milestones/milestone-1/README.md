@@ -1441,20 +1441,12 @@ If you use this system in your research or project, please cite:
   author = {Your Name},
   year = {2025},
   note = {Deep learning system for bearing fault diagnosis with 96-97\% accuracy},
-  url = {https://github.com/abbas-ahmad-cowlar/bearing-fault-diagnosis}
 }
 ```
 
 ---
 
-## 📞 Contact & Support
 
-For questions, issues, or suggestions:
-
-- **Email**: syedabbasahmad6@gmail.com
-- **Issues**: Please report bugs or request features via email or project documentation
-
----
 
 **Last Updated**: November 2025
 
