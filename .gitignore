@@ -30,7 +30,15 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
-
+*.zip
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.lzma
+*.tar.lz
+*.tar.lz4
+*.tar.zstd
+*.tar.z
 # Unit test / coverage reports
 htmlcov/
 .tox/
