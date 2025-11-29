@@ -345,7 +345,7 @@ paths = generator.save_dataset(dataset, output_dir='data/processed', format='bot
 # Creates: data/processed/mat_files/*.mat AND data/processed/dataset.h5
 ```
 
-📖 **For more details on HDF5 vs .mat formats**, see [`HDF5_MIGRATION_GUIDE.md`](HDF5_MIGRATION_GUIDE.md)
+📖 **For more details on HDF5 vs .mat formats**, see [`docs/HDF5_MIGRATION_GUIDE.md`](docs/HDF5_MIGRATION_GUIDE.md)
 
 ### Verify Data
 
