@@ -207,7 +207,7 @@ Traditional MATLAB format - fully supported for backward compatibility.
 generator.save_dataset(dataset, output_dir='data/processed')
 ```
 
-📖 **Complete migration guide**: See [`HDF5_MIGRATION_GUIDE.md`](HDF5_MIGRATION_GUIDE.md) for detailed usage, performance comparisons, and migration scenarios.
+📖 **Complete migration guide**: See [`docs/HDF5_MIGRATION_GUIDE.md`](docs/HDF5_MIGRATION_GUIDE.md) for detailed usage, performance comparisons, and migration scenarios.
 
 ---
 
@@ -239,7 +239,7 @@ All 11 phases are **complete and production-ready**:
 ## 🚀 Quick Start
 
 > **🎯 Choose Your Path:**
-> - **GUI Users (No Code)**: Follow **[GUI QUICK START](GUI_QUICKSTART.md)** - Train models using only the web dashboard
+> - **GUI Users (No Code)**: Follow **[GUI QUICK START](dash_app/GUI_QUICKSTART.md)** - Train models using only the web dashboard
 > - **Command-Line Users**: Follow **[CLI QUICK START](QUICKSTART.md)** - Full 11-phase implementation guide
 > - **Dashboard Users**: See **[Phase 11 Usage Guide](docs/USAGE_PHASE_11.md)** - Complete dashboard feature documentation
 
