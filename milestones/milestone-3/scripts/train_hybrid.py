@@ -203,8 +203,8 @@ def main():
         criterion=criterion,
         device=device,
         lr_scheduler=scheduler,
-        mixed_precision=args.mixed_precision,
-        checkpoint_dir=str(checkpoint_dir)
+        checkpoint_dir=checkpoint_dir,
+        mixed_precision=args.mixed_precision
     )
 
     print("="*70)
