@@ -11,7 +11,7 @@ Evaluates LSTM models on test data with detailed metrics:
 
 Usage:
     # Evaluate a trained model
-    python scripts/evaluate_lstm.py --checkpoint checkpoints/bilstm/best_model.pth
+    python scripts/evaluate_lstm.py --checkpoint checkpoints/lstm/model_best.pth
 
     # Evaluate with detailed analysis
     python scripts/evaluate_lstm.py --checkpoint model.pth --analyze-failures --plot-confusion
@@ -41,11 +41,9 @@ from sklearn.metrics import (
 # Import project modules
 from models import create_model
 from data.lstm_dataloader import create_lstm_dataloaders
+from training.lstm_trainer import LSTMTrainer
 from utils.device_manager import get_device
-from utils.constants import NUM_CLASSES, FAULT_TYPES, FAULT_TYPE_DISPLAY_NAMES
-
-# Class names for bearing faults
-CLASS_NAMES = [FAULT_TYPE_DISPLAY_NAMES.get(ft, ft) for ft in FAULT_TYPES]
+from utils.constants import NUM_CLASSES, FAULT_TYPES
 
 
 def parse_args() -> argparse.Namespace:
@@ -64,7 +62,7 @@ def parse_args() -> argparse.Namespace:
 
     # Data arguments
     parser.add_argument('--data-dir', type=str, default='data/raw/bearing_data',
-                       help='Directory with .MAT files')
+                       help='Directory with test data')
     parser.add_argument('--batch-size', type=int, default=64,
                        help='Batch size for evaluation')
     parser.add_argument('--num-workers', type=int, default=4,
@@ -368,7 +366,7 @@ def main():
 
     # Per-class metrics
     if args.per_class_metrics:
-        print_per_class_metrics(results, CLASS_NAMES)
+        print_per_class_metrics(results, FAULT_TYPES)
 
     # Create output directory
     output_dir = Path(args.output_dir)
@@ -377,11 +375,11 @@ def main():
     # Plot confusion matrix
     if args.plot_confusion:
         cm_path = output_dir / 'confusion_matrix.png'
-        plot_confusion_matrix(results['confusion_matrix'], CLASS_NAMES, cm_path)
+        plot_confusion_matrix(results['confusion_matrix'], FAULT_TYPES, cm_path)
 
     # Analyze failures
     if args.analyze_failures:
-        analyze_failures(results, CLASS_NAMES)
+        analyze_failures(results, FAULT_TYPES)
 
     # Save predictions
     if args.save_predictions:
