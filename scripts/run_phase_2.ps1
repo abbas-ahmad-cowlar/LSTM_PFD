@@ -86,12 +86,20 @@ try {
 
 # Check Python version
 $versionMatch = $pythonVersion -match "Python (\d+)\.(\d+)"
+$pythonMajor = 0
+$pythonMinor = 0
 if ($versionMatch) {
-    $major = [int]$matches[1]
-    $minor = [int]$matches[2]
-    if ($major -lt 3 -or ($major -eq 3 -and $minor -lt 8)) {
+    $pythonMajor = [int]$matches[1]
+    $pythonMinor = [int]$matches[2]
+    if ($pythonMajor -lt 3 -or ($pythonMajor -eq 3 -and $pythonMinor -lt 8)) {
         Write-Error -Message "Python 3.8+ required. Found: $pythonVersion"
         exit 1
+    }
+    # Warn about Python 3.13+ not having CUDA wheels yet
+    if ($pythonMajor -eq 3 -and $pythonMinor -ge 13) {
+        Write-Warning -Message "Python $pythonMajor.$pythonMinor detected - PyTorch CUDA wheels may not be available yet"
+        Write-Warning -Message "If GPU acceleration fails, consider using Python 3.12 for CUDA support"
+        Write-Info -Message "  To fix: Install Python 3.12, then recreate venv with: C:\Python312\python.exe -m venv venv"
     }
 }
 
@@ -198,24 +206,65 @@ if (-not $SkipRequirements) {
         # Install Phase 2 specific packages (PyTorch is critical)
         Write-Info -Message "Installing Phase 2 packages..."
         
-        # Check if PyTorch is installed and if it matches hardware
-        $torchCheck = @"
+        # Comprehensive PyTorch check and auto-fix
+        Write-Info -Message "Checking PyTorch installation and CUDA support..."
+        
+        $torchCheckScript = @"
+import torch
 import sys
 try:
-    import torch
-    print(f"✓ torch {torch.__version__}")
-    print(f"✓ CUDA available: {torch.cuda.is_available()}")
-    if torch.cuda.is_available():
-        print(f"✓ CUDA device: {torch.cuda.get_device_name(0)}")
+    version = torch.__version__
+    cuda_available = torch.cuda.is_available()
+    # Check if it's CPU-only build
+    is_cpu_build = '+cpu' in version
+    # Also check if CUDA version attribute exists
+    has_cuda_version = hasattr(torch.version, 'cuda') and torch.version.cuda is not None
+    
+    print(f"INSTALLED:True")
+    print(f"VERSION:{version}")
+    print(f"CUDA_AVAILABLE:{cuda_available}")
+    print(f"IS_CPU_BUILD:{is_cpu_build}")
+    print(f"HAS_CUDA_VERSION:{has_cuda_version}")
+    
+    if cuda_available:
+        print(f"GPU_NAME:{torch.cuda.get_device_name(0)}")
+        print(f"CUDA_VERSION:{torch.version.cuda}")
+    
     sys.exit(0)
 except ImportError:
-    print("✗ torch MISSING")
+    print("INSTALLED:False")
     sys.exit(1)
 "@
-        $tempTorchCheck = "$env:TEMP\check_torch.py"
-        $torchCheck | Out-File -FilePath $tempTorchCheck -Encoding UTF8
-        $torchOutput = & $pythonCmd $tempTorchCheck 2>&1
-        $torchInstalled = $?
+        $tempTorchCheck = "$env:TEMP\check_torch_detailed.py"
+        $torchCheckScript | Out-File -FilePath $tempTorchCheck -Encoding UTF8
+        $torchCheckOutput = & $pythonCmd $tempTorchCheck 2>&1
+        Remove-Item $tempTorchCheck -ErrorAction SilentlyContinue
+        
+        $torchInstalled = $false
+        $torchVersion = ""
+        $cudaAvailable = $false
+        $isCpuBuild = $false
+        $hasCudaVersion = $false
+        
+        if ($torchCheckOutput) {
+            foreach ($line in $torchCheckOutput) {
+                if ($line -match "INSTALLED:(.+)") {
+                    $torchInstalled = ($matches[1].Trim() -eq "True")
+                }
+                if ($line -match "VERSION:(.+)") {
+                    $torchVersion = $matches[1].Trim()
+                }
+                if ($line -match "CUDA_AVAILABLE:(.+)") {
+                    $cudaAvailable = ($matches[1].Trim() -eq "True")
+                }
+                if ($line -match "IS_CPU_BUILD:(.+)") {
+                    $isCpuBuild = ($matches[1].Trim() -eq "True")
+                }
+                if ($line -match "HAS_CUDA_VERSION:(.+)") {
+                    $hasCudaVersion = ($matches[1].Trim() -eq "True")
+                }
+            }
+        }
         
         if (-not $torchInstalled) {
             Write-Warning -Message "PyTorch not found. Installing appropriate version..."
@@ -224,63 +273,121 @@ except ImportError:
             if ($hasGPU -and $cudaVersion -ne "Legacy") {
                 Write-Info -Message "  Installing PyTorch with CUDA support for GPU acceleration..."
                 Write-Info -Message "  This is a large download ~2.5GB and may take several minutes..."
-                & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 --quiet 2>&1 | Out-Null
                 
-                if ($?) {
-                    Write-Success -Message "  PyTorch with CUDA support installed successfully"
+                # Try CUDA 12.4 first (for modern drivers), fallback to 12.1, then 11.8
+                $cudaVersionsToTry = @("cu124", "cu121", "cu118")
+                $cudaInstallSuccess = $false
+                
+                foreach ($cudaVer in $cudaVersionsToTry) {
+                    Write-Info -Message "  Trying PyTorch with $cudaVer..."
+                    $installOutput = & $pythonCmd -m pip install torch torchvision torchaudio --index-url "https://download.pytorch.org/whl/$cudaVer" 2>&1
                     
-                    # Verify CUDA is available
-                    $cudaVerify = & $pythonCmd -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')" 2>&1
-                    Write-Info -Message "  $cudaVerify"
-                } else {
-                    Write-Warning -Message "  Failed to install CUDA-enabled PyTorch. Falling back to CPU version..."
+                    # Verify installation worked and CUDA is available
+                    $verifyResult = & $pythonCmd -c "import torch; print(torch.cuda.is_available())" 2>&1
+                    if ($verifyResult -eq "True") {
+                        Write-Success -Message "  PyTorch with $cudaVer installed successfully!"
+                        $cudaVerify = & $pythonCmd -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')" 2>&1
+                        Write-Info -Message "  $cudaVerify"
+                        $cudaInstallSuccess = $true
+                        break
+                    } else {
+                        Write-Warning -Message "  $cudaVer not available for Python $pythonMajor.$pythonMinor, trying next..."
+                        & $pythonCmd -m pip uninstall torch torchvision torchaudio -y --quiet 2>&1 | Out-Null
+                    }
+                }
+                
+                if (-not $cudaInstallSuccess) {
+                    Write-Warning -Message "  No CUDA-enabled PyTorch available for Python $pythonMajor.$pythonMinor"
+                    Write-Warning -Message "  This is likely because Python $pythonMajor.$pythonMinor is too new."
+                    Write-Warning -Message "  Falling back to CPU version (training will be slower)..."
+                    Write-Info -Message "  TIP: For GPU support, use Python 3.12: C:\Python312\python.exe -m venv venv"
                     & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
                 }
             } else {
                 Write-Info -Message "  Installing PyTorch CPU-only..."
                 & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
             }
-            
-            # Verify installation
-            $torchOutput = & $pythonCmd $tempTorchCheck 2>&1
-            Write-Host $torchOutput
         } else {
-            Write-Host $torchOutput
+            # PyTorch is installed - check if it needs upgrade
+            Write-Info -Message "  PyTorch found: $torchVersion"
             
-            # Check if installed PyTorch matches hardware
             if ($hasGPU -and $cudaVersion -ne "Legacy") {
-                $cudaAvailable = & $pythonCmd -c "import torch; print(torch.cuda.is_available())" 2>&1
-                if ($cudaAvailable -eq "False") {
-                    Write-Warning -Message "  GPU detected but PyTorch doesn't have CUDA support"
-                    Write-Info -Message "  Upgrading PyTorch to CUDA version for GPU acceleration..."
+                # Check if we need to upgrade from CPU-only to CUDA version
+                $needsUpgrade = $false
+                $upgradeReason = ""
+                
+                if ($isCpuBuild) {
+                    $needsUpgrade = $true
+                    $upgradeReason = "CPU-only build detected (+cpu in version)"
+                } elseif (-not $cudaAvailable) {
+                    $needsUpgrade = $true
+                    $upgradeReason = "CUDA not available despite GPU being present"
+                } elseif (-not $hasCudaVersion) {
+                    $needsUpgrade = $true
+                    $upgradeReason = "PyTorch doesn't have CUDA version info"
+                }
+                
+                if ($needsUpgrade) {
+                    Write-Warning -Message "  GPU detected but PyTorch doesn't have proper CUDA support"
+                    Write-Info -Message "  Reason: $upgradeReason"
+                    Write-Info -Message "  Auto-upgrading PyTorch to CUDA version for GPU acceleration..."
                     Write-Info -Message "  This may take a few minutes - larger download (~2.5GB)..."
                     
                     # Uninstall existing PyTorch
-                    Write-Info -Message "  Uninstalling existing PyTorch..."
+                    Write-Info -Message "  Step 1/2: Uninstalling existing CPU-only PyTorch..."
                     & $pythonCmd -m pip uninstall torch torchvision torchaudio -y --quiet 2>&1 | Out-Null
                     
-                    # Install PyTorch with CUDA support
-                    & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 --quiet 2>&1 | Out-Null
+                    # Try CUDA versions in order: 12.4, 12.1, 11.8
+                    Write-Info -Message "  Step 2/2: Installing PyTorch with CUDA support..."
+                    $cudaVersionsToTry = @("cu124", "cu121", "cu118")
+                    $cudaUpgradeSuccess = $false
                     
-                    if ($?) {
-                        Write-Success -Message "  PyTorch upgraded to CUDA version successfully"
+                    foreach ($cudaVer in $cudaVersionsToTry) {
+                        Write-Info -Message "    Trying $cudaVer..."
+                        $installOutput = & $pythonCmd -m pip install torch torchvision torchaudio --index-url "https://download.pytorch.org/whl/$cudaVer" 2>&1
                         
-                        # Verify CUDA is available
-                        $cudaVerify = & $pythonCmd -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')" 2>&1
-                        Write-Info -Message "  $cudaVerify"
-                    } else {
-                        Write-Warning -Message "  Failed to upgrade to CUDA-enabled PyTorch. Continuing with CPU version..."
+                        # Verify CUDA actually works
+                        $verifyResult = & $pythonCmd -c "import torch; print(torch.cuda.is_available())" 2>&1
+                        if ($verifyResult -eq "True") {
+                            $cudaVerify = & $pythonCmd -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('GPU:', torch.cuda.get_device_name(0)); print('CUDA Version:', torch.version.cuda)" 2>&1
+                            Write-Host $cudaVerify
+                            Write-Success -Message "  PyTorch successfully upgraded to CUDA version ($cudaVer) - GPU acceleration enabled!"
+                            $deviceInfo = "cuda"
+                            $cudaUpgradeSuccess = $true
+                            break
+                        } else {
+                            Write-Warning -Message "    $cudaVer not available for Python $pythonMajor.$pythonMinor"
+                            & $pythonCmd -m pip uninstall torch torchvision torchaudio -y --quiet 2>&1 | Out-Null
+                        }
+                    }
+                    
+                    if (-not $cudaUpgradeSuccess) {
+                        Write-Warning -Message "  No CUDA-enabled PyTorch available for Python $pythonMajor.$pythonMinor"
+                        Write-Warning -Message "  This is likely because your Python version is too new for PyTorch CUDA wheels."
+                        Write-Warning -Message "  Reinstalling CPU version - training will be slower (10-15 hours vs 2-3 hours)"
+                        Write-Info -Message ""
+                        Write-Info -Message "  =========================================="
+                        Write-Info -Message "  TO ENABLE GPU ACCELERATION:"
+                        Write-Info -Message "  1. Install Python 3.12 from python.org"
+                        Write-Info -Message "  2. Delete the venv folder"
+                        Write-Info -Message "  3. Create new venv: C:\Python312\python.exe -m venv venv"
+                        Write-Info -Message "  4. Run this script again"
+                        Write-Info -Message "  =========================================="
+                        Write-Info -Message ""
                         & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
                     }
                 } else {
-                    Write-Success -Message "PyTorch is already installed with CUDA support - ready for GPU acceleration"
+                    Write-Success -Message "  ??? PyTorch already has CUDA support - ready for GPU acceleration"
+                    if ($torchCheckOutput -match "GPU_NAME:(.+)") {
+                        $gpuName = $matches[1].Trim()
+                        Write-Info -Message "    GPU: $gpuName"
+                    }
                     $deviceInfo = "cuda"
                 }
             } else {
-                Write-Success -Message "PyTorch is already installed"
+                Write-Info -Message "  PyTorch installed (CPU version - no GPU detected)"
             }
         }
-        Remove-Item $tempTorchCheck -ErrorAction SilentlyContinue
         
         # Update deviceInfo after PyTorch installation/upgrade
         if ($hasGPU -and $cudaVersion -ne "Legacy") {
@@ -299,7 +406,15 @@ except ImportError:
             "h5py>=3.8.0",
             "matplotlib>=3.7.0",
             "seaborn>=0.12.0",
-            "tqdm>=4.65.0"
+            "tqdm>=4.65.0",
+            "pyyaml>=6.0",
+            "jsonschema>=4.0.0",
+            "pywavelets>=1.4.0",
+            "python-dotenv>=1.0.0",
+            "joblib>=1.3.0",
+            "pillow>=10.0.0",
+            "tabulate>=0.9.0",
+            "tensorboard>=2.10.0"
         )
         
         foreach ($pkg in $phase2Packages) {
@@ -314,31 +429,31 @@ import sys
 missing = []
 try:
     import torch
-    print("✓ torch")
+    print("??? torch")
 except ImportError:
     missing.append("torch")
-    print("✗ torch MISSING")
+    print("??? torch MISSING")
 
 try:
     import numpy
-    print("✓ numpy")
+    print("??? numpy")
 except ImportError:
     missing.append("numpy")
-    print("✗ numpy MISSING")
+    print("??? numpy MISSING")
 
 try:
     import h5py
-    print("✓ h5py")
+    print("??? h5py")
 except ImportError:
     missing.append("h5py")
-    print("✗ h5py MISSING")
+    print("??? h5py MISSING")
 
 try:
     import sklearn
-    print("✓ scikit-learn")
+    print("??? scikit-learn")
 except ImportError:
     missing.append("scikit-learn")
-    print("✗ scikit-learn MISSING")
+    print("??? scikit-learn MISSING")
 
 if missing:
     print(f"ERROR: Missing critical packages: {', '.join(missing)}")
@@ -447,7 +562,7 @@ try:
         fs = f.attrs.get('sampling_rate', 20480)
         num_classes = f.attrs.get('num_classes', 'unknown')
         
-        print(f"✓ HDF5 file structure valid")
+        print(f"??? HDF5 file structure valid")
         print(f"  Train samples: {train_count}")
         print(f"  Val samples: {val_count}")
         print(f"  Test samples: {test_count}")
@@ -456,7 +571,7 @@ try:
         print(f"  Number of classes: {num_classes}")
         
         if train_count > 0 and val_count > 0 and test_count > 0:
-            print("✓ Dataset validation passed")
+            print("??? Dataset validation passed")
             sys.exit(0)
         else:
             print("ERROR: Empty dataset splits")
@@ -493,12 +608,12 @@ $gpuCheckScript = @"
 import torch
 import sys
 if torch.cuda.is_available():
-    print(f"✓ GPU available: {torch.cuda.get_device_name(0)}")
-    print(f"✓ CUDA version: {torch.version.cuda}")
-    print(f"✓ GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
+    print(f"??? GPU available: {torch.cuda.get_device_name(0)}")
+    print(f"??? CUDA version: {torch.version.cuda}")
+    print(f"??? GPU memory: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB")
     sys.exit(0)
 else:
-    print("⚠ GPU not available - will use CPU (training will be slower)")
+    print("??? GPU not available - will use CPU (training will be slower)")
     print("  Expected training time: 10-15 hours (CPU) vs 2-3 hours (GPU)")
     sys.exit(1)
 "@
@@ -609,17 +724,17 @@ if (Test-Path $modelCheckpointDir) {
     $bestCheckpoint = Get-ChildItem -Path $modelCheckpointDir -Filter "*_best.pth" -ErrorAction SilentlyContinue | Select-Object -First 1
     
     if ($bestCheckpoint) {
-        Write-Success -Message "  ✓ Best model checkpoint: $($bestCheckpoint.Name)"
+        Write-Success -Message "  ??? Best model checkpoint: $($bestCheckpoint.Name)"
     } else {
-        Write-Warning -Message "  ✗ Best model checkpoint not found"
+        Write-Warning -Message "  ??? Best model checkpoint not found"
     }
     
     # Check for any checkpoint files
-    $allCheckpoints = Get-ChildItem -Path $modelCheckpointDir -Filter "*.pth" -ErrorAction SilentlyContinue
-    if ($allCheckpoints) {
-        Write-Success -Message "  ✓ Found $($allCheckpoints.Count) checkpoint file(s)"
+    $allCheckpoints = @(Get-ChildItem -Path $modelCheckpointDir -Filter "*.pth" -ErrorAction SilentlyContinue)
+    if ($allCheckpoints.Count -gt 0) {
+        Write-Success -Message "  [OK] Found $($allCheckpoints.Count) checkpoint file(s)"
     } else {
-        Write-Warning -Message "  ✗ No checkpoint files found"
+        Write-Warning -Message "  [WARN] No checkpoint files found"
     }
     
     Write-Success -Message "Output validation complete"
@@ -665,4 +780,8 @@ if ($trainExitCode -eq 0 -or $trainExitCode -eq $null) {
 }
 
 Write-Host ""
+
+
+
+
 
