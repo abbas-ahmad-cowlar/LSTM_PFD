@@ -88,8 +88,10 @@ def parse_args() -> argparse.Namespace:
                        help='CNN architecture to train')
 
     # Data arguments
+    parser.add_argument('--data-path', type=str, default=None,
+                       help='Path to HDF5 dataset file (auto-detects if not provided)')
     parser.add_argument('--data-dir', type=str, default='data/processed',
-                       help='Directory with processed data')
+                       help='Directory with processed data (for MAT files, deprecated)')
     parser.add_argument('--num-workers', type=int, default=4,
                        help='Number of data loading workers')
 
@@ -217,40 +219,73 @@ def create_model(args: argparse.Namespace, num_classes: int) -> torch.nn.Module:
 
 
 def load_data(args: argparse.Namespace, logger):
-    """Load and prepare data"""
-    logger.info(f"Loading data from {args.data_dir}...")
-
-    # Load .mat files from directory
-    from data.matlab_importer import load_mat_dataset
-    from data.cnn_dataset import RawSignalDataset
-    from sklearn.model_selection import train_test_split
-
-    # Load dataset
-    logger.info("Loading .MAT files...")
-    signals, labels, label_names = load_mat_dataset(args.data_dir)
-
-    logger.info(f"✓ Loaded {len(signals)} signals")
-    logger.info(f"  Signal shape: {signals.shape}")
-    logger.info(f"  Classes: {len(np.unique(labels))} ({', '.join(label_names[:5])}...)")
-
-    # Split into train/val/test (70/15/15)
-    train_signals, temp_signals, train_labels, temp_labels = train_test_split(
-        signals, labels, test_size=0.3, random_state=args.seed, stratify=labels
+    """Load and prepare data from HDF5 file (Phase 0 output)"""
+    import h5py
+    from data.cnn_dataset import RawSignalDataset, CachedRawSignalDataset
+    from data.cnn_transforms import get_train_transforms, get_test_transforms
+    
+    # Auto-detect HDF5 file if not provided
+    project_root = Path(__file__).parent.parent
+    if args.data_path is None:
+        possible_paths = [
+            project_root / "data" / "processed" / "dataset.h5",
+            project_root / "data" / "processed" / "signals_cache.h5"
+        ]
+        hdf5_path = None
+        for path in possible_paths:
+            if path.exists():
+                hdf5_path = path
+                break
+        if hdf5_path is None:
+            raise FileNotFoundError(
+                f"HDF5 dataset not found. Expected at: {possible_paths[0]} or {possible_paths[1]}\n"
+                "Please run Phase 0 first to generate the dataset."
+            )
+    else:
+        hdf5_path = Path(args.data_path)
+        if not hdf5_path.exists():
+            raise FileNotFoundError(f"HDF5 file not found: {hdf5_path}")
+    
+    logger.info(f"Loading data from HDF5: {hdf5_path}")
+    
+    # Load data from HDF5
+    with h5py.File(hdf5_path, 'r') as f:
+        train_signals = f['train']['signals'][:]
+        train_labels = f['train']['labels'][:]
+        val_signals = f['val']['signals'][:]
+        val_labels = f['val']['labels'][:]
+        test_signals = f['test']['signals'][:]
+        test_labels = f['test']['labels'][:]
+        fs = f.attrs.get('sampling_rate', 20480)
+        num_classes = f.attrs.get('num_classes', 11)
+    
+    logger.info(f"✓ Loaded data from HDF5:")
+    logger.info(f"  Train: {len(train_signals)} samples")
+    logger.info(f"  Val:   {len(val_signals)} samples")
+    logger.info(f"  Test:  {len(test_signals)} samples")
+    logger.info(f"  Signal length: {train_signals.shape[1]}")
+    logger.info(f"  Sampling rate: {fs} Hz")
+    logger.info(f"  Classes: {num_classes}")
+    
+    # Create datasets with transforms
+    train_dataset = RawSignalDataset(
+        signals=train_signals,
+        labels=train_labels,
+        transform=get_train_transforms(augment=True)
     )
-    val_signals, test_signals, val_labels, test_labels = train_test_split(
-        temp_signals, temp_labels, test_size=0.5, random_state=args.seed, stratify=temp_labels
+    val_dataset = RawSignalDataset(
+        signals=val_signals,
+        labels=val_labels,
+        transform=get_test_transforms()
+    )
+    test_dataset = RawSignalDataset(
+        signals=test_signals,
+        labels=test_labels,
+        transform=get_test_transforms()
     )
 
-    # Create datasets
-    train_dataset = RawSignalDataset(train_signals, train_labels)
-    val_dataset = RawSignalDataset(val_signals, val_labels)
-    test_dataset = RawSignalDataset(test_signals, test_labels)
-
-    logger.info(f"✓ Created datasets:")
-    logger.info(f"  Train: {len(train_dataset)} samples")
-    logger.info(f"  Val:   {len(val_dataset)} samples")
-    logger.info(f"  Test:  {len(test_dataset)} samples")
-
+    logger.info(f"✓ Created datasets with transforms")
+    
     # Create dataloaders
     loaders = create_cnn_dataloaders(
         train_dataset=train_dataset,
@@ -341,6 +376,11 @@ def main():
     )
     logger.info(f"✓ Created scheduler: {args.scheduler}")
 
+    # Create checkpoint directory (must be before trainer creation)
+    checkpoint_dir = Path(args.checkpoint_dir) / args.model
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"✓ Checkpoint directory: {checkpoint_dir}")
+
     # Create trainer
     trainer = CNNTrainer(
         model=model,
@@ -355,11 +395,6 @@ def main():
         checkpoint_dir=checkpoint_dir
     )
     logger.info(f"✓ Created trainer")
-
-    # Create checkpoint directory
-    checkpoint_dir = Path(args.checkpoint_dir) / args.model
-    checkpoint_dir.mkdir(parents=True, exist_ok=True)
-    logger.info(f"✓ Checkpoint directory: {checkpoint_dir}")
 
     # Experiment name
     if args.experiment_name is None:
