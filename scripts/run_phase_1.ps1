@@ -126,9 +126,58 @@ Write-Info -Message "Activating virtual environment..."
 & "$venvPath\Scripts\Activate.ps1"
 
 # ============================================================================
-# STEP 2: CHECK REQUIREMENTS
+# STEP 2: GPU DETECTION
 # ============================================================================
-Write-Step -Step "2" -Message "Checking Requirements"
+Write-Step -Step "2" -Message "Detecting GPU Hardware"
+
+$hasGPU = $false
+$gpuName = "None"
+$cudaVersion = "N/A"
+$deviceInfo = "cpu"
+
+try {
+    # Check for NVIDIA GPU
+    $gpuInfo = Get-WmiObject Win32_VideoController | Where-Object { $_.Name -like "*NVIDIA*" }
+    if ($gpuInfo) {
+        $hasGPU = $true
+        $gpuName = $gpuInfo.Name
+        Write-Success -Message "NVIDIA GPU detected: $gpuName"
+        Write-Info -Message "  Adapter RAM: $([math]::Round($gpuInfo.AdapterRAM / 1GB, 2)) GB"
+        Write-Info -Message "  Driver Version: $($gpuInfo.DriverVersion)"
+        
+        # Try to detect CUDA version from nvidia-smi
+        try {
+            $nvidiaSmi = nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>&1
+            if ($?) {
+                Write-Success -Message "NVIDIA drivers are properly installed"
+                # Infer CUDA compatibility from driver version
+                $driverMajor = [int]($gpuInfo.DriverVersion.Split('.')[0])
+                if ($driverMajor -ge 522) {
+                    $cudaVersion = "12.x"
+                    Write-Info -Message "  CUDA Compatibility: $cudaVersion - based on driver version"
+                } elseif ($driverMajor -ge 456) {
+                    $cudaVersion = "11.x"
+                    Write-Info -Message "  CUDA Compatibility: $cudaVersion - based on driver version"
+                } else {
+                    Write-Warning -Message "  Driver version may be too old for modern CUDA support"
+                    $cudaVersion = "Legacy"
+                }
+                $deviceInfo = "cuda"
+            }
+        } catch {
+            Write-Warning -Message "nvidia-smi not available. GPU detected but CUDA support uncertain."
+        }
+    } else {
+        Write-Info -Message "No NVIDIA GPU detected. Will use CPU for computations."
+    }
+} catch {
+    Write-Info -Message "GPU detection failed. Assuming CPU-only mode."
+}
+
+# ============================================================================
+# STEP 3: CHECK REQUIREMENTS
+# ============================================================================
+Write-Step -Step "3" -Message "Checking Requirements"
 
 if (-not $SkipRequirements) {
     Write-Info -Message "Running requirements check..."
@@ -239,9 +288,9 @@ else:
 }
 
 # ============================================================================
-# STEP 3: CHECK FOR PHASE 0 DATA
+# STEP 4: CHECK FOR PHASE 0 DATA
 # ============================================================================
-Write-Step -Step "3" -Message "Checking for Phase 0 Data"
+Write-Step -Step "4" -Message "Checking for Phase 0 Data"
 
 # Check for HDF5 dataset files (multiple possible locations)
 $possibleDataPaths = @(
@@ -355,9 +404,9 @@ Remove-Item $tempValidate -ErrorAction SilentlyContinue
 Write-Success -Message "HDF5 dataset validated successfully"
 
 # ============================================================================
-# STEP 4: RUN PHASE 1 PIPELINE
+# STEP 5: RUN PHASE 1 PIPELINE
 # ============================================================================
-Write-Step -Step "4" -Message "Running Phase 1 Classical ML Pipeline"
+Write-Step -Step "5" -Message "Running Phase 1 Classical ML Pipeline"
 
 Write-Info -Message "Phase 1 will:"
 Write-Host "  1. Extract 36 features from signals" -ForegroundColor White
@@ -395,6 +444,18 @@ os.chdir(str(project_root))
 print("=" * 70)
 print("PHASE 1: CLASSICAL ML PIPELINE")
 print("=" * 70)
+print()
+
+# Check GPU availability (for any PyTorch-based components)
+import torch
+device = torch.device("$deviceInfo")
+print(f"Device configuration:")
+if torch.cuda.is_available():
+    print(f"  GPU: {torch.cuda.get_device_name(0)}")
+    print(f"  CUDA Version: {torch.version.cuda}")
+    print(f"  Device: cuda (GPU acceleration enabled)")
+else:
+    print(f"  Device: cpu (CPU-only mode)")
 print()
 
 from pipelines.classical_ml_pipeline import ClassicalMLPipeline
@@ -498,7 +559,7 @@ else:
 $tempPhase1 = "$env:TEMP\run_phase1_pipeline.py"
 $phase1Script | Out-File -FilePath $tempPhase1 -Encoding UTF8
 
-Write-Info -Message "Executing Phase 1 pipeline (this may take 20-40 minutes)..."
+Write-Info -Message "Executing Phase 1 pipeline - this may take 20-40 minutes..."
 Write-Info -Message "  Feature extraction: ~3-5 minutes"
 if (-not $SkipHyperOpt) {
     Write-Info -Message "  Hyperparameter optimization: ~10-20 minutes"
@@ -521,9 +582,9 @@ if ($phase1ExitCode -eq 0 -or $phase1ExitCode -eq $null) {
 Remove-Item $tempPhase1 -ErrorAction SilentlyContinue
 
 # ============================================================================
-# STEP 5: VALIDATE OUTPUT
+# STEP 6: VALIDATE OUTPUT
 # ============================================================================
-Write-Step -Step "5" -Message "Validating Phase 1 Output"
+Write-Step -Step "6" -Message "Validating Phase 1 Output"
 
 $outputDirPath = Join-Path $ProjectRoot $OutputDir
 
@@ -537,22 +598,22 @@ if (Test-Path $outputDirPath) {
     if (Test-Path $resultsFile) {
         Write-Success -Message "  ✓ results.json"
     } else {
-        Write-Warning -Message "  ✗ results.json (missing)"
+        Write-Warning -Message "  ✗ results.json - missing"
     }
     if (Test-Path $modelFile) {
         Write-Success -Message "  ✓ best_model.pkl"
     } else {
-        Write-Warning -Message "  ✗ best_model.pkl (missing)"
+        Write-Warning -Message "  ✗ best_model.pkl - missing"
     }
     if (Test-Path $selectorFile) {
         Write-Success -Message "  ✓ feature_selector.pkl"
     } else {
-        Write-Warning -Message "  ✗ feature_selector.pkl (missing)"
+        Write-Warning -Message "  ✗ feature_selector.pkl - missing"
     }
     if (Test-Path $normalizerFile) {
         Write-Success -Message "  ✓ normalizer.pkl"
     } else {
-        Write-Warning -Message "  ✗ normalizer.pkl (missing)"
+        Write-Warning -Message "  ✗ normalizer.pkl - missing"
     }
     Write-Success -Message "Output validation complete"
 } else {
@@ -566,6 +627,17 @@ $separator = "=" * 70
 Write-Host "`n$separator" -ForegroundColor Cyan
 Write-Success -Message "PHASE 1 EXECUTION COMPLETE"
 Write-Host "$separator" -ForegroundColor Cyan
+Write-Host ""
+
+Write-Info -Message "Hardware Configuration:"
+if ($hasGPU) {
+    Write-Host "  GPU: $gpuName" -ForegroundColor Green
+    Write-Host "  CUDA: $cudaVersion" -ForegroundColor Green
+    Write-Host "  Device: GPU-accelerated for PyTorch components" -ForegroundColor Green
+} else {
+    Write-Host "  GPU: Not detected" -ForegroundColor Yellow
+    Write-Host "  Device: CPU-only" -ForegroundColor Yellow
+}
 Write-Host ""
 
 Write-Info -Message "Output Location:"

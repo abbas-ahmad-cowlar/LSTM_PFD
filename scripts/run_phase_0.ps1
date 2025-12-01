@@ -125,9 +125,57 @@ Write-Info -Message "Activating virtual environment..."
 & "$venvPath\Scripts\Activate.ps1"
 
 # ============================================================================
-# STEP 2: CHECK REQUIREMENTS
+# STEP 2: GPU DETECTION
 # ============================================================================
-Write-Step -Step "2" -Message "Checking Requirements"
+Write-Step -Step "2" -Message "Detecting GPU Hardware"
+
+$hasGPU = $false
+$gpuName = "None"
+$cudaVersion = "N/A"
+
+try {
+    # Check for NVIDIA GPU
+    $gpuInfo = Get-WmiObject Win32_VideoController | Where-Object { $_.Name -like "*NVIDIA*" }
+    if ($gpuInfo) {
+        $hasGPU = $true
+        $gpuName = $gpuInfo.Name
+        Write-Success -Message "NVIDIA GPU detected: $gpuName"
+        Write-Info -Message "  Adapter RAM: $([math]::Round($gpuInfo.AdapterRAM / 1GB, 2)) GB"
+        Write-Info -Message "  Driver Version: $($gpuInfo.DriverVersion)"
+        
+        # Try to detect CUDA version from nvidia-smi
+        try {
+            $nvidiaSmi = nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>&1
+            if ($?) {
+                Write-Success -Message "NVIDIA drivers are properly installed"
+                # Infer CUDA compatibility from driver version
+                # Driver 456+ supports CUDA 11.x, Driver 522+ supports CUDA 12.x
+                $driverMajor = [int]($gpuInfo.DriverVersion.Split('.')[0])
+                if ($driverMajor -ge 522) {
+                    $cudaVersion = "12.x"
+                    Write-Info -Message "  CUDA Compatibility: $cudaVersion - based on driver version"
+                } elseif ($driverMajor -ge 456) {
+                    $cudaVersion = "11.x"
+                    Write-Info -Message "  CUDA Compatibility: $cudaVersion - based on driver version"
+                } else {
+                    Write-Warning -Message "  Driver version may be too old for modern CUDA support"
+                    $cudaVersion = "Legacy"
+                }
+            }
+        } catch {
+            Write-Warning -Message "nvidia-smi not available. GPU detected but CUDA support uncertain."
+        }
+    } else {
+        Write-Info -Message "No NVIDIA GPU detected. Will use CPU for computations."
+    }
+} catch {
+    Write-Info -Message "GPU detection failed. Assuming CPU-only mode."
+}
+
+# ============================================================================
+# STEP 3: CHECK REQUIREMENTS
+# ============================================================================
+Write-Step -Step "3" -Message "Checking Requirements"
 
 if (-not $SkipRequirements) {
     Write-Info -Message "Running requirements check..."
@@ -145,11 +193,32 @@ if (-not $SkipRequirements) {
         # Install core Phase 0 packages first (essential for data generation)
         # These are the minimum packages needed to run Phase 0 data generation
         Write-Info -Message "Installing core packages for Phase 0..."
-        Write-Info -Message "  Note: Installing PyTorch CPU-only (smaller, faster install)"
         
-        # Install PyTorch CPU-only first (it's large, so do it separately)
-        Write-Info -Message "  Installing PyTorch (CPU-only, this may take a few minutes)..."
-        & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
+        # Install PyTorch with appropriate backend (GPU or CPU)
+        if ($hasGPU -and $cudaVersion -ne "Legacy") {
+            Write-Info -Message "  Installing PyTorch with CUDA support for GPU acceleration..."
+            Write-Info -Message "  Detected CUDA compatibility: $cudaVersion"
+            Write-Info -Message "  This may take a few minutes - larger download..."
+            
+            # Install PyTorch with CUDA support (using CUDA 11.8 for broad compatibility)
+            # CUDA 11.8 works with most modern NVIDIA GPUs
+            & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 --quiet 2>&1 | Out-Null
+            
+            if ($?) {
+                Write-Success -Message "  PyTorch with CUDA support installed successfully"
+                
+                # Verify CUDA is available in PyTorch
+                $cudaCheck = & $pythonCmd -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('CUDA Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A')" 2>&1
+                Write-Info -Message "  $cudaCheck"
+            } else {
+                Write-Warning -Message "  Failed to install CUDA-enabled PyTorch. Falling back to CPU version..."
+                & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
+            }
+        } else {
+            Write-Info -Message "  Installing PyTorch CPU-only - no GPU available or legacy driver"
+            Write-Info -Message "  This may take a few minutes..."
+            & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
+        }
         
         # Install other core packages
         $corePackages = @(
@@ -174,7 +243,7 @@ if (-not $SkipRequirements) {
         # Now try to install remaining packages from requirements.txt
         # Continue even if some packages fail (like scikit-image needing C compiler)
         Write-Info -Message "Installing remaining packages from requirements.txt..."
-        Write-Info -Message "  (Some packages may fail - this is okay if core packages are installed)"
+        Write-Info -Message "  Note: Some packages may fail - this is okay if core packages are installed"
         
         # Temporarily change error action to continue, then restore
         $oldErrorAction = $ErrorActionPreference
@@ -187,7 +256,7 @@ if (-not $SkipRequirements) {
         $ErrorActionPreference = $oldErrorAction
         
         # Always continue - verification step will check if core packages are installed
-        Write-Info -Message "Package installation attempt completed (checking results next...)"
+        Write-Info -Message "Package installation attempt completed - checking results next..."
         
         # Verify core packages are installed (critical check)
         Write-Info -Message "Verifying core packages for Phase 0..."
@@ -274,7 +343,13 @@ else:
             Write-Success -Message "Core packages verified - Phase 0 can proceed"
         } else {
             Write-Error -Message "CRITICAL: Core packages are missing. Please install them manually:"
-            Write-Host "  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu" -ForegroundColor Yellow
+            if ($hasGPU -and $cudaVersion -ne "Legacy") {
+                Write-Host "  # For GPU support (CUDA):" -ForegroundColor Yellow
+                Write-Host "  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118" -ForegroundColor Yellow
+            } else {
+                Write-Host "  # For CPU-only:" -ForegroundColor Yellow
+                Write-Host "  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu" -ForegroundColor Yellow
+            }
             Write-Host "  pip install numpy scipy pandas h5py scikit-learn tqdm pyyaml jsonschema matplotlib" -ForegroundColor Yellow
             Write-Host "  Then run this script again." -ForegroundColor Yellow
             Remove-Item $tempTest -ErrorAction SilentlyContinue
@@ -287,9 +362,9 @@ else:
 }
 
 # ============================================================================
-# STEP 3: CREATE DIRECTORY STRUCTURE
+# STEP 4: CREATE DIRECTORY STRUCTURE
 # ============================================================================
-Write-Step -Step "3" -Message "Creating Directory Structure"
+Write-Step -Step "4" -Message "Creating Directory Structure"
 
 $directories = @(
     "data\raw\bearing_data\normal",
@@ -339,9 +414,9 @@ $dirMsg = "Directory structure ready ($created created, $existing existing)"
 Write-Success $dirMsg
 
 # ============================================================================
-# STEP 4: CHECK FOR EXISTING DATA
+# STEP 5: CHECK FOR EXISTING DATA
 # ============================================================================
-Write-Step -Step "4" -Message "Checking for Existing Data"
+Write-Step -Step "5" -Message "Checking for Existing Data"
 
 $hdf5Path = "$ProjectRoot\data\processed\dataset.h5"
 $matDir = "$ProjectRoot\data\raw\bearing_data"
@@ -366,9 +441,9 @@ if ($hasHDF5) {
 }
 
 # ============================================================================
-# STEP 5: DATA GENERATION OR IMPORT
+# STEP 6: DATA GENERATION OR IMPORT
 # ============================================================================
-Write-Step -Step "5" -Message "Data Generation/Import"
+Write-Step -Step "6" -Message "Data Generation/Import"
 
 if ($UseExistingData -and $hasHDF5) {
     Write-Info -Message "Using existing HDF5 dataset (--UseExistingData flag)"
@@ -397,7 +472,7 @@ if ($UseExistingData -and $hasHDF5) {
     Write-Info -Message "Generating synthetic dataset..."
     Write-Info -Message "  Signals per fault: $NumSignals"
     $totalSignals = $NumSignals * 11
-    Write-Info -Message "  Total signals: $totalSignals (11 fault types)"
+    Write-Info -Message "  Total signals: $totalSignals - 11 fault types"
     
     # Create Python script for data generation
     # Convert Windows path to Python-compatible format
@@ -509,9 +584,9 @@ with h5py.File(hdf5_path_str, 'r') as f:
 }
 
 # ============================================================================
-# STEP 6: VALIDATE OUTPUT
+# STEP 7: VALIDATE OUTPUT
 # ============================================================================
-Write-Step -Step "6" -Message "Validating Output"
+Write-Step -Step "7" -Message "Validating Output"
 
 if (Test-Path $hdf5Path) {
     Write-Info -Message "Validating HDF5 dataset..."
@@ -576,7 +651,7 @@ except Exception as e:
     if ($?) {
         Write-Success -Message "Dataset validation passed"
     } else {
-        Write-Warning -Message "Dataset validation had issues (but file exists)"
+        Write-Warning -Message "Dataset validation had issues - but file exists"
     }
     
     Remove-Item $tempValidate -ErrorAction SilentlyContinue
@@ -585,9 +660,9 @@ except Exception as e:
 }
 
 # ============================================================================
-# STEP 7: RUN BASIC TESTS (OPTIONAL)
+# STEP 8: RUN BASIC TESTS (OPTIONAL)
 # ============================================================================
-Write-Step -Step "7" -Message "Running Basic Tests (Optional)"
+Write-Step -Step "8" -Message "Running Basic Tests - Optional"
 
 $runTests = Read-Host "Run unit tests for Phase 0? (y/N)"
 if ($runTests -eq "y" -or $runTests -eq "Y") {
@@ -600,13 +675,13 @@ if ($runTests -eq "y" -or $runTests -eq "Y") {
         if ($?) {
             Write-Success -Message "All tests passed"
         } else {
-            Write-Warning -Message "Some tests failed (this is okay for now)"
+            Write-Warning -Message "Some tests failed - this is okay for now"
         }
     } else {
         Write-Warning -Message "Test file not found: $testFile"
     }
 } else {
-    Write-Info -Message "Skipping tests (you can run them later with: pytest tests/test_data_generation.py)"
+    Write-Info -Message "Skipping tests - you can run them later with: pytest tests/test_data_generation.py"
 }
 
 # ============================================================================
@@ -622,6 +697,17 @@ Write-Info -Message "Next Steps:"
 Write-Host "  1. Verify dataset: Check data/processed/dataset.h5"
 Write-Host "  2. Run Phase 1: python scripts/train_classical_ml.py"
 Write-Host "  3. Or use dashboard: cd dash_app && python app.py"
+Write-Host ""
+
+Write-Info -Message "Hardware Configuration:"
+if ($hasGPU) {
+    Write-Host "  GPU: $gpuName" -ForegroundColor Green
+    Write-Host "  CUDA: $cudaVersion" -ForegroundColor Green
+    Write-Host "  PyTorch Backend: GPU-accelerated" -ForegroundColor Green
+} else {
+    Write-Host "  GPU: Not detected" -ForegroundColor Yellow
+    Write-Host "  PyTorch Backend: CPU-only" -ForegroundColor Yellow
+}
 Write-Host ""
 
 Write-Info -Message "Dataset Location:"
