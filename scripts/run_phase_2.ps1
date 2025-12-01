@@ -131,9 +131,62 @@ Write-Info -Message "Activating virtual environment..."
 & "$venvPath\Scripts\Activate.ps1"
 
 # ============================================================================
-# STEP 2: CHECK REQUIREMENTS
+# STEP 2: GPU DETECTION
 # ============================================================================
-Write-Step -Step "2" -Message "Checking Requirements"
+Write-Step -Step "2" -Message "Detecting GPU Hardware"
+
+$hasGPU = $false
+$gpuName = "None"
+$cudaVersion = "N/A"
+$deviceInfo = "cpu"
+
+try {
+    # Check for NVIDIA GPU
+    $gpuInfo = Get-WmiObject Win32_VideoController | Where-Object { $_.Name -like "*NVIDIA*" }
+    if ($gpuInfo) {
+        $hasGPU = $true
+        $gpuName = $gpuInfo.Name
+        Write-Success -Message "NVIDIA GPU detected: $gpuName"
+        Write-Info -Message "  Adapter RAM: $([math]::Round($gpuInfo.AdapterRAM / 1GB, 2)) GB"
+        Write-Info -Message "  Driver Version: $($gpuInfo.DriverVersion)"
+        
+        # Try to detect CUDA version from nvidia-smi
+        try {
+            $nvidiaSmi = nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>&1
+            if ($?) {
+                Write-Success -Message "NVIDIA drivers are properly installed"
+                # Infer CUDA compatibility from driver version
+                $driverMajor = [int]($gpuInfo.DriverVersion.Split('.')[0])
+                if ($driverMajor -ge 522) {
+                    $cudaVersion = "12.x"
+                    Write-Info -Message "  CUDA Compatibility: $cudaVersion - based on driver version"
+                } elseif ($driverMajor -ge 456) {
+                    $cudaVersion = "11.x"
+                    Write-Info -Message "  CUDA Compatibility: $cudaVersion - based on driver version"
+                } else {
+                    Write-Warning -Message "  Driver version may be too old for modern CUDA support"
+                    $cudaVersion = "Legacy"
+                }
+                $deviceInfo = "cuda"
+            }
+        } catch {
+            Write-Warning -Message "nvidia-smi not available. GPU detected but CUDA support uncertain."
+        }
+        
+        # GPU is detected and ready for Phase 2 training
+        Write-Success -Message "GPU will be used for neural network training - significant speedup expected"
+    } else {
+        Write-Info -Message "No NVIDIA GPU detected. Training will use CPU - slower performance."
+        Write-Warning -Message "  Note: GPU is highly recommended for Phase 2+ deep learning"
+    }
+} catch {
+    Write-Info -Message "GPU detection failed. Assuming CPU-only mode."
+}
+
+# ============================================================================
+# STEP 3: CHECK REQUIREMENTS
+# ============================================================================
+Write-Step -Step "3" -Message "Checking Requirements"
 
 if (-not $SkipRequirements) {
     Write-Info -Message "Checking Python packages for Phase 2..."
@@ -143,9 +196,9 @@ if (-not $SkipRequirements) {
         & $pythonCmd -m pip install --upgrade pip --quiet
         
         # Install Phase 2 specific packages (PyTorch is critical)
-        Write-Info -Message "Installing Phase 2 packages (this may take a few minutes)..."
+        Write-Info -Message "Installing Phase 2 packages..."
         
-        # Check if PyTorch is installed
+        # Check if PyTorch is installed and if it matches hardware
         $torchCheck = @"
 import sys
 try:
@@ -162,14 +215,27 @@ except ImportError:
         $tempTorchCheck = "$env:TEMP\check_torch.py"
         $torchCheck | Out-File -FilePath $tempTorchCheck -Encoding UTF8
         $torchOutput = & $pythonCmd $tempTorchCheck 2>&1
+        $torchInstalled = $?
         
-        if (-not $?) {
-            Write-Warning -Message "PyTorch not found. Installing PyTorch..."
-            Write-Info -Message "  Installing PyTorch CPU-only (use --UseGPU to install CUDA version)"
+        if (-not $torchInstalled) {
+            Write-Warning -Message "PyTorch not found. Installing appropriate version..."
             
-            if ($UseGPU) {
-                Write-Info -Message "  Installing PyTorch with CUDA support..."
+            # Auto-install based on GPU detection
+            if ($hasGPU -and $cudaVersion -ne "Legacy") {
+                Write-Info -Message "  Installing PyTorch with CUDA support for GPU acceleration..."
+                Write-Info -Message "  This is a large download ~2.5GB and may take several minutes..."
                 & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 --quiet 2>&1 | Out-Null
+                
+                if ($?) {
+                    Write-Success -Message "  PyTorch with CUDA support installed successfully"
+                    
+                    # Verify CUDA is available
+                    $cudaVerify = & $pythonCmd -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU')" 2>&1
+                    Write-Info -Message "  $cudaVerify"
+                } else {
+                    Write-Warning -Message "  Failed to install CUDA-enabled PyTorch. Falling back to CPU version..."
+                    & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
+                }
             } else {
                 Write-Info -Message "  Installing PyTorch CPU-only..."
                 & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
@@ -180,7 +246,17 @@ except ImportError:
             Write-Host $torchOutput
         } else {
             Write-Host $torchOutput
-            Write-Success -Message "PyTorch is installed"
+            Write-Success -Message "PyTorch is already installed"
+            
+            # Check if installed PyTorch matches hardware
+            if ($hasGPU) {
+                $cudaAvailable = & $pythonCmd -c "import torch; print(torch.cuda.is_available())" 2>&1
+                if ($cudaAvailable -eq "False") {
+                    Write-Warning -Message "  GPU detected but PyTorch doesn't have CUDA support"
+                    Write-Warning -Message "  Consider reinstalling PyTorch with CUDA for better performance"
+                    Write-Info -Message "  Run: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118"
+                }
+            }
         }
         Remove-Item $tempTorchCheck -ErrorAction SilentlyContinue
         
@@ -263,9 +339,9 @@ else:
 }
 
 # ============================================================================
-# STEP 3: CHECK FOR PHASE 0 DATA
+# STEP 4: CHECK FOR PHASE 0 DATA
 # ============================================================================
-Write-Step -Step "3" -Message "Checking for Phase 0 Data"
+Write-Step -Step "4" -Message "Checking for Phase 0 Data"
 
 # Check for HDF5 dataset files
 $possibleDataPaths = @(
@@ -379,12 +455,13 @@ Remove-Item $tempValidate -ErrorAction SilentlyContinue
 Write-Success -Message "HDF5 dataset validated successfully"
 
 # ============================================================================
-# STEP 4: CHECK GPU AVAILABILITY
+# STEP 5: VERIFY GPU IN PYTORCH
 # ============================================================================
-Write-Step -Step "4" -Message "Checking GPU Availability"
+Write-Step -Step "5" -Message "Verifying GPU in PyTorch"
 
 $gpuCheckScript = @"
 import torch
+import sys
 if torch.cuda.is_available():
     print(f"✓ GPU available: {torch.cuda.get_device_name(0)}")
     print(f"✓ CUDA version: {torch.version.cuda}")
@@ -404,16 +481,17 @@ $gpuAvailable = $?
 Remove-Item $tempGpuCheck -ErrorAction SilentlyContinue
 
 if ($gpuAvailable) {
-    Write-Success -Message "GPU will be used for training"
+    Write-Success -Message "GPU will be used for training - expected time: 2-3 hours"
+    $deviceInfo = "cuda"
 } else {
-    Write-Warning -Message "GPU not available - CPU training will be significantly slower"
-    Write-Info -Message "Expected training time: 10-15 hours on CPU (vs 2-3 hours on GPU)"
+    Write-Warning -Message "GPU not available - CPU training will be significantly slower, expected time: 10-15 hours"
+    $deviceInfo = "cpu"
 }
 
 # ============================================================================
-# STEP 5: RUN PHASE 2 CNN TRAINING
+# STEP 6: RUN PHASE 2 CNN TRAINING
 # ============================================================================
-Write-Step -Step "5" -Message "Running Phase 2 CNN Training"
+Write-Step -Step "6" -Message "Running Phase 2 CNN Training"
 
 Write-Info -Message "Phase 2 will:"
 Write-Host "  1. Load data from HDF5 file" -ForegroundColor White
@@ -444,10 +522,10 @@ Write-Host ""
 # Estimate training time
 if ($gpuAvailable) {
     $estimatedHours = [math]::Round(($Epochs * 3) / 60, 1)
-    Write-Info -Message "Estimated training time: ~$estimatedHours hours (GPU)"
+    Write-Info -Message "Estimated training time: ~$estimatedHours hours with GPU"
 } else {
     $estimatedHours = [math]::Round(($Epochs * 12) / 60, 1)
-    Write-Warning -Message "Estimated training time: ~$estimatedHours hours (CPU - consider using GPU)"
+    Write-Warning -Message "Estimated training time: ~$estimatedHours hours with CPU - consider using GPU"
 }
 
 Write-Host ""
@@ -487,9 +565,9 @@ if ($trainExitCode -eq 0 -or $trainExitCode -eq $null) {
 }
 
 # ============================================================================
-# STEP 6: VALIDATE OUTPUT
+# STEP 7: VALIDATE OUTPUT
 # ============================================================================
-Write-Step -Step "6" -Message "Validating Phase 2 Output"
+Write-Step -Step "7" -Message "Validating Phase 2 Output"
 
 $checkpointDirPath = Join-Path $ProjectRoot $CheckpointDir
 $modelCheckpointDir = Join-Path $checkpointDirPath $Model
@@ -528,6 +606,17 @@ Write-Success -Message "PHASE 2 EXECUTION COMPLETE"
 Write-Host "$separator" -ForegroundColor Cyan
 Write-Host ""
 
+Write-Info -Message "Hardware Configuration:"
+if ($hasGPU -and $gpuAvailable) {
+    Write-Host "  GPU: $gpuName" -ForegroundColor Green
+    Write-Host "  CUDA: $cudaVersion" -ForegroundColor Green
+    Write-Host "  Training Device: GPU-accelerated" -ForegroundColor Green
+} else {
+    Write-Host "  GPU: Not used" -ForegroundColor Yellow
+    Write-Host "  Training Device: CPU-only" -ForegroundColor Yellow
+}
+Write-Host ""
+
 Write-Info -Message "Model Checkpoints:"
 Write-Host "  $modelCheckpointDir" -ForegroundColor White
 Write-Host ""
@@ -535,7 +624,7 @@ Write-Host ""
 Write-Info -Message "Next Steps:"
 Write-Host "  1. Review training logs for accuracy metrics" -ForegroundColor White
 Write-Host "  2. Evaluate model: python scripts/evaluate_cnn.py --checkpoint <path>" -ForegroundColor White
-Write-Host "  3. Run Phase 3: Advanced CNNs (ResNet, EfficientNet)" -ForegroundColor White
+Write-Host "  3. Run Phase 3: Advanced CNNs - ResNet, EfficientNet" -ForegroundColor White
 Write-Host "  4. Or use dashboard: cd dash_app; python app.py" -ForegroundColor White
 Write-Host ""
 
