@@ -162,7 +162,9 @@ try {
                     Write-Warning -Message "  Driver version may be too old for modern CUDA support"
                     $cudaVersion = "Legacy"
                 }
-                $deviceInfo = "cuda"
+                if ($cudaVersion -ne "Legacy") {
+                    $deviceInfo = "cuda"
+                }
             }
         } catch {
             Write-Warning -Message "nvidia-smi not available. GPU detected but CUDA support uncertain."
@@ -186,6 +188,99 @@ if (-not $SkipRequirements) {
     if (Test-Path "$ProjectRoot\requirements.txt") {
         Write-Info -Message "Installing/updating Python packages..."
         & $pythonCmd -m pip install --upgrade pip --quiet
+        
+        # Check if PyTorch is already installed and if it has CUDA support
+        Write-Info -Message "Checking PyTorch installation..."
+        $torchCheck = @"
+import sys
+try:
+    import torch
+    print(f"INSTALLED|{torch.__version__}|{torch.cuda.is_available()}")
+    sys.exit(0)
+except ImportError:
+    print("NOT_INSTALLED")
+    sys.exit(1)
+"@
+        $tempTorchCheck = "$env:TEMP\check_torch_phase1.py"
+        $torchCheck | Out-File -FilePath $tempTorchCheck -Encoding UTF8
+        $torchOutput = & $pythonCmd $tempTorchCheck 2>&1
+        $torchInstalled = $?
+        Remove-Item $tempTorchCheck -ErrorAction SilentlyContinue
+        
+        $torchNeedsUpgrade = $false
+        $torchVersion = ""
+        $torchHasCuda = $false
+        
+        if ($torchInstalled -and $torchOutput) {
+            if ($torchOutput -match "INSTALLED\|(.+?)\|(.+)") {
+                $torchVersion = $matches[1]
+                $torchHasCuda = ($matches[2] -eq "True")
+                Write-Info -Message "  PyTorch found: $torchVersion (CUDA: $torchHasCuda)"
+                
+                # Check if upgrade is needed
+                if ($hasGPU -and $cudaVersion -ne "Legacy" -and -not $torchHasCuda) {
+                    $torchNeedsUpgrade = $true
+                    Write-Warning -Message "  GPU detected but PyTorch doesn't have CUDA support"
+                    Write-Info -Message "  Upgrading PyTorch to CUDA version for GPU acceleration..."
+                }
+            }
+        }
+        
+        # Install or upgrade PyTorch with appropriate backend (GPU or CPU)
+        if (-not $torchInstalled -or $torchNeedsUpgrade) {
+            if ($hasGPU -and $cudaVersion -ne "Legacy") {
+                if ($torchNeedsUpgrade) {
+                    Write-Info -Message "  Upgrading PyTorch to CUDA version..."
+                } else {
+                    Write-Info -Message "  Installing PyTorch with CUDA support for GPU acceleration..."
+                }
+                Write-Info -Message "  Detected CUDA compatibility: $cudaVersion"
+                Write-Info -Message "  This may take a few minutes - larger download (~2.5GB)..."
+                
+                # Uninstall existing PyTorch if upgrading
+                if ($torchNeedsUpgrade) {
+                    Write-Info -Message "  Uninstalling existing PyTorch..."
+                    & $pythonCmd -m pip uninstall torch torchvision torchaudio -y --quiet 2>&1 | Out-Null
+                }
+                
+                # Install PyTorch with CUDA support (using CUDA 11.8 for broad compatibility)
+                & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118 --quiet 2>&1 | Out-Null
+                
+                if ($?) {
+                    Write-Success -Message "  PyTorch with CUDA support installed successfully"
+                    
+                    # Verify CUDA is available in PyTorch
+                    $cudaCheck = & $pythonCmd -c "import torch; print('CUDA Available:', torch.cuda.is_available()); print('CUDA Device:', torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'N/A')" 2>&1
+                    Write-Info -Message "  $cudaCheck"
+                } else {
+                    Write-Warning -Message "  Failed to install CUDA-enabled PyTorch. Falling back to CPU version..."
+                    & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
+                }
+            } else {
+                if (-not $torchInstalled) {
+                    Write-Info -Message "  Installing PyTorch CPU-only - no GPU available or legacy driver"
+                    Write-Info -Message "  This may take a few minutes..."
+                    & $pythonCmd -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu --quiet 2>&1 | Out-Null
+                } else {
+                    Write-Info -Message "  PyTorch already installed (CPU version) - no upgrade needed"
+                }
+            }
+        } else {
+            if ($hasGPU -and $torchHasCuda) {
+                Write-Success -Message "  PyTorch already installed with CUDA support - ready for GPU acceleration"
+                $deviceInfo = "cuda"
+            } else {
+                Write-Info -Message "  PyTorch already installed (CPU version)"
+            }
+        }
+        
+        # Update deviceInfo after PyTorch installation/upgrade
+        if ($hasGPU -and $cudaVersion -ne "Legacy") {
+            $cudaFinalCheck = & $pythonCmd -c "import torch; print(torch.cuda.is_available())" 2>&1
+            if ($cudaFinalCheck -eq "True") {
+                $deviceInfo = "cuda"
+            }
+        }
         
         # Install Phase 1 specific packages
         Write-Info -Message "Installing Phase 1 packages..."
