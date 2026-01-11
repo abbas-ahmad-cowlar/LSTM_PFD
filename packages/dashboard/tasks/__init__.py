@@ -19,3 +19,8 @@ celery_app.conf.update(
     timezone='UTC',
     enable_utc=True,
 )
+
+# Check for eager execution (useful for debugging/development without worker)
+import os
+if os.getenv('CELERY_ALWAYS_EAGER', 'False').lower() == 'true':
+    celery_app.conf.update(task_always_eager=True)
