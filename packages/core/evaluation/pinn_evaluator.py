@@ -27,8 +27,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from evaluation.evaluator import ModelEvaluator
-from models.physics.bearing_dynamics import BearingDynamics
-from models.physics.fault_signatures import FaultSignatureDatabase
+from packages.core.models.physics.bearing_dynamics import BearingDynamics
+from packages.core.models.physics.fault_signatures import FaultSignatureDatabase
 from training.physics_loss_functions import FrequencyConsistencyLoss
 
 
@@ -434,7 +434,7 @@ if __name__ == "__main__":
     print("PINN Evaluator - Validation")
     print("=" * 60)
 
-    from models.pinn.hybrid_pinn import HybridPINN
+    from packages.core.models.pinn.hybrid_pinn import HybridPINN
 
     # Create dummy model and data
     model = HybridPINN(num_classes=NUM_CLASSES, backbone='resnet18')

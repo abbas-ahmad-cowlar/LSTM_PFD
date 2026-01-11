@@ -18,8 +18,8 @@ import torch
 import torch.nn as nn
 from typing import List
 
-from models.base_model import BaseModel
-from models.resnet.residual_blocks import BasicBlock1D, make_downsample_layer
+from packages.core.models.base_model import BaseModel
+from packages.core.models.resnet.residual_blocks import BasicBlock1D, make_downsample_layer
 
 
 class WideResNet1D(BaseModel):

@@ -24,7 +24,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.constants import NUM_CLASSES
-from models.base_model import BaseModel
+from packages.core.models.base_model import BaseModel
 
 
 class PositionalEncoding1D(nn.Module):

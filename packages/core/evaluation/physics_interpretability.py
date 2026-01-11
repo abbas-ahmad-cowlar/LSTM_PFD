@@ -27,8 +27,8 @@ from pathlib import Path
 # Add parent directory for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from models.physics.bearing_dynamics import BearingDynamics
-from models.physics.fault_signatures import FaultSignatureDatabase
+from packages.core.models.physics.bearing_dynamics import BearingDynamics
+from packages.core.models.physics.fault_signatures import FaultSignatureDatabase
 
 
 class PhysicsInterpreter:
@@ -156,7 +156,7 @@ class PhysicsInterpreter:
             return
 
         # Get knowledge graph
-        from models.pinn.knowledge_graph_pinn import FaultKnowledgeGraph
+        from packages.core.models.pinn.knowledge_graph_pinn import FaultKnowledgeGraph
         kg = FaultKnowledgeGraph()
         adj = kg.get_adjacency_matrix(normalized=False)
 
@@ -479,7 +479,7 @@ if __name__ == "__main__":
     print("Physics Interpretability - Validation")
     print("=" * 60)
 
-    from models.pinn.hybrid_pinn import HybridPINN
+    from packages.core.models.pinn.hybrid_pinn import HybridPINN
 
     # Create model
     model = HybridPINN(num_classes=NUM_CLASSES, backbone='resnet18')

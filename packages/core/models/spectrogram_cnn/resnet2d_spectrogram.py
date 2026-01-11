@@ -19,7 +19,7 @@ import torch.nn.functional as F
 from typing import Optional, List, Type, Union
 
 
-from models.base_model import BaseModel
+from packages.core.models.base_model import BaseModel
 
 
 class BasicBlock2D(nn.Module):

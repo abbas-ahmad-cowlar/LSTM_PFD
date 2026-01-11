@@ -20,7 +20,7 @@ from typing import Optional, List, Tuple
 import math
 
 
-from models.base_model import BaseModel
+from packages.core.models.base_model import BaseModel
 
 
 class SwishActivation(nn.Module):

@@ -22,8 +22,8 @@ import os
 # Add parent directory to path for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from models.physics.bearing_dynamics import BearingDynamics
-from models.physics.fault_signatures import FaultSignatureDatabase
+from packages.core.models.physics.bearing_dynamics import BearingDynamics
+from packages.core.models.physics.fault_signatures import FaultSignatureDatabase
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 

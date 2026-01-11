@@ -18,7 +18,7 @@ from tqdm import tqdm
 import copy
 import sys
 sys.path.append('/home/user/LSTM_PFD')
-from models.base_model import BaseModel
+from packages.core.models.base_model import BaseModel
 
 
 class AdaptiveBoosting:
