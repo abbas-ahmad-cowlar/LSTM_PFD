@@ -1,0 +1,36 @@
+{
+  "num_samples": 1430,
+  "num_classes": 11,
+  "signal_length": 102400,
+  "fault_types": [
+    "sain",
+    "desalignement",
+    "desequilibre",
+    "jeu",
+    "lubrification",
+    "cavitation",
+    "usure",
+    "oilwhirl",
+    "mixed_misalign_imbalance",
+    "mixed_wear_lube",
+    "mixed_cavit_jeu"
+  ],
+  "class_distribution": {
+    "sain": 130,
+    "desalignement": 130,
+    "desequilibre": 130,
+    "jeu": 130,
+    "lubrification": 130,
+    "cavitation": 130,
+    "usure": 130,
+    "oilwhirl": 130,
+    "mixed_misalign_imbalance": 130,
+    "mixed_wear_lube": 130,
+    "mixed_cavit_jeu": 130
+  },
+  "splits": {
+    "train": 1000,
+    "val": 215,
+    "test": 215
+  }
+}
