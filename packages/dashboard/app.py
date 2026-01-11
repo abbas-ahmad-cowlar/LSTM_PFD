@@ -59,6 +59,7 @@ app.layout = dbc.Container([
     dcc.Store(id='session-store', storage_type='session'),
     dcc.Store(id='comparison-cart', storage_type='session', data=[]),
     dcc.Interval(id='refresh-interval', interval=5000, n_intervals=0),
+    dcc.Interval(id='system-health-interval', interval=5000, n_intervals=0),
 
     create_header(),
 
@@ -83,4 +84,4 @@ if __name__ == '__main__':
     init_database()
 
     logger.info(f"Starting Dash app on {APP_HOST}:{APP_PORT}")
-    app.run_server(host=APP_HOST, port=APP_PORT, debug=DEBUG)
+    app.run(host=APP_HOST, port=APP_PORT, debug=DEBUG)

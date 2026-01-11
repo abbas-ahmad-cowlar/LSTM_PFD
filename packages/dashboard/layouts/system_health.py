@@ -221,11 +221,7 @@ def create_system_health_layout():
         ], className="mb-4"),
 
         # Auto-refresh interval
-        dcc.Interval(
-            id='system-health-interval',
-            interval=5*1000,  # Update every 5 seconds
-            n_intervals=0
-        ),
+        # dcc.Interval(id='system-health-interval', interval=5000, n_intervals=0), # Moved to app.py
 
         # Store for pagination
         dcc.Store(id='log-page-number', data=1),
