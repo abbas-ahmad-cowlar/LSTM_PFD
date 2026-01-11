@@ -41,7 +41,7 @@ def create_home_layout():
                         dbc.Button([
                             html.I(className="fas fa-chart-line me-2"),
                             "View Analytics"
-                        ], href="/analytics", color="info", className="w-100"),
+                        ], href="/visualization", color="info", className="w-100"),
                     ])
                 ], className="shadow-sm")
             ], width=4),

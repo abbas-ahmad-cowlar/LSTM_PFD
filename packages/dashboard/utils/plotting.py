@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 from typing import List, Optional, Dict, Any
 import numpy as np
-from config import PLOT_THEME, COLOR_PALETTE
+from dashboard_config import PLOT_THEME, COLOR_PALETTE
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 

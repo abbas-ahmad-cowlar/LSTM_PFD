@@ -12,7 +12,7 @@ from scipy import stats
 from database.connection import get_db_session
 from models.experiment import Experiment, ExperimentStatus
 from models.training_run import TrainingRun
-from config import STORAGE_RESULTS_DIR, FAULT_CLASSES
+from dashboard_config import STORAGE_RESULTS_DIR, FAULT_CLASSES
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 from utils.statistical_tests import mcnemar_test, friedman_test
 

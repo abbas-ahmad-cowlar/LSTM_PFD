@@ -9,7 +9,7 @@ from typing import Tuple
 
 import redis
 
-from config import (
+from dashboard_config import (
     REDIS_HOST, REDIS_PORT, REDIS_DB,
     API_KEY_RATE_LIMIT_WINDOW, API_KEY_EXPIRY_REDIS,
     RATE_LIMIT_FAIL_OPEN

@@ -9,6 +9,11 @@ Security Note:
 """
 import os
 from pathlib import Path
+
+# Load .env file for local development
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).resolve().parent / ".env")
+
 # from utils.constants import SIGNAL_LENGTH, SAMPLING_RATE (Circular import)
 
 # Import validator for lazy validation (only validates when config is imported)

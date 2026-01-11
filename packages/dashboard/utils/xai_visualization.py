@@ -6,7 +6,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from typing import List, Optional, Dict, Any, Tuple
-from config import FAULT_CLASSES as FAULT_CLASSES_CONFIG
+from dashboard_config import FAULT_CLASSES as FAULT_CLASSES_CONFIG
 
 
 class XAIVisualization:

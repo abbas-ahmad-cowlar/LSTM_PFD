@@ -7,7 +7,7 @@ from sqlalchemy.pool import Pool
 from contextlib import contextmanager
 import time
 
-from config import DATABASE_URL
+from dashboard_config import DATABASE_URL
 from models.base import Base
 from utils.logger import setup_logger
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE

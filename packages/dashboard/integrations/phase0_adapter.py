@@ -12,7 +12,7 @@ from utils.logger import setup_logger
 
 # Add dash_app to path for config import
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import DASHBOARD_TO_PHASE0_FAULT_MAP
+from dashboard_config import DASHBOARD_TO_PHASE0_FAULT_MAP
 
 logger = setup_logger(__name__)
 
