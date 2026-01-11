@@ -235,7 +235,7 @@ class DeepLearningAdapter:
     @staticmethod
     def _create_model(config, num_classes):
         """Create model based on configuration."""
-        from models import create_model
+        from packages.core.models import create_model
 
         model_type = config["model_type"]
         hyperparams = config.get("hyperparameters", {})
