@@ -4,7 +4,7 @@ Redis caching service.
 import redis
 import json
 from typing import Any, Optional
-from config import REDIS_URL, CACHE_TTL_MEDIUM
+from dashboard_config import REDIS_URL, CACHE_TTL_MEDIUM
 from utils.logger import setup_logger
 from utils.exceptions import CacheError
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE

@@ -5,7 +5,7 @@ from database.connection import get_db_session
 from models.user import User
 from models.dataset import Dataset
 from utils.logger import setup_logger
-from config import FAULT_CLASSES, PHASE_0_CACHE_PATH
+from dashboard_config import FAULT_CLASSES, PHASE_0_CACHE_PATH
 import os
 
 logger = setup_logger(__name__)

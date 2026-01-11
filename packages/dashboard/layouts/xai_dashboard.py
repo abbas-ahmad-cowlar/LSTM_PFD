@@ -5,7 +5,7 @@ Interactive dashboard for SHAP, LIME, and Grad-CAM explanations.
 import dash_bootstrap_components as dbc
 from dash import html, dcc
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
-from config import FAULT_CLASSES
+from dashboard_config import FAULT_CLASSES
 
 
 def create_xai_dashboard_layout():

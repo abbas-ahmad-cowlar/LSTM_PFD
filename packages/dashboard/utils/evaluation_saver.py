@@ -6,7 +6,7 @@ import numpy as np
 import json
 from pathlib import Path
 from typing import Dict, Optional
-from config import STORAGE_RESULTS_DIR
+from dashboard_config import STORAGE_RESULTS_DIR
 
 
 class EvaluationSaver:
