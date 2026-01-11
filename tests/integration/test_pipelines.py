@@ -21,9 +21,9 @@ class TestClassicalMLPipeline:
 
     def test_pipeline_full_workflow(self, sample_batch_signals):
         """Test complete classical ML pipeline."""
-        from features.feature_extractor import FeatureExtractor
-        from features.feature_selector import FeatureSelector
-        from features.feature_normalization import FeatureNormalizer
+        from packages.core.features.feature_extractor import FeatureExtractor
+        from packages.core.features.feature_selector import FeatureSelector
+        from packages.core.features.feature_normalization import FeatureNormalizer
 
         signals, labels = sample_batch_signals
 
@@ -177,7 +177,7 @@ class TestEnsemblePipeline:
     def test_voting_ensemble_pipeline(self):
         """Test voting ensemble pipeline."""
         import torch
-        from models.ensemble.voting_ensemble import VotingEnsemble
+        from packages.core.models.ensemble.voting_ensemble import VotingEnsemble
 
         # Create multiple simple models
         models = []
