@@ -1,5 +1,5 @@
 """Webhook log model for tracking webhook delivery status (Feature #4)."""
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Index
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, DateTime, Index, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
@@ -31,7 +31,7 @@ class WebhookLog(BaseModel):
 
     # Request details
     webhook_url = Column(Text, nullable=False)  # Logged for debugging (can't rely on config if deleted)
-    payload = Column(JSONB, nullable=True)  # Full JSON payload sent
+    payload = Column(JSONB().with_variant(JSON, 'sqlite'), nullable=True)  # Full JSON payload sent
 
     # Response details
     status = Column(String(20), nullable=False, index=True)  # 'sent', 'failed', 'rate_limited'

@@ -2,7 +2,7 @@
 API Key model for authentication and rate limiting (Feature #1).
 Implements secure API key management with bcrypt hashing.
 """
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ARRAY, ForeignKey, Text, Index
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ARRAY, ForeignKey, Text, Index, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from datetime import datetime
@@ -42,7 +42,7 @@ class APIKey(Base):
     key_hash = Column(String(255), nullable=False, unique=True)
     name = Column(String(100), nullable=False)
     prefix = Column(String(20), nullable=False, index=True)  # Indexed for fast lookup
-    scopes = Column(ARRAY(String), default=['read', 'write'])
+    scopes = Column(ARRAY(String).with_variant(JSON, 'sqlite'), default=['read', 'write'])
     rate_limit = Column(Integer, default=1000)
     last_used_at = Column(TIMESTAMP)
     is_active = Column(Boolean, default=True, index=True)
