@@ -6,6 +6,7 @@ from tasks import celery_app
 from utils.logger import setup_logger
 from database.connection import get_db_session
 from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
+from models.dataset import Dataset
 from integrations.phase0_adapter import Phase0Adapter
 from services.notification_service import NotificationService
 from models.notification_preference import EventType
@@ -93,6 +94,23 @@ def generate_dataset_task(self, config: dict):
                     generation.num_signals = results.get("total_signals", 0)
                     generation.num_faults = results.get("num_faults", 0)
                     generation.duration_seconds = generation_time
+
+                    # Create a Dataset record so it appears in Data Explorer
+                    dataset = Dataset(
+                        name=generation.name,
+                        description=f"Generated dataset with {generation.num_signals} signals across {generation.num_faults} fault types",
+                        num_signals=generation.num_signals,
+                        fault_types=config.get('fault_types', []),
+                        severity_levels=config.get('severity_levels', []),
+                        file_path=results.get("output_path", ""),
+                        meta_data={
+                            'generation_id': generation_id,
+                            'generation_time_seconds': generation_time,
+                            'config': config
+                        },
+                        created_by=config.get('user_id', 1)
+                    )
+                    session.add(dataset)
 
                     # Emit notification
                     try:
