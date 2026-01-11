@@ -1,5 +1,5 @@
 """System log model for tracking events."""
-from sqlalchemy import Column, String, JSON, ForeignKey
+from sqlalchemy import Column, String, JSON, ForeignKey, Index
 from models.base import BaseModel
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 

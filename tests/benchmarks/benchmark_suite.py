@@ -35,7 +35,7 @@ class BenchmarkSuite:
 
     def benchmark_feature_extraction(self, num_samples: int = 100) -> Dict:
         """Benchmark feature extraction performance."""
-        from features.feature_extractor import FeatureExtractor
+        from packages.core.features.feature_extractor import FeatureExtractor
 
         logger.info(f"Benchmarking feature extraction ({num_samples} samples)...")
 
@@ -67,7 +67,7 @@ class BenchmarkSuite:
         batch_size: int = 32
     ) -> Dict:
         """Benchmark model inference performance."""
-        from deployment.inference import TorchInferenceEngine, InferenceConfig
+        from packages.deployment.optimization.inference import TorchInferenceEngine, InferenceConfig
 
         logger.info(f"Benchmarking model inference ({num_samples} samples)...")
 
@@ -111,7 +111,7 @@ class BenchmarkSuite:
         logger.info(f"Benchmarking quantized model...")
 
         try:
-            from deployment.quantization import quantize_model_dynamic
+            from packages.deployment.optimization.quantization import quantize_model_dynamic
 
             # Load original model
             model = torch.load(model_path, map_location='cpu')

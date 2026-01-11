@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from features.feature_extractor import FeatureExtractor
+from packages.core.features.feature_extractor import FeatureExtractor
 
 
 @pytest.mark.unit
@@ -103,7 +103,7 @@ class TestFeatureNormalization:
 
     def test_zscore_normalization(self, sample_features):
         """Test Z-score normalization."""
-        from features.feature_normalization import FeatureNormalizer
+        from packages.core.features.feature_normalization import FeatureNormalizer
 
         X, _ = sample_features
         normalizer = FeatureNormalizer(method='zscore')
@@ -119,7 +119,7 @@ class TestFeatureNormalization:
 
     def test_minmax_normalization(self, sample_features):
         """Test Min-Max normalization."""
-        from features.feature_normalization import FeatureNormalizer
+        from packages.core.features.feature_normalization import FeatureNormalizer
 
         X, _ = sample_features
         normalizer = FeatureNormalizer(method='minmax')
@@ -134,7 +134,7 @@ class TestFeatureNormalization:
 
     def test_transform_without_fit(self, sample_features):
         """Test transform without fit raises error."""
-        from features.feature_normalization import FeatureNormalizer
+        from packages.core.features.feature_normalization import FeatureNormalizer
 
         X, _ = sample_features
         normalizer = FeatureNormalizer(method='zscore')
@@ -149,7 +149,7 @@ class TestFeatureSelection:
 
     def test_mrmr_selection(self, sample_features):
         """Test MRMR feature selection."""
-        from features.feature_selector import FeatureSelector
+        from packages.core.features.feature_selector import FeatureSelector
 
         X, y = sample_features
         selector = FeatureSelector(method='mrmr', n_features=5)
@@ -162,7 +162,7 @@ class TestFeatureSelection:
 
     def test_variance_threshold_selection(self, sample_features):
         """Test variance threshold selection."""
-        from features.feature_selector import FeatureSelector
+        from packages.core.features.feature_selector import FeatureSelector
 
         X, y = sample_features
 

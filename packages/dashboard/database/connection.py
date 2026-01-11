@@ -17,16 +17,23 @@ logger = setup_logger(__name__)
 # Create engine with optimized connection pool
 # Configuration for 26+ concurrent callbacks (Dash/Plotly architecture)
 # Estimated concurrent connections: ~16 peak, +14 headroom = 30 pool_size
-engine = create_engine(
-    DATABASE_URL,
-    pool_pre_ping=True,         # Verify connection health before checkout
-    pool_size=30,               # Base connection pool (optimized for actual load)
-    max_overflow=30,            # Additional connections during spikes (total 60 max)
-    pool_recycle=3600,          # Recycle connections hourly (prevents stale connections)
-    pool_timeout=30,            # Wait 30s for connection from pool before raising error
-    echo=False,                 # Set to True for SQL query debugging in development
-    max_identifier_length=128,  # PostgreSQL compatibility
-)
+# Create engine with optimized connection pool
+engine_kwargs = {
+    "pool_pre_ping": True,
+    "pool_recycle": 3600,
+    "echo": False,
+}
+
+# Add PostgreSQL-specific arguments
+if str(DATABASE_URL).startswith("postgresql"):
+    engine_kwargs.update({
+        "pool_size": 30,
+        "max_overflow": 30,
+        "pool_timeout": 30,
+        "max_identifier_length": 128,
+    })
+
+engine = create_engine(DATABASE_URL, **engine_kwargs)
 
 # Performance monitoring - log slow queries
 @event.listens_for(engine, "before_cursor_execute")

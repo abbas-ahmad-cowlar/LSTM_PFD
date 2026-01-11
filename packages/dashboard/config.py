@@ -9,7 +9,7 @@ Security Note:
 """
 import os
 from pathlib import Path
-from utils.constants import SIGNAL_LENGTH, SAMPLING_RATE
+# from utils.constants import SIGNAL_LENGTH, SAMPLING_RATE (Circular import)
 
 # Import validator for lazy validation (only validates when config is imported)
 # This allows tests and scripts to run without full config
