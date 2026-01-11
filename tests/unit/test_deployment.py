@@ -21,16 +21,16 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 # Check if quantization is available
 QUANTIZATION_AVAILABLE = platform.system() != 'Darwin'  # Skip on macOS
 
-from deployment.quantization import (
+from packages.deployment.optimization.quantization import (
     quantize_model_dynamic,
     quantize_to_fp16,
     compare_model_sizes
 )
-from deployment.inference import (
+from packages.deployment.optimization.inference import (
     TorchInferenceEngine,
     InferenceConfig
 )
-from deployment.model_optimization import (
+from packages.deployment.optimization.model_optimization import (
     calculate_model_stats,
     prune_model
 )
@@ -188,7 +188,7 @@ class TestONNXExport:
         """Test basic ONNX export."""
         pytest.importorskip("onnx")
 
-        from deployment.onnx_export import export_to_onnx
+        from packages.deployment.optimization.onnx_export import export_to_onnx
 
         model = simple_cnn_model
         model.eval()
@@ -216,7 +216,7 @@ class TestONNXExport:
         pytest.importorskip("onnx")
         pytest.importorskip("onnxruntime")
 
-        from deployment.onnx_export import export_to_onnx, validate_onnx_export
+        from packages.deployment.optimization.onnx_export import export_to_onnx, validate_onnx_export
 
         model = simple_cnn_model
         model.eval()

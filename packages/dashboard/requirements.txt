@@ -1,0 +1,43 @@
+# Dashboard specific requirements
+dash==2.14.2
+dash-bootstrap-components==1.5.0
+dash-ag-grid==2.4.0
+plotly==5.18.0
+
+# Database
+sqlalchemy==2.0.23
+# psycopg2-binary==2.9.9
+alembic==1.13.0
+
+# Caching and Task Queue
+redis==5.0.1
+celery==5.3.4
+
+# Web Framework
+flask==3.0.0
+flask-cors==4.0.0
+
+# Data Processing
+pandas==2.1.4
+numpy==1.24.3
+scipy==1.11.4
+
+# ML/Stats
+scikit-learn==1.3.2
+optuna==3.5.0
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0.1
+tqdm==4.66.1
+psutil==5.9.6
+pynvml==11.5.0
+
+# Security & Authentication (Feature #1: API Keys)
+bcrypt==4.1.2
+pyjwt==2.8.0
+
+# Email (Feature #3: Email Notifications)
+sendgrid==6.11.0
+jinja2==3.1.3
+premailer==3.10.0
