@@ -21,8 +21,8 @@ import time
 from features.feature_extractor import FeatureExtractor
 from features.feature_selector import FeatureSelector
 from features.feature_normalization import FeatureNormalizer
-from models.classical.model_selector import ModelSelector
-from models.classical import (
+from packages.core.models.classical.model_selector import ModelSelector
+from packages.core.models.classical import (
     RandomForestClassifier,
     SVMClassifier,
     MLPClassifier,

@@ -16,8 +16,8 @@ import torch
 import torch.nn as nn
 from typing import Dict, Any, Optional, Tuple
 
-from models.base_model import BaseModel
-from models.cnn.conv_blocks import ConvBlock1D
+from packages.core.models.base_model import BaseModel
+from packages.core.models.cnn.conv_blocks import ConvBlock1D
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 

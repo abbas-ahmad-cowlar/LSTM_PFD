@@ -24,8 +24,8 @@ import torch.nn.functional as F
 from typing import List, Tuple, Optional
 import math
 
-from models.base_model import BaseModel
-from models.efficientnet.mbconv_block import MBConvBlock, FusedMBConvBlock
+from packages.core.models.base_model import BaseModel
+from packages.core.models.efficientnet.mbconv_block import MBConvBlock, FusedMBConvBlock
 
 
 def round_channels(channels: int, width_multiplier: float, divisor: int = 8) -> int:

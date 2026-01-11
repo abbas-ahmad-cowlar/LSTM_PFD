@@ -17,8 +17,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional, List
 
-from models.base_model import BaseModel
-from models.resnet.residual_blocks import BasicBlock1D, Bottleneck1D, make_downsample_layer
+from packages.core.models.base_model import BaseModel
+from packages.core.models.resnet.residual_blocks import BasicBlock1D, Bottleneck1D, make_downsample_layer
 
 
 class SEBlock(nn.Module):
