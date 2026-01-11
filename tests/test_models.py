@@ -20,7 +20,7 @@ class TestCNN1D:
 
     def test_forward_pass(self):
         """Test forward pass output shape."""
-        from models import CNN1D
+        from packages.core.models import CNN1D
 
         model = CNN1D(num_classes=11, input_channels=1)
         x = torch.randn(4, 1, 5000)  # Batch of 4 signals
@@ -31,7 +31,7 @@ class TestCNN1D:
 
     def test_gradient_flow(self):
         """Test gradient flow through model."""
-        from models import CNN1D
+        from packages.core.models import CNN1D
 
         model = CNN1D(num_classes=11)
         x = torch.randn(2, 1, 5000)
@@ -47,7 +47,7 @@ class TestCNN1D:
 
     def test_serialization(self):
         """Test model save/load."""
-        from models import CNN1D
+        from packages.core.models import CNN1D
 
         model = CNN1D(num_classes=11)
 
@@ -67,7 +67,7 @@ class TestResNet1D:
 
     def test_forward_pass(self):
         """Test forward pass output shape."""
-        from models import ResNet1D
+        from packages.core.models import ResNet1D
 
         model = ResNet1D(num_classes=11, input_channels=1)
         x = torch.randn(4, 1, 5000)
@@ -78,7 +78,7 @@ class TestResNet1D:
 
     def test_residual_connections(self):
         """Test that residual connections work."""
-        from models import ResNet1D
+        from packages.core.models import ResNet1D
 
         model = ResNet1D(num_classes=11)
         model.eval()
@@ -96,7 +96,7 @@ class TestTransformer:
 
     def test_forward_pass(self):
         """Test forward pass output shape."""
-        from models import SignalTransformer
+        from packages.core.models import SignalTransformer
 
         model = SignalTransformer(
             num_classes=11,
@@ -117,7 +117,7 @@ class TestHybridPINN:
 
     def test_forward_pass_with_physics(self):
         """Test forward pass with physics features."""
-        from models import HybridPINN
+        from packages.core.models import HybridPINN
 
         model = HybridPINN(num_classes=11, physics_dim=32)
 
@@ -130,7 +130,7 @@ class TestHybridPINN:
 
     def test_forward_pass_without_physics(self):
         """Test forward pass without physics features."""
-        from models import HybridPINN
+        from packages.core.models import HybridPINN
 
         model = HybridPINN(num_classes=11, physics_dim=32)
         x = torch.randn(4, 1, 5000)
@@ -145,7 +145,7 @@ class TestEnsemble:
 
     def test_voting_ensemble(self):
         """Test voting ensemble."""
-        from models import CNN1D, create_voting_ensemble
+        from packages.core.models import CNN1D, create_voting_ensemble
 
         # Create base models
         model1 = CNN1D(num_classes=11)
@@ -169,7 +169,7 @@ class TestModelFactory:
 
     def test_create_model(self):
         """Test create_model factory function."""
-        from models import create_model
+        from packages.core.models import create_model
 
         model = create_model('cnn1d', num_classes=11)
 
@@ -178,7 +178,7 @@ class TestModelFactory:
 
     def test_list_available_models(self):
         """Test listing available models."""
-        from models import list_available_models
+        from packages.core.models import list_available_models
 
         models = list_available_models()
 
@@ -187,7 +187,7 @@ class TestModelFactory:
 
     def test_save_and_load_checkpoint(self):
         """Test checkpoint save/load."""
-        from models import create_model, save_checkpoint, load_pretrained
+        from packages.core.models import create_model, save_checkpoint, load_pretrained
 
         model = create_model('cnn1d', num_classes=11)
 
