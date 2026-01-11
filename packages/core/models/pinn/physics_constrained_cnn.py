@@ -27,11 +27,11 @@ import numpy as np
 from typing import Dict, Optional, Tuple
 
 
-from models.base_model import BaseModel
-from models.resnet.resnet_1d import ResNet1D
-from models.cnn.cnn_1d import CNN1D
-from models.physics.bearing_dynamics import BearingDynamics
-from models.physics.fault_signatures import FaultSignatureDatabase
+from packages.core.models.base_model import BaseModel
+from packages.core.models.resnet.resnet_1d import ResNet1D
+from packages.core.models.cnn.cnn_1d import CNN1D
+from packages.core.models.physics.bearing_dynamics import BearingDynamics
+from packages.core.models.physics.fault_signatures import FaultSignatureDatabase
 
 
 class PhysicsConstrainedCNN(BaseModel):

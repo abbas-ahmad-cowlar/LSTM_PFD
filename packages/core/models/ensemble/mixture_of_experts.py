@@ -24,7 +24,7 @@ from typing import List, Dict, Optional, Tuple, Union
 from tqdm import tqdm
 import sys
 sys.path.append('/home/user/LSTM_PFD')
-from models.base_model import BaseModel
+from packages.core.models.base_model import BaseModel
 
 
 class GatingNetwork(nn.Module):

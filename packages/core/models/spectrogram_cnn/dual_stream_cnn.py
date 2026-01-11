@@ -28,7 +28,7 @@ Reference:
 - Adapted for bearing fault diagnosis with time-frequency fusion
 
 Usage:
-    from models.spectrogram_cnn.dual_stream_cnn import DualStreamCNN
+    from packages.core.models.spectrogram_cnn.dual_stream_cnn import DualStreamCNN
 
     model = DualStreamCNN(
         time_branch='resnet18_1d',
@@ -47,7 +47,7 @@ import torch.nn.functional as F
 from typing import Optional, Union, Tuple
 
 
-from models.base_model import BaseModel
+from packages.core.models.base_model import BaseModel
 
 
 class DualStreamCNN(BaseModel):
@@ -155,8 +155,8 @@ class DualStreamCNN(BaseModel):
     def _create_time_branch(self, model_name: str) -> nn.Module:
         """Create 1D CNN for time-domain processing."""
         if 'resnet' in model_name.lower():
-            from models.resnet.resnet_1d import ResNet1D
-            from models.resnet.residual_blocks import BasicBlock1D
+            from packages.core.models.resnet.resnet_1d import ResNet1D
+            from packages.core.models.resnet.residual_blocks import BasicBlock1D
 
             if '18' in model_name:
                 layers = [2, 2, 2, 2]
@@ -175,7 +175,7 @@ class DualStreamCNN(BaseModel):
             model.fc = nn.Identity()
 
         elif 'cnn' in model_name.lower():
-            from models.cnn.cnn_1d import CNN1D
+            from packages.core.models.cnn.cnn_1d import CNN1D
             model = CNN1D(num_classes=self.num_classes)
             model.fc = nn.Identity()
 
@@ -186,7 +186,7 @@ class DualStreamCNN(BaseModel):
 
     def _create_freq_branch(self, model_name: str) -> nn.Module:
         """Create 2D CNN for frequency-domain processing."""
-        from models.spectrogram_cnn import get_model
+        from packages.core.models.spectrogram_cnn import get_model
 
         if 'resnet' in model_name.lower():
             if '18' in model_name:

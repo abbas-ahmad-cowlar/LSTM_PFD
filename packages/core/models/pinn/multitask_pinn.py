@@ -34,9 +34,9 @@ import torch.nn.functional as F
 from typing import Dict, Optional, Tuple, List
 
 
-from models.base_model import BaseModel
-from models.resnet.resnet_1d import ResNet1D
-from models.cnn.cnn_1d import CNN1D
+from packages.core.models.base_model import BaseModel
+from packages.core.models.resnet.resnet_1d import ResNet1D
+from packages.core.models.cnn.cnn_1d import CNN1D
 
 
 class MultitaskPINN(BaseModel):

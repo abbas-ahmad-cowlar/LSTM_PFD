@@ -13,7 +13,7 @@ Date: 2025-11-20
 """
 
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
-from models.cnn.conv_blocks import (
+from packages.core.models.cnn.conv_blocks import (
     ConvBlock1D,
     ResidualConvBlock1D,
     SeparableConv1D

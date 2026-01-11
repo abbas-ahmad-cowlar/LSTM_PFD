@@ -35,7 +35,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Optional
 
-from models.base_model import BaseModel
+from packages.core.models.base_model import BaseModel
 
 
 class MultiScaleBranch(nn.Module):

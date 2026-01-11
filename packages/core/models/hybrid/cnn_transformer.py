@@ -22,7 +22,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.constants import NUM_CLASSES
-from models.base_model import BaseModel
+from packages.core.models.base_model import BaseModel
 
 
 class CNNTransformerHybrid(BaseModel):
@@ -113,7 +113,7 @@ class CNNTransformerHybrid(BaseModel):
             CNN backbone module (without final classification layer)
         """
         if backbone_type == 'resnet18':
-            from models.resnet_1d import create_resnet18_1d
+            from packages.core.models.resnet_1d import create_resnet18_1d
             resnet = create_resnet18_1d(num_classes=self.num_classes)
             # Remove final FC layer and global pooling
             backbone = nn.Sequential(*list(resnet.children())[:-2])
@@ -125,7 +125,7 @@ class CNNTransformerHybrid(BaseModel):
                 )
 
         elif backbone_type == 'resnet34':
-            from models.resnet_1d import create_resnet34_1d
+            from packages.core.models.resnet_1d import create_resnet34_1d
             resnet = create_resnet34_1d(num_classes=self.num_classes)
             backbone = nn.Sequential(*list(resnet.children())[:-2])
             if output_channels != 512:

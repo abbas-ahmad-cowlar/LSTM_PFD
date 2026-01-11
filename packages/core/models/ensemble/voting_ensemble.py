@@ -20,7 +20,7 @@ from sklearn.metrics import accuracy_score
 from itertools import product
 import sys
 sys.path.append('/home/user/LSTM_PFD')
-from models.base_model import BaseModel
+from packages.core.models.base_model import BaseModel
 
 
 class VotingEnsemble(BaseModel):
