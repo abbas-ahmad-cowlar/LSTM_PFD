@@ -113,8 +113,8 @@ COLOR_PALETTE = [
 ]
 
 # Phase 0-10 Integration Paths
-PHASE_0_DATA_PATH = BASE_DIR / "data"
-PHASE_0_CACHE_PATH = PHASE_0_DATA_PATH / "processed" / "signals_cache.h5"
+PHASE_0_DATA_PATH = BASE_DIR.parent / "data"
+PHASE_0_CACHE_PATH = PHASE_0_DATA_PATH / "processed" / "dataset.h5"
 CHECKPOINTS_DIR = BASE_DIR / "checkpoints"
 
 # GPU Configuration
