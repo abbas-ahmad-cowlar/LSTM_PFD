@@ -31,6 +31,7 @@ from layouts.nas_dashboard import create_nas_dashboard_layout
 from layouts.settings import create_settings_layout
 
 
+
 def register_all_callbacks(app):
     """Register all callbacks with the app."""
 
@@ -109,6 +110,13 @@ def register_all_callbacks(app):
                 html.P(f"The page '{pathname}' does not exist."),
                 html.A("Return to Home", href="/")
             ], className="text-center mt-5")
+
+    # Register Home Page callbacks
+    try:
+        from callbacks.home_callbacks import register_home_callbacks
+        register_home_callbacks(app)
+    except ImportError as e:
+        print(f"Warning: Could not import home_callbacks: {e}")
 
     # Import and register Phase 0 (data generation) callbacks
     try:
