@@ -58,12 +58,47 @@ class DataService:
                 "class_distribution": {}
             }
 
-            # Get class distribution from signals
-            for fault in dataset.fault_types:
-                count = session.query(Signal).filter_by(
-                    dataset_id=dataset_id, fault_class=fault
-                ).count()
-                stats["class_distribution"][fault] = count
+            # Try to get class distribution from HDF5 file first
+            try:
+                file_path = Path(dataset.file_path)
+                if file_path.exists():
+                    with h5py.File(file_path, 'r') as f:
+                        # Check for metadata group
+                        if 'metadata' in f and 'fault_classes' in f['metadata']:
+                            fault_classes = f['metadata']['fault_classes'][:]
+                            if hasattr(fault_classes[0], 'decode'):
+                                fault_classes = [fc.decode() for fc in fault_classes]
+                            # Count occurrences
+                            from collections import Counter
+                            dist = Counter(fault_classes)
+                            stats["class_distribution"] = dict(dist)
+                        elif 'train' in f and 'labels' in f['train']:
+                            # Fall back to counting labels from train split
+                            labels = f['train']['labels'][:]
+                            from collections import Counter
+                            label_counts = Counter(labels.tolist())
+                            # Map label indices to fault names if possible
+                            fault_types = dataset.fault_types or []
+                            for label_idx, count in label_counts.items():
+                                if label_idx < len(fault_types):
+                                    stats["class_distribution"][fault_types[label_idx]] = count
+                                else:
+                                    stats["class_distribution"][f"class_{label_idx}"] = count
+                            # Update num_signals from actual data
+                            total = sum(label_counts.values())
+                            if 'val' in f and 'labels' in f['val']:
+                                total += len(f['val']['labels'][:])
+                            if 'test' in f and 'labels' in f['test']:
+                                total += len(f['test']['labels'][:])
+                            stats["num_signals"] = total
+            except Exception as e:
+                logger.warning(f"Could not read HDF5 stats for dataset {dataset_id}: {e}")
+                # Fall back to Signal table query if HDF5 fails
+                for fault in (dataset.fault_types or []):
+                    count = session.query(Signal).filter_by(
+                        dataset_id=dataset_id, fault_class=fault
+                    ).count()
+                    stats["class_distribution"][fault] = count
 
             CacheService.set(cache_key, stats, ttl=600)  # Cache for 10 minutes
             return stats

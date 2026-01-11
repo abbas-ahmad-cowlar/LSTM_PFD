@@ -23,236 +23,100 @@ class Phase0Adapter:
     @staticmethod
     def generate_dataset(config: dict, progress_callback=None) -> dict:
         """
-        Generate dataset using Phase 0 logic.
+        Generate dataset using Phase 0 logic via subprocess.
+
+        Uses a standalone script to avoid Python import namespace conflicts
+        between the dashboard (packages/dashboard/config.py) and the project's
+        config/ package.
 
         Args:
             config: Dataset configuration
-                - name: Dataset name
-                - output_dir: Output directory path
-                - num_signals_per_fault: Number of signals per fault type
-                - fault_types: List of fault types to include
-                - severity_levels: List of severity levels
-                - temporal_evolution: Enable temporal evolution
-                - noise_layers: Dict of noise layer enables
-                - speed_variation: Speed variation percentage (0-1)
-                - load_range: [min, max] load range (0-1)
-                - temp_range: [min, max] temperature range (°C)
-                - augmentation: Augmentation config dict
-                - output_format: 'mat', 'hdf5', or 'both'
-                - random_seed: Random seed for reproducibility
             progress_callback: Optional callback(current, total, fault_type)
 
         Returns:
-            dict with:
-                - success: bool
-                - output_path: str (HDF5 file path)
-                - total_signals: int
-                - num_faults: int
-                - generation_time: float
+            dict with success, output_path, total_signals, num_faults
         """
+        import subprocess
+        import json
+        import tempfile
+        import os
+
         try:
-            from data.signal_generator import SignalGenerator
-            from config.data_config import DataConfig, SignalConfig, FaultConfig, \
-                SeverityConfig, NoiseConfig, OperatingConfig, PhysicsConfig, \
-                TransientConfig, AugmentationConfig
-            from pathlib import Path
-            from utils.constants import DEFAULT_RANDOM_SEED, DEFAULT_NUM_SIGNALS_PER_FAULT
-            import h5py
-            import numpy as np
-            from dataclasses import asdict
+            project_root = Path(__file__).resolve().parent.parent.parent.parent
+            script_path = project_root / "scripts" / "generate_dataset_standalone.py"
 
-            logger.info(f"Generating dataset '{config['name']}' with config: {config}")
-
-            # Convert dashboard config to DataConfig
-            data_config = DataConfig(
-                num_signals_per_fault=config.get('num_signals_per_fault', DEFAULT_NUM_SIGNALS_PER_FAULT),
-                output_dir=config.get('output_dir', 'data/generated'),
-                rng_seed=config.get('random_seed', DEFAULT_RANDOM_SEED),
-            )
-
-            # Configure signal parameters (use defaults)
-            data_config.signal = SignalConfig()
-
-            # Configure fault types
-            fault_config = FaultConfig()
-            selected_faults = config.get('fault_types', [])
-
-            # Disable all faults first
-            fault_config.include_healthy = False
-            for fault in fault_config.single_faults:
-                fault_config.single_faults[fault] = False
-            for fault in fault_config.mixed_faults:
-                fault_config.mixed_faults[fault] = False
-
-            # Enable selected faults (convert from dashboard names to Phase 0 names)
-            for dashboard_fault in selected_faults:
-                # Convert dashboard name to Phase 0 name
-                phase0_fault = DASHBOARD_TO_PHASE0_FAULT_MAP.get(dashboard_fault, dashboard_fault)
-
-                if phase0_fault == 'sain':
-                    fault_config.include_healthy = True
-                elif phase0_fault.startswith('mixed_'):
-                    # Remove 'mixed_' prefix for the dict key
-                    fault_key = phase0_fault.replace('mixed_', '')
-                    if fault_key in fault_config.mixed_faults:
-                        fault_config.include_single = True  # Need single faults for mixed
-                        fault_config.include_mixed = True
-                        fault_config.mixed_faults[fault_key] = True
-                else:
-                    if phase0_fault in fault_config.single_faults:
-                        fault_config.include_single = True
-                        fault_config.single_faults[phase0_fault] = True
-
-            data_config.fault = fault_config
-
-            # Configure severity
-            severity_config = SeverityConfig()
-            severity_config.enabled = True
-            severity_config.levels = config.get('severity_levels', ['incipient', 'mild', 'moderate', 'severe'])
-            severity_config.temporal_evolution = 0.30 if config.get('temporal_evolution', True) else 0.0
-            data_config.severity = severity_config
-
-            # Configure noise layers
-            noise_config = NoiseConfig()
-            noise_layers = config.get('noise_layers', {})
-            noise_config.measurement = noise_layers.get('measurement', True)
-            noise_config.emi = noise_layers.get('emi', True)
-            noise_config.pink = noise_layers.get('pink', True)
-            noise_config.drift = noise_layers.get('drift', True)
-            noise_config.quantization = noise_layers.get('quantization', True)
-            noise_config.sensor_drift = noise_layers.get('sensor_drift', True)
-            noise_config.impulse = noise_layers.get('impulse', True)
-            data_config.noise = noise_config
-
-            # Configure operating conditions
-            operating_config = OperatingConfig()
-            operating_config.speed_variation = config.get('speed_variation', 0.10)
-            load_range = config.get('load_range', [0.30, 1.00])
-            operating_config.load_range = tuple(load_range)
-            temp_range = config.get('temp_range', [40.0, 80.0])
-            operating_config.temp_range = tuple(temp_range)
-            data_config.operating = operating_config
-
-            # Configure physics (use defaults)
-            data_config.physics = PhysicsConfig()
-
-            # Configure transients (use defaults)
-            data_config.transient = TransientConfig()
-
-            # Configure augmentation
-            aug_config_dict = config.get('augmentation', {})
-            aug_config = AugmentationConfig()
-            aug_config.enabled = aug_config_dict.get('enabled', True)
-            aug_config.ratio = aug_config_dict.get('ratio', 0.30)
-            aug_config.methods = aug_config_dict.get('methods', ['time_shift', 'amplitude_scale', 'noise_injection'])
-            data_config.augmentation = aug_config
-
-            # Initialize generator
-            generator = SignalGenerator(data_config)
-
-            # Generate dataset with progress tracking
-            fault_types = data_config.fault.get_fault_list()
-            total_faults = len(fault_types)
-            total_signals_target = data_config.get_total_signals()
-
-            logger.info(f"Will generate {total_signals_target} signals for {total_faults} fault types")
-
-            # Custom generation with progress
-            all_signals = []
-            all_metadata = []
-            all_labels = []
-            signal_count = 0
-
-            for k, fault in enumerate(fault_types):
-                num_base = data_config.num_signals_per_fault
-
-                if data_config.augmentation.enabled:
-                    num_augmented = int(num_base * data_config.augmentation.ratio)
-                else:
-                    num_augmented = 0
-
-                num_total_for_fault = num_base + num_augmented
-
-                for n in range(num_total_for_fault):
-                    is_augmented = (n >= num_base)
-
-                    # Generate signal
-                    signal, metadata = generator.generate_single_signal(fault, is_augmented)
-
-                    all_signals.append(signal)
-                    all_metadata.append(metadata)
-                    all_labels.append(fault)
-                    signal_count += 1
-
-                    # Report progress
-                    if progress_callback and signal_count % 10 == 0:
-                        progress_callback(signal_count, total_signals_target, fault)
-
-                logger.info(f"Generated {num_total_for_fault} signals for fault: {fault}")
-
-            # Save dataset based on output format
-            output_format = config.get('output_format', 'both')
-            output_dir = Path(config.get('output_dir', 'data/generated'))
-            output_dir.mkdir(parents=True, exist_ok=True)
-
-            dataset_name = config.get('name', 'dataset')
-
-            # Save as MAT files if requested
-            if output_format in ['mat', 'both']:
-                mat_dir = output_dir / f"{dataset_name}_mat"
-                mat_dir.mkdir(parents=True, exist_ok=True)
-                logger.info(f"Saving MAT files to {mat_dir}")
-
-                dataset_dict = {
-                    'signals': all_signals,
-                    'metadata': all_metadata,
-                    'labels': all_labels,
-                    'config': data_config,
+            if not script_path.exists():
+                logger.error(f"Standalone generation script not found: {script_path}")
+                return {
+                    'success': False,
+                    'error': f'Generation script not found: {script_path}',
+                    'output_path': None,
+                    'total_signals': 0,
+                    'num_faults': 0,
                 }
-                generator.save_dataset(dataset_dict, mat_dir)
 
-            # Save as HDF5 if requested
-            hdf5_path = None
-            if output_format in ['hdf5', 'both']:
-                hdf5_path = output_dir / f"{dataset_name}.h5"
-                logger.info(f"Saving HDF5 file to {hdf5_path}")
+            # Write config to temp file
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as config_file:
+                json.dump(config, config_file)
+                config_path = config_file.name
 
-                with h5py.File(hdf5_path, 'w') as f:
-                    # Store signals and labels
-                    for i, (signal, metadata, label) in enumerate(zip(all_signals, all_metadata, all_labels)):
-                        signal_id = f"signal_{i:06d}"
-                        grp = f.create_group(signal_id)
-                        grp.create_dataset('data', data=signal, compression='gzip')
-                        grp.attrs['fault_type'] = label
-                        grp.attrs['severity'] = metadata.severity
-                        grp.attrs['is_augmented'] = metadata.is_augmented
-                        grp.attrs['signal_rms'] = metadata.signal_rms
-                        grp.attrs['signal_peak'] = metadata.signal_peak
+            # Write output to temp file
+            output_path = tempfile.mktemp(suffix='_result.json')
 
-                    # Store metadata
-                    meta_grp = f.create_group('metadata')
-                    meta_grp.attrs['total_signals'] = len(all_signals)
-                    meta_grp.attrs['num_faults'] = len(fault_types)
-                    meta_grp.attrs['sampling_rate'] = data_config.signal.fs
-                    meta_grp.attrs['signal_duration'] = data_config.signal.T
-                    meta_grp.attrs['dataset_name'] = dataset_name
+            try:
+                # Set PYTHONPATH to project root only (exclude dashboard)
+                env = os.environ.copy()
+                env['PYTHONPATH'] = str(project_root)
 
-            # Final progress callback
-            if progress_callback:
-                progress_callback(total_signals_target, total_signals_target, "Complete")
+                logger.info(f"Running standalone generation for '{config.get('name')}'...")
 
-            output_path = str(hdf5_path) if hdf5_path else str(output_dir / f"{dataset_name}_mat")
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(script_path),
+                        '--config-file', config_path,
+                        '--output-json', output_path
+                    ],
+                    cwd=str(project_root),
+                    env=env,
+                    capture_output=True,
+                    text=True,
+                    timeout=3600  # 1 hour timeout
+                )
 
-            logger.info(f"✓ Dataset generation complete: {output_path}")
+                if result.returncode != 0:
+                    logger.error(f"Generation subprocess failed: {result.stderr}")
+                    return {
+                        'success': False,
+                        'error': result.stderr or 'Subprocess failed',
+                        'output_path': None,
+                        'total_signals': 0,
+                        'num_faults': 0,
+                    }
 
+                # Read result
+                with open(output_path, 'r') as f:
+                    gen_result = json.load(f)
+
+                logger.info(f"Generation complete: {gen_result}")
+                return gen_result
+
+            finally:
+                # Cleanup temp files
+                if os.path.exists(config_path):
+                    os.unlink(config_path)
+                if os.path.exists(output_path):
+                    os.unlink(output_path)
+
+        except subprocess.TimeoutExpired:
+            logger.error("Dataset generation timed out after 1 hour")
             return {
-                'success': True,
-                'output_path': output_path,
-                'total_signals': len(all_signals),
-                'num_faults': len(fault_types),
-                'generation_time': 0,  # Will be calculated by task
+                'success': False,
+                'error': 'Generation timed out',
+                'output_path': None,
+                'total_signals': 0,
+                'num_faults': 0,
             }
-
         except Exception as e:
             logger.error(f"Error generating dataset: {e}", exc_info=True)
             return {
