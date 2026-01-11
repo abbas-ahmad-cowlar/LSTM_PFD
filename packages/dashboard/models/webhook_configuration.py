@@ -1,5 +1,5 @@
 """Webhook configuration model for Slack/Teams integrations (Feature #4)."""
-from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, UniqueConstraint, DateTime, Index
+from sqlalchemy import Column, Integer, String, Boolean, Text, ForeignKey, UniqueConstraint, DateTime, Index, JSON
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 from models.base import BaseModel
@@ -28,11 +28,11 @@ class WebhookConfiguration(BaseModel):
 
     # Event routing (JSON array of enabled events)
     # Example: ["training.complete", "training.failed", "hpo.campaign_complete"]
-    enabled_events = Column(JSONB, default=list, nullable=False)
+    enabled_events = Column(JSONB().with_variant(JSON, 'sqlite'), default=list, nullable=False)
 
     # Provider-specific settings (flexible JSON for different providers)
     # Example for Slack: {"mention_on_failure": true, "mention_user": "@abbas"}
-    settings = Column(JSONB, default=dict, nullable=False)
+    settings = Column(JSONB().with_variant(JSON, 'sqlite'), default=dict, nullable=False)
 
     # Status tracking
     last_used_at = Column(DateTime, nullable=True)
