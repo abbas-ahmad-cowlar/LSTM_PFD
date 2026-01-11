@@ -5,7 +5,7 @@ from dash import Input, Output, State, callback_context, dcc, html
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
-from database.connection import get_session
+from database.connection import get_db_session
 from models.experiment import Experiment, ExperimentStatus
 from models.tag import ExperimentTag
 from layouts.experiments import create_experiments_table
@@ -27,10 +27,9 @@ def register_experiments_callbacks(app):
         if pathname != '/experiments':
             raise PreventUpdate
 
-        session = get_session()
-
-        # Build query
-        query = session.query(Experiment)
+        with get_db_session() as session:
+            # Build query
+            query = session.query(Experiment)
 
         # Apply tag filter
         if tag_filter and len(tag_filter) > 0:
@@ -58,7 +57,6 @@ def register_experiments_callbacks(app):
         # Apply pagination to prevent loading too many experiments
         from utils.query_utils import paginate_with_default_limit
         experiments = paginate_with_default_limit(query, limit=500)
-        session.close()
 
         return create_experiments_table(experiments)
 
@@ -71,20 +69,17 @@ def register_experiments_callbacks(app):
         if pathname != '/experiments':
             raise PreventUpdate
 
-        session = get_session()
-
-        total_experiments = session.query(Experiment).count()
-        completed_experiments = session.query(Experiment).filter(
-            Experiment.status == ExperimentStatus.COMPLETED
-        ).count()
-        running_experiments = session.query(Experiment).filter(
-            Experiment.status == ExperimentStatus.RUNNING
-        ).count()
-        failed_experiments = session.query(Experiment).filter(
-            Experiment.status == ExperimentStatus.FAILED
-        ).count()
-
-        session.close()
+        with get_db_session() as session:
+            total_experiments = session.query(Experiment).count()
+            completed_experiments = session.query(Experiment).filter(
+                Experiment.status == ExperimentStatus.COMPLETED
+            ).count()
+            running_experiments = session.query(Experiment).filter(
+                Experiment.status == ExperimentStatus.RUNNING
+            ).count()
+            failed_experiments = session.query(Experiment).filter(
+                Experiment.status == ExperimentStatus.FAILED
+            ).count()
 
         return dbc.Row([
             dbc.Col([
@@ -122,11 +117,9 @@ def register_experiments_callbacks(app):
         if pathname != '/experiments':
             raise PreventUpdate
 
-        session = get_session()
-
-        # Get unique model types
-        model_types = session.query(Experiment.model_type).distinct().all()
-        session.close()
+        with get_db_session() as session:
+            # Get unique model types
+            model_types = session.query(Experiment.model_type).distinct().all()
 
         options = [{'label': mt[0], 'value': mt[0]} for mt in model_types if mt[0]]
 
@@ -187,11 +180,10 @@ def register_experiments_callbacks(app):
                 raise PreventUpdate
 
             # Load selected experiments
-            session = get_session()
-            experiments = session.query(Experiment).filter(
-                Experiment.id.in_(selected_ids)
-            ).all()
-            session.close()
+            with get_db_session() as session:
+                experiments = session.query(Experiment).filter(
+                    Experiment.id.in_(selected_ids)
+                ).all()
 
             # Build cart content
             cart_items = []

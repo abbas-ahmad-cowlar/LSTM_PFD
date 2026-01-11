@@ -40,7 +40,7 @@ class SessionLog(BaseModel):
     # Indexes for performance
     __table_args__ = (
         Index('ix_session_logs_user_id', 'user_id'),
-        Index('ix_session_logs_session_token', 'session_token'),
+        # Index('ix_session_logs_session_token', 'session_token'),  # Removed: Duplicate of unique=True index
         Index('ix_session_logs_is_active', 'is_active'),
     )
 

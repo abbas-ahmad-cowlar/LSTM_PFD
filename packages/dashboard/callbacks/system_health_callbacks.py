@@ -38,18 +38,25 @@ def register_system_health_callbacks(app):
             Output('recent-alerts', 'children'),
             Output('metrics-history-chart', 'figure'),
         ],
-        Input('system-health-interval', 'n_intervals')
+        [
+            Input('system-health-interval', 'n_intervals'),
+            Input('url', 'pathname')
+        ]
     )
-    def update_system_health(n_intervals):
+    def update_system_health(n_intervals, pathname):
         """
         Update all system health metrics in real-time.
 
         Args:
             n_intervals: Interval counter
+            pathname: Current URL path
 
         Returns:
             Tuple of updated components
         """
+        if pathname != '/system-health':
+            raise PreventUpdate
+
         try:
             # Get current health status
             health_status = monitoring_service.get_health_status()
