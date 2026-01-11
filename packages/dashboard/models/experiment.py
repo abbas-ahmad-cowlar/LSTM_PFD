@@ -41,7 +41,7 @@ class Experiment(BaseModel):
 
     # Feature #5: Tags & Search
     notes = Column(Text)  # User notes for experiment (searchable)
-    search_vector = Column(TSVECTOR)  # Full-text search vector (auto-updated by trigger)
+    search_vector = Column(TSVECTOR().with_variant(Text(), 'sqlite'))  # Full-text search vector (auto-updated by trigger)
 
     # Relationships
     created_by = Column(Integer, ForeignKey('users.id'))
