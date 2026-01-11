@@ -4,7 +4,7 @@ Global constants for the Dash application.
 import sys
 from pathlib import Path
 
-from config import FAULT_CLASSES, COLOR_PALETTE
+from dashboard_config import FAULT_CLASSES, COLOR_PALETTE
 
 # Decoupled from parent project to avoid circular imports
 NUM_CLASSES = 11

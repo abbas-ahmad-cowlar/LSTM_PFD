@@ -34,7 +34,7 @@ class NotificationProviderFactory:
         Raises:
             ValueError: If provider type unknown or disabled
         """
-        from config import (
+        from dashboard_config import (
             NOTIFICATIONS_SLACK_ENABLED,
             NOTIFICATIONS_TEAMS_ENABLED,
             NOTIFICATIONS_WEBHOOK_ENABLED
@@ -76,7 +76,7 @@ class NotificationProviderFactory:
         Returns:
             List of enabled provider strings (e.g., ['email', 'slack', 'teams'])
         """
-        from config import (
+        from dashboard_config import (
             EMAIL_ENABLED,
             NOTIFICATIONS_SLACK_ENABLED,
             NOTIFICATIONS_TEAMS_ENABLED,

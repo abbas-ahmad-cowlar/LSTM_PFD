@@ -2,7 +2,7 @@
 Celery tasks for background processing.
 """
 from celery import Celery
-from config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
+from dashboard_config import CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 # Initialize Celery app

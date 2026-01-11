@@ -18,7 +18,7 @@ from models.webhook_log import WebhookLog, WebhookStatus
 from models.user import User
 from services.email_provider import EmailProviderFactory, EmailRateLimiter
 from services.notification_providers import NotificationProviderFactory, NotificationMessage
-from config import DASH_APP_DIR
+from dashboard_config import DASH_APP_DIR
 import redis
 
 logger = setup_logger(__name__)
@@ -353,7 +353,7 @@ class NotificationService:
             List of results for each webhook
         """
         try:
-            from config import (
+            from dashboard_config import (
                 NOTIFICATIONS_SLACK_ENABLED,
                 NOTIFICATIONS_TEAMS_ENABLED,
                 NOTIFICATIONS_WEBHOOK_ENABLED,
@@ -435,7 +435,7 @@ class NotificationService:
         Returns:
             Result dict with status
         """
-        from config import (
+        from dashboard_config import (
             SLACK_RATE_LIMIT_PER_WEBHOOK,
             SLACK_RETRY_ATTEMPTS,
             SLACK_TIMEOUT_SECONDS,

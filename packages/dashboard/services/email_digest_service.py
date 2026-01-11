@@ -9,7 +9,7 @@ from database.connection import get_db_session
 from models.email_digest_queue import EmailDigestQueue
 from models.user import User
 from utils.logger import setup_logger
-from config import EMAIL_DIGEST_PAGE_SIZE
+from dashboard_config import EMAIL_DIGEST_PAGE_SIZE
 
 logger = setup_logger(__name__)
 

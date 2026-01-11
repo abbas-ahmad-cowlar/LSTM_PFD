@@ -7,7 +7,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 from flask import Flask
 
-from config import APP_HOST, APP_PORT, DEBUG
+from dashboard_config import APP_HOST, APP_PORT, DEBUG
 from utils.logger import setup_logger
 from database.connection import init_database
 
@@ -18,7 +18,7 @@ logger = setup_logger(__name__)
 server = Flask(__name__)
 
 # Configure Flask server for sessions (Phase 11D - Authentication)
-from config import SECRET_KEY
+from dashboard_config import SECRET_KEY
 server.secret_key = SECRET_KEY
 server.config['SESSION_COOKIE_HTTPONLY'] = True
 server.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
