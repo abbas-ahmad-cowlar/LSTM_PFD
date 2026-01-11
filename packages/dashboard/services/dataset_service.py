@@ -64,7 +64,7 @@ class DatasetService:
                         'file_path': ds.file_path,
                         'file_size_mb': file_size_mb,
                         'created_at': ds.created_at,
-                        'metadata': ds.metadata or {}
+                        'metadata': ds.meta_data or {}
                     })
 
                 return result
@@ -102,7 +102,7 @@ class DatasetService:
                     'severity_levels': dataset.severity_levels or [],
                     'file_path': dataset.file_path,
                     'created_at': dataset.created_at,
-                    'metadata': dataset.metadata or {}
+                    'metadata': dataset.meta_data or {}
                 }
 
                 # Load statistics from HDF5 file
@@ -280,10 +280,10 @@ class DatasetService:
                     return False
 
                 # Update metadata
-                metadata = dataset.metadata or {}
+                metadata = dataset.meta_data or {}
                 metadata['archived'] = True
                 metadata['archived_at'] = datetime.utcnow().isoformat()
-                dataset.metadata = metadata
+                dataset.meta_data = metadata
 
                 session.commit()
 

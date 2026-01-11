@@ -11,8 +11,9 @@ Provides endpoints for:
 from flask import Blueprint, request, jsonify
 from database.connection import get_db_session
 from services.tag_service import TagService
-from middleware.rate_limiter import rate_limit_check
-from middleware.api_auth import require_api_key
+
+from middleware.api_key_auth import APIKeyAuth
+require_api_key = APIKeyAuth.require_api_key
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)

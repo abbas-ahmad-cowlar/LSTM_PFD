@@ -14,7 +14,7 @@ class Dataset(BaseModel):
     fault_types = Column(JSON, nullable=False)  # List of fault types included
     severity_levels = Column(JSON, nullable=False)  # List of severity levels
     file_path = Column(String(500), nullable=False)  # Path to HDF5 file
-    metadata = Column(JSON)  # Additional metadata
+    meta_data = Column(JSON)  # Additional metadata (Renamed from metadata avoids conflict)
     created_by = Column(Integer, ForeignKey('users.id'))
 
     # Performance indexes
