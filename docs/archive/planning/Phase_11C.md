@@ -228,7 +228,7 @@ Confusion Matrix Diff:
 **New directories and files added to Phase 11A+11B structure:**
 
 ```
-dash_app/
+packages/dashboard/
 │
 ├── layouts/                        # ADD 6 new pages
 │   ├── xai_explorer.py             # NEW: Explain individual predictions

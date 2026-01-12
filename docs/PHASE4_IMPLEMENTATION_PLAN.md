@@ -63,7 +63,7 @@ Users cannot configure their notification preferences via UI. The backend suppor
 
 #### Files to Create/Modify
 
-**1. Enhance `/settings` page** - `dash_app/layouts/settings.py`
+**1. Enhance `/settings` page** - `packages/dashboard/layouts/settings.py`
 ```python
 # Add new tab: "Notifications"
 # Structure:
@@ -81,7 +81,7 @@ Users cannot configure their notification preferences via UI. The backend suppor
 
 **Changes Required**: Add notification tab after existing tabs (~200 lines)
 
-**2. Create notification callbacks** - `dash_app/callbacks/notification_callbacks.py` (~150 lines)
+**2. Create notification callbacks** - `packages/dashboard/callbacks/notification_callbacks.py` (~150 lines)
 ```python
 # Callbacks to implement:
 
@@ -129,7 +129,7 @@ def export_notification_history(format):
     # Export to selected format
 ```
 
-**3. Register callbacks** - `dash_app/callbacks/__init__.py`
+**3. Register callbacks** - `packages/dashboard/callbacks/__init__.py`
 ```python
 # Add import and registration:
 try:
@@ -249,7 +249,7 @@ The codebase has extensive visualization capabilities (t-SNE, UMAP, bispectrum, 
 
 #### Files to Create
 
-**1. Visualization dashboard layout** - `dash_app/layouts/visualization.py` (~300 lines)
+**1. Visualization dashboard layout** - `packages/dashboard/layouts/visualization.py` (~300 lines)
 ```python
 def create_visualization_layout():
     """
@@ -385,7 +385,7 @@ def create_visualization_layout():
     ])
 ```
 
-**2. Visualization callbacks** - `dash_app/callbacks/visualization_callbacks.py` (~250 lines)
+**2. Visualization callbacks** - `packages/dashboard/callbacks/visualization_callbacks.py` (~250 lines)
 ```python
 def register_visualization_callbacks(app):
     """Register all visualization dashboard callbacks."""
@@ -471,7 +471,7 @@ def register_visualization_callbacks(app):
         # Return plotly figure
 ```
 
-**3. Add route** - `dash_app/callbacks/__init__.py`
+**3. Add route** - `packages/dashboard/callbacks/__init__.py`
 ```python
 elif pathname == '/visualization':
     from layouts.visualization import create_visualization_layout
@@ -485,7 +485,7 @@ except ImportError as e:
     print(f"Warning: Could not import visualization_callbacks: {e}")
 ```
 
-**4. Add sidebar link** - `dash_app/components/sidebar.py`
+**4. Add sidebar link** - `packages/dashboard/components/sidebar.py`
 ```python
 dbc.NavLink([
     html.I(className="fas fa-chart-area me-2"),
@@ -568,7 +568,7 @@ NAS is a cutting-edge ML technique for automatically discovering optimal archite
 
 #### Files to Create
 
-**1. NAS service layer** - `dash_app/services/nas_service.py` (~300 lines)
+**1. NAS service layer** - `packages/dashboard/services/nas_service.py` (~300 lines)
 ```python
 class NASService:
     """Service for Neural Architecture Search operations."""
@@ -645,7 +645,7 @@ class NASService:
         # Return code string
 ```
 
-**2. NAS Celery tasks** - `dash_app/tasks/nas_tasks.py` (~300 lines)
+**2. NAS Celery tasks** - `packages/dashboard/tasks/nas_tasks.py` (~300 lines)
 ```python
 @celery_app.task(bind=True)
 def run_nas_campaign_task(self, campaign_id: int):
@@ -724,7 +724,7 @@ def train_model_quick(model, dataset_id, num_epochs) -> Dict:
     # Return validation accuracy and time
 ```
 
-**3. NAS database models** - `dash_app/models/nas_campaign.py` (~100 lines)
+**3. NAS database models** - `packages/dashboard/models/nas_campaign.py` (~100 lines)
 ```python
 class NASCampaign(BaseModel):
     """NAS campaign tracking."""
@@ -754,7 +754,7 @@ class NASTrial(BaseModel):
     flops = Column(BigInteger)  # FLOPs count
 ```
 
-**4. NAS dashboard layout** - `dash_app/layouts/nas_dashboard.py` (~400 lines)
+**4. NAS dashboard layout** - `packages/dashboard/layouts/nas_dashboard.py` (~400 lines)
 ```python
 def create_nas_dashboard_layout():
     """NAS campaign dashboard."""
@@ -829,7 +829,7 @@ def create_nas_dashboard_layout():
     ])
 ```
 
-**5. NAS callbacks** - `dash_app/callbacks/nas_callbacks.py` (~350 lines)
+**5. NAS callbacks** - `packages/dashboard/callbacks/nas_callbacks.py` (~350 lines)
 ```python
 def register_nas_callbacks(app):
     """Register NAS dashboard callbacks."""

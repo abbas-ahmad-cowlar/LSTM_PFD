@@ -41,8 +41,8 @@ These features are **essential for production deployment** and have significant 
 **Impact**: Cannot systematically optimize model hyperparameters, reducing model performance potential.
 
 **What Exists**:
-- Complete UI layout (`dash_app/layouts/hpo_campaigns.py`)
-- Database model (`dash_app/models/hpo_campaign.py`)
+- Complete UI layout (`packages/dashboard/layouts/hpo_campaigns.py`)
+- Database model (`packages/dashboard/models/hpo_campaign.py`)
 - Optuna-based HPO engine (`experiments/hyperparameter_tuner.py`)
 - Bayesian optimizer (`training/bayesian_optimizer.py`)
 - Grid search and random search implementations
@@ -54,9 +54,9 @@ These features are **essential for production deployment** and have significant 
 - No results visualization
 
 **Files to Create**:
-- `dash_app/callbacks/hpo_callbacks.py` (~600 lines)
-- `dash_app/tasks/hpo_tasks.py` (~300 lines)
-- `dash_app/services/hpo_service.py` (~250 lines)
+- `packages/dashboard/callbacks/hpo_callbacks.py` (~600 lines)
+- `packages/dashboard/tasks/hpo_tasks.py` (~300 lines)
+- `packages/dashboard/services/hpo_service.py` (~250 lines)
 
 **Estimated Effort**: 2-3 days
 
@@ -93,10 +93,10 @@ These features are **essential for production deployment** and have significant 
 - No model size comparison
 
 **Files to Create**:
-- `dash_app/layouts/deployment.py` (~400 lines)
-- `dash_app/callbacks/deployment_callbacks.py` (~500 lines)
-- `dash_app/tasks/deployment_tasks.py` (~200 lines)
-- `dash_app/services/deployment_service.py` (~300 lines)
+- `packages/dashboard/layouts/deployment.py` (~400 lines)
+- `packages/dashboard/callbacks/deployment_callbacks.py` (~500 lines)
+- `packages/dashboard/tasks/deployment_tasks.py` (~200 lines)
+- `packages/dashboard/services/deployment_service.py` (~300 lines)
 
 **Estimated Effort**: 3-4 days
 
@@ -109,7 +109,7 @@ These features are **essential for production deployment** and have significant 
 **Impact**: Cannot monitor system health, resource usage, or alerts in production.
 
 **What Exists**:
-- Monitoring service (`dash_app/services/monitoring_service.py`)
+- Monitoring service (`packages/dashboard/services/monitoring_service.py`)
   - CPU, memory, disk monitoring
   - Application metrics
   - Alert system
@@ -123,8 +123,8 @@ These features are **essential for production deployment** and have significant 
 - No monitoring history
 
 **Files to Create**:
-- `dash_app/layouts/system_health.py` (~300 lines)
-- `dash_app/callbacks/system_health_callbacks.py` (~250 lines)
+- `packages/dashboard/layouts/system_health.py` (~300 lines)
+- `packages/dashboard/callbacks/system_health_callbacks.py` (~250 lines)
 
 **Estimated Effort**: 1-2 days
 
@@ -155,9 +155,9 @@ These features are **essential for production deployment** and have significant 
 - No request/response logging viewer
 
 **Files to Create**:
-- `dash_app/layouts/api_dashboard.py` (~350 lines)
-- `dash_app/callbacks/api_callbacks.py` (~400 lines)
-- `dash_app/services/api_monitoring_service.py` (~200 lines)
+- `packages/dashboard/layouts/api_dashboard.py` (~350 lines)
+- `packages/dashboard/callbacks/api_callbacks.py` (~400 lines)
+- `packages/dashboard/services/api_monitoring_service.py` (~200 lines)
 
 **Estimated Effort**: 2 days
 
@@ -187,9 +187,9 @@ These features are **essential for production deployment** and have significant 
 - No robustness test interface
 
 **Files to Enhance**:
-- `dash_app/layouts/experiment_results.py` (add ROC, error analysis)
-- Create `dash_app/layouts/evaluation_dashboard.py` (~500 lines)
-- `dash_app/callbacks/evaluation_callbacks.py` (~400 lines)
+- `packages/dashboard/layouts/experiment_results.py` (add ROC, error analysis)
+- Create `packages/dashboard/layouts/evaluation_dashboard.py` (~500 lines)
+- `packages/dashboard/callbacks/evaluation_callbacks.py` (~400 lines)
 
 **Estimated Effort**: 2-3 days
 
@@ -216,9 +216,9 @@ These features are **essential for production deployment** and have significant 
 - No CI/CD status integration
 
 **Files to Create**:
-- `dash_app/layouts/testing_dashboard.py` (~400 lines)
-- `dash_app/callbacks/testing_callbacks.py` (~350 lines)
-- `dash_app/tasks/testing_tasks.py` (~200 lines)
+- `packages/dashboard/layouts/testing_dashboard.py` (~400 lines)
+- `packages/dashboard/callbacks/testing_callbacks.py` (~350 lines)
+- `packages/dashboard/tasks/testing_tasks.py` (~200 lines)
 
 **Estimated Effort**: 2 days
 
@@ -234,7 +234,7 @@ These features are **essential for production deployment** and have significant 
 
 **What Exists**:
 - Sidebar link to `/datasets`
-- Database model (`dash_app/models/dataset.py`)
+- Database model (`packages/dashboard/models/dataset.py`)
 - MAT import functionality (in Data Generation tab)
 - Dataset query utilities
 
@@ -245,8 +245,8 @@ These features are **essential for production deployment** and have significant 
 - No dataset deletion/archiving
 
 **Files to Create**:
-- `dash_app/layouts/datasets.py` (~300 lines)
-- `dash_app/callbacks/datasets_callbacks.py` (~250 lines)
+- `packages/dashboard/layouts/datasets.py` (~300 lines)
+- `packages/dashboard/callbacks/datasets_callbacks.py` (~250 lines)
 
 **Estimated Effort**: 1 day
 
@@ -272,9 +272,9 @@ These features are **essential for production deployment** and have significant 
 - No feature engineering pipeline builder
 
 **Files to Create**:
-- `dash_app/layouts/feature_engineering.py` (~450 lines)
-- `dash_app/callbacks/feature_callbacks.py` (~400 lines)
-- `dash_app/services/feature_service.py` (~250 lines)
+- `packages/dashboard/layouts/feature_engineering.py` (~450 lines)
+- `packages/dashboard/callbacks/feature_callbacks.py` (~400 lines)
+- `packages/dashboard/services/feature_service.py` (~250 lines)
 
 **Estimated Effort**: 2-3 days
 
@@ -299,8 +299,8 @@ These features are **essential for production deployment** and have significant 
 - No mixed precision toggle
 
 **Files to Enhance**:
-- `dash_app/layouts/experiment_wizard.py` (add advanced options)
-- `dash_app/callbacks/experiment_wizard_callbacks.py` (enhance)
+- `packages/dashboard/layouts/experiment_wizard.py` (add advanced options)
+- `packages/dashboard/callbacks/experiment_wizard_callbacks.py` (enhance)
 
 **Estimated Effort**: 1-2 days
 

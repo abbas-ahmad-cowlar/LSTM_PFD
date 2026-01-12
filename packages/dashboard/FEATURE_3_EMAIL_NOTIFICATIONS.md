@@ -193,7 +193,7 @@ For testing, you can use Gmail SMTP:
 
 ### 5. Initialize Notification Service at Startup
 
-In `dash_app/app.py`, add initialization:
+In `packages/dashboard/app.py`, add initialization:
 
 ```python
 from services.notification_service import NotificationService
@@ -286,7 +286,7 @@ create_default_notification_preferences(user_id=new_user.id)
 ### Template Structure
 
 ```
-dash_app/templates/email_templates/
+packages/dashboard/templates/email_templates/
 ├── base.html                      # Base template (header, footer, styling)
 ├── training_complete.html         # Training success
 ├── training_failed.html           # Training failure
@@ -528,7 +528,7 @@ python scripts/test_training.py
 1. `EMAIL_ENABLED=True` in `.env`
 2. Valid `SENDGRID_API_KEY` or SMTP credentials
 3. NotificationService initialized in `app.py`
-4. Check logs: `tail -f dash_app/app.log | grep "email"`
+4. Check logs: `tail -f packages/dashboard/app.log | grep "email"`
 5. Check email_logs table for error messages
 
 ### Problem: Emails in spam
@@ -566,9 +566,9 @@ Increase `EMAIL_RATE_LIMIT` in config or upgrade SendGrid plan.
 ## Support & Contact
 
 - **Documentation**: See `feature_3.md` for full specification
-- **Code**: `dash_app/services/notification_service.py`
-- **Templates**: `dash_app/templates/email_templates/`
-- **Models**: `dash_app/models/notification_preference.py`
+- **Code**: `packages/dashboard/services/notification_service.py`
+- **Templates**: `packages/dashboard/templates/email_templates/`
+- **Models**: `packages/dashboard/models/notification_preference.py`
 
 ---
 

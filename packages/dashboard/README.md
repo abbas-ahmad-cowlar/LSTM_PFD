@@ -206,7 +206,7 @@ python app.py
 ## Architecture
 
 ```
-dash_app/
+packages/dashboard/
 ├── app.py                 # Main application entry point
 ├── config.py              # Configuration management
 ├── assets/                # Static CSS/JS assets

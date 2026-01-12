@@ -49,7 +49,7 @@
 ### Architecture Design
 
 #### Database Model (New)
-Create `dash_app/models/api_request_log.py`:
+Create `packages/dashboard/models/api_request_log.py`:
 ```python
 class APIRequestLog(BaseModel):
     endpoint: str  # /predict, /predict/batch
@@ -68,7 +68,7 @@ class APIRequestLog(BaseModel):
 ```
 
 #### Service Layer
-`dash_app/services/api_monitoring_service.py`:
+`packages/dashboard/services/api_monitoring_service.py`:
 - `log_api_request()` - Log request/response
 - `get_request_stats()` - Aggregate statistics (last hour, day, week)
 - `get_endpoint_metrics()` - Per-endpoint breakdown
@@ -91,7 +91,7 @@ async def log_requests(request: Request, call_next):
     return response
 ```
 
-#### Layout (`dash_app/layouts/api_dashboard.py`)
+#### Layout (`packages/dashboard/layouts/api_dashboard.py`)
 **Components**:
 1. **Overview Cards** - Total requests, avg latency, error rate, active API keys
 2. **Request Timeline** - Requests per minute (last 24h)
@@ -100,7 +100,7 @@ async def log_requests(request: Request, call_next):
 5. **Error Log** - Recent errors with details
 6. **API Key Management** - Create, revoke, view usage
 
-#### Callbacks (`dash_app/callbacks/api_callbacks.py`)
+#### Callbacks (`packages/dashboard/callbacks/api_callbacks.py`)
 - `update_api_metrics()` - Real-time metrics (auto-refresh 10s)
 - `update_request_timeline()` - Timeline chart
 - `update_endpoint_table()` - Endpoint statistics
@@ -124,14 +124,14 @@ async def log_requests(request: Request, call_next):
 ### Architecture Design
 
 #### Service Layer
-`dash_app/services/evaluation_service.py`:
+`packages/dashboard/services/evaluation_service.py`:
 - `generate_roc_curves()` - Generate ROC data for experiment
 - `compute_error_analysis()` - Confusion patterns, misclassified samples
 - `compare_architectures()` - FLOPs vs Accuracy Pareto frontier
 - `test_robustness()` - Noise/adversarial evaluation
 - `cache_evaluation_results()` - Cache expensive computations
 
-#### Layout (`dash_app/layouts/evaluation_dashboard.py`)
+#### Layout (`packages/dashboard/layouts/evaluation_dashboard.py`)
 **Tabs**:
 1. **ROC Analysis Tab**
    - Multi-class ROC curves (one-vs-rest)
@@ -157,11 +157,11 @@ async def log_requests(request: Request, call_next):
    - Robustness score per class
 
 #### Enhance Existing Results Page
-Modify `dash_app/layouts/experiment_results.py`:
+Modify `packages/dashboard/layouts/experiment_results.py`:
 - Add "Advanced Evaluation" button
 - Link to evaluation dashboard with experiment_id
 
-#### Callbacks (`dash_app/callbacks/evaluation_callbacks.py`)
+#### Callbacks (`packages/dashboard/callbacks/evaluation_callbacks.py`)
 - `generate_roc_curves_callback()` - Trigger ROC generation (Celery task)
 - `display_roc_curves()` - Show ROC plots
 - `analyze_errors_callback()` - Trigger error analysis (Celery task)
@@ -169,7 +169,7 @@ Modify `dash_app/layouts/experiment_results.py`:
 - `compare_models_callback()` - Load multiple experiments for comparison
 - `display_pareto_frontier()` - Architecture comparison plot
 
-#### Celery Tasks (`dash_app/tasks/evaluation_tasks.py`)
+#### Celery Tasks (`packages/dashboard/tasks/evaluation_tasks.py`)
 - `generate_roc_task()` - Compute ROC curves (CPU intensive)
 - `error_analysis_task()` - Deep error analysis
 - `robustness_test_task()` - Run robustness tests
@@ -191,7 +191,7 @@ Modify `dash_app/layouts/experiment_results.py`:
 ### Architecture Design
 
 #### Service Layer
-`dash_app/services/testing_service.py`:
+`packages/dashboard/services/testing_service.py`:
 - `run_tests()` - Execute pytest via subprocess
 - `get_test_results()` - Parse pytest output
 - `get_coverage_report()` - Parse coverage.py XML
@@ -199,7 +199,7 @@ Modify `dash_app/layouts/experiment_results.py`:
 - `compare_benchmark_history()` - Track performance over time
 
 #### Database Model (Optional)
-`dash_app/models/test_run.py`:
+`packages/dashboard/models/test_run.py`:
 ```python
 class TestRun(BaseModel):
     run_id: str
@@ -213,7 +213,7 @@ class TestRun(BaseModel):
     test_results: JSON  # Detailed results
 ```
 
-#### Layout (`dash_app/layouts/testing_dashboard.py`)
+#### Layout (`packages/dashboard/layouts/testing_dashboard.py`)
 **Sections**:
 1. **Test Execution Panel**
    - Test suite selector (unit/integration/all)
@@ -236,14 +236,14 @@ class TestRun(BaseModel):
    - Performance trends (line chart)
    - Comparison with baseline
 
-#### Callbacks (`dash_app/callbacks/testing_callbacks.py`)
+#### Callbacks (`packages/dashboard/callbacks/testing_callbacks.py`)
 - `run_tests_callback()` - Execute tests (Celery task)
 - `stream_test_output()` - Show live test output
 - `display_test_results()` - Show results table
 - `display_coverage()` - Coverage visualization
 - `display_benchmarks()` - Benchmark charts
 
-#### Celery Tasks (`dash_app/tasks/testing_tasks.py`)
+#### Celery Tasks (`packages/dashboard/tasks/testing_tasks.py`)
 - `run_pytest_task()` - Execute pytest with coverage
 - `run_benchmark_task()` - Execute benchmark suite
 - Stream output to Redis for live updates

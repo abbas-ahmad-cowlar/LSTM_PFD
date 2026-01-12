@@ -315,7 +315,7 @@ This document analyzes the security fixes for hardcoded credentials and explains
 ## 🔍 Original Issues (RESOLVED)
 
 ### 1. Hardcoded Database Credentials
-**Location**: `dash_app/config.py:21`
+**Location**: `packages/dashboard/config.py:21`
 ```python
 # ❌ BEFORE (INSECURE)
 DATABASE_URL = os.getenv(
@@ -327,7 +327,7 @@ DATABASE_URL = os.getenv(
 **Risk**: Credentials exposed in version control, easily compromised
 
 ### 2. Weak Secret Key Default
-**Location**: `dash_app/config.py:49`
+**Location**: `packages/dashboard/config.py:49`
 ```python
 # ❌ BEFORE (INSECURE)
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
@@ -336,7 +336,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 **Risk**: Predictable secret allows session hijacking and CSRF attacks
 
 ### 3. Hardcoded JWT Secret
-**Location**: `dash_app/middleware/auth.py:18`
+**Location**: `packages/dashboard/middleware/auth.py:18`
 ```python
 # ❌ BEFORE (INSECURE)
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-this-in-production-please")
@@ -550,7 +550,7 @@ DATABASE_URL = "postgresql://user:short@localhost/db"  # Warning: password < 12 
 ```bash
 # Test 1: Missing config (should fail)
 $ unset DATABASE_URL SECRET_KEY JWT_SECRET_KEY
-$ python dash_app/app.py
+$ python packages/dashboard/app.py
 ❌ Configuration Validation Failed!
 DATABASE_URL is required but not set.
 SECRET_KEY is required but not set.
@@ -558,14 +558,14 @@ JWT_SECRET_KEY is required but not set.
 
 # Test 2: Weak secrets (should fail)
 $ export SECRET_KEY="weak"
-$ python dash_app/app.py
+$ python packages/dashboard/app.py
 ❌ SECRET_KEY is too short (4 < 32 characters).
 
 # Test 3: Valid config (should start)
 $ export SECRET_KEY=$(python -c 'import secrets; print(secrets.token_hex(32))')
 $ export JWT_SECRET_KEY=$(python -c 'import secrets; print(secrets.token_hex(32))')
 $ export DATABASE_URL="postgresql://user:$(python -c 'import secrets; print(secrets.token_urlsafe(16))')@localhost/db"
-$ python dash_app/app.py
+$ python packages/dashboard/app.py
 ✅ Configuration validation passed!
 Starting application...
 ```

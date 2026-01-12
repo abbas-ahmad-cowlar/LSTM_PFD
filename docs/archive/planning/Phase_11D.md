@@ -791,7 +791,7 @@ Real-Time Metrics:
 **New directories and files added to Phase 11A+11B+11C structure:**
 
 ```
-dash_app/
+packages/dashboard/
 │
 ├── auth/                           # NEW directory: Authentication
 │   ├── __init__.py

@@ -17,7 +17,7 @@
 
 ### Fix #1: Configure Flask Secret Key
 
-**File**: `dash_app/app.py`
+**File**: `packages/dashboard/app.py`
 **Line**: After `server = Flask(__name__)` (around line 18)
 
 **Add this code**:
@@ -47,7 +47,7 @@ server.config.update(
 **Option A: Replace Current File (Recommended)**
 
 ```bash
-mv dash_app/utils/auth_utils_improved.py dash_app/utils/auth_utils.py
+mv packages/dashboard/utils/auth_utils_improved.py packages/dashboard/utils/auth_utils.py
 ```
 
 **Option B: Keep Both Files**
@@ -114,7 +114,7 @@ Keep the improved version as a reference and gradually migrate.
 2. **Test Current Implementation**
    ```bash
    cd /home/user/LSTM_PFD
-   python dash_app/app.py
+   python packages/dashboard/app.py
    # Verify no crashes, dev mode works
    ```
 
@@ -122,8 +122,8 @@ Keep the improved version as a reference and gradually migrate.
 
 3. **Upgrade to Improved auth_utils.py**
    ```bash
-   mv dash_app/utils/auth_utils_improved.py dash_app/utils/auth_utils.py
-   git add dash_app/utils/auth_utils.py
+   mv packages/dashboard/utils/auth_utils_improved.py packages/dashboard/utils/auth_utils.py
+   git add packages/dashboard/utils/auth_utils.py
    git commit -m "feat: Upgrade auth_utils with production-ready features"
    ```
 
@@ -174,13 +174,13 @@ Keep the improved version as a reference and gradually migrate.
 ```bash
 # Test 1: Development Mode (Current Behavior)
 export ENV=development
-python dash_app/app.py
+python packages/dashboard/app.py
 # Visit http://localhost:8050/settings
 # Should work with user_id=1
 
 # Test 2: Production Mode (After Fix #1)
 export ENV=production
-python dash_app/app.py
+python packages/dashboard/app.py
 # Visit http://localhost:8050/settings
 # Should show "User not authenticated" in logs
 ```

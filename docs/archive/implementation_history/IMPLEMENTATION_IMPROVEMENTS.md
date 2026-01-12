@@ -401,7 +401,7 @@ Create new migration to add indexes:
 
 ```bash
 # Create migration
-python dash_app/database/run_migration.py create "add_composite_indexes"
+python packages/dashboard/database/run_migration.py create "add_composite_indexes"
 
 # Edit migration file:
 # migrations/versions/XXXX_add_composite_indexes.py
@@ -433,7 +433,7 @@ def downgrade():
     op.drop_index('idx_email_logs_time_status')
 
 # Run migration
-python dash_app/database/run_migration.py upgrade
+python packages/dashboard/database/run_migration.py upgrade
 ```
 
 ### Environment Variables
@@ -545,7 +545,7 @@ logger.info(f"Cache hit rate: {hit_rate:.2%}")
 For questions or issues with implementation:
 1. Check this document
 2. Review service class docstrings
-3. Check logs in `dash_app/app.log`
+3. Check logs in `packages/dashboard/app.log`
 4. Review codebase exploration notes
 
 ---
