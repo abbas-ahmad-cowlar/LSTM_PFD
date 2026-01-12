@@ -11,15 +11,27 @@ def create_signal_viewer_layout():
     return dbc.Container([
         html.H2("Signal Viewer", className="mb-4"),
 
-        # Signal selection
+        # Dataset and Signal selection
         dbc.Row([
             dbc.Col([
-                dcc.Dropdown(id="signal-id-selector", placeholder="Select or enter signal ID"),
-            ], width=6),
+                html.Label("Dataset"),
+                dcc.Dropdown(
+                    id="signal-viewer-dataset-selector",
+                    placeholder="Select a dataset",
+                    className="mb-2"
+                ),
+            ], width=4),
             dbc.Col([
-                dbc.Button("Random Signal", id="random-signal-btn", color="secondary"),
-                dbc.Button("Upload Signal", id="upload-signal-btn", color="primary", className="ms-2"),
-            ], width=6, className="text-end"),
+                html.Label("Signal ID"),
+                dcc.Dropdown(id="signal-id-selector", placeholder="Select or enter signal ID"),
+            ], width=4),
+            dbc.Col([
+                html.Label("\u00a0"),  # Spacer for alignment
+                html.Div([
+                    dbc.Button("Random Signal", id="random-signal-btn", color="secondary"),
+                    dbc.Button("Upload Signal", id="upload-signal-btn", color="primary", className="ms-2"),
+                ])
+            ], width=4, className="text-end"),
         ], className="mb-4"),
 
         dbc.Row([
