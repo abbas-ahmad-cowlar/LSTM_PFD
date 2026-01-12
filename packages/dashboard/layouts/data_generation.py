@@ -493,4 +493,46 @@ def create_data_generation_layout():
         dcc.Store(id='active-import-id', data=None),
         dcc.Store(id='generation-config-store', data={}),
         dcc.Store(id='uploaded-files-store', data=[]),
+        
+        # Download component for config export
+        dcc.Download(id='download-config'),
+        
+        # Load Configuration Modal
+        dbc.Modal([
+            dbc.ModalHeader(dbc.ModalTitle([
+                html.I(className="fas fa-upload me-2"),
+                "Load Configuration"
+            ])),
+            dbc.ModalBody([
+                html.P("Upload a previously saved configuration file (.json)", className="text-muted mb-3"),
+                dcc.Upload(
+                    id='upload-config-file',
+                    children=html.Div([
+                        html.I(className="fas fa-file-upload fa-2x mb-2"),
+                        html.Br(),
+                        "Drag & Drop or Click to Select",
+                        html.Br(),
+                        html.Small("(.json files only)", className="text-muted")
+                    ]),
+                    style={
+                        'width': '100%',
+                        'height': '150px',
+                        'lineHeight': '40px',
+                        'borderWidth': '2px',
+                        'borderStyle': 'dashed',
+                        'borderRadius': '10px',
+                        'textAlign': 'center',
+                        'padding': '20px',
+                        'cursor': 'pointer',
+                        'background': '#f8f9fa'
+                    },
+                    multiple=False,
+                    accept='.json'
+                ),
+                html.Div(id='load-config-error', className="mt-3"),
+            ]),
+            dbc.ModalFooter([
+                dbc.Button("Cancel", id="close-load-modal-btn", color="secondary", outline=True),
+            ]),
+        ], id="load-config-modal", is_open=False, centered=True),
     ], fluid=True)

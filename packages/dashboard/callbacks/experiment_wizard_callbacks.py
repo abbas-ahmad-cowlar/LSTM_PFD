@@ -203,14 +203,9 @@ def register_experiment_wizard_callbacks(app):
 
         try:
             with get_db_session() as session:
-                # Apply pagination to prevent loading too many datasets
-                from utils.query_utils import paginate_with_default_limit
-                datasets = paginate_with_default_limit(
-                    session.query(Dataset).order_by(Dataset.created_at.desc()),
-                    limit=100
-                )
+                datasets = session.query(Dataset).order_by(Dataset.created_at.desc()).limit(50).all()
                 return [
-                    {"label": f"{ds.name} ({ds.num_samples} samples)", "value": ds.id}
+                    {"label": f"{ds.name} ({ds.num_signals} signals)", "value": ds.id}
                     for ds in datasets
                 ]
         except Exception as e:

@@ -2,11 +2,13 @@
 Data Generation callbacks - Phase 0 integration.
 Handles user interactions for dataset generation and MAT file import.
 """
-from dash import Input, Output, State, html, callback_context
+from dash import Input, Output, State, html, callback_context, dcc, no_update
 from dash.exceptions import PreventUpdate
+import dash_bootstrap_components as dbc
 import plotly.graph_objects as go
 from datetime import datetime
 import json
+import base64
 
 from database.connection import get_db_session
 from models.dataset_generation import DatasetGeneration, DatasetGenerationStatus
@@ -38,6 +40,164 @@ def register_data_generation_callbacks(app):
     # Register MAT import callbacks
     from callbacks.mat_import_callbacks import register_mat_import_callbacks
     register_mat_import_callbacks(app)
+
+    # =========================================================================
+    # SAVE CONFIGURATION CALLBACK
+    # =========================================================================
+    @app.callback(
+        Output('download-config', 'data'),
+        Input('save-config-btn', 'n_clicks'),
+        [
+            State('dataset-name-input', 'value'),
+            State('output-dir-input', 'value'),
+            State('num-signals-slider', 'value'),
+            State('fault-types-checklist', 'value'),
+            State('severity-levels-checklist', 'value'),
+            State('temporal-evolution-check', 'value'),
+            State('noise-layers-checklist', 'value'),
+            State('speed-variation-slider', 'value'),
+            State('load-range-slider', 'value'),
+            State('temp-range-slider', 'value'),
+            State('augmentation-enabled-check', 'value'),
+            State('augmentation-ratio-slider', 'value'),
+            State('augmentation-methods-checklist', 'value'),
+            State('output-format-radio', 'value'),
+            State('random-seed-input', 'value'),
+        ],
+        prevent_initial_call=True
+    )
+    def save_configuration(n_clicks, dataset_name, output_dir, num_signals, fault_types,
+                          severity_levels, temporal_evolution, noise_layers, speed_variation,
+                          load_range, temp_range, aug_enabled, aug_ratio, aug_methods,
+                          output_format, random_seed):
+        """Save current configuration to a downloadable JSON file."""
+        if not n_clicks:
+            raise PreventUpdate
+
+        config = {
+            'version': '1.0',
+            'saved_at': datetime.now().isoformat(),
+            'dataset_name': dataset_name or '',
+            'output_dir': output_dir or 'data/generated',
+            'num_signals': num_signals or DEFAULT_NUM_SIGNALS_PER_FAULT,
+            'fault_types': fault_types or [],
+            'severity_levels': severity_levels or [],
+            'temporal_evolution': temporal_evolution or [],
+            'noise_layers': noise_layers or [],
+            'speed_variation': speed_variation or DEFAULT_SPEED_VARIATION_PERCENT,
+            'load_range': load_range or [DEFAULT_LOAD_RANGE_MIN_PERCENT, DEFAULT_LOAD_RANGE_MAX_PERCENT],
+            'temp_range': temp_range or [DEFAULT_TEMP_RANGE_MIN, DEFAULT_TEMP_RANGE_MAX],
+            'augmentation_enabled': aug_enabled or [],
+            'augmentation_ratio': aug_ratio or DEFAULT_AUGMENTATION_RATIO_PERCENT,
+            'augmentation_methods': aug_methods or [],
+            'output_format': output_format or 'both',
+            'random_seed': random_seed or DEFAULT_RANDOM_SEED,
+        }
+
+        filename = f"{dataset_name or 'config'}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        logger.info(f"Saving configuration to {filename}")
+
+        return dict(content=json.dumps(config, indent=2), filename=filename)
+
+    # =========================================================================
+    # LOAD CONFIGURATION CALLBACK - Toggle Modal
+    # =========================================================================
+    @app.callback(
+        Output('load-config-modal', 'is_open'),
+        [Input('load-config-btn', 'n_clicks'), Input('close-load-modal-btn', 'n_clicks')],
+        State('load-config-modal', 'is_open'),
+        prevent_initial_call=True
+    )
+    def toggle_load_config_modal(open_clicks, close_clicks, is_open):
+        """Toggle the load configuration modal."""
+        return not is_open
+
+    # =========================================================================
+    # LOAD CONFIGURATION CALLBACK - Apply Config
+    # =========================================================================
+    @app.callback(
+        [
+            Output('dataset-name-input', 'value'),
+            Output('output-dir-input', 'value'),
+            Output('num-signals-slider', 'value'),
+            Output('fault-types-checklist', 'value'),
+            Output('severity-levels-checklist', 'value'),
+            Output('temporal-evolution-check', 'value'),
+            Output('noise-layers-checklist', 'value'),
+            Output('speed-variation-slider', 'value'),
+            Output('load-range-slider', 'value'),
+            Output('temp-range-slider', 'value'),
+            Output('augmentation-enabled-check', 'value'),
+            Output('augmentation-ratio-slider', 'value'),
+            Output('augmentation-methods-checklist', 'value'),
+            Output('output-format-radio', 'value'),
+            Output('random-seed-input', 'value'),
+            Output('load-config-modal', 'is_open', allow_duplicate=True),
+            Output('load-config-error', 'children'),
+        ],
+        Input('upload-config-file', 'contents'),
+        State('upload-config-file', 'filename'),
+        prevent_initial_call=True
+    )
+    def load_configuration(contents, filename):
+        """Load configuration from uploaded JSON file."""
+        if not contents:
+            raise PreventUpdate
+
+        try:
+            # Decode the uploaded file
+            content_type, content_string = contents.split(',')
+            decoded = base64.b64decode(content_string).decode('utf-8')
+            config = json.loads(decoded)
+
+            logger.info(f"Loaded configuration from {filename}")
+
+            return (
+                config.get('dataset_name', ''),
+                config.get('output_dir', 'data/generated'),
+                config.get('num_signals', DEFAULT_NUM_SIGNALS_PER_FAULT),
+                config.get('fault_types', []),
+                config.get('severity_levels', []),
+                config.get('temporal_evolution', []),
+                config.get('noise_layers', []),
+                config.get('speed_variation', DEFAULT_SPEED_VARIATION_PERCENT),
+                config.get('load_range', [DEFAULT_LOAD_RANGE_MIN_PERCENT, DEFAULT_LOAD_RANGE_MAX_PERCENT]),
+                config.get('temp_range', [DEFAULT_TEMP_RANGE_MIN, DEFAULT_TEMP_RANGE_MAX]),
+                config.get('augmentation_enabled', []),
+                config.get('augmentation_ratio', DEFAULT_AUGMENTATION_RATIO_PERCENT),
+                config.get('augmentation_methods', []),
+                config.get('output_format', 'both'),
+                config.get('random_seed', DEFAULT_RANDOM_SEED),
+                False,  # Close modal
+                '',  # Clear error
+            )
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in config file: {e}")
+            return (
+                no_update, no_update, no_update, no_update,
+                no_update, no_update, no_update, no_update,
+                no_update, no_update, no_update, no_update,
+                no_update, no_update, no_update,
+                True,  # Keep modal open
+                html.Div([
+                    html.I(className="fas fa-exclamation-triangle me-2"),
+                    f"Invalid JSON file: {str(e)}"
+                ], className="text-danger")
+            )
+        except Exception as e:
+            logger.error(f"Error loading config file: {e}")
+            return (
+                no_update, no_update, no_update, no_update,
+                no_update, no_update, no_update, no_update,
+                no_update, no_update, no_update, no_update,
+                no_update, no_update, no_update,
+                True,  # Keep modal open
+                html.Div([
+                    html.I(className="fas fa-exclamation-triangle me-2"),
+                    f"Error loading file: {str(e)}"
+                ], className="text-danger")
+            )
 
     @app.callback(
         Output('config-summary', 'children'),
