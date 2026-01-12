@@ -47,7 +47,7 @@ pip install -r requirements.txt
 - **Option B (Real data):** Use `scripts/import_mat_dataset.py` if you have MAT files
 
 **Step 4: Choose your path:**
-- **GUI (No coding):** → `dash_app/app.py` - See [Section 4](#4-dashboard-usage)
+- **GUI (No coding):** → `packages/dashboard/app.py` - See [Section 4](#4-dashboard-usage)
 - **CLI (Command line):** → `scripts/` directory - See [Section 5](#5-cli-workflow)
 
 ---
@@ -77,7 +77,7 @@ LSTM_PFD/
 │   ├── pinn_trainer.py         PINN training
 │   └── bayesian_optimizer.py  Hyperparameter optimization
 │
-├── 📁 dash_app/          # Enterprise Dashboard (Phase 11)
+├── 📁 packages/dashboard/          # Enterprise Dashboard (Phase 11)
 │   ├── app.py                 ⭐ MAIN ENTRY POINT for web UI
 │   ├── layouts/                Page layouts
 │   ├── callbacks/              Event handlers
@@ -107,10 +107,10 @@ LSTM_PFD/
 
 | Use Case | Entry Point | Documentation |
 |----------|-------------|---------------|
-| **Web Dashboard** | `dash_app/app.py` | `dash_app/README.md` |
+| **Web Dashboard** | `packages/dashboard/app.py` | `packages/dashboard/README.md` |
 | **REST API** | `api/main.py` | `docs/API_REFERENCE.md` |
 | **Data Generation** | `data/signal_generator.py` | `QUICKSTART.md` Phase 0 |
-| **Model Training (CLI)** | `scripts/train_*.py` | `USAGE_GUIDES/PHASE_X_USAGE_GUIDE.md` |
+| **Model Training (CLI)** | `scripts/train_*.py` | `docs/user-guide/phases/PHASE_X_USAGE_GUIDE.md` |
 | **Model Creation** | `models/model_factory.py` | `models/__init__.py` |
 
 ---
@@ -172,21 +172,21 @@ LSTM_PFD/
 #### 3.4 Understanding Dashboard Architecture
 
 **Start here:**
-1. **`dash_app/app.py`** (86 lines)
+1. **`packages/dashboard/app.py`** (86 lines)
    - Main entry point
    - Flask + Dash setup
    - Route registration
 
-2. **`dash_app/callbacks/__init__.py`**
+2. **`packages/dashboard/callbacks/__init__.py`**
    - How callbacks are registered
    - Page routing logic
 
-3. **`dash_app/services/`**
+3. **`packages/dashboard/services/`**
    - Business logic layer
    - Database interactions
    - Cache management
 
-4. **`dash_app/layouts/`**
+4. **`packages/dashboard/layouts/`**
    - UI components
    - Page layouts
 
@@ -209,7 +209,7 @@ LSTM_PFD/
 
 ### If you want to use the web interface (no coding):
 
-**Entry Point:** `dash_app/app.py`
+**Entry Point:** `packages/dashboard/app.py`
 
 **Quick Start:**
 ```bash
@@ -232,9 +232,9 @@ python app.py
 **Access:** `http://localhost:8050`
 
 **Documentation:**
-- **Quick Start:** `dash_app/GUI_QUICKSTART.md` (30-minute tutorial)
+- **Quick Start:** `packages/dashboard/GUI_QUICKSTART.md` (30-minute tutorial)
 - **Complete Guide:** `docs/USAGE_PHASE_11.md` (850+ lines)
-- **Dashboard README:** `dash_app/README.md`
+- **Dashboard README:** `packages/dashboard/README.md`
 
 **Key Pages:**
 - `/` - Home dashboard
@@ -294,8 +294,8 @@ python scripts/train_cnn.py \
 **Complete workflow:** See `QUICKSTART.md` for all phases
 
 **Documentation per phase:**
-- Phase 1: `USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md`
-- Phase 2: `USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md`
+- Phase 1: `docs/user-guide/phases/PHASE_1_USAGE_GUIDE.md`
+- Phase 2: `docs/user-guide/phases/PHASE_2_USAGE_GUIDE.md`
 - ... (and so on for all 11 phases)
 
 ---
@@ -334,7 +334,7 @@ python scripts/train_cnn.py \
    - `data/signal_generator.py` - Understand data
    - `models/model_factory.py` - Understand models
    - `training/trainer.py` - Understand training
-   - `dash_app/app.py` - Understand dashboard
+   - `packages/dashboard/app.py` - Understand dashboard
 
 3. **Run:** Start with Phase 8 (Ensemble)
    - Best accuracy (98-99%)
@@ -343,16 +343,16 @@ python scripts/train_cnn.py \
 
 ### For Software Developers:
 
-1. **Read:** `dash_app/README.md`
+1. **Read:** `packages/dashboard/README.md`
    - Dashboard architecture
    - Development guidelines
    - Adding new features
 
 2. **Explore:** Dashboard code structure:
-   - `dash_app/app.py` - Entry point
-   - `dash_app/callbacks/` - Event handlers
-   - `dash_app/services/` - Business logic
-   - `dash_app/models/` - Database models
+   - `packages/dashboard/app.py` - Entry point
+   - `packages/dashboard/callbacks/` - Event handlers
+   - `packages/dashboard/services/` - Business logic
+   - `packages/dashboard/models/` - Database models
 
 3. **Understand:** Three-layer architecture
    - Presentation (layouts/callbacks)
@@ -375,7 +375,7 @@ python scripts/train_cnn.py \
    - All commands you need
    - Expected outputs
 
-3. **`dash_app/README.md`** ⭐⭐ (if using dashboard)
+3. **`packages/dashboard/README.md`** ⭐⭐ (if using dashboard)
    - Dashboard features
    - Architecture
    - Development guide
@@ -390,7 +390,7 @@ python scripts/train_cnn.py \
 1. **`data/signal_generator.py`** - How data is created
 2. **`models/model_factory.py`** - How models are created
 3. **`training/trainer.py`** - How training works
-4. **`dash_app/app.py`** - Dashboard entry point
+4. **`packages/dashboard/app.py`** - Dashboard entry point
 5. **`api/main.py`** - API entry point
 
 ---
@@ -421,7 +421,7 @@ python scripts/train_cnn.py \
 ### Scenario C: "I want to use the dashboard"
 
 **Path:**
-1. Read `dash_app/GUI_QUICKSTART.md` (30 min)
+1. Read `packages/dashboard/GUI_QUICKSTART.md` (30 min)
 2. Set up environment (see Section 4)
 3. Start dashboard: `cd dash_app && python app.py`
 4. Follow GUI tutorial in dashboard
@@ -431,7 +431,7 @@ python scripts/train_cnn.py \
 ### Scenario D: "I want to add a new feature"
 
 **Path:**
-1. Read `dash_app/README.md` Development section
+1. Read `packages/dashboard/README.md` Development section
 2. Understand architecture (Section 3.4)
 3. Find similar feature in codebase
 4. Follow pattern to add new feature
@@ -448,26 +448,26 @@ python scripts/train_cnn.py \
 |------|-------------|----------------|
 | **Learn everything** | `QUICKSTART.md` | `README.md` |
 | **Quick start** | `QUICKSTART.md` | `README.md` |
-| **Use dashboard** | `dash_app/GUI_QUICKSTART.md` | `dash_app/README.md`, `docs/USAGE_PHASE_11.md` |
-| **Understand architecture** | `README.md` | `docs/FINAL_REPORT.md`, `dash_app/README.md` |
-| **Develop features** | `dash_app/README.md` | `CONTRIBUTING.md`, `docs/IMPLEMENTATION_PLAN.md` |
-| **Deploy production** | `docs/DEPLOYMENT_GUIDE.md` | `USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md` |
-| **Phase-specific** | `USAGE_GUIDES/PHASE_X_USAGE_GUIDE.md` | `phase-plan/Phase_X.md` |
+| **Use dashboard** | `packages/dashboard/GUI_QUICKSTART.md` | `packages/dashboard/README.md`, `docs/USAGE_PHASE_11.md` |
+| **Understand architecture** | `README.md` | `docs/FINAL_REPORT.md`, `packages/dashboard/README.md` |
+| **Develop features** | `packages/dashboard/README.md` | `CONTRIBUTING.md`, `docs/IMPLEMENTATION_PLAN.md` |
+| **Deploy production** | `docs/DEPLOYMENT_GUIDE.md` | `docs/user-guide/phases/Phase_9_DEPLOYMENT_GUIDE.md` |
+| **Phase-specific** | `docs/user-guide/phases/PHASE_X_USAGE_GUIDE.md` | `phase-plan/Phase_X.md` |
 
 ### By Phase:
 
 - **Phase 0:** `QUICKSTART.md` Phase 0 section
-- **Phase 1:** `USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md`
-- **Phase 2:** `USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md`
-- **Phase 3:** `USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md`
-- **Phase 4:** `USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md`
-- **Phase 5:** `USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md`
-- **Phase 6:** `USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md`
-- **Phase 7:** `USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md`
-- **Phase 8:** `USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md`
-- **Phase 9:** `USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md`
-- **Phase 10:** `USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md`
-- **Phase 11:** `USAGE_GUIDES/PHASE_11_USAGE_GUIDE.md`
+- **Phase 1:** `docs/user-guide/phases/PHASE_1_USAGE_GUIDE.md`
+- **Phase 2:** `docs/user-guide/phases/PHASE_2_USAGE_GUIDE.md`
+- **Phase 3:** `docs/user-guide/phases/PHASE_3_USAGE_GUIDE.md`
+- **Phase 4:** `docs/user-guide/phases/PHASE_4_USAGE_GUIDE.md`
+- **Phase 5:** `docs/user-guide/phases/PHASE_5_USAGE_GUIDE.md`
+- **Phase 6:** `docs/user-guide/phases/PHASE_6_USAGE_GUIDE.md`
+- **Phase 7:** `docs/user-guide/phases/PHASE_7_USAGE_GUIDE.md`
+- **Phase 8:** `docs/user-guide/phases/PHASE_8_USAGE_GUIDE.md`
+- **Phase 9:** `docs/user-guide/phases/Phase_9_DEPLOYMENT_GUIDE.md`
+- **Phase 10:** `docs/user-guide/phases/Phase_10_QA_INTEGRATION_GUIDE.md`
+- **Phase 11:** `docs/user-guide/phases/PHASE_11_USAGE_GUIDE.md`
 
 ---
 
@@ -506,7 +506,7 @@ python scripts/train_cnn.py \
 
 ### "I'm getting errors" → Check:
 - `QUICKSTART.md` Troubleshooting section
-- `dash_app/README.md` Troubleshooting section
+- `packages/dashboard/README.md` Troubleshooting section
 - GitHub Issues: https://github.com/abbas-ahmad-cowlar/LSTM_PFD/issues
 
 ### "I don't understand X" → Read:
@@ -536,7 +536,7 @@ python scripts/train_cnn.py \
    - Expected outputs
 
 4. **Choose your path:**
-   - **Dashboard:** Follow Section 4 → `dash_app/GUI_QUICKSTART.md`
+   - **Dashboard:** Follow Section 4 → `packages/dashboard/GUI_QUICKSTART.md`
    - **CLI:** Follow Section 5 → Execute Phase 0 commands
 
 5. **Start with Phase 0 (Data Generation)**
@@ -549,7 +549,7 @@ python scripts/train_cnn.py \
 1. `README.md` - Project overview
 2. `QUICKSTART.md` - Step-by-step guide
 3. `data/signal_generator.py` - Data generation (if doing Phase 0)
-4. `dash_app/app.py` - Dashboard entry (if using GUI)
+4. `packages/dashboard/app.py` - Dashboard entry (if using GUI)
 5. `scripts/train_classical_ml.py` - First training script (if using CLI)
 
 ---
@@ -572,7 +572,7 @@ cat QUICKSTART.md
 
 ```bash
 # 1. Read GUI_QUICKSTART.md
-cat dash_app/GUI_QUICKSTART.md
+cat packages/dashboard/GUI_QUICKSTART.md
 
 # 2. Set up dashboard
 cd dash_app

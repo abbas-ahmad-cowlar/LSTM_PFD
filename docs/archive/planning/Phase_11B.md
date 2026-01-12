@@ -244,7 +244,7 @@ Results Page Layout:
 **New directories and files added to Phase 11A structure:**
 
 ```
-dash_app/
+packages/dashboard/
 │
 ├── layouts/                        # ADD 4 new pages
 │   ├── experiment_config.py        # NEW: Configure training experiments

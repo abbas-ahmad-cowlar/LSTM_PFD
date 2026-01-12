@@ -155,7 +155,7 @@ The models now have optimized indexes defined, so no migration is needed.
 
 ## Connection Pool Changes
 
-The connection pool configuration has been updated in `dash_app/database/connection.py`:
+The connection pool configuration has been updated in `packages/dashboard/database/connection.py`:
 
 ### Old Configuration
 ```python

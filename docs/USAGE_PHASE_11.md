@@ -101,7 +101,7 @@ python app.py
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    PLOTLY DASH APPLICATION                   │
-│                     (dash_app/app.py)                        │
+│                     (packages/dashboard/app.py)                        │
 └─────────────────────────────────────────────────────────────┘
                             │
         ┌───────────────────┼───────────────────┐
@@ -733,7 +733,7 @@ pip install -r requirements.txt
 
 **Solution**:
 1. Ensure PostgreSQL is running
-2. Check database configuration in `dash_app/config/.env`
+2. Check database configuration in `packages/dashboard/config/.env`
 3. Run migrations: `python database/run_migration.py`
 
 ---

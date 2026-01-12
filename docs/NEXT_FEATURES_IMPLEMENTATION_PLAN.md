@@ -14,7 +14,7 @@
 
 **Solution**: Remove from sidebar until implemented
 
-**File to Modify**: `dash_app/components/sidebar.py`
+**File to Modify**: `packages/dashboard/components/sidebar.py`
 
 **Changes**:
 ```python
@@ -41,7 +41,7 @@ Fix the broken `/datasets` link by implementing a complete dataset management in
 ## Architecture
 
 ### Database Schema (Already Exists ✅)
-**File**: `dash_app/models/dataset.py`
+**File**: `packages/dashboard/models/dataset.py`
 
 ```python
 class Dataset(BaseModel):
@@ -61,7 +61,7 @@ class Dataset(BaseModel):
 
 ## Implementation Plan
 
-### File 1: `dash_app/services/dataset_service.py` (~200 lines)
+### File 1: `packages/dashboard/services/dataset_service.py` (~200 lines)
 
 **Purpose**: Business logic for dataset operations
 
@@ -166,7 +166,7 @@ class DatasetService:
 
 ---
 
-### File 2: `dash_app/layouts/datasets.py` (~350 lines)
+### File 2: `packages/dashboard/layouts/datasets.py` (~350 lines)
 
 **Purpose**: Dataset management UI
 
@@ -311,7 +311,7 @@ def create_datasets_layout():
 
 ---
 
-### File 3: `dash_app/callbacks/datasets_callbacks.py` (~300 lines)
+### File 3: `packages/dashboard/callbacks/datasets_callbacks.py` (~300 lines)
 
 **Purpose**: Handle dataset UI interactions
 
@@ -488,7 +488,7 @@ def create_signal_preview_chart(preview_data: Dict) -> go.Figure:
 
 ---
 
-### File 4: Update `dash_app/callbacks/__init__.py`
+### File 4: Update `packages/dashboard/callbacks/__init__.py`
 
 **Add route**:
 
@@ -566,7 +566,7 @@ Create a comprehensive feature engineering interface leveraging the extensive fe
 
 ## Implementation Plan
 
-### File 1: `dash_app/services/feature_service.py` (~300 lines)
+### File 1: `packages/dashboard/services/feature_service.py` (~300 lines)
 
 **Purpose**: Business logic for feature engineering
 
@@ -672,7 +672,7 @@ class FeatureService:
 
 ---
 
-### File 2: `dash_app/tasks/feature_tasks.py` (~250 lines)
+### File 2: `packages/dashboard/tasks/feature_tasks.py` (~250 lines)
 
 **Purpose**: Background tasks for feature extraction
 
@@ -714,7 +714,7 @@ def select_features_task(self, features: List, targets: List, method: str, num_f
 
 ---
 
-### File 3: `dash_app/layouts/feature_engineering.py` (~500 lines)
+### File 3: `packages/dashboard/layouts/feature_engineering.py` (~500 lines)
 
 **Purpose**: Feature engineering UI
 
@@ -918,7 +918,7 @@ def create_feature_engineering_layout():
 
 ---
 
-### File 4: `dash_app/callbacks/feature_callbacks.py` (~450 lines)
+### File 4: `packages/dashboard/callbacks/feature_callbacks.py` (~450 lines)
 
 **Purpose**: Handle feature engineering interactions
 
@@ -966,7 +966,7 @@ Add advanced training options to the experiment wizard without creating new page
 
 ## Implementation Plan
 
-### File 1: Enhance `dash_app/layouts/experiment_wizard.py`
+### File 1: Enhance `packages/dashboard/layouts/experiment_wizard.py`
 
 **Add new tab**: "Advanced Options"
 
@@ -1128,7 +1128,7 @@ Add advanced training options to the experiment wizard without creating new page
 
 ---
 
-### File 2: Enhance `dash_app/callbacks/experiment_wizard_callbacks.py`
+### File 2: Enhance `packages/dashboard/callbacks/experiment_wizard_callbacks.py`
 
 **Add callbacks for advanced options**:
 

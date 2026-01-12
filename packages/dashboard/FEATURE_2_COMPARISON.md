@@ -69,7 +69,7 @@ Click the "Share Link" button to:
 
 ### Backend Service
 
-**File:** `dash_app/services/comparison_service.py`
+**File:** `packages/dashboard/services/comparison_service.py`
 
 **Key Methods:**
 - `validate_comparison_request()`: Validates experiment IDs and permissions
@@ -80,7 +80,7 @@ Click the "Share Link" button to:
 
 ### Frontend Layout
 
-**File:** `dash_app/layouts/experiment_comparison.py`
+**File:** `packages/dashboard/layouts/experiment_comparison.py`
 
 **Components:**
 - `create_experiment_comparison_layout()`: Main comparison page
@@ -92,7 +92,7 @@ Click the "Share Link" button to:
 
 ### Callbacks
 
-**File:** `dash_app/callbacks/comparison_callbacks.py`
+**File:** `packages/dashboard/callbacks/comparison_callbacks.py`
 
 **Callbacks:**
 - Tab content rendering
@@ -100,7 +100,7 @@ Click the "Share Link" button to:
 - Share link modal
 - PDF export (placeholder)
 
-**File:** `dash_app/callbacks/experiments_callbacks.py`
+**File:** `packages/dashboard/callbacks/experiments_callbacks.py`
 
 **Callbacks:**
 - Experiment loading and filtering
@@ -109,7 +109,7 @@ Click the "Share Link" button to:
 
 ### Routing
 
-**File:** `dash_app/callbacks/__init__.py`
+**File:** `packages/dashboard/callbacks/__init__.py`
 
 URL pattern: `/compare?ids=1,2,3`
 

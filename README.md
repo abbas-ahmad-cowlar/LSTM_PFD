@@ -239,7 +239,7 @@ All 11 phases are **complete and production-ready**:
 ## 🚀 Quick Start
 
 > **🎯 Choose Your Path:**
-> - **GUI Users (No Code)**: Follow **[GUI QUICK START](dash_app/GUI_QUICKSTART.md)** - Train models using only the web dashboard
+> - **GUI Users (No Code)**: Follow **[GUI QUICK START](packages/dashboard/GUI_QUICKSTART.md)** - Train models using only the web dashboard
 > - **Command-Line Users**: Follow **[CLI QUICK START](QUICKSTART.md)** - Full 11-phase implementation guide
 > - **Dashboard Users**: See **[Phase 11 Usage Guide](docs/USAGE_PHASE_11.md)** - Complete dashboard feature documentation
 
@@ -335,7 +335,7 @@ Each phase has a **dedicated usage guide** with step-by-step instructions:
 
 **What**: Feature engineering + traditional ML algorithms
 **Accuracy**: 95-96%
-**Guide**: [`USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/PHASE_1_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_1_USAGE_GUIDE.md)
 
 ```python
 from pipelines.classical_ml_pipeline import ClassicalMLPipeline
@@ -359,7 +359,7 @@ print(f"Test Accuracy: {results['test_accuracy']:.2f}%")
 
 **What**: Deep learning baseline with multi-scale CNNs
 **Accuracy**: 93-95%
-**Guide**: [`USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/PHASE_2_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_2_USAGE_GUIDE.md)
 
 ```bash
 python scripts/train_cnn.py \
@@ -378,7 +378,7 @@ python scripts/train_cnn.py \
 
 **What**: State-of-the-art CNNs (ResNet, EfficientNet, NAS)
 **Accuracy**: 96-97%
-**Guide**: [`USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/PHASE_3_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_3_USAGE_GUIDE.md)
 
 ```bash
 # Train ResNet-18
@@ -403,7 +403,7 @@ python scripts/train_cnn.py \
 
 **What**: Self-attention for long-range temporal dependencies
 **Accuracy**: 96-97%
-**Guide**: [`USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/PHASE_4_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_4_USAGE_GUIDE.md)
 
 ```python
 from transformers import create_signal_transformer
@@ -426,7 +426,7 @@ model = create_signal_transformer(
 
 **What**: 2D CNNs on spectrograms (STFT, CWT, WVD)
 **Accuracy**: 96-98%
-**Guide**: [`USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/PHASE_5_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_5_USAGE_GUIDE.md)
 
 ```bash
 # Precompute spectrograms
@@ -450,7 +450,7 @@ python scripts/train_spectrogram_cnn.py \
 
 **What**: Integrate domain knowledge and physical laws
 **Accuracy**: 97-98%
-**Guide**: [`USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/PHASE_6_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_6_USAGE_GUIDE.md)
 
 ```python
 from models.pinn.hybrid_pinn import HybridPINN
@@ -472,7 +472,7 @@ trainer = PINNTrainer(model, physics_losses=physics_losses)
 
 **What**: Interpret predictions with SHAP, LIME, Integrated Gradients
 **Purpose**: Build trust and understand model decisions
-**Guide**: [`USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/PHASE_7_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_7_USAGE_GUIDE.md)
 
 ```python
 from explainability import SHAPExplainer, LIMEExplainer
@@ -494,7 +494,7 @@ streamlit run explainability/xai_dashboard.py
 
 **What**: Combine multiple models for superior performance
 **Accuracy**: 98-99% ⭐
-**Guide**: [`USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/PHASE_8_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_8_USAGE_GUIDE.md)
 
 ```python
 from models.ensemble import VotingEnsemble, StackedEnsemble
@@ -521,7 +521,7 @@ stacked = StackedEnsemble(
 
 **What**: Production-ready deployment with optimization
 **Target**: <50ms latency
-**Guide**: [`USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md`](USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/Phase_9_DEPLOYMENT_GUIDE.md`](docs/user-guide/phases/Phase_9_DEPLOYMENT_GUIDE.md)
 
 ```bash
 # Quantize model (4x smaller, 3x faster)
@@ -550,7 +550,7 @@ docker-compose up
 
 **What**: Comprehensive testing and CI/CD
 **Coverage**: 90%+
-**Guide**: [`USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md`](USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md)
+**Guide**: [`docs/user-guide/phases/Phase_10_QA_INTEGRATION_GUIDE.md`](docs/user-guide/phases/Phase_10_QA_INTEGRATION_GUIDE.md)
 
 ```bash
 # Run all tests
@@ -741,7 +741,7 @@ spec:
 
 Phase 11 delivers a **production-ready enterprise dashboard** built with Plotly Dash that provides a complete web interface for the entire LSTM PFD system. No coding required!
 
-**📍 Location**: [`dash_app/`](dash_app/)
+**📍 Location**: [`packages/dashboard/`](packages/dashboard/)
 
 ### Why Use the Dashboard?
 
@@ -911,7 +911,7 @@ python app.py
 
 ### Documentation
 
-- **[Dashboard README](dash_app/README.md)** - Comprehensive dashboard documentation
+- **[Dashboard README](packages/dashboard/README.md)** - Comprehensive dashboard documentation
 - **[Phase 11 Complete Usage Guide](PHASE_11_USAGE_GUIDE.md)** - 800+ line step-by-step guide covering:
   - Detailed setup for all deployment scenarios
   - Complete walkthrough of every feature
@@ -935,7 +935,7 @@ python app.py
 
 **New to the dashboard?** Follow these steps:
 
-1. **[Read the Dashboard README](dash_app/README.md)** - Get an overview
+1. **[Read the Dashboard README](packages/dashboard/README.md)** - Get an overview
 2. **[Follow the Complete Usage Guide](PHASE_11_USAGE_GUIDE.md)** - Step-by-step instructions
 3. **Start the application** - Use Docker Compose or local setup
 4. **Explore the home page** - Familiarize yourself with the UI
@@ -951,17 +951,17 @@ python app.py
 ### Phase-Specific Guides
 
 **Usage Guides** (Step-by-step how-to):
-- [`USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md) - Classical ML
-- [`USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md) - 1D CNNs
-- [`USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md) - Advanced CNNs
-- [`USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md) - Transformers
-- [`USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md) - Time-Frequency
-- [`USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md) - PINNs
-- [`USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md) - XAI
-- [`USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md) - Ensemble
-- [`USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md`](USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md) - Deployment
-- [`USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md`](USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md) - QA
-- [`USAGE_GUIDES/PHASE_11_USAGE_GUIDE.md`](USAGE_GUIDES/PHASE_11_USAGE_GUIDE.md) - **Enterprise Dashboard** ⭐
+- [`docs/user-guide/phases/PHASE_1_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_1_USAGE_GUIDE.md) - Classical ML
+- [`docs/user-guide/phases/PHASE_2_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_2_USAGE_GUIDE.md) - 1D CNNs
+- [`docs/user-guide/phases/PHASE_3_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_3_USAGE_GUIDE.md) - Advanced CNNs
+- [`docs/user-guide/phases/PHASE_4_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_4_USAGE_GUIDE.md) - Transformers
+- [`docs/user-guide/phases/PHASE_5_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_5_USAGE_GUIDE.md) - Time-Frequency
+- [`docs/user-guide/phases/PHASE_6_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_6_USAGE_GUIDE.md) - PINNs
+- [`docs/user-guide/phases/PHASE_7_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_7_USAGE_GUIDE.md) - XAI
+- [`docs/user-guide/phases/PHASE_8_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_8_USAGE_GUIDE.md) - Ensemble
+- [`docs/user-guide/phases/Phase_9_DEPLOYMENT_GUIDE.md`](docs/user-guide/phases/Phase_9_DEPLOYMENT_GUIDE.md) - Deployment
+- [`docs/user-guide/phases/Phase_10_QA_INTEGRATION_GUIDE.md`](docs/user-guide/phases/Phase_10_QA_INTEGRATION_GUIDE.md) - QA
+- [`docs/user-guide/phases/PHASE_11_USAGE_GUIDE.md`](docs/user-guide/phases/PHASE_11_USAGE_GUIDE.md) - **Enterprise Dashboard** ⭐
 
 **Architecture Documents** (Technical details):
 - [`phase-plan/phase_0.md`](phase-plan/phase_0.md) - Foundation design
@@ -970,7 +970,7 @@ python app.py
 - [`phase-plan/Phase_3.md`](phase-plan/Phase_3.md) - Advanced CNN architectures
 - [`phase-plan/Phase_4.md`](phase-plan/Phase_4.md) - Transformer implementation
 - [`phase-plan/Phase_5.md`](phase-plan/Phase_5.md) - Time-frequency theory
-- [`USAGE_GUIDES/PHASE_5_ARCHITECTURE.md`](USAGE_GUIDES/PHASE_5_ARCHITECTURE.md) - Phase 5 detailed architecture
+- [`docs/user-guide/phases/PHASE_5_ARCHITECTURE.md`](docs/user-guide/phases/PHASE_5_ARCHITECTURE.md) - Phase 5 detailed architecture
 
 ### Other Documentation
 

@@ -221,7 +221,7 @@ This project is structured into 11 phases, each building on the previous:
 **For Experienced Users:**
 - Jump to specific phases as needed
 - Each phase can run independently (with Phase 0 data)
-- Refer to detailed USAGE_GUIDES/ for advanced options
+- Refer to detailed docs/user-guide/phases/ for advanced options
 
 ---
 
@@ -447,7 +447,7 @@ print(f"Test Accuracy: {results['test_accuracy']:.4f}")
 
 **✅ Phase 1 Complete!** You have a 95% accurate baseline model.
 
-**📚 More Details**: See `USAGE_GUIDES/PHASE_1_USAGE_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/PHASE_1_USAGE_GUIDE.md`
 
 ---
 
@@ -503,7 +503,7 @@ python scripts/train_cnn.py \
 
 **✅ Phase 2 Complete!** You have a deep learning model with 94-95% accuracy.
 
-**📚 More Details**: See `USAGE_GUIDES/PHASE_2_USAGE_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/PHASE_2_USAGE_GUIDE.md`
 
 ---
 
@@ -556,7 +556,7 @@ python scripts/train_cnn.py \
 
 **✅ Phase 3 Complete!** You have multiple models with 96-97% accuracy.
 
-**📚 More Details**: See `USAGE_GUIDES/PHASE_3_USAGE_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/PHASE_3_USAGE_GUIDE.md`
 
 ---
 
@@ -592,7 +592,7 @@ python scripts/train_transformer.py \
 
 **✅ Phase 4 Complete!** You have a transformer model with attention visualization.
 
-**📚 More Details**: See `USAGE_GUIDES/PHASE_4_USAGE_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/PHASE_4_USAGE_GUIDE.md`
 
 ---
 
@@ -643,7 +643,7 @@ python scripts/train_spectrogram_cnn.py \
 
 **✅ Phase 5 Complete!** You have models that analyze time-frequency patterns.
 
-**📚 More Details**: See `USAGE_GUIDES/PHASE_5_USAGE_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/PHASE_5_USAGE_GUIDE.md`
 
 ---
 
@@ -679,7 +679,7 @@ python scripts/train_pinn.py \
 
 **✅ Phase 6 Complete!** You have physics-informed models with better generalization.
 
-**📚 More Details**: See `USAGE_GUIDES/PHASE_6_USAGE_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/PHASE_6_USAGE_GUIDE.md`
 
 ---
 
@@ -715,7 +715,7 @@ Then open browser to `http://localhost:8501` to explore explanations interactive
 
 **✅ Phase 7 Complete!** You can now explain why your model makes predictions.
 
-**📚 More Details**: See `USAGE_GUIDES/PHASE_7_USAGE_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/PHASE_7_USAGE_GUIDE.md`
 
 ---
 
@@ -769,7 +769,7 @@ python scripts/train_stacked_ensemble.py \
 
 **✅ Phase 8 Complete!** You have achieved state-of-the-art performance (98-99%)!
 
-**📚 More Details**: See `USAGE_GUIDES/PHASE_8_USAGE_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/PHASE_8_USAGE_GUIDE.md`
 
 ---
 
@@ -853,7 +853,7 @@ docker-compose up -d
 
 **✅ Phase 9 Complete!** You have a production-ready API with <50ms latency.
 
-**📚 More Details**: See `USAGE_GUIDES/Phase_9_DEPLOYMENT_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/Phase_9_DEPLOYMENT_GUIDE.md`
 
 ---
 
@@ -905,7 +905,7 @@ python tests/benchmarks/benchmark_suite.py \
 
 **✅ Phase 10 Complete!** You have comprehensive test coverage and quality assurance.
 
-**📚 More Details**: See `USAGE_GUIDES/Phase_10_QA_INTEGRATION_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/Phase_10_QA_INTEGRATION_GUIDE.md`
 
 ---
 
@@ -1002,7 +1002,7 @@ python app.py
 
 **✅ Phase 11 Complete!** You have a full enterprise dashboard for ML operations.
 
-**📚 More Details**: See `USAGE_GUIDES/PHASE_11_USAGE_GUIDE.md`
+**📚 More Details**: See `docs/user-guide/phases/PHASE_11_USAGE_GUIDE.md`
 
 ---
 
@@ -1139,7 +1139,7 @@ docker-compose build --no-cache
 
 If you're stuck:
 
-1. **Check the detailed usage guides** in `USAGE_GUIDES/` for your phase
+1. **Check the detailed usage guides** in `docs/user-guide/phases/` for your phase
 2. **Search GitHub Issues**: https://github.com/abbas-ahmad-cowlar/LSTM_PFD/issues
 3. **Review the main README**: Most questions are answered there
 4. **Open a new GitHub Issue** with:
@@ -1182,10 +1182,10 @@ You've learned how to:
 ## Additional Resources
 
 ### Documentation
-- **Phase-specific guides**: `USAGE_GUIDES/PHASE_X_USAGE_GUIDE.md`
+- **Phase-specific guides**: `docs/user-guide/phases/PHASE_X_USAGE_GUIDE.md`
 - **Architecture details**: `phase-plan/` directory
 - **API docs**: `api/README.md`
-- **Dashboard docs**: `dash_app/README.md`
+- **Dashboard docs**: `packages/dashboard/README.md`
 
 ### Example Scripts
 - Training: `scripts/train_*.py`

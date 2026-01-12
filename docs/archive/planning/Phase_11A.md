@@ -222,7 +222,7 @@ GOOD: Callback delegates to service
 ### Directory Structure (58 files total for Phase 11A)
 
 ```
-dash_app/
+packages/dashboard/
 ├── app.py                          # Application entry point
 ├── config.py                       # Configuration (database, Redis URLs, secrets)
 ├── requirements.txt                # Python dependencies
