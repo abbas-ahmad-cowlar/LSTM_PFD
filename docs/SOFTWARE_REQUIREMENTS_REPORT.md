@@ -83,12 +83,12 @@
 #### PostgreSQL CLI
 - **Status:** NOT INSTALLED (but not required)
 - **Why Optional:** Docker Compose can provide PostgreSQL container
-- **Alternative:** Use `docker-compose up` in `dash_app/` directory
+- **Alternative:** Use `docker-compose up` in `packages/dashboard/` directory
 
 #### Redis CLI
 - **Status:** NOT INSTALLED (but not required)
 - **Why Optional:** Docker Compose can provide Redis container
-- **Alternative:** Use `docker-compose up` in `dash_app/` directory
+- **Alternative:** Use `docker-compose up` in `packages/dashboard/` directory
 
 #### NVIDIA GPU/CUDA
 - **Status:** NOT DETECTED
@@ -130,7 +130,7 @@ This will install:
 
 ```bash
 # Install dashboard-specific requirements
-pip install -r dash_app/requirements.txt
+pip install -r packages/dashboard/requirements.txt
 ```
 
 This will install:
@@ -175,7 +175,7 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 # 2. Install all requirements
 pip install -r requirements.txt
-pip install -r dash_app/requirements.txt
+pip install -r packages/dashboard/requirements.txt
 pip install -r requirements-deployment.txt
 pip install -r requirements-test.txt
 ```
@@ -219,7 +219,7 @@ This will automatically:
 - ✅ Python 3.8+ (you have 3.14.0)
 - ✅ Docker & Docker Compose (you have both)
 - ❌ PyTorch (CRITICAL)
-- ❌ Dashboard packages from `dash_app/requirements.txt`
+- ❌ Dashboard packages from `packages/dashboard/requirements.txt`
 
 **Optional:**
 - ❌ PostgreSQL CLI (Docker provides it)
@@ -273,7 +273,7 @@ python -c "import fastapi, uvicorn; print('API packages OK')"
 2. **Install requirements.txt** (core functionality)
 3. **Choose your path:**
    - CLI training → You're ready after steps 1-2
-   - Dashboard → Also install `dash_app/requirements.txt` and use Docker
+   - Dashboard → Also install `packages/dashboard/requirements.txt` and use Docker
    - API → Also install `requirements-deployment.txt`
 
 4. **Follow START_HERE.md** for your next steps

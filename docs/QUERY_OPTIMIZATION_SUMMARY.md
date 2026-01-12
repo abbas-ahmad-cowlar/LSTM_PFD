@@ -11,7 +11,7 @@ This document summarizes the comprehensive performance optimization work complet
 ## Issues Fixed
 
 ### 1. ❌ Critical N+1 Query: Tag Loading in Experiments Table
-**File**: `dash_app/layouts/experiments.py:241`
+**File**: `packages/dashboard/layouts/experiments.py:241`
 
 **Problem**:
 ```python
@@ -40,7 +40,7 @@ experiment_tag_mappings = session.query(ExperimentTag).options(
 ---
 
 ### 2. ❌ Critical N+1 Query: Tag Callbacks
-**File**: `dash_app/callbacks/tag_callbacks.py:189`
+**File**: `packages/dashboard/callbacks/tag_callbacks.py:189`
 
 **Problem**:
 ```python
@@ -68,7 +68,7 @@ experiment_tag_mappings = session.query(ExperimentTag).options(
 ---
 
 ### 3. ❌ N+1 Query: Experiment Training Runs
-**File**: `dash_app/services/comparison_service.py:104`
+**File**: `packages/dashboard/services/comparison_service.py:104`
 
 **Problem**:
 ```python
@@ -134,7 +134,7 @@ experiments = paginate_with_default_limit(query, limit=500)
 
 ## New Utilities Created
 
-### `dash_app/utils/query_utils.py`
+### `packages/dashboard/utils/query_utils.py`
 
 **1. `paginate()` - Full Pagination**
 ```python

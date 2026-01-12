@@ -77,17 +77,17 @@
   - **Action:** Archive - QUICKSTART.md covers the same ground more concisely
 
 #### 7. **GUI_QUICKSTART.md** ⚠️
-- **Status:** ⚠️ **PARTIALLY SUPERSEDED** by dash_app/README.md
+- **Status:** ⚠️ **PARTIALLY SUPERSEDED** by packages/dashboard/README.md
 - **Last Updated:** Not specified
 - **Purpose:** GUI-based quick start (no coding)
 - **Issues:**
-  - Overlaps with `dash_app/README.md` (which is more comprehensive)
+  - Overlaps with `packages/dashboard/README.md` (which is more comprehensive)
   - Less detailed than dashboard README
   - Root directory clutter
 - **Recommendation:**
   - **Archive** to `docs/archive/` OR
-  - **Move** to `dash_app/` directory (where it belongs)
-- **Action:** Move to `dash_app/` or archive
+  - **Move** to `packages/dashboard/` directory (where it belongs)
+- **Action:** Move to `packages/dashboard/` or archive
 
 #### 8. **IMPLEMENTATION_GUIDE.md** ⚠️
 - **Status:** ⚠️ **OUTDATED** - Authentication implementation guide
@@ -219,13 +219,13 @@
 - **Action:** Keep HDF5_MIGRATION_GUIDE.md, archive or merge the summary
 
 #### 19. **FEATURE_1_API_KEYS_INTEGRATION_GUIDE.md**
-- **Status:** 🔄 **FEATURE-SPECIFIC** - Should be in docs/ or dash_app/
+- **Status:** 🔄 **FEATURE-SPECIFIC** - Should be in docs/ or packages/dashboard/
 - **Last Updated:** November 21, 2025
 - **Purpose:** API Keys feature integration guide
 - **Issues:**
   - Feature-specific documentation
-  - Should be in `docs/features/` or `dash_app/`
-- **Recommendation:** **Move** to `docs/features/` or `dash_app/`
+  - Should be in `docs/features/` or `packages/dashboard/`
+- **Recommendation:** **Move** to `docs/features/` or `packages/dashboard/`
 - **Action:** Move to appropriate location
 
 ---
@@ -303,12 +303,12 @@
 5. `HDF5_IMPLEMENTATION_SUMMARY.md` → `docs/archive/` (keep migration guide)
 6. `MIGRATION_GUIDE.md` → `docs/archive/` or `docs/` (if still relevant)
 7. `FIX_LIME_INSTALLATION.md` → `docs/troubleshooting/` or merge
-8. `GUI_QUICKSTART.md` → `dash_app/` or `docs/archive/`
+8. `GUI_QUICKSTART.md` → `packages/dashboard/` or `docs/archive/`
 
 ### 🔄 Move to Appropriate Location (3 files)
-1. `FEATURE_1_API_KEYS_INTEGRATION_GUIDE.md` → `docs/features/` or `dash_app/`
+1. `FEATURE_1_API_KEYS_INTEGRATION_GUIDE.md` → `docs/features/` or `packages/dashboard/`
 2. `HDF5_MIGRATION_GUIDE.md` → `docs/` (keep, but move from root)
-3. `GUI_QUICKSTART.md` → `dash_app/` (if keeping)
+3. `GUI_QUICKSTART.md` → `packages/dashboard/` (if keeping)
 
 ### 🗑️ Move Reference Code (2 files)
 1. `generator.txt` → `docs/reference/generator_matlab_v2.0.m`
@@ -361,7 +361,7 @@ mv MIGRATION_GUIDE.md docs/archive/  # or docs/ if still relevant
 ```bash
 # Move feature guides
 mv FEATURE_1_API_KEYS_INTEGRATION_GUIDE.md docs/features/
-mv GUI_QUICKSTART.md dash_app/  # or docs/archive/
+mv GUI_QUICKSTART.md packages/dashboard/  # or docs/archive/
 mv HDF5_MIGRATION_GUIDE.md docs/
 mv FIX_LIME_INSTALLATION.md docs/troubleshooting/
 ```
@@ -431,7 +431,7 @@ README.md (Main entry point)
     ├─→ QUICKSTART.md (CLI workflow)
     │   └─→ Supersedes: COMPLETE_BEGINNER_GUIDE.md (archive)
     ├─→ GUI_QUICKSTART.md (GUI workflow)
-    │   └─→ Partially superseded by: dash_app/README.md
+    │   └─→ Partially superseded by: packages/dashboard/README.md
     └─→ SOFTWARE_REQUIREMENTS_REPORT.md (Installation)
         └─→ Can merge into QUICKSTART.md
 ```
@@ -479,7 +479,7 @@ LSTM_PFD/
 After moving files, update links in:
 1. `README.md` - May reference GUI_QUICKSTART.md
 2. `QUICKSTART.md` - May reference other guides
-3. `dash_app/README.md` - May reference GUI_QUICKSTART.md
+3. `packages/dashboard/README.md` - May reference GUI_QUICKSTART.md
 
 ### Files to Update After Cleanup
 1. Search for references to moved files

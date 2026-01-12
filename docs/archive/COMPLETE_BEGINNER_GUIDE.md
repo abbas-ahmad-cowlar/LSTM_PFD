@@ -2070,8 +2070,8 @@ EOF
 
 **2. Database Schema Documentation**
 ```bash
-# Create dash_app/database/README.md
-cat > dash_app/database/README.md << 'EOF'
+# Create packages/dashboard/database/README.md
+cat > packages/dashboard/database/README.md << 'EOF'
 # Database Schema
 
 ## Tables
@@ -2105,7 +2105,7 @@ EOF
 **1. Flask Secret Key Configuration**
 - **Status:** ✅ FIXED (November 22, 2025)
 - **What was wrong:** Secret key not configured for sessions
-- **Fixed in:** `dash_app/app.py`
+- **Fixed in:** `packages/dashboard/app.py`
 - **No action needed**
 
 **2. Hardcoded User IDs**

@@ -177,7 +177,7 @@ engine = create_engine(
 ### Add SQLAlchemy Event Listeners
 
 ```python
-# dash_app/database/connection.py
+# packages/dashboard/database/connection.py
 
 from sqlalchemy import event
 from sqlalchemy.engine import Engine

@@ -216,7 +216,7 @@ paths = generator.save_dataset(dataset, format='hdf5')
 The dash_app already supports HDF5! No changes needed:
 
 ```python
-# In dash_app/integrations/deep_learning_adapter.py
+# In packages/dashboard/integrations/deep_learning_adapter.py
 # The _load_data() method automatically reads HDF5:
 with h5py.File(cache_path, 'r') as f:
     X_train = torch.FloatTensor(f['train']['signals'][:])

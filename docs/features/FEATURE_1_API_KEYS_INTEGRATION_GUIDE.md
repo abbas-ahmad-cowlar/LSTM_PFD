@@ -53,7 +53,7 @@ This feature adds **secure API key authentication** and **Redis-based rate limit
 ### New Files Created
 
 ```
-dash_app/
+packages/dashboard/
 ├── models/
 │   └── api_key.py                          # APIKey and APIUsage models
 ├── services/
@@ -76,7 +76,7 @@ dash_app/
 ### Modified Files
 
 ```
-dash_app/
+packages/dashboard/
 ├── models/
 │   ├── __init__.py                         # Added APIKey, APIUsage imports
 │   └── user.py                             # Added api_keys relationship
@@ -150,7 +150,7 @@ INFO: Migration successful: 001_add_api_keys.sql
 
 ### 5. Register Blueprints and Callbacks
 
-Update `dash_app/app.py`:
+Update `packages/dashboard/app.py`:
 
 ```python
 # Import new blueprints

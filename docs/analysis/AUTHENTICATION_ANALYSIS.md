@@ -3,7 +3,7 @@
 ## Current Implementation Review
 
 ### What Was Implemented
-✅ Created `dash_app/utils/auth_utils.py`
+✅ Created `packages/dashboard/utils/auth_utils.py`
 ✅ Added `get_current_user_id()` helper function
 ✅ Replaced 18 hardcoded `user_id = 1` instances across 5 callback files
 ✅ Development mode fallback
@@ -80,7 +80,7 @@
 
 ## Improved Implementation
 
-See `dash_app/utils/auth_utils.py` (v2) for the enhanced solution.
+See `packages/dashboard/utils/auth_utils.py` (v2) for the enhanced solution.
 
 ### Key Improvements:
 

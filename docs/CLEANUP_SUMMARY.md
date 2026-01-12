@@ -46,7 +46,7 @@ All documentation files have been organized and moved to appropriate locations. 
 ### 📁 Moved to `docs/troubleshooting/` (Troubleshooting)
 1. **FIX_LIME_INSTALLATION.md** - LIME installation troubleshooting
 
-### 📁 Moved to `dash_app/` (Dashboard Documentation)
+### 📁 Moved to `packages/dashboard/` (Dashboard Documentation)
 1. **GUI_QUICKSTART.md** - Dashboard quick start guide
 
 ### 📁 Moved to `docs/reference/` (Reference Code)
@@ -77,13 +77,13 @@ All documentation files have been organized and moved to appropriate locations. 
 ### Files Updated with New Paths:
 1. **README.md**
    - Updated `HDF5_MIGRATION_GUIDE.md` → `docs/HDF5_MIGRATION_GUIDE.md`
-   - Updated `GUI_QUICKSTART.md` → `dash_app/GUI_QUICKSTART.md`
+   - Updated `GUI_QUICKSTART.md` → `packages/dashboard/GUI_QUICKSTART.md`
 
 2. **QUICKSTART.md**
    - Updated `HDF5_MIGRATION_GUIDE.md` → `docs/HDF5_MIGRATION_GUIDE.md`
 
 3. **START_HERE.md**
-   - Updated `GUI_QUICKSTART.md` → `dash_app/GUI_QUICKSTART.md`
+   - Updated `GUI_QUICKSTART.md` → `packages/dashboard/GUI_QUICKSTART.md`
    - Updated `COMPLETE_BEGINNER_GUIDE.md` references to point to `QUICKSTART.md` with archive note
 
 ---
@@ -129,7 +129,7 @@ docs/
 ├── troubleshooting/      # Troubleshooting guides
 └── HDF5_MIGRATION_GUIDE.md  # User guide (moved from root)
 
-dash_app/
+packages/dashboard/
 └── GUI_QUICKSTART.md     # Dashboard quick start (moved from root)
 
 milestones/

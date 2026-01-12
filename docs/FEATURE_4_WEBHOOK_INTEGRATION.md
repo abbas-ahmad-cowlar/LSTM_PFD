@@ -243,10 +243,10 @@ Run migrations to create database tables:
 
 ```bash
 # Migration 005: Create webhook_configurations table
-psql -U lstm_user -d lstm_dashboard -f dash_app/database/migrations/005_add_webhook_configurations.sql
+psql -U lstm_user -d lstm_dashboard -f packages/dashboard/database/migrations/005_add_webhook_configurations.sql
 
 # Migration 006: Create webhook_logs table
-psql -U lstm_user -d lstm_dashboard -f dash_app/database/migrations/006_add_webhook_logs.sql
+psql -U lstm_user -d lstm_dashboard -f packages/dashboard/database/migrations/006_add_webhook_logs.sql
 ```
 
 ## Supported Events

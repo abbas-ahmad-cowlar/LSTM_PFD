@@ -42,7 +42,7 @@ These branches were successfully merged to `main`:
 
 ### Conflicted Files:
 
-#### 1. `dash_app/config.py`
+#### 1. `packages/dashboard/config.py`
 **Conflict Type**: Both added new sections at end of file
 
 **Main has**: Startup validation section (Team 1's work)
@@ -74,12 +74,12 @@ git merge --no-commit origin/claude/add-email-digest-ui-01Y9BnxZPQsoiK6srWG77751
 # 1. Keep email digest config from branch
 # 2. Keep validation section from main
 # 3. Ensure both sections are present
-git add dash_app/config.py
+git add packages/dashboard/config.py
 ```
 
 ---
 
-#### 2. `dash_app/models/email_log.py`
+#### 2. `packages/dashboard/models/email_log.py`
 **Conflict Type**: Different index strategies
 
 **Main has**: Minimal indexes (Team 5's optimization for write performance)
@@ -109,8 +109,8 @@ __table_args__ = (
 **Steps**:
 ```bash
 # Accept branch version (theirs)
-git checkout --theirs dash_app/models/email_log.py
-git add dash_app/models/email_log.py
+git checkout --theirs packages/dashboard/models/email_log.py
+git add packages/dashboard/models/email_log.py
 ```
 
 ---
@@ -123,7 +123,7 @@ git add dash_app/models/email_log.py
 
 ### Conflicted Files:
 
-#### 1. `dash_app/callbacks/security_callbacks.py`
+#### 1. `packages/dashboard/callbacks/security_callbacks.py`
 **Conflict Type**: Both modified imports and same function
 
 **Main has**: No changes (baseline)
@@ -137,14 +137,14 @@ git add dash_app/models/email_log.py
 **Check first**:
 ```bash
 # Check if auth_utils.py exists (Team 3's work)
-ls -la dash_app/utils/auth_utils.py
+ls -la packages/dashboard/utils/auth_utils.py
 ```
 
 **If file exists** (Team 3 merged):
 ```bash
 # Accept branch version
-git checkout --theirs dash_app/callbacks/security_callbacks.py
-git add dash_app/callbacks/security_callbacks.py
+git checkout --theirs packages/dashboard/callbacks/security_callbacks.py
+git add packages/dashboard/callbacks/security_callbacks.py
 ```
 
 **If file doesn't exist** (Team 3 not merged):
@@ -155,7 +155,7 @@ git merge --abort
 echo "ERROR: Team 3 must be merged before Team 4"
 ```
 
-**Dependency**: Requires `dash_app/utils/auth_utils.py` from Team 3's branch
+**Dependency**: Requires `packages/dashboard/utils/auth_utils.py` from Team 3's branch
 
 ---
 
@@ -167,7 +167,7 @@ echo "ERROR: Team 3 must be merged before Team 4"
 
 ### Conflicted Files:
 
-#### 1. `dash_app/callbacks/webhook_callbacks.py`
+#### 1. `packages/dashboard/callbacks/webhook_callbacks.py`
 **Conflict Type**: Same lines modified
 
 **Main has**: Original code with `user_id = 1`
@@ -181,8 +181,8 @@ echo "ERROR: Team 3 must be merged before Team 4"
 **Steps**:
 ```bash
 git merge --no-commit origin/claude/fix-hardcoded-user-id-01BckhunZFZEAxp6BA6N8GbY
-git checkout --theirs dash_app/callbacks/webhook_callbacks.py
-git add dash_app/callbacks/webhook_callbacks.py
+git checkout --theirs packages/dashboard/callbacks/webhook_callbacks.py
+git add packages/dashboard/callbacks/webhook_callbacks.py
 ```
 
 **Note**: This branch creates `utils/auth_utils.py` - Team 4 depends on this!
@@ -197,7 +197,7 @@ git add dash_app/callbacks/webhook_callbacks.py
 
 ### Conflicted Files:
 
-#### 1. `dash_app/callbacks/experiment_wizard_callbacks.py`
+#### 1. `packages/dashboard/callbacks/experiment_wizard_callbacks.py`
 **Conflict Type**: Different sections modified
 
 **Main has**: Possible changes from another team
@@ -213,7 +213,7 @@ git add dash_app/callbacks/webhook_callbacks.py
 git merge --no-commit origin/claude/fix-magic-numbers-01T2bWdYWoCanxW33rK1wVDw
 
 # Check the conflict
-git diff dash_app/callbacks/experiment_wizard_callbacks.py
+git diff packages/dashboard/callbacks/experiment_wizard_callbacks.py
 
 # If conflict is just imports or different sections:
 # 1. Keep both sets of imports
@@ -224,7 +224,7 @@ git diff dash_app/callbacks/experiment_wizard_callbacks.py
 # - Main's imports + Branch's constant imports
 # - Main's logic changes + Branch's number replacements
 
-git add dash_app/callbacks/experiment_wizard_callbacks.py
+git add packages/dashboard/callbacks/experiment_wizard_callbacks.py
 ```
 
 **Pattern to follow**:
@@ -348,15 +348,15 @@ echo "🔀 Starting conflict resolution..."
 # Branch 1: Team 3 - Auth Batch 1
 echo "📝 Merging Team 3..."
 git merge --no-ff origin/claude/fix-hardcoded-user-id-01BckhunZFZEAxp6BA6N8GbY || true
-git checkout --theirs dash_app/callbacks/webhook_callbacks.py
-git add dash_app/callbacks/webhook_callbacks.py
+git checkout --theirs packages/dashboard/callbacks/webhook_callbacks.py
+git add packages/dashboard/callbacks/webhook_callbacks.py
 git commit -m "Merge Team 3: Authentication integration batch 1"
 
 # Branch 2: Team 4 - Auth Batch 2
 echo "📝 Merging Team 4..."
 git merge --no-ff origin/claude/fix-auth-callbacks-batch-2-012DVCXu4SkYBP7jwLmB9EDT || true
-git checkout --theirs dash_app/callbacks/security_callbacks.py
-git add dash_app/callbacks/security_callbacks.py
+git checkout --theirs packages/dashboard/callbacks/security_callbacks.py
+git add packages/dashboard/callbacks/security_callbacks.py
 git commit -m "Merge Team 4: Authentication integration batch 2"
 
 # Branch 3: Team 8 - 2FA
@@ -375,17 +375,17 @@ git merge --no-ff origin/claude/fix-magic-numbers-01T2bWdYWoCanxW33rK1wVDw || tr
 echo "⚠️  Manual merge needed for experiment_wizard_callbacks.py"
 echo "Press Enter after resolving..."
 read
-git add dash_app/callbacks/experiment_wizard_callbacks.py
+git add packages/dashboard/callbacks/experiment_wizard_callbacks.py
 git commit -m "Merge Team 6: Replace magic numbers with constants"
 
 # Branch 5: Team 9 - Email Digest UI
 echo "📝 Merging Team 9..."
 git merge --no-ff origin/claude/add-email-digest-ui-01Y9BnxZPQsoiK6srWG77751 || true
-git checkout --theirs dash_app/models/email_log.py
+git checkout --theirs packages/dashboard/models/email_log.py
 echo "⚠️  Manual merge needed for config.py"
 echo "Press Enter after resolving..."
 read
-git add dash_app/config.py dash_app/models/email_log.py
+git add packages/dashboard/config.py packages/dashboard/models/email_log.py
 git commit -m "Merge Team 9: Email digest management UI"
 
 echo "✅ All merges complete!"
@@ -400,8 +400,8 @@ After all merges complete, run these checks:
 ### 1. **Code Verification**
 ```bash
 # Check no conflict markers remain
-grep -r "<<<<<<< HEAD" dash_app/
-grep -r ">>>>>>>" dash_app/
+grep -r "<<<<<<< HEAD" packages/dashboard/
+grep -r ">>>>>>>" packages/dashboard/
 # Should return nothing
 
 # Check all imports resolve
@@ -412,11 +412,11 @@ python -c "import sys; sys.path.insert(0, 'dash_app'); from utils.auth_utils imp
 ### 2. **Security Verification**
 ```bash
 # No hardcoded user_id = 1
-grep -rn "user_id = 1" dash_app/callbacks/
+grep -rn "user_id = 1" packages/dashboard/callbacks/
 # Should return 0 results
 
 # No hardcoded credentials
-grep -rn "lstm_password" dash_app/
+grep -rn "lstm_password" packages/dashboard/
 # Should return 0 results
 ```
 
