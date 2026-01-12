@@ -31,32 +31,34 @@ def register_experiments_callbacks(app):
             # Build query
             query = session.query(Experiment)
 
-        # Apply tag filter
-        if tag_filter and len(tag_filter) > 0:
-            # Filter experiments that have ALL selected tags
-            for tag_id in tag_filter:
-                query = query.join(
-                    ExperimentTag,
-                    Experiment.id == ExperimentTag.experiment_id
-                ).filter(ExperimentTag.tag_id == tag_id)
+            # Apply tag filter
+            if tag_filter and len(tag_filter) > 0:
+                # Filter experiments that have ALL selected tags
+                for tag_id in tag_filter:
+                    query = query.join(
+                        ExperimentTag,
+                        Experiment.id == ExperimentTag.experiment_id
+                    ).filter(ExperimentTag.tag_id == tag_id)
 
-        # Apply filters
-        if search_value:
-            query = query.filter(Experiment.name.ilike(f'%{search_value}%'))
+            # Apply search filter
+            if search_value:
+                query = query.filter(Experiment.name.ilike(f'%{search_value}%'))
 
-        if model_filter:
-            query = query.filter(Experiment.model_type.in_(model_filter))
+            # Apply model type filter
+            if model_filter:
+                query = query.filter(Experiment.model_type.in_(model_filter))
 
-        if status_filter:
-            status_enums = [ExperimentStatus(s) for s in status_filter]
-            query = query.filter(Experiment.status.in_(status_enums))
+            # Apply status filter
+            if status_filter:
+                status_enums = [ExperimentStatus(s) for s in status_filter]
+                query = query.filter(Experiment.status.in_(status_enums))
 
-        # Order by created date (newest first)
-        query = query.order_by(Experiment.created_at.desc())
-
-        # Apply pagination to prevent loading too many experiments
-        from utils.query_utils import paginate_with_default_limit
-        experiments = paginate_with_default_limit(query, limit=500)
+            # Order by created date (newest first) and limit
+            experiments = query.order_by(Experiment.created_at.desc()).limit(500).all()
+            
+            # Expunge for use outside session
+            for exp in experiments:
+                session.expunge(exp)
 
         return create_experiments_table(experiments)
 

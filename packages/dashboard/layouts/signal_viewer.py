@@ -9,6 +9,9 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 def create_signal_viewer_layout():
     """Create signal viewer layout."""
     return dbc.Container([
+        # Download component for signal export
+        dcc.Download(id="signal-download"),
+        
         html.H2("Signal Viewer", className="mb-4"),
 
         # Dataset and Signal selection

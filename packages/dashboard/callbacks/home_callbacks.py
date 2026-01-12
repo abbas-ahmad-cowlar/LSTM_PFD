@@ -24,7 +24,12 @@ def register_home_callbacks(app):
         [
             Output('recent-experiments-list', 'children'),
             Output('dataset-distribution-chart', 'figure'),
-            Output('system-health-gauge', 'figure')
+            Output('system-health-gauge', 'figure'),
+            # Quick stats outputs
+            Output('home-total-signals', 'children'),
+            Output('home-fault-classes', 'children'),
+            Output('home-best-accuracy', 'children'),
+            Output('home-total-experiments', 'children'),
         ],
         [Input('url', 'pathname')]
     )
@@ -44,7 +49,6 @@ def register_home_callbacks(app):
                 if experiments:
                     experiments_list = []
                     for exp in experiments:
-                        # Determine color based on status
                         status_colors = {
                             'completed': 'success',
                             'running': 'primary',
@@ -70,61 +74,99 @@ def register_home_callbacks(app):
                 else:
                     recent_experiments = html.P("No experiments found. Start training!", className="text-muted text-center py-3")
 
-            # 2. Dataset Distribution Chart
-            # Count signals per class across all datasets
-            # For simplicity in this specialized query, we might just count datasets by type or class
-            # Let's count experiments by model_type for this chart instead, as it's more interesting for now
-            # OR count samples per class if available.
-            # Let's do Experiments by Status
-            status_counts = session.query(
-                Experiment.status, func.count(Experiment.id)
-            ).group_by(Experiment.status).all()
+                # 2. Quick Stats - Total Signals
+                total_signals = session.query(
+                    func.sum(Dataset.num_signals)
+                ).scalar() or 0
+                signals_display = f"{total_signals:,}" if total_signals else "0"
+
+                # 3. Quick Stats - Fault Classes
+                datasets = session.query(Dataset).all()
+                all_fault_types = set()
+                for ds in datasets:
+                    if ds.fault_types:
+                        all_fault_types.update(ds.fault_types)
+                fault_classes = len(all_fault_types) if all_fault_types else 11
+
+                # 4. Quick Stats - Best Accuracy from completed experiments' metrics
+                completed_experiments = session.query(Experiment).filter(
+                    Experiment.status == ExperimentStatus.COMPLETED
+                ).all()
+                
+                best_accuracy = "N/A"
+                max_acc = 0.0
+                for exp in completed_experiments:
+                    if exp.metrics and isinstance(exp.metrics, dict):
+                        acc = exp.metrics.get('accuracy', exp.metrics.get('test_accuracy', 0))
+                        if acc and acc > max_acc:
+                            max_acc = acc
+                if max_acc > 0:
+                    best_accuracy = f"{max_acc * 100:.1f}%" if max_acc <= 1 else f"{max_acc:.1f}%"
+
+                # 5. Quick Stats - Total Experiments
+                total_experiments = session.query(func.count(Experiment.id)).scalar() or 0
+
+                # 6. Dataset Distribution Chart - Experiments by Status
+                status_counts = session.query(
+                    Experiment.status, func.count(Experiment.id)
+                ).group_by(Experiment.status).all()
             
-            if status_counts:
-                data = {'Status': [s[0].value for s in status_counts], 'Count': [s[1] for s in status_counts]}
-                fig_dist = px.pie(
-                    data, 
-                    values='Count', 
-                    names='Status', 
-                    title='Experiment Status Distribution',
-                    hole=0.4,
-                    color='Status',
-                    color_discrete_map={
-                        'completed': '#28a745',
-                        'running': '#007bff',
-                        'failed': '#dc3545',
-                        'pending': '#ffc107',
-                        'cancelled': '#6c757d'
-                    }
-                )
-                fig_dist.update_layout(margin=dict(t=30, b=0, l=0, r=0), height=250)
-            else:
-                fig_dist = {}
+                if status_counts:
+                    data = {'Status': [s[0].value for s in status_counts], 'Count': [s[1] for s in status_counts]}
+                    fig_dist = px.pie(
+                        data, 
+                        values='Count', 
+                        names='Status', 
+                        title='Experiment Status Distribution',
+                        hole=0.4,
+                        color='Status',
+                        color_discrete_map={
+                            'completed': '#28a745',
+                            'running': '#007bff',
+                            'failed': '#dc3545',
+                            'pending': '#ffc107',
+                            'cancelled': '#6c757d'
+                        }
+                    )
+                    fig_dist.update_layout(margin=dict(t=30, b=0, l=0, r=0), height=250)
+                else:
+                    fig_dist = {}
 
-            # 3. System Health Gauge (Mock or Real)
-            # Since we have the system health callbacks, we could reuse or just show a simple static one
-            # Ideally this should be updated by the interval, but let's just initialize it
-            fig_gauge = {} # Let the specific component callback handle real-time updates if we had one.
-            # But wait, layouts/home.py defined 'system-health-gauge'.
-            # system_health_callbacks.py updates 'cpu-usage-gauge' etc.
-            # So home.py's gauge is currently orphan.
-            # Let's explicitly return a placeholder or simple figure
-            
-            fig_gauge = {
-                "data": [{
-                    "type": "indicator",
-                    "mode": "gauge+number",
-                    "value": 100, 
-                    "title": {"text": "System Online"},
-                    "gauge": {"axis": {"range": [0, 100]}, "bar": {"color": "green"}}
-                }],
-                "layout": {"height": 200, "margin": dict(t=0, b=0, l=0, r=0)}
-            }
+                # 7. System Health Gauge
+                fig_gauge = {
+                    "data": [{
+                        "type": "indicator",
+                        "mode": "gauge+number",
+                        "value": 100, 
+                        "title": {"text": "System Online"},
+                        "gauge": {"axis": {"range": [0, 100]}, "bar": {"color": "green"}}
+                    }],
+                    "layout": {"height": 200, "margin": dict(t=0, b=0, l=0, r=0)}
+                }
 
+                logger.info(f"Home stats: {signals_display} signals, {fault_classes} classes, "
+                           f"{best_accuracy} best, {total_experiments} experiments")
 
-
-            return recent_experiments, fig_dist, fig_gauge
+            return (
+                recent_experiments,
+                fig_dist,
+                fig_gauge,
+                signals_display,
+                str(fault_classes),
+                best_accuracy,
+                str(total_experiments)
+            )
 
         except Exception as e:
             logger.error(f"Error updating home dashboard: {e}", exc_info=True)
-            return html.P("Error loading data"), {}, {}
+            return (
+                html.P("Error loading data"),
+                {},
+                {},
+                "Error",
+                "Error", 
+                "Error",
+                "Error"
+            )
+
+    logger.info("Home page callbacks registered")
