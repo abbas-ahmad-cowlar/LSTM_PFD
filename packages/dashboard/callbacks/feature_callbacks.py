@@ -69,20 +69,43 @@ def register_feature_callbacks(app):
         try:
             logger.info(f"Launching feature extraction: dataset={dataset_id}, domain={domain}")
 
-            # Launch Celery task
-            task = extract_features_task.delay(dataset_id, domain)
-
-            return dbc.Alert([
-                html.H5("Feature Extraction Started", className="alert-heading"),
-                html.P(f"Task ID: {task.id}"),
-                html.P([
-                    html.Strong("Dataset ID: "), f"{dataset_id}", html.Br(),
-                    html.Strong("Domain: "), domain, html.Br(),
-                    html.Strong("Status: "), "Processing..."
-                ]),
-                dbc.Spinner(size="sm", className="mt-2"),
-                html.P("This may take several minutes depending on dataset size.", className="mt-3 text-muted small")
-            ], color="info")
+            # Launch Celery task - check if connection is available
+            try:
+                task = extract_features_task.delay(dataset_id, domain)
+                
+                return dbc.Alert([
+                    html.H5("✅ Feature Extraction Started", className="alert-heading"),
+                    html.P(f"Task ID: {task.id}"),
+                    html.P([
+                        html.Strong("Dataset ID: "), f"{dataset_id}", html.Br(),
+                        html.Strong("Domain: "), domain, html.Br(),
+                        html.Strong("Status: "), "Processing..."
+                    ]),
+                    dbc.Spinner(size="sm", className="mt-2"),
+                    html.P("This may take several minutes depending on dataset size.", className="mt-3 text-muted small")
+                ], color="info")
+                
+            except Exception as celery_error:
+                # Celery/Redis not available - provide user-friendly message
+                logger.warning(f"Celery task submission failed: {celery_error}")
+                return dbc.Alert([
+                    html.H5("⚠️ Background Worker Not Available", className="alert-heading"),
+                    html.P([
+                        "Feature extraction requires the Celery background worker to be running.",
+                        html.Br(),
+                        "Please start Redis and the Celery worker to enable this feature."
+                    ]),
+                    html.Hr(),
+                    html.P([
+                        html.Strong("To start the worker:"), html.Br(),
+                        html.Code("celery -A tasks worker --loglevel=info", className="d-block mt-2 p-2 bg-dark")
+                    ]),
+                    html.P([
+                        html.Strong("Configuration: "), html.Br(),
+                        f"Dataset: {dataset_id}", html.Br(),
+                        f"Domain: {domain}"
+                    ], className="mt-3 small text-muted")
+                ], color="warning")
 
         except Exception as e:
             logger.error(f"Failed to start feature extraction: {e}", exc_info=True)

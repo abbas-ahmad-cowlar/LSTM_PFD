@@ -12,13 +12,46 @@ def create_home_layout():
     return dbc.Container([
         html.H2("Dashboard Overview", className="mb-4"),
 
-        # Quick stats row
+        # Quick stats row - with IDs for dynamic updates
         dbc.Row([
-            dbc.Col(create_stat_card("Total Signals", "1,430", "fa-database", "primary"), width=3),
-            dbc.Col(create_stat_card("Fault Classes", "11", "fa-tags", "success"), width=3),
-            dbc.Col(create_stat_card("Best Model", "98.3%", "fa-trophy", "warning"), width=3),
-            dbc.Col(create_stat_card("Experiments", "47", "fa-flask", "info"), width=3),
+            dbc.Col(dbc.Card([
+                dbc.CardBody([
+                    html.Div([
+                        html.I(className="fas fa-database fa-2x text-primary"),
+                    ], className="float-end"),
+                    html.H5("Total Signals", className="card-title text-muted"),
+                    html.H2(id="home-total-signals", children="Loading...", className="text-primary"),
+                ])
+            ], className="shadow-sm"), width=3),
+            dbc.Col(dbc.Card([
+                dbc.CardBody([
+                    html.Div([
+                        html.I(className="fas fa-tags fa-2x text-success"),
+                    ], className="float-end"),
+                    html.H5("Fault Classes", className="card-title text-muted"),
+                    html.H2(id="home-fault-classes", children="Loading...", className="text-success"),
+                ])
+            ], className="shadow-sm"), width=3),
+            dbc.Col(dbc.Card([
+                dbc.CardBody([
+                    html.Div([
+                        html.I(className="fas fa-trophy fa-2x text-warning"),
+                    ], className="float-end"),
+                    html.H5("Best Accuracy", className="card-title text-muted"),
+                    html.H2(id="home-best-accuracy", children="Loading...", className="text-warning"),
+                ])
+            ], className="shadow-sm"), width=3),
+            dbc.Col(dbc.Card([
+                dbc.CardBody([
+                    html.Div([
+                        html.I(className="fas fa-flask fa-2x text-info"),
+                    ], className="float-end"),
+                    html.H5("Experiments", className="card-title text-muted"),
+                    html.H2(id="home-total-experiments", children="Loading...", className="text-info"),
+                ])
+            ], className="shadow-sm"), width=3),
         ], className="mb-4"),
+
 
         dbc.Row([
             # Quick actions
