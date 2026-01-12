@@ -37,6 +37,8 @@ server.register_blueprint(tags_bp)
 server.register_blueprint(search_bp)
 
 # Initialize Dash app
+# serve_locally=True serves assets from local packages instead of CDN
+# This fixes the issue where CDN is blocked or timing out
 app = dash.Dash(
     __name__,
     server=server,
@@ -44,10 +46,12 @@ app = dash.Dash(
     suppress_callback_exceptions=True,
     title="LSTM PFD Dashboard",
     update_title="Loading...",
+    serve_locally=True,  # Critical: serve assets locally to avoid CDN timeouts
     meta_tags=[
         {"name": "viewport", "content": "width=device-width, initial-scale=1"}
     ]
 )
+
 
 # App layout
 from components.header import create_header
@@ -84,4 +88,7 @@ if __name__ == '__main__':
     init_database()
 
     logger.info(f"Starting Dash app on {APP_HOST}:{APP_PORT}")
-    app.run(host=APP_HOST, port=APP_PORT, debug=DEBUG)
+    # Enable threaded=True to handle concurrent browser requests
+    # Without this, the browser's fetch() calls timeout waiting for server
+    app.run(host=APP_HOST, port=APP_PORT, debug=DEBUG, threaded=True)
+
