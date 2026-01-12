@@ -48,6 +48,40 @@ def create_experiment_wizard_layout():
         dcc.Store(id="wizard-config", data={}),
         dcc.Store(id="wizard-validation", data={}),
 
+        # Hidden placeholder components for callback inputs (components render dynamically in steps)
+        # These ensure callbacks don't error on missing components
+        html.Div([
+            # Step 2 components
+            dcc.Dropdown(id="dataset-dropdown", style={"display": "none"}),
+            dbc.Checkbox(id="show-advanced-options", value=False, style={"display": "none"}),
+            dbc.Input(id="random-seed", type="number", value=42, style={"display": "none"}),
+            dcc.Dropdown(id="device-dropdown", value="auto", style={"display": "none"}),
+            
+            # Step 3 components
+            dbc.Input(id="num-epochs", type="number", value=100, style={"display": "none"}),
+            dcc.Dropdown(id="batch-size-dropdown", value=32, style={"display": "none"}),
+            dcc.Dropdown(id="optimizer-dropdown", value="adam", style={"display": "none"}),
+            dbc.Input(id="learning-rate", type="number", value=0.001, style={"display": "none"}),
+            dcc.Dropdown(id="scheduler-dropdown", value="plateau", style={"display": "none"}),
+            dbc.Checklist(id="augmentation-checklist", value=[], style={"display": "none"}),
+            dbc.Checkbox(id="enable-distillation", value=False, style={"display": "none"}),
+            dcc.Dropdown(id="teacher-model-select", style={"display": "none"}),
+            dbc.Input(id="distillation-temperature", type="number", value=3.0, style={"display": "none"}),
+            dbc.Input(id="distillation-alpha", type="number", value=0.5, style={"display": "none"}),
+            dbc.RadioItems(id="mixed-precision-mode", value="fp32", style={"display": "none"}),
+            dbc.Checklist(id="enable-advanced-aug", value=[], style={"display": "none"}),
+            dbc.Input(id="aug-magnitude", type="number", value=9, style={"display": "none"}),
+            dbc.Input(id="aug-probability", type="number", value=0.5, style={"display": "none"}),
+            dbc.Checkbox(id="enable-progressive", value=False, style={"display": "none"}),
+            dbc.Input(id="progressive-start-size", type="number", value=51200, style={"display": "none"}),
+            dbc.Input(id="progressive-end-size", type="number", value=102400, style={"display": "none"}),
+            
+            # Step 4 components  
+            dbc.Input(id="experiment-name", type="text", style={"display": "none"}),
+            dbc.Input(id="experiment-tags", type="text", style={"display": "none"}),
+            dbc.Textarea(id="experiment-notes", style={"display": "none"}),
+        ], style={"display": "none"}),
+
     ], fluid=True)
 
 

@@ -266,12 +266,11 @@ class APIKeyService:
             if not include_inactive:
                 query = query.filter(APIKey.is_active == True)
 
-            # Apply pagination to prevent loading too many API keys
-            from utils.query_utils import paginate_with_default_limit
-            keys = paginate_with_default_limit(
-                query.order_by(APIKey.created_at.desc()),
-                limit=100
-            )
+            keys = query.order_by(APIKey.created_at.desc()).limit(100).all()
+
+            # Expunge objects so they can be used after session closes
+            for key in keys:
+                session.expunge(key)
 
             logger.info(f"Listed {len(keys)} API keys for user {user_id}")
             return keys

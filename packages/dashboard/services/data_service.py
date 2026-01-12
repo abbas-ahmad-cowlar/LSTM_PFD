@@ -128,21 +128,54 @@ class DataService:
             return [s.to_dict() for s in signals]
 
     @staticmethod
-    def load_signal_data(dataset_id: int, signal_id: str) -> np.ndarray:
-        """Load actual signal data from HDF5 file."""
+    def load_signal_data(dataset_id: int, signal_id) -> np.ndarray:
+        """Load actual signal data from HDF5 file.
+        
+        Args:
+            dataset_id: Database ID of the dataset
+            signal_id: Signal index (integer) within the dataset
+            
+        Returns:
+            Signal data as numpy array
+        """
         with get_db_session() as session:
             dataset = session.query(Dataset).filter_by(id=dataset_id).first()
             if not dataset:
                 raise DatasetNotFoundError(f"Dataset {dataset_id} not found")
 
+            # Ensure signal_id is an integer index
+            signal_idx = int(signal_id)
+            
             # Load from HDF5
             try:
                 with h5py.File(dataset.file_path, 'r') as f:
-                    if signal_id in f:
-                        signal_data = f[signal_id][:]
-                        return signal_data
+                    # Try different HDF5 structures
+                    
+                    # Structure 1: Flat signals array
+                    if 'signals' in f:
+                        signals = f['signals']
+                        if signal_idx < len(signals):
+                            return signals[signal_idx][:]
+                        else:
+                            raise ValueError(f"Signal index {signal_idx} out of range (max {len(signals)-1})")
+                    
+                    # Structure 2: Train/Val/Test splits
+                    elif 'train' in f and 'signals' in f['train']:
+                        # Combine all splits or use just train for now
+                        train_signals = f['train']['signals']
+                        if signal_idx < len(train_signals):
+                            return train_signals[signal_idx][:]
+                        else:
+                            raise ValueError(f"Signal index {signal_idx} out of range (max {len(train_signals)-1})")
+                    
+                    # Structure 3: Signal by string ID (legacy)
+                    elif str(signal_idx) in f:
+                        return f[str(signal_idx)][:]
+                    
                     else:
-                        raise ValueError(f"Signal {signal_id} not found in dataset")
+                        available_keys = list(f.keys())[:5]
+                        raise ValueError(f"Cannot find signals in HDF5. Available keys: {available_keys}")
+                        
             except Exception as e:
                 logger.error(f"Error loading signal {signal_id}: {e}")
                 raise

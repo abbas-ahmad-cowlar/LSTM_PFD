@@ -39,7 +39,7 @@ def register_visualization_callbacks(app):
                 datasets = session.query(Dataset).order_by(Dataset.created_at.desc()).limit(50).all()
 
                 return [
-                    {'label': f"{ds.name} ({ds.signal_count} signals)", 'value': ds.id}
+                    {'label': f"{ds.name} ({ds.num_signals} signals)", 'value': ds.id}
                     for ds in datasets
                 ]
         except Exception as e:
@@ -195,7 +195,7 @@ def register_visualization_callbacks(app):
                 # Signal options (show first 100)
                 signal_options = [
                     {'label': f"Signal {i}", 'value': i}
-                    for i in range(min(100, dataset.signal_count))
+                    for i in range(min(100, dataset.num_signals))
                 ]
 
                 # Fault type options
