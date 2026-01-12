@@ -102,3 +102,21 @@ milestones/*/data/spectrograms/
 milestones/*/checkpoints/
 milestones/*/results/
 milestones/*/logs/
+
+# Temporary files
+*_temp.pkl
+*.tmp
+*.bak
+
+# Additional logs
+error_log.txt
+test_log.txt
+test_fault_log.txt
+test_signal_config_log.txt
+callback_check.txt
+output.txt
+*.log
+app.log
+
+# Database files (use packages/dashboard/dashboard.db only)
+/dashboard.db
