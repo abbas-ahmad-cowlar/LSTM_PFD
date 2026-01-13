@@ -1,0 +1,76 @@
+# Security Scan Workflow
+# Runs Bandit and Safety for vulnerability detection
+# Reference: Master Roadmap Chapter 4.1.4
+
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * 0" # Weekly on Sunday
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install security tools
+        run: |
+          pip install bandit safety pip-audit
+
+      - name: Run Bandit (static code analysis)
+        run: |
+          echo "=== Bandit Security Scan ==="
+          bandit -r packages/ -f json -o bandit-report.json --severity-level medium || true
+          bandit -r packages/ -f txt --severity-level high
+        continue-on-error: true
+
+      - name: Run Safety (dependency vulnerabilities)
+        run: |
+          echo "=== Safety Dependency Scan ==="
+          safety check -r requirements.txt --json > safety-report.json || true
+          safety check -r requirements.txt --full-report
+        continue-on-error: true
+
+      - name: Run pip-audit
+        run: |
+          echo "=== pip-audit Scan ==="
+          pip-audit -r requirements.txt --format json > pip-audit-report.json || true
+          pip-audit -r requirements.txt
+        continue-on-error: true
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "=== Checking for hardcoded secrets ==="
+          # Check for potential secrets in Python files
+          grep -rn "password\s*=" packages/ --include="*.py" | grep -v "password=" | grep -v ".pyc" || echo "No hardcoded passwords found"
+          grep -rn "secret\s*=" packages/ --include="*.py" | grep -v "os.getenv\|os.environ\|SECRET_KEY\|JWT_SECRET" || echo "No hardcoded secrets found"
+
+      - name: Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            pip-audit-report.json
+          retention-days: 30
+
+      - name: Fail on HIGH severity issues
+        run: |
+          # Check if any HIGH severity issues in Bandit
+          if grep -q '"severity": "HIGH"' bandit-report.json 2>/dev/null; then
+            echo "❌ HIGH severity issues found in Bandit scan"
+            exit 1
+          fi
+          echo "✅ No HIGH severity issues"
