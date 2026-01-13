@@ -1,0 +1,138 @@
+# Kubernetes Deployment for LSTM-PFD API
+# Reference: Master Roadmap Chapter 4.3
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lstm-pfd-api
+  labels:
+    app: lstm-pfd
+    component: api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: lstm-pfd
+      component: api
+  template:
+    metadata:
+      labels:
+        app: lstm-pfd
+        component: api
+    spec:
+      containers:
+        - name: api
+          image: lstm-pfd:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: lstm-pfd-secrets
+                  key: database-url
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: lstm-pfd-secrets
+                  key: jwt-secret
+            - name: REDIS_URL
+              value: "redis://redis:6379/0"
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: models
+              mountPath: /app/models
+              readOnly: true
+      volumes:
+        - name: models
+          persistentVolumeClaim:
+            claimName: lstm-pfd-models
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lstm-pfd-api
+  labels:
+    app: lstm-pfd
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 8000
+      protocol: TCP
+      name: http
+  selector:
+    app: lstm-pfd
+    component: api
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lstm-pfd-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - api.lstm-pfd.example.com
+      secretName: lstm-pfd-tls
+  rules:
+    - host: api.lstm-pfd.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: lstm-pfd-api
+                port:
+                  number: 80
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: lstm-pfd-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: lstm-pfd-api
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
