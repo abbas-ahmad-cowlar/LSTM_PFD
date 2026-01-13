@@ -1,9 +1,15 @@
-# Docker Compose configuration for LSTM_PFD API
+# Docker Compose configuration for LSTM_PFD
+# Full-stack deployment: API + Dashboard with Celery/Redis
+# Phase 1.11 Infrastructure - MASTER_ROADMAP_FINAL.md
 
-version: '3.8'
+version: "3.8"
 
 services:
-  # API service
+  # =============================================================================
+  # API SERVICES
+  # =============================================================================
+
+  # API service (FastAPI inference)
   api:
     build:
       context: .
@@ -12,15 +18,15 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DEVICE=cpu  # Change to 'cuda' if GPU available
+      - DEVICE=cpu # Change to 'cuda' if GPU available
       - MODEL_PATH=/app/checkpoints/best_model.pth
       - MODEL_TYPE=torch
       - LOG_LEVEL=INFO
       - WORKERS=4
     volumes:
-      - ./checkpoints:/app/checkpoints:ro  # Mount checkpoints (read-only)
-      - ./logs:/app/logs  # Mount logs directory
-      - ./models:/app/models:ro  # Mount ONNX models (read-only)
+      - ./checkpoints:/app/checkpoints:ro
+      - ./logs:/app/logs
+      - ./models:/app/models:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -31,7 +37,7 @@ services:
     networks:
       - lstm_pfd_network
 
-  # Optional: NGINX reverse proxy
+  # NGINX reverse proxy
   nginx:
     image: nginx:alpine
     container_name: lstm_pfd_nginx
@@ -40,12 +46,143 @@ services:
       - "443:443"
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./ssl:/etc/nginx/ssl:ro  # SSL certificates
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - api
+      - dashboard
     restart: unless-stopped
     networks:
       - lstm_pfd_network
+
+  # =============================================================================
+  # DASHBOARD SERVICES (Phase 1.11)
+  # =============================================================================
+
+  # PostgreSQL for Dashboard
+  dashboard_postgres:
+    image: postgres:15-alpine
+    container_name: lstm_pfd_dashboard_db
+    environment:
+      POSTGRES_DB: lstm_dashboard
+      POSTGRES_USER: lstm_user
+      POSTGRES_PASSWORD: lstm_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - dashboard_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lstm_user -d lstm_dashboard"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lstm_pfd_network
+
+  # Redis for Celery task queue
+  redis:
+    image: redis:7-alpine
+    container_name: lstm_pfd_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lstm_pfd_network
+
+  # Celery Worker for async tasks (HPO, XAI, Training, etc.)
+  celery_worker:
+    build:
+      context: ./packages/dashboard
+      dockerfile: Dockerfile
+    container_name: lstm_pfd_celery_worker
+    command: celery -A tasks.celery_app worker --loglevel=info --concurrency=2
+    volumes:
+      - ./packages/dashboard:/app
+      - ./packages/storage:/app/storage
+      - ./checkpoints:/app/checkpoints
+      - ./outputs:/app/outputs
+    environment:
+      - DATABASE_URL=postgresql://lstm_user:lstm_password@dashboard_postgres:5432/lstm_dashboard
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=development_secret_key_change_in_production
+    depends_on:
+      dashboard_postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - lstm_pfd_network
+
+  # Dash Dashboard Application
+  dashboard:
+    build:
+      context: ./packages/dashboard
+      dockerfile: Dockerfile
+    container_name: lstm_pfd_dashboard
+    command: python app.py
+    ports:
+      - "8050:8050"
+    volumes:
+      - ./packages/dashboard:/app
+      - ./packages/storage:/app/storage
+      - ./checkpoints:/app/checkpoints
+      - ./outputs:/app/outputs
+    environment:
+      - DATABASE_URL=postgresql://lstm_user:lstm_password@dashboard_postgres:5432/lstm_dashboard
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=development_secret_key_change_in_production
+      - DEBUG=True
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8050
+    depends_on:
+      dashboard_postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8050/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - lstm_pfd_network
+
+  # Celery Flower - Task monitoring UI (optional)
+  celery_flower:
+    build:
+      context: ./packages/dashboard
+      dockerfile: Dockerfile
+    container_name: lstm_pfd_flower
+    command: celery -A tasks.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SECRET_KEY=development_secret_key_change_in_production
+      - DATABASE_URL=postgresql://lstm_user:lstm_password@dashboard_postgres:5432/lstm_dashboard
+    depends_on:
+      - redis
+      - celery_worker
+    restart: unless-stopped
+    networks:
+      - lstm_pfd_network
+
+# =============================================================================
+# NETWORKS & VOLUMES
+# =============================================================================
 
 networks:
   lstm_pfd_network:
@@ -55,3 +192,5 @@ volumes:
   checkpoints:
   logs:
   models:
+  dashboard_postgres_data:
+  redis_data:
