@@ -107,6 +107,13 @@ FAULT_LABELS_PINN = {
 # Use PINN labels as default alias for backward compatibility with Phase 6
 FAULT_LABELS = FAULT_LABELS_PINN
 
+# Dashboard-compatible fault class names (English naming convention)
+# Used by packages/dashboard for UI display
+FAULT_CLASSES: List[str] = [
+    "normal", "ball_fault", "inner_race", "outer_race", "combined",
+    "imbalance", "misalignment", "oil_whirl", "cavitation", "looseness", "oil_deficiency"
+]
+
 
 # ==============================================================================
 # MODEL ARCHITECTURE DEFAULTS

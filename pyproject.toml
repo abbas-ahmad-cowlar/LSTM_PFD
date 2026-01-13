@@ -1,0 +1,23 @@
+# Interrogate configuration for docstring coverage
+# Run: interrogate -v packages/
+# Add to pre-commit: interrogate -f 80 packages/
+
+[tool.interrogate]
+ignore-init-method = true
+ignore-init-module = true
+ignore-magic = true
+ignore-semiprivate = false
+ignore-private = false
+ignore-property-decorators = false
+ignore-module = true
+ignore-nested-functions = false
+ignore-nested-classes = true
+fail-under = 80
+exclude = ["setup.py", "docs", "build", "tests", "migrations", "venv"]
+verbose = 0
+quiet = false
+whitelist-regex = []
+color = true
+omit-covered-files = false
+generate-badge = "docs/assets"
+badge-format = "svg"

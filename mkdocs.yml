@@ -1,0 +1,153 @@
+# LSTM PFD Documentation
+# Built with MkDocs Material - https://squidfunk.github.io/mkdocs-material/
+
+site_name: LSTM PFD Documentation
+site_description: Advanced Bearing Fault Diagnosis System - Production-Ready Research Platform
+site_author: Syed Abbas Ahmad
+site_url: https://abbas-ahmad-cowlar.github.io/LSTM_PFD/
+
+# Repository
+repo_name: abbas-ahmad-cowlar/LSTM_PFD
+repo_url: https://github.com/abbas-ahmad-cowlar/LSTM_PFD
+edit_uri: edit/main/docs/
+
+# Copyright
+copyright: Copyright &copy; 2024-2026 Syed Abbas Ahmad
+
+# Configuration
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/chart-line
+
+# Plugins
+plugins:
+  - search:
+      lang: en
+  - minify:
+      minify_html: true
+
+# Extensions
+markdown_extensions:
+  # Python Markdown
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+
+  # Python Markdown Extensions
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# MathJax for LaTeX equations (PINN documentation)
+extra_javascript:
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
+
+extra_css:
+  - stylesheets/extra.css
+
+# Navigation Structure - Phase 2.4 Complete
+# Research documentation with LaTeX equations added
+nav:
+  - Home: index.md
+
+  - Getting Started:
+      - getting-started/index.md
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Configuration: getting-started/configuration.md
+      - First Experiment: getting-started/first-experiment.md
+
+  - User Guide:
+      - user-guide/index.md
+      - Dashboard Usage: USAGE_PHASE_11.md
+      - User Guide: USER_GUIDE.md
+
+  - API Reference:
+      - api/index.md
+      - REST API: API_REFERENCE.md
+
+  - Research:
+      - research/index.md
+      - PINN Theory: research/pinn-theory.md
+      - XAI Methods: research/xai-methods.md
+      - Ensemble Strategies: research/ensemble-strategies.md
+      - Ablation Studies: research/ablation-studies.md
+      - Reproducibility: research/reproducibility.md
+
+  - Deployment:
+      - DEPLOYMENT_GUIDE.md
+
+  - Changelog: ../CHANGELOG.md
+
+# Social links
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/abbas-ahmad-cowlar/LSTM_PFD
+  version:
+    provider: mike
