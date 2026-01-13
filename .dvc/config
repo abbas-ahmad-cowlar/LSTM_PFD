@@ -1,0 +1,16 @@
+# DVC Configuration
+# Data Version Control for dataset reproducibility
+
+[core]
+    remote = local
+    autostage = true
+
+[remote "local"]
+    url = /tmp/dvc-storage
+
+# For cloud storage (uncomment and configure):
+# [remote "s3"]
+#     url = s3://lstm-pfd-data/dvc
+# 
+# [remote "gdrive"]
+#     url = gdrive://1234567890abcdefg

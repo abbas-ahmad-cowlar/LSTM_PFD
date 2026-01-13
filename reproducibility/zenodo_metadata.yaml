@@ -1,0 +1,57 @@
+# Zenodo Dataset Metadata
+# For dataset publication per Master Roadmap Chapter 3.5
+
+title: "LSTM-PFD Bearing Fault Diagnosis Dataset"
+
+description: |
+  Synthetic bearing vibration signals for fault diagnosis research.
+  Contains 11 fault classes with realistic physics-based simulations
+  including ball faults, inner/outer race defects, misalignment,
+  imbalance, and oil-related issues.
+
+creators:
+  - name: "Ahmad, Syed Abbas"
+    affiliation: "Cowlar"
+    orcid: "0000-0000-0000-0000" # Replace with actual ORCID
+
+keywords:
+  - bearing fault diagnosis
+  - vibration analysis
+  - machine learning
+  - physics-informed neural networks
+  - predictive maintenance
+  - condition monitoring
+
+license: "CC-BY-4.0"
+
+access_right: "open"
+
+related_identifiers:
+  - identifier: "https://github.com/abbas-ahmad-cowlar/LSTM_PFD"
+    relation: "isSupplementTo"
+    type: "url"
+
+version: "1.0.0"
+
+language: "en"
+
+# Data description
+data_description:
+  format: "HDF5"
+  samples: 1430
+  classes: 11
+  signal_length: 102400
+  sampling_rate: 20480
+
+  fault_types:
+    - normal
+    - ball_fault
+    - inner_race
+    - outer_race
+    - combined
+    - imbalance
+    - misalignment
+    - oil_whirl
+    - cavitation
+    - looseness
+    - oil_deficiency
