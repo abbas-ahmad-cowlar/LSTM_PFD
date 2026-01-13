@@ -1,0 +1,48 @@
+# PINN Optimal Configuration
+# Found via Hyperparameter Optimization (Phase 3.1)
+# Use with: python scripts/train_pinn.py --config reproducibility/config/pinn_optimal.yaml
+
+# Model Architecture
+model:
+  name: hybrid_pinn
+  base_architecture: resnet18
+  num_classes: 11
+
+  # Physics-informed components
+  physics:
+    lambda_physics: 0.2 # Physics loss weight (optimal)
+    lambda_boundary: 0.15 # Boundary loss weight (optimal)
+    mlp_depth: 3 # Physics MLP layers
+    embedding_dim: 64 # Physics embedding size
+
+# Training Configuration
+training:
+  epochs: 100
+  batch_size: 64
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  optimizer: adamw
+
+  # Learning rate schedule
+  scheduler:
+    name: cosine_annealing
+    T_max: 100
+    eta_min: 0.00001
+
+  # Early stopping
+  early_stopping:
+    patience: 15
+    min_delta: 0.001
+
+# Data Configuration
+data:
+  path: data/processed/signals_cache.h5
+  split_ratio: [0.7, 0.15, 0.15]
+  augmentation:
+    enabled: true
+    noise_std: 0.01
+    shift_ratio: 0.1
+
+# Reproducibility
+seed: 42
+deterministic: true
