@@ -14,6 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from utils.constants import SAMPLING_RATE
 from packages.core.features.feature_extractor import FeatureExtractor
 
 
@@ -23,12 +24,12 @@ class TestFeatureExtractor:
 
     def test_initialization(self):
         """Test FeatureExtractor initialization."""
-        extractor = FeatureExtractor(fs=20480)
+        extractor = FeatureExtractor(fs=SAMPLING_RATE)
         assert extractor.fs == 20480
 
     def test_extract_time_domain_features(self, sample_signal):
         """Test time domain feature extraction."""
-        extractor = FeatureExtractor(fs=20480)
+        extractor = FeatureExtractor(fs=SAMPLING_RATE)
         features = extractor.extract_time_domain_features(sample_signal)
 
         assert isinstance(features, dict)
@@ -46,7 +47,7 @@ class TestFeatureExtractor:
 
     def test_extract_frequency_domain_features(self, sample_signal):
         """Test frequency domain feature extraction."""
-        extractor = FeatureExtractor(fs=20480)
+        extractor = FeatureExtractor(fs=SAMPLING_RATE)
         features = extractor.extract_frequency_domain_features(sample_signal)
 
         assert isinstance(features, dict)
@@ -62,7 +63,7 @@ class TestFeatureExtractor:
     def test_extract_features_batch(self, sample_batch_signals):
         """Test batch feature extraction."""
         signals, _ = sample_batch_signals
-        extractor = FeatureExtractor(fs=20480)
+        extractor = FeatureExtractor(fs=SAMPLING_RATE)
 
         features_list = []
         for signal in signals:
@@ -80,14 +81,14 @@ class TestFeatureExtractor:
 
     def test_extract_features_empty_signal(self):
         """Test extraction with empty signal."""
-        extractor = FeatureExtractor(fs=20480)
+        extractor = FeatureExtractor(fs=SAMPLING_RATE)
 
         with pytest.raises((ValueError, IndexError)):
             extractor.extract_features(np.array([]))
 
     def test_extract_features_constant_signal(self):
         """Test extraction with constant signal."""
-        extractor = FeatureExtractor(fs=20480)
+        extractor = FeatureExtractor(fs=SAMPLING_RATE)
         constant_signal = np.ones(1024)
 
         features = extractor.extract_features(constant_signal)
