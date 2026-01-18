@@ -38,6 +38,7 @@ from datetime import datetime
 from typing import Dict, Any, Optional, Tuple
 
 from utils.logging import get_logger
+from utils.constants import NUM_CLASSES
 
 
 logger = get_logger(__name__)
@@ -326,7 +327,7 @@ def main():
         from packages.core.models.cnn.cnn_1d import CNN1D
         
         # Create model
-        model = CNN1D(num_classes=11)
+        model = CNN1D(num_classes=NUM_CLASSES)
         logger.info(f"\nModel: CNN1D ({sum(p.numel() for p in model.parameters()):,} params)")
         
         # Export
