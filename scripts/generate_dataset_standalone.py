@@ -126,8 +126,14 @@ def generate_dataset(config: dict) -> dict:
 
             logger.info(f"  Generated {num_total} signals for {fault}")
 
-        # Save to HDF5
-        output_dir = Path(config.get('output_dir', 'data/generated'))
+        # Save to HDF5 - use absolute paths
+        # Resolve output_dir relative to project root (where this script lives)
+        project_root = Path(__file__).resolve().parent.parent
+        output_dir = config.get('output_dir', 'data/generated')
+        if not Path(output_dir).is_absolute():
+            output_dir = project_root / output_dir
+        else:
+            output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         dataset_name = config.get('name', 'dataset')
         hdf5_path = output_dir / f"{dataset_name}.h5"
