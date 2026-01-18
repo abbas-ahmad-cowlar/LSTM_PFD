@@ -60,9 +60,9 @@ class DataService:
 
             # Try to get class distribution from HDF5 file first
             try:
-                file_path = Path(dataset.file_path)
+                file_path = DataService._resolve_file_path(dataset.file_path)
                 if file_path.exists():
-                    with h5py.File(file_path, 'r') as f:
+                    with h5py.File(str(file_path), 'r') as f:
                         # Check for metadata group
                         if 'metadata' in f and 'fault_classes' in f['metadata']:
                             fault_classes = f['metadata']['fault_classes'][:]
@@ -128,6 +128,37 @@ class DataService:
             return [s.to_dict() for s in signals]
 
     @staticmethod
+    def _resolve_file_path(file_path: str) -> Path:
+        """
+        Resolve file path, trying multiple base directories.
+        
+        Handles paths that may be:
+        1. Absolute paths
+        2. Relative to project root (LSTM_PFD/)
+        3. Relative to dashboard dir (packages/dashboard/)
+        """
+        path = Path(file_path)
+        
+        # Already absolute and exists
+        if path.is_absolute() and path.exists():
+            return path
+        
+        # Try relative to project root
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        project_relative = project_root / file_path
+        if project_relative.exists():
+            return project_relative
+        
+        # Try relative to dashboard dir
+        dashboard_dir = Path(__file__).resolve().parent.parent
+        dashboard_relative = dashboard_dir / file_path
+        if dashboard_relative.exists():
+            return dashboard_relative
+        
+        # Return original path (will fail with clear error)
+        return path
+
+    @staticmethod
     def load_signal_data(dataset_id: int, signal_id) -> np.ndarray:
         """Load actual signal data from HDF5 file.
         
@@ -146,9 +177,12 @@ class DataService:
             # Ensure signal_id is an integer index
             signal_idx = int(signal_id)
             
+            # Resolve file path (handles relative paths)
+            resolved_path = DataService._resolve_file_path(dataset.file_path)
+            
             # Load from HDF5
             try:
-                with h5py.File(dataset.file_path, 'r') as f:
+                with h5py.File(str(resolved_path), 'r') as f:
                     # Try different HDF5 structures
                     
                     # Structure 1: Flat signals array
@@ -177,7 +211,7 @@ class DataService:
                         raise ValueError(f"Cannot find signals in HDF5. Available keys: {available_keys}")
                         
             except Exception as e:
-                logger.error(f"Error loading signal {signal_id}: {e}")
+                logger.error(f"Error loading signal {signal_id} from {resolved_path}: {e}")
                 raise
 
     @staticmethod
