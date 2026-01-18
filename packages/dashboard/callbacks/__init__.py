@@ -119,6 +119,7 @@ def register_all_callbacks(app):
         print(f"Warning: Could not import home_callbacks: {e}")
 
     # Import and register Phase 0 (data generation) callbacks
+    # Note: data_generation_callbacks internally registers mat_import_callbacks
     try:
         from callbacks.data_generation_callbacks import register_data_generation_callbacks
         register_data_generation_callbacks(app)
