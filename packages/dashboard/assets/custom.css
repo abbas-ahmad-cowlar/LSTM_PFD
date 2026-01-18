@@ -1,8 +1,8 @@
 /* Custom CSS for LSTM PFD Dashboard */
 
 .sidebar {
-    padding: 1rem;
-    min-height: calc(100vh - 100px);
+    padding: 0;
+    height: 100vh;
 }
 
 .sidebar .nav-link {
@@ -48,9 +48,50 @@
     overflow-y: auto;
 }
 
+/* ============================================ */
+/* Dropdown fixes - prevent clipping and overlap */
+/* ============================================ */
+
+/* Ensure dropdown menus render above other elements */
+.Select-menu-outer,
+.VirtualizedSelectMenuOuter {
+    z-index: 9999 !important;
+    position: absolute !important;
+}
+
+/* Prevent dropdown from being clipped by card overflow */
+.card-body {
+    overflow: visible !important;
+}
+
+/* Minimum dropdown menu height for visibility */
+.Select-menu {
+    min-height: 100px;
+}
+
+/* Fix for sticky sidebar not clipping dropdowns */
+.sticky-top {
+    overflow: visible !important;
+    z-index: 100;
+}
+
+/* Ensure dropdown control has proper styling */
+.Select-control {
+    border-radius: 4px;
+    border-color: #ced4da;
+}
+
+/* Hover state styling for dropdown */
+.Select-control:hover {
+    border-color: #80bdff;
+}
+
+/* ============================================ */
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .sidebar {
         display: none;
     }
 }
+
