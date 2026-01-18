@@ -2,7 +2,7 @@
 Neural Architecture Search (NAS) Celery Tasks.
 Runs NAS campaigns in background, evaluating sampled architectures.
 """
-from celery_app import celery_app
+from tasks import celery_app
 from utils.logger import setup_logger
 from database.connection import get_db_session
 from models.nas_campaign import NASCampaign, NASTrial
