@@ -44,10 +44,12 @@ def register_data_explorer_callbacks(app):
     # =========================================================================
     @app.callback(
         Output('class-distribution-chart', 'figure'),
-        Input('dataset-selector', 'value')
+        [Input('dataset-selector', 'value'),
+         Input('fault-filter', 'value'),
+         Input('severity-filter', 'value')]
     )
-    def update_class_distribution(dataset_id):
-        """Update class distribution chart."""
+    def update_class_distribution(dataset_id, fault_filter, severity_filter):
+        """Update class distribution chart with filter support."""
         if not dataset_id:
             fig = go.Figure()
             fig.update_layout(
@@ -62,6 +64,15 @@ def register_data_explorer_callbacks(app):
             if not dist:
                 fig = go.Figure()
                 fig.update_layout(annotations=[dict(text="No class distribution data", showarrow=False)])
+                return fig
+
+            # Apply fault class filter if provided
+            if fault_filter:
+                dist = {k: v for k, v in dist.items() if k in fault_filter}
+            
+            if not dist:
+                fig = go.Figure()
+                fig.update_layout(annotations=[dict(text="No classes match filter", showarrow=False)])
                 return fig
 
             fig = px.bar(
@@ -169,35 +180,242 @@ def register_data_explorer_callbacks(app):
     @app.callback(
         Output('feature-distribution-plot', 'figure'),
         [Input('feature-selector', 'value'),
-         Input('dataset-selector', 'value')]
+         Input('dataset-selector', 'value'),
+         Input('fault-filter', 'value'),
+         Input('severity-filter', 'value'),
+         Input('chart-type-selector', 'value')]
     )
-    def update_feature_distribution(feature, dataset_id):
-        """Update feature distribution histogram."""
+    def update_feature_distribution(feature, dataset_id, fault_filter, severity_filter, chart_type):
+        """Update feature distribution chart based on selected feature and chart type.
+        
+        Supports: violin, strip, kde, ridge, histogram
+        """
         if not feature or not dataset_id:
             fig = go.Figure()
             fig.update_layout(
-                annotations=[dict(text="Select a feature and dataset", showarrow=False)]
+                annotations=[dict(text="Select a feature and dataset", showarrow=False)],
+                height=450
             )
             return fig
 
+        # Default chart type to violin if not specified
+        if not chart_type:
+            chart_type = 'violin'
+
         try:
-            # For now, generate simulated feature data
-            # In production, this would load actual computed features
-            np.random.seed(42)
-            feature_values = np.random.randn(1000) * 0.5 + 1.0
+            import pandas as pd
+            from scipy import stats
             
-            fig = px.histogram(
-                x=feature_values,
-                nbins=50,
-                title=f"{feature.replace('_', ' ').title()} Distribution",
-                labels={'x': feature.replace('_', ' ').title(), 'y': 'Count'}
+            # Define realistic value ranges for each feature type
+            feature_params = {
+                'rms': {'mean': 0.5, 'std': 0.15, 'label': 'RMS Value'},
+                'peak_to_peak': {'mean': 2.5, 'std': 0.8, 'label': 'Peak-to-Peak'},
+                'kurtosis': {'mean': 3.0, 'std': 1.5, 'label': 'Kurtosis'},
+                'skewness': {'mean': 0.0, 'std': 0.5, 'label': 'Skewness'},
+                'crest_factor': {'mean': 3.5, 'std': 0.7, 'label': 'Crest Factor'},
+                'std': {'mean': 0.35, 'std': 0.1, 'label': 'Standard Deviation'},
+                'mean': {'mean': 0.0, 'std': 0.2, 'label': 'Mean Value'},
+                'max': {'mean': 1.2, 'std': 0.4, 'label': 'Max Value'},
+                'min': {'mean': -1.2, 'std': 0.4, 'label': 'Min Value'},
+            }
+            
+            params = feature_params.get(feature, {'mean': 0, 'std': 1, 'label': feature})
+            
+            # Fault classes to simulate
+            all_fault_classes = ['normal', 'ball_fault', 'inner_race', 'outer_race', 
+                                  'combined', 'imbalance', 'misalignment']
+            
+            # Apply fault filter
+            if fault_filter:
+                active_faults = [f for f in all_fault_classes if f in fault_filter]
+            else:
+                active_faults = all_fault_classes
+            
+            if not active_faults:
+                fig = go.Figure()
+                fig.update_layout(annotations=[dict(text="No fault classes selected", showarrow=False)])
+                return fig
+            
+            # Generate synthetic data for each fault class
+            feature_values = []
+            fault_labels = []
+            
+            n_samples_per_class = 120
+            
+            for i, fault in enumerate(active_faults):
+                np.random.seed(hash(f"{feature}_{fault}") % (2**32))
+                offset = (i - len(active_faults)/2) * params['std'] * 0.3
+                values = np.random.normal(params['mean'] + offset, params['std'], n_samples_per_class)
+                
+                if fault in ['ball_fault', 'inner_race', 'outer_race']:
+                    values = values * 1.2
+                elif fault == 'normal':
+                    values = values * 0.8
+                
+                feature_values.extend(values)
+                fault_labels.extend([fault.replace('_', ' ').title()] * n_samples_per_class)
+            
+            # Create DataFrame
+            df = pd.DataFrame({
+                'value': feature_values,
+                'fault_class': fault_labels
+            })
+            
+            # Color palette for consistency across chart types
+            colors = px.colors.qualitative.Set2
+            
+            # ============================================
+            # RENDER CHART BASED ON SELECTED TYPE
+            # ============================================
+            
+            if chart_type == 'violin':
+                # Violin Plot - shows distribution shape
+                fig = px.violin(
+                    df,
+                    y='fault_class',
+                    x='value',
+                    color='fault_class',
+                    orientation='h',
+                    box=True,  # Add box plot inside
+                    points='outliers',  # Show outliers only
+                    title=f"{params['label']} Distribution (Violin)",
+                    labels={'value': params['label'], 'fault_class': 'Fault Class'},
+                    color_discrete_sequence=colors
+                )
+                fig.update_layout(showlegend=False, height=max(350, len(active_faults) * 60))
+                
+            elif chart_type == 'strip':
+                # Strip/Jitter Plot - shows individual points
+                fig = px.strip(
+                    df,
+                    y='fault_class',
+                    x='value',
+                    color='fault_class',
+                    orientation='h',
+                    title=f"{params['label']} Distribution (Strip/Jitter)",
+                    labels={'value': params['label'], 'fault_class': 'Fault Class'},
+                    color_discrete_sequence=colors
+                )
+                fig.update_traces(jitter=0.4, marker=dict(size=5, opacity=0.6))
+                fig.update_layout(showlegend=False, height=max(350, len(active_faults) * 60))
+                
+            elif chart_type == 'kde':
+                # KDE Lines - smooth density curves
+                fig = go.Figure()
+                
+                for i, fault in enumerate(df['fault_class'].unique()):
+                    fault_data = df[df['fault_class'] == fault]['value']
+                    
+                    # Calculate KDE
+                    x_range = np.linspace(fault_data.min() - params['std'], 
+                                         fault_data.max() + params['std'], 200)
+                    kde = stats.gaussian_kde(fault_data)
+                    density = kde(x_range)
+                    
+                    fig.add_trace(go.Scatter(
+                        x=x_range,
+                        y=density,
+                        mode='lines',
+                        name=fault,
+                        line=dict(width=2.5),
+                        fill='tozeroy',
+                        opacity=0.4
+                    ))
+                
+                fig.update_layout(
+                    title=f"{params['label']} Distribution (KDE Lines)",
+                    xaxis_title=params['label'],
+                    yaxis_title='Density',
+                    legend_title='Fault Class',
+                    height=450
+                )
+                
+            elif chart_type == 'ridge':
+                # Ridge Plot - stacked density curves
+                fig = go.Figure()
+                
+                unique_faults = df['fault_class'].unique()
+                n_faults = len(unique_faults)
+                
+                # Use a simple color palette that's guaranteed to work
+                ridge_colors = ['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', 
+                               '#a6d854', '#ffd92f', '#e5c494']
+                
+                for i, fault in enumerate(unique_faults):
+                    fault_data = df[df['fault_class'] == fault]['value']
+                    
+                    # Calculate KDE
+                    x_range = np.linspace(df['value'].min() - params['std'], 
+                                         df['value'].max() + params['std'], 200)
+                    kde = stats.gaussian_kde(fault_data)
+                    density = kde(x_range)
+                    
+                    # Normalize and offset for ridge effect
+                    density_normalized = density / density.max() * 0.8
+                    y_offset = i * 1.0
+                    
+                    # Get color and create rgba version
+                    hex_color = ridge_colors[i % len(ridge_colors)]
+                    # Convert hex to rgba
+                    r = int(hex_color[1:3], 16)
+                    g = int(hex_color[3:5], 16)
+                    b = int(hex_color[5:7], 16)
+                    fill_rgba = f'rgba({r},{g},{b},0.4)'
+                    
+                    # Fill area
+                    fig.add_trace(go.Scatter(
+                        x=x_range,
+                        y=density_normalized + y_offset,
+                        mode='lines',
+                        name=fault,
+                        line=dict(width=2, color=hex_color),
+                        fill='tonexty' if i > 0 else 'tozeroy',
+                        fillcolor=fill_rgba
+                    ))
+                
+                fig.update_layout(
+                    title=f"{params['label']} Distribution (Ridge Plot)",
+                    xaxis_title=params['label'],
+                    yaxis=dict(
+                        tickvals=[i * 1.0 + 0.4 for i in range(n_faults)],
+                        ticktext=list(unique_faults),
+                        title=''
+                    ),
+                    height=max(400, n_faults * 70),
+                    showlegend=False
+                )
+                
+            else:  # histogram (default/fallback)
+                fig = px.histogram(
+                    df,
+                    x='value',
+                    color='fault_class',
+                    nbins=40,
+                    title=f"{params['label']} Distribution (Histogram)",
+                    labels={'value': params['label'], 'fault_class': 'Fault Class'},
+                    color_discrete_sequence=colors
+                )
+                fig.update_layout(
+                    barmode='overlay',
+                    legend_title_text='Fault Class',
+                    height=450
+                )
+                fig.update_traces(opacity=0.65)
+            
+            # Common layout updates
+            fig.update_layout(
+                template='plotly_white',
+                margin=dict(l=60, r=40, t=60, b=60)
             )
-            fig.update_layout(showlegend=False)
+            
             return fig
             
         except Exception as e:
             logger.error(f"Error creating feature distribution: {e}")
-            return go.Figure()
+            fig = go.Figure()
+            fig.update_layout(annotations=[dict(text=f"Error: {str(e)}", showarrow=False)])
+            return fig
+
 
     # =========================================================================
     # CALCULATE DIMENSIONALITY REDUCTION
@@ -246,3 +464,371 @@ def register_data_explorer_callbacks(app):
             fig = go.Figure()
             fig.update_layout(annotations=[dict(text=f"Error: {str(e)}", showarrow=False)])
             return fig
+
+    # =========================================================================
+    # SPECTRAL ANALYSIS CALLBACKS (PSD, Envelope, Cepstrum)
+    # =========================================================================
+    @app.callback(
+        [Output('spectral-analysis-plot', 'figure'),
+         Output('spectral-info-text', 'children')],
+        [Input('spectral-analysis-type', 'value'),
+         Input('spectral-fault-selector', 'value'),
+         Input('rotational-freq-input', 'value'),
+         Input('show-harmonics-toggle', 'value'),
+         Input('dataset-selector', 'value')]
+    )
+    def update_spectral_analysis(analysis_type, fault_class, rotational_freq, show_harmonics, dataset_id):
+        """Update spectral analysis plot based on selected type."""
+        from scipy.signal import welch, hilbert
+        
+        if not dataset_id or not analysis_type:
+            fig = go.Figure()
+            fig.update_layout(
+                annotations=[dict(text="Select a dataset and analysis type", showarrow=False)],
+                height=450
+            )
+            return fig, ""
+        
+        try:
+            # Simulated signal for demonstration
+            # In production, load actual signal from HDF5
+            fs = 20480  # Sampling frequency (Hz)
+            duration = 2.0  # seconds
+            t = np.linspace(0, duration, int(fs * duration))
+            
+            # Create realistic vibration signal based on fault type
+            np.random.seed(hash(fault_class) % (2**32))
+            omega = rotational_freq or 60
+            
+            # Base signal with rotational harmonics
+            signal = (0.3 * np.sin(2 * np.pi * omega * t) +  # 1X
+                     0.15 * np.sin(2 * np.pi * 2 * omega * t) +  # 2X
+                     0.08 * np.sin(2 * np.pi * 3 * omega * t))  # 3X
+            
+            # Add fault-specific characteristics
+            if fault_class == 'ball_fault':
+                # Ball fault: high frequency components
+                signal += 0.2 * np.sin(2 * np.pi * 3.5 * omega * t)
+                signal += 0.1 * np.sin(2 * np.pi * 7 * omega * t)
+            elif fault_class == 'inner_race':
+                # Inner race: modulated signal
+                signal = signal * (1 + 0.3 * np.sin(2 * np.pi * 0.4 * omega * t))
+            elif fault_class == 'outer_race':
+                # Outer race: impact-like components
+                signal += 0.25 * np.sin(2 * np.pi * 4.2 * omega * t)
+            elif fault_class == 'misalignment':
+                # Misalignment: strong 2X component
+                signal += 0.35 * np.sin(2 * np.pi * 2 * omega * t + 0.5)
+            elif fault_class == 'imbalance':
+                # Imbalance: dominant 1X
+                signal += 0.4 * np.sin(2 * np.pi * omega * t + 0.3)
+            
+            # Add noise
+            signal += 0.05 * np.random.randn(len(t))
+            
+            show_harm = 'show' in (show_harmonics or [])
+            
+            if analysis_type == 'psd':
+                # Power Spectral Density using Welch method
+                f, Pxx = welch(signal, fs, nperseg=4096)
+                
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=f, y=Pxx,
+                    mode='lines',
+                    name='PSD',
+                    line=dict(color='#1f77b4', width=1.5)
+                ))
+                
+                # Add harmonic markers
+                if show_harm and omega:
+                    colors = ['#2ca02c', '#ff7f0e', '#d62728']
+                    for i, mult in enumerate([1, 2, 3]):
+                        freq = omega * mult
+                        if freq < f[-1]:
+                            fig.add_vline(
+                                x=freq, line_dash="dash",
+                                annotation_text=f"{mult}X",
+                                annotation_position="top",
+                                line_color=colors[i],
+                                line_width=2
+                            )
+                
+                fig.update_layout(
+                    title=f"Power Spectral Density - {fault_class.replace('_', ' ').title()}",
+                    xaxis_title="Frequency (Hz)",
+                    yaxis_title="Power Spectral Density (V²/Hz)",
+                    yaxis_type="log",
+                    height=450,
+                    template='plotly_white'
+                )
+                
+                info_text = "PSD shows the distribution of signal power across frequencies. Peaks indicate dominant frequency components. Harmonic markers (1X, 2X, 3X) highlight rotational frequency multiples."
+                
+            elif analysis_type == 'envelope':
+                # Envelope Analysis using Hilbert Transform
+                analytic_signal = hilbert(signal)
+                envelope = np.abs(analytic_signal)
+                
+                # Envelope spectrum
+                f_env, Pxx_env = welch(envelope, fs, nperseg=2048)
+                
+                fig = go.Figure()
+                
+                # Top: signal with envelope
+                fig.add_trace(go.Scatter(
+                    x=t[:2000], y=signal[:2000],
+                    mode='lines', name='Signal',
+                    line=dict(color='#1f77b4', width=0.5)
+                ))
+                fig.add_trace(go.Scatter(
+                    x=t[:2000], y=envelope[:2000],
+                    mode='lines', name='Envelope',
+                    line=dict(color='#d62728', width=2)
+                ))
+                
+                fig.update_layout(
+                    title=f"Envelope Analysis (Hilbert Transform) - {fault_class.replace('_', ' ').title()}",
+                    xaxis_title="Time (s)",
+                    yaxis_title="Amplitude",
+                    height=450,
+                    template='plotly_white',
+                    showlegend=True
+                )
+                
+                info_text = "Envelope analysis extracts the amplitude modulation of the signal using the Hilbert transform. Useful for detecting bearing faults that cause amplitude modulation at characteristic frequencies."
+                
+            elif analysis_type == 'cepstrum':
+                # Real Cepstrum
+                # Cepstrum = IFFT(log(|FFT(x)|))
+                N = len(signal)
+                spectrum = np.fft.fft(signal)
+                log_spectrum = np.log(np.abs(spectrum) + 1e-10)
+                cepstrum = np.real(np.fft.ifft(log_spectrum))
+                
+                # Quefrency axis (in ms)
+                quefrency = np.arange(N) / fs * 1000  # Convert to ms
+                
+                fig = go.Figure()
+                # Only show positive quefrency up to 50 ms
+                max_q = min(int(0.05 * fs), N // 2)
+                fig.add_trace(go.Scatter(
+                    x=quefrency[:max_q], y=cepstrum[:max_q],
+                    mode='lines',
+                    name='Cepstrum',
+                    line=dict(color='#1f77b4', width=1.5)
+                ))
+                
+                # Mark 1X and 2X periods
+                if show_harm and omega:
+                    period_1x = 1000 / omega  # ms
+                    period_2x = 500 / omega  # ms
+                    if period_1x < 50:
+                        fig.add_vline(x=period_1x, line_dash="dash",
+                                     annotation_text=f"1X ({period_1x:.1f}ms)",
+                                     line_color='#2ca02c', line_width=2)
+                    if period_2x < 50:
+                        fig.add_vline(x=period_2x, line_dash="dash",
+                                     annotation_text=f"2X ({period_2x:.1f}ms)",
+                                     line_color='#ff7f0e', line_width=2)
+                
+                fig.update_layout(
+                    title=f"Cepstrum Analysis - {fault_class.replace('_', ' ').title()}",
+                    xaxis_title="Quefrency (ms)",
+                    yaxis_title="Cepstral Amplitude",
+                    height=450,
+                    template='plotly_white'
+                )
+                
+                info_text = "Cepstrum shows periodic structures in the spectrum. Peaks at specific quefrencies indicate harmonic families (gear mesh, bearing faults). Quefrency = 1/frequency."
+            
+            else:
+                fig = go.Figure()
+                fig.update_layout(annotations=[dict(text="Unknown analysis type", showarrow=False)])
+                info_text = ""
+            
+            return fig, info_text
+            
+        except Exception as e:
+            logger.error(f"Error in spectral analysis: {e}")
+            fig = go.Figure()
+            fig.update_layout(annotations=[dict(text=f"Error: {str(e)}", showarrow=False)])
+            return fig, f"Error: {str(e)}"
+
+    # =========================================================================
+    # FEATURE COMPARISON CALLBACKS (Spider, Heatmap, Importance)
+    # =========================================================================
+    @app.callback(
+        [Output('feature-comparison-plot', 'figure'),
+         Output('comparison-description', 'children')],
+        [Input('comparison-chart-type', 'value'),
+         Input('normalize-features-toggle', 'value'),
+         Input('dataset-selector', 'value'),
+         Input('fault-filter', 'value')]
+    )
+    def update_feature_comparison(chart_type, normalize_toggle, dataset_id, fault_filter):
+        """Update feature comparison visualization."""
+        import pandas as pd
+        
+        if not dataset_id or not chart_type:
+            fig = go.Figure()
+            fig.update_layout(
+                annotations=[dict(text="Select a dataset and comparison type", showarrow=False)],
+                height=500
+            )
+            return fig, ""
+        
+        try:
+            normalize = 'normalize' in (normalize_toggle or [])
+            
+            # Feature data (simulated - in production load from actual features)
+            feature_names = ['RMS', 'Kurtosis', 'Crest Factor', '2X/1X Ratio', '3X/1X Ratio', 'Skewness']
+            fault_classes = ['Normal', 'Ball Fault', 'Inner Race', 'Outer Race', 
+                            'Misalignment', 'Imbalance', 'Cavitation']
+            
+            # Apply fault filter
+            if fault_filter:
+                fault_mapping = {
+                    'normal': 'Normal', 'ball_fault': 'Ball Fault', 'inner_race': 'Inner Race',
+                    'outer_race': 'Outer Race', 'misalignment': 'Misalignment',
+                    'imbalance': 'Imbalance', 'cavitation': 'Cavitation'
+                }
+                fault_classes = [fault_mapping.get(f, f.replace('_', ' ').title()) 
+                                for f in fault_filter if fault_mapping.get(f) in fault_classes]
+            
+            if not fault_classes:
+                fault_classes = ['Normal', 'Ball Fault', 'Inner Race']
+            
+            # Simulated feature values (realistic ranges)
+            np.random.seed(42)
+            feature_matrix = {
+                'Normal':      [0.05, 3.0, 3.2, 0.01, 0.02, 0.0],
+                'Ball Fault':  [0.15, 5.5, 4.8, 0.08, 0.06, 0.2],
+                'Inner Race':  [0.18, 6.2, 5.2, 0.12, 0.08, 0.3],
+                'Outer Race':  [0.14, 5.0, 4.5, 0.15, 0.05, 0.1],
+                'Misalignment':[0.12, 3.5, 3.8, 0.45, 0.35, 0.1],
+                'Imbalance':   [0.20, 3.2, 3.5, 0.05, 0.02, 0.0],
+                'Cavitation':  [0.10, 8.0, 6.0, 0.03, 0.01, 0.5],
+            }
+            
+            # Build matrix for selected faults
+            data = np.array([feature_matrix.get(f, [0.1]*6) for f in fault_classes])
+            
+            # Normalize if requested
+            if normalize:
+                data_min = data.min(axis=0)
+                data_max = data.max(axis=0)
+                data = (data - data_min) / (data_max - data_min + 1e-10)
+            
+            colors = px.colors.qualitative.Set2
+            
+            # Use hex colors that work reliably (same fix as Ridge Plot)
+            spider_colors = ['#66c2a5', '#fc8d62', '#8da0cb', '#e78ac3', 
+                           '#a6d854', '#ffd92f', '#e5c494', '#b3b3b3']
+            
+            if chart_type == 'spider':
+                # Spider/Radar Chart
+                fig = go.Figure()
+                
+                for i, fault in enumerate(fault_classes):
+                    values = data[i].tolist()
+                    values.append(values[0])  # Close the polygon
+                    
+                    # Get color and create rgba version
+                    hex_color = spider_colors[i % len(spider_colors)]
+                    r = int(hex_color[1:3], 16)
+                    g = int(hex_color[3:5], 16)
+                    b = int(hex_color[5:7], 16)
+                    fill_rgba = f'rgba({r},{g},{b},0.2)'
+                    
+                    fig.add_trace(go.Scatterpolar(
+                        r=values,
+                        theta=feature_names + [feature_names[0]],
+                        fill='toself',
+                        name=fault,
+                        line=dict(color=hex_color, width=2),
+                        fillcolor=fill_rgba
+                    ))
+                
+                fig.update_layout(
+                    polar=dict(radialaxis=dict(visible=True, range=[0, 1] if normalize else None)),
+                    title="Multi-Feature Spider Chart (Normalized)" if normalize else "Multi-Feature Spider Chart",
+                    showlegend=True,
+                    height=550
+                )
+                
+                description = "Spider chart shows how each fault type differs across multiple features. Wider polygons indicate more severe fault signatures."
+                
+            elif chart_type == 'heatmap':
+                # Feature Heatmap
+                fig = px.imshow(
+                    data,
+                    x=feature_names,
+                    y=fault_classes,
+                    color_continuous_scale='Viridis',
+                    aspect='auto',
+                    title="Normalized Feature Heatmap" if normalize else "Feature Heatmap",
+                    labels=dict(color="Value")
+                )
+                
+                # Add value annotations
+                for i in range(len(fault_classes)):
+                    for j in range(len(feature_names)):
+                        fig.add_annotation(
+                            x=j, y=i,
+                            text=f"{data[i, j]:.2f}",
+                            showarrow=False,
+                            font=dict(color="white" if data[i, j] > 0.5 else "black", size=10)
+                        )
+                
+                fig.update_layout(height=550)
+                
+                description = "Heatmap shows feature values across fault types. Brighter colors indicate higher values. Useful for identifying which features distinguish specific faults."
+                
+            elif chart_type == 'importance':
+                # Feature Importance (based on variance/discriminability)
+                # Calculate importance as coefficient of variation across faults
+                importance = np.std(data, axis=0) / (np.mean(data, axis=0) + 1e-10)
+                
+                # Sort by importance
+                sorted_idx = np.argsort(importance)[::-1]
+                sorted_features = [feature_names[i] for i in sorted_idx]
+                sorted_importance = importance[sorted_idx]
+                
+                # Normalize importance to 0-1
+                sorted_importance = sorted_importance / sorted_importance.max()
+                
+                fig = go.Figure()
+                fig.add_trace(go.Bar(
+                    y=sorted_features,
+                    x=sorted_importance,
+                    orientation='h',
+                    marker=dict(
+                        color=sorted_importance,
+                        colorscale='Blues',
+                        showscale=False
+                    )
+                ))
+                
+                fig.update_layout(
+                    title="Feature Importance for Fault Discrimination",
+                    xaxis_title="Normalized Importance Score",
+                    yaxis_title="Feature",
+                    height=550,
+                    yaxis=dict(autorange="reversed")  # Highest at top
+                )
+                
+                description = "Feature importance shows which features are most useful for distinguishing between fault types. Higher scores indicate better discriminating power."
+            
+            else:
+                fig = go.Figure()
+                fig.update_layout(annotations=[dict(text="Unknown chart type", showarrow=False)])
+                description = ""
+            
+            return fig, description
+            
+        except Exception as e:
+            logger.error(f"Error in feature comparison: {e}")
+            fig = go.Figure()
+            fig.update_layout(annotations=[dict(text=f"Error: {str(e)}", showarrow=False)])
+            return fig, f"Error: {str(e)}"
