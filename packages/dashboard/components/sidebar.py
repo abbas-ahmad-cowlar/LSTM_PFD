@@ -6,11 +6,13 @@ Enhanced with:
 - Hover tooltips for collapsed state
 - Smooth width transition
 - Toggle button
+- Collapsible section groups
+- Scrollable navigation area
 
 Addresses Deficiency #29 (Priority 40): Sidebar Icons with collapsed state
 """
 import dash_bootstrap_components as dbc
-from dash import html, dcc, callback, Input, Output, State, clientside_callback
+from dash import html, dcc, callback, Input, Output, State, clientside_callback, ALL, MATCH
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
@@ -64,32 +66,41 @@ def create_nav_link(item: dict, collapsed: bool = False):
 
 
 def create_section(section_name: str, items: list):
-    """Create a navigation section with header and links."""
+    """Create a navigation section with collapsible header and links."""
     if section_name == 'main':
-        # No header for main section
-        header = None
-    else:
-        header = html.P(
-            [
-                html.I(className="fas fa-chevron-right section-chevron me-1"),
-                html.Span(section_name, className="section-label")
-            ],
-            className="sidebar-section-header"
-        )
+        # No header for main section, just return links
+        return [create_nav_link(item) for item in items]
     
-    links = [create_nav_link(item) for item in items]
+    # Create section ID for collapse functionality
+    section_id = section_name.lower().replace(' ', '-')
     
-    elements = []
-    if header:
-        elements.append(html.Hr(className="sidebar-divider"))
-        elements.append(header)
-    elements.extend(links)
+    # Clickable header that toggles collapse
+    header = html.Div(
+        [
+            html.I(className="fas fa-chevron-down section-chevron me-2", id=f"chevron-{section_id}"),
+            html.Span(section_name, className="section-label")
+        ],
+        id={'type': 'section-header', 'section': section_id},
+        className="sidebar-section-header",
+        n_clicks=0
+    )
     
-    return elements
+    # Links container (collapsible)
+    links = html.Div(
+        [create_nav_link(item) for item in items],
+        id={'type': 'section-content', 'section': section_id},
+        className="sidebar-section-content"
+    )
+    
+    return [
+        html.Hr(className="sidebar-divider"),
+        header,
+        links
+    ]
 
 
 def create_sidebar():
-    """Create enhanced sidebar navigation with collapse support."""
+    """Create enhanced sidebar navigation with collapse support and scrolling."""
     
     # Build navigation elements
     nav_elements = []
@@ -110,11 +121,9 @@ def create_sidebar():
         )
     ], className="sidebar-header")
     
-    # Navigation container
-    nav_container = dbc.Nav(
+    # Navigation container with scrollable area
+    nav_container = html.Div(
         nav_elements,
-        vertical=True,
-        pills=True,
         className="sidebar-nav"
     )
     
@@ -129,6 +138,8 @@ def create_sidebar():
     return html.Div([
         # Store for collapsed state
         dcc.Store(id='sidebar-collapsed-store', data=False),
+        # Store for section collapse states (all sections expanded by default)
+        dcc.Store(id='section-collapse-store', data={}),
         
         # Sidebar container
         html.Div([
@@ -171,6 +182,7 @@ def create_sidebar_styles():
         padding: 1rem;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         min-height: 60px;
+        flex-shrink: 0;
     }
     
     .sidebar-logo {
@@ -220,12 +232,32 @@ def create_sidebar_styles():
         transform: rotate(180deg);
     }
     
-    /* Navigation */
+    /* Navigation - SCROLLABLE */
     .sidebar-nav {
         flex: 1;
         overflow-y: auto;
         overflow-x: hidden;
         padding: 0.5rem;
+        min-height: 0;
+    }
+    
+    /* Custom scrollbar for sidebar */
+    .sidebar-nav::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .sidebar-nav::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 3px;
+    }
+    
+    .sidebar-nav::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 3px;
+    }
+    
+    .sidebar-nav::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.3);
     }
     
     .sidebar-divider {
@@ -233,6 +265,7 @@ def create_sidebar_styles():
         margin: 0.5rem 0;
     }
     
+    /* Collapsible Section Header */
     .sidebar-section-header {
         color: #64748b;
         font-size: 0.75rem;
@@ -243,10 +276,44 @@ def create_sidebar_styles():
         margin: 0;
         white-space: nowrap;
         overflow: hidden;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        user-select: none;
+    }
+    
+    .sidebar-section-header:hover {
+        background: rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
+    }
+    
+    .sidebar-section-header .section-chevron {
+        transition: transform 0.25s ease;
+        font-size: 0.65rem;
+    }
+    
+    .sidebar-section-header.collapsed .section-chevron {
+        transform: rotate(-90deg);
+    }
+    
+    /* Section Content (collapsible) */
+    .sidebar-section-content {
+        overflow: hidden;
+        max-height: 500px;
+        transition: max-height 0.3s ease, opacity 0.2s ease;
+        opacity: 1;
+    }
+    
+    .sidebar-section-content.collapsed {
+        max-height: 0;
+        opacity: 0;
     }
     
     .sidebar.collapsed .sidebar-section-header {
         text-align: center;
+        justify-content: center;
     }
     
     .sidebar.collapsed .section-label {
@@ -331,6 +398,7 @@ def create_sidebar_styles():
     .sidebar-footer {
         padding: 0.75rem;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
+        flex-shrink: 0;
     }
     
     .sidebar-version {
@@ -412,3 +480,84 @@ clientside_callback(
     [State('sidebar-collapsed-store', 'data')],
     prevent_initial_call=True
 )
+
+
+# Clientside callback for section collapse toggle
+clientside_callback(
+    """
+    function(n_clicks_list, section_states) {
+        // Ensure section_states is an object
+        if (!section_states) {
+            section_states = {};
+        }
+        
+        // Get the triggered element
+        const ctx = dash_clientside.callback_context;
+        if (!ctx || !ctx.triggered || ctx.triggered.length === 0) {
+            return dash_clientside.no_update;
+        }
+        
+        const triggeredItem = ctx.triggered[0];
+        if (!triggeredItem || !triggeredItem.value) {
+            return dash_clientside.no_update;
+        }
+        
+        // Parse the triggered prop_id to extract section name
+        const propId = triggeredItem.prop_id;
+        let sectionId;
+        try {
+            // Remove .n_clicks suffix and parse JSON
+            const jsonStr = propId.split('.n_clicks')[0];
+            const parsed = JSON.parse(jsonStr);
+            sectionId = parsed.section;
+        } catch (e) {
+            console.error('Failed to parse section ID:', e);
+            return dash_clientside.no_update;
+        }
+        
+        if (!sectionId) {
+            return dash_clientside.no_update;
+        }
+        
+        // Toggle the section state
+        const newStates = Object.assign({}, section_states);
+        newStates[sectionId] = !newStates[sectionId];
+        
+        // Update DOM classes for all headers and contents
+        document.querySelectorAll('.sidebar-section-content').forEach(function(el) {
+            try {
+                const elId = JSON.parse(el.id);
+                if (elId.section === sectionId) {
+                    if (newStates[sectionId]) {
+                        el.classList.add('collapsed');
+                    } else {
+                        el.classList.remove('collapsed');
+                    }
+                }
+            } catch (e) {}
+        });
+        
+        // Update header chevron
+        document.querySelectorAll('.sidebar-section-header').forEach(function(el) {
+            try {
+                const elId = JSON.parse(el.id);
+                if (elId.section === sectionId) {
+                    if (newStates[sectionId]) {
+                        el.classList.add('collapsed');
+                    } else {
+                        el.classList.remove('collapsed');
+                    }
+                }
+            } catch (e) {}
+        });
+        
+        return newStates;
+    }
+    """,
+    Output('section-collapse-store', 'data'),
+    [Input({'type': 'section-header', 'section': ALL}, 'n_clicks')],
+    [State('section-collapse-store', 'data')],
+    prevent_initial_call=True
+)
+
+
