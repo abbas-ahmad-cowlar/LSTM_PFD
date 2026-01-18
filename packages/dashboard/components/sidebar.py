@@ -384,7 +384,7 @@ clientside_callback(
         
         const new_collapsed = !is_collapsed;
         const sidebar = document.getElementById('sidebar-container');
-        const mainContent = document.querySelector('.main-content');
+        const body = document.body;
         
         if (sidebar) {
             if (new_collapsed) {
@@ -394,11 +394,12 @@ clientside_callback(
             }
         }
         
-        if (mainContent) {
+        // Toggle body class for dynamic layout (header & content margins)
+        if (body) {
             if (new_collapsed) {
-                mainContent.classList.add('sidebar-collapsed');
+                body.classList.add('sidebar-collapsed');
             } else {
-                mainContent.classList.remove('sidebar-collapsed');
+                body.classList.remove('sidebar-collapsed');
             }
         }
         
