@@ -42,7 +42,10 @@ server.register_blueprint(search_bp)
 app = dash.Dash(
     __name__,
     server=server,
-    external_stylesheets=[dbc.themes.BOOTSTRAP],
+    external_stylesheets=[
+        dbc.themes.BOOTSTRAP,
+        "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"  # Font Awesome for icons
+    ],
     suppress_callback_exceptions=True,
     title="LSTM PFD Dashboard",
     update_title="Loading...",
@@ -53,30 +56,37 @@ app = dash.Dash(
 )
 
 
-# App layout
+# App layout - Sidebar SEPARATE from main content flow
 from components.header import create_header
 from components.sidebar import create_sidebar
 from components.footer import create_footer
 
-app.layout = dbc.Container([
+app.layout = html.Div([
+    # Hidden stores and location
     dcc.Location(id='url', refresh=False),
     dcc.Store(id='session-store', storage_type='session'),
     dcc.Store(id='comparison-cart', storage_type='session', data=[]),
     dcc.Interval(id='refresh-interval', interval=5000, n_intervals=0),
     dcc.Interval(id='system-health-interval', interval=5000, n_intervals=0),
-
-    create_header(),
-
-    dbc.Row([
-        dbc.Col(create_sidebar(), width=2, className="bg-light"),
-        dbc.Col(html.Div(id='page-content'), width=10)
-    ]),
-
-    create_footer(),
-
+    
+    # Sidebar - fixed position, outside content flow
+    create_sidebar(),
+    
+    # Main wrapper - everything that needs to shift with sidebar
+    html.Div([
+        create_header(),
+        
+        # Main content area
+        dbc.Container([
+            html.Div(id='page-content')
+        ], fluid=True, className="py-3"),
+        
+        create_footer(),
+    ], id="main-wrapper", className="main-wrapper"),
+    
     # Toast notifications container
     html.Div(id='toast-container', className='position-fixed top-0 end-0 p-3', style={'zIndex': 9999})
-], fluid=True)
+])
 
 # Register all callbacks
 from callbacks import register_all_callbacks
