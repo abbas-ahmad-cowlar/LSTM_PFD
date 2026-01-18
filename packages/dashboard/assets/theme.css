@@ -248,20 +248,51 @@ body {
   background-color: var(--surface-hover);
 }
 
-/* Sidebar Styles */
+/* ============================================
+   SIDEBAR & LAYOUT SYSTEM
+   Dynamic margins for header and content
+   ============================================ */
+
+/* CSS Variables for sidebar widths */
+:root {
+  --sidebar-width-expanded: 240px;
+  --sidebar-width-collapsed: 64px;
+}
+
+/* Main layout wrapper - applies to body content */
+body {
+  --current-sidebar-width: var(--sidebar-width-expanded);
+}
+
+body.sidebar-collapsed {
+  --current-sidebar-width: var(--sidebar-width-collapsed);
+}
+
+/* Sidebar Styles - Fixed position */
 .sidebar {
-  background-color: var(--sidebar-bg);
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, var(--sidebar-bg) 0%, #0d1117 100%);
   color: var(--sidebar-text);
-  min-height: 100vh;
-  width: 240px;
-  padding: var(--spacing-lg);
+  height: 100vh;
+  width: var(--sidebar-width-expanded);
+  padding: var(--spacing-md);
   transition: width var(--transition-base);
+  z-index: 1050;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .sidebar.collapsed {
-  width: 64px;
+  width: var(--sidebar-width-collapsed);
+  padding: var(--spacing-md) var(--spacing-sm);
 }
 
+/* Sidebar Navigation Links */
+.sidebar .nav-link,
 .sidebar-item {
   display: flex;
   align-items: center;
@@ -271,29 +302,215 @@ body {
   text-decoration: none;
   transition: all var(--transition-fast);
   margin-bottom: var(--spacing-xs);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
+.sidebar .nav-link:hover,
 .sidebar-item:hover {
   background-color: var(--sidebar-active-bg);
   color: var(--sidebar-text-hover);
 }
 
+.sidebar .nav-link.active,
 .sidebar-item.active {
-  background-color: var(--sidebar-active-bg);
-  color: var(--sidebar-text-hover);
+  background-color: var(--brand-primary);
+  color: white;
   font-weight: 500;
 }
 
+/* Icons in sidebar */
+.sidebar .nav-link i,
 .sidebar-item-icon {
   width: 20px;
+  min-width: 20px;
   height: 20px;
   margin-right: var(--spacing-md);
   flex-shrink: 0;
+  text-align: center;
+  font-size: 1rem;
 }
 
-.sidebar.collapsed .sidebar-item-label {
-  display: none;
+/* Collapsed state - hide text labels */
+.sidebar.collapsed .nav-link,
+.sidebar.collapsed .sidebar-item {
+  justify-content: center;
+  padding: var(--spacing-sm);
 }
+
+.sidebar.collapsed .nav-link i,
+.sidebar.collapsed .sidebar-item-icon {
+  margin-right: 0;
+}
+
+/* Hide text in collapsed state - SPECIFIC SELECTORS */
+.sidebar.collapsed .sidebar-logo-text,
+.sidebar.collapsed .nav-label,
+.sidebar.collapsed .sidebar-item-label,
+.sidebar.collapsed p.text-muted,
+.sidebar.collapsed p:not(.keep),
+.sidebar.collapsed h5 {
+  display: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Collapsed sidebar header - hide toggle text too */
+.sidebar.collapsed .sidebar-header {
+  justify-content: center;
+  padding: var(--spacing-sm);
+}
+
+.sidebar.collapsed .sidebar-logo {
+  justify-content: center;
+}
+
+/* Nav links in collapsed state - center icons */
+.sidebar.collapsed .nav-link,
+.sidebar.collapsed .sidebar-nav-link {
+  justify-content: center !important;
+  padding: var(--spacing-sm) !important;
+}
+
+/* Icons MUST be visible in collapsed state */
+.sidebar.collapsed .nav-icon,
+.sidebar.collapsed .nav-link i,
+.sidebar.collapsed .sidebar-nav-link i,
+.sidebar.collapsed .sidebar-logo-icon {
+  display: inline-block !important;
+  visibility: visible !important;
+  font-size: 1.2rem !important;
+  margin-right: 0 !important;
+  width: auto !important;
+  opacity: 1 !important;
+}
+
+/* Section headers in collapsed mode */
+.sidebar.collapsed hr {
+  margin: var(--spacing-xs) 0;
+}
+
+/* Sidebar header/logo area - expanded */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  border-bottom: 1px solid var(--sidebar-border);
+  min-height: 56px;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  overflow: hidden;
+}
+
+.sidebar-logo-icon {
+  font-size: 1.4rem;
+  color: var(--brand-primary);
+  flex-shrink: 0;
+}
+
+.sidebar-logo-text {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--sidebar-text-hover);
+  white-space: nowrap;
+  transition: opacity var(--transition-fast);
+}
+
+/* Toggle button styling */
+.sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: var(--radius-md);
+  color: var(--sidebar-text);
+  padding: 6px 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--brand-primary);
+  color: white;
+}
+
+.sidebar.collapsed .sidebar-toggle-btn {
+  transform: rotate(180deg);
+}
+
+/* MAIN CONTENT MARGIN - adjusts when sidebar collapses */
+.container-fluid > .row > .col-10,
+.main-content {
+  margin-left: 0;
+  transition: margin-left var(--transition-base);
+}
+
+/* When sidebar is collapsed, content should not be affected */
+/* The sidebar is position:fixed so content flows naturally */
+
+/* Tooltips for collapsed state */
+.sidebar.collapsed .nav-link {
+  position: relative;
+}
+
+.sidebar.collapsed .nav-link:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  margin-left: 8px;
+  padding: 6px 12px;
+  background: #1e293b;
+  color: white;
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  z-index: 1051;
+  box-shadow: var(--shadow-md);
+  pointer-events: none;
+}
+
+/* ============================================
+   LAYOUT OFFSET FOR FIXED SIDEBAR
+   Target #main-wrapper for dynamic margins
+   ============================================ */
+
+/* Main wrapper - shifts right for sidebar */
+.main-wrapper,
+#main-wrapper {
+  margin-left: var(--sidebar-width-expanded);
+  min-height: 100vh;
+  transition: margin-left var(--transition-base);
+}
+
+/* When sidebar is collapsed, shift content left */
+body.sidebar-collapsed .main-wrapper,
+body.sidebar-collapsed #main-wrapper {
+  margin-left: var(--sidebar-width-collapsed);
+}
+
+/* Navbar inside wrapper - no extra margin needed */
+.main-wrapper .navbar,
+#main-wrapper .navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1040;
+}
+
+/* Page content transitions smoothly */
+#page-content {
+  transition: all var(--transition-base);
+  padding: var(--spacing-md);
+}
+
+
 
 /* Status Badges */
 .badge {
