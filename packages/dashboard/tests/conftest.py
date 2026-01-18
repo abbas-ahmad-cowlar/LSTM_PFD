@@ -30,7 +30,7 @@ def sample_dataset():
     return {
         "name": "Test Dataset",
         "num_signals": 100,
-        "fault_types": ["normal", "ball_fault"],
+        "fault_types": ["sain", "misalignment"],
         "severity_levels": ["mild", "moderate"],
         "file_path": "/tmp/test.h5"
     }

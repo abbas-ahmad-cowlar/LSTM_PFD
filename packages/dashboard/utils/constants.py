@@ -15,19 +15,19 @@ SAMPLING_RATE = 20480
 FAULT_CLASS_TO_IDX = {fault: idx for idx, fault in enumerate(FAULT_CLASSES)}
 IDX_TO_FAULT_CLASS = {idx: fault for idx, fault in enumerate(FAULT_CLASSES)}
 
-# Fault class display names
+# Fault class display names (aligned with FAULT_CLASSES order)
 FAULT_CLASS_NAMES = {
     "normal": "Normal",
-    "ball_fault": "Ball Fault",
-    "inner_race": "Inner Race Fault",
-    "outer_race": "Outer Race Fault",
-    "combined": "Combined Fault",
-    "imbalance": "Imbalance",
     "misalignment": "Misalignment",
-    "oil_whirl": "Oil Whirl",
-    "cavitation": "Cavitation",
+    "imbalance": "Imbalance",
     "looseness": "Looseness",
-    "oil_deficiency": "Oil Deficiency"
+    "lubrication": "Lubrication Issue",
+    "cavitation": "Cavitation",
+    "wear": "Wear",
+    "oil_whirl": "Oil Whirl",
+    "combined_misalign_imbalance": "Misalignment + Imbalance",
+    "combined_wear_lube": "Wear + Lubrication",
+    "combined_cavit_jeu": "Cavitation + Looseness"
 }
 
 # Color mapping for fault classes

@@ -235,13 +235,13 @@ def register_signal_viewer_callbacks(app):
             
             # Simple heuristic based on signal characteristics
             if rms > 0.8 or abs(kurtosis) > 10:
-                predicted_class = "Outer Race Fault"
+                predicted_class = "Cavitation"
                 confidence = 75.0
             elif rms > 0.6 or abs(kurtosis) > 6:
-                predicted_class = "Inner Race Fault"
+                predicted_class = "Wear"
                 confidence = 70.0
             elif rms > 0.4 or abs(kurtosis) > 4:
-                predicted_class = "Ball Fault"
+                predicted_class = "Looseness"
                 confidence = 65.0
             else:
                 predicted_class = "Normal"
