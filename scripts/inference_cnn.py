@@ -42,6 +42,7 @@ from models.cnn.multi_scale_cnn import MultiScaleCNN1D, DilatedMultiScaleCNN
 from data.cnn_transforms import normalize_signal
 from utils.device_manager import get_device
 from utils.logging import get_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 
 # Model registry
@@ -139,7 +140,7 @@ def load_model(checkpoint_path: str, model_type: str = None, device: torch.devic
         num_classes=NUM_CLASSES
 
     # Create model
-    model = model_class(num_classes=num_classes, input_length=102400, in_channels=1)
+    model = model_class(num_classes=num_classes, input_length=SIGNAL_LENGTH, in_channels=1)
 
     # Load weights
     model.load_state_dict(checkpoint['model_state_dict'])
@@ -234,7 +235,7 @@ def predict_single_signal(args, model, device, logger):
     logger.info(f"✓ Loaded signal: shape={signal.shape}")
 
     # Pad or trim to correct length
-    target_length = 102400
+    target_length = SIGNAL_LENGTH
     if len(signal) < target_length:
         signal = np.pad(signal, (0, target_length - len(signal)), mode='constant')
     elif len(signal) > target_length:
@@ -271,7 +272,7 @@ def predict_batch(args, model, device, logger):
         signal = load_signal(str(file_path), normalize=args.normalize)
 
         # Pad or trim
-        target_length = 102400
+        target_length = SIGNAL_LENGTH
         if len(signal) < target_length:
             signal = np.pad(signal, (0, target_length - len(signal)), mode='constant')
         elif len(signal) > target_length:
