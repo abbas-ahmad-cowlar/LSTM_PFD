@@ -39,7 +39,7 @@ import io
 # Add parent directory for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from utils.constants import NUM_CLASSES
+from utils.constants import NUM_CLASSES, FAULT_TYPES, FAULT_TYPE_DISPLAY_NAMES
 
 # Import all XAI methods
 from explainability.integrated_gradients import IntegratedGradientsExplainer
@@ -73,11 +73,9 @@ except ImportError:
 # Configuration
 # =============================================================================
 
-FAULT_CLASSES = [
-    'Healthy', 'Misalignment', 'Imbalance', 'Looseness',
-    'Bearing Outer Race', 'Bearing Inner Race', 'Bearing Ball',
-    'Gear Fault', 'Shaft Bent', 'Rotor Rub', 'Combined Fault'
-]
+# Fault classes aligned with Phase 0 data generation order
+# Dynamically generated from the single source of truth (utils.constants)
+FAULT_CLASSES = [FAULT_TYPE_DISPLAY_NAMES[ft] for ft in FAULT_TYPES]
 
 DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
 
