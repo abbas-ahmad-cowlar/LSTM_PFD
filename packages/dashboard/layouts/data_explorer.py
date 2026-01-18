@@ -63,13 +63,37 @@ def create_data_explorer_layout():
 
                     dbc.Tab(label="Feature Distributions", tab_id="features", children=[
                         html.Div([
-                            html.Label("Select Feature", className="mt-3"),
-                            dcc.Dropdown(
-                                id="feature-selector",
-                                placeholder="Select feature",
-                                className="mb-3"
-                            ),
-                            dcc.Graph(id="feature-distribution-plot")
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Label("Select Feature", className="mt-3"),
+                                    dcc.Dropdown(
+                                        id="feature-selector",
+                                        placeholder="Select feature",
+                                        className="mb-3"
+                                    ),
+                                ], width=6),
+                                dbc.Col([
+                                    html.Label("Chart Type", className="mt-3"),
+                                    dcc.Dropdown(
+                                        id="chart-type-selector",
+                                        options=[
+                                            {"label": "🎻 Violin Plot", "value": "violin"},
+                                            {"label": "🔵 Strip/Jitter", "value": "strip"},
+                                            {"label": "📈 KDE Lines", "value": "kde"},
+                                            {"label": "🏔️ Ridge Plot", "value": "ridge"},
+                                            {"label": "📊 Histogram", "value": "histogram"},
+                                        ],
+                                        value="violin",
+                                        clearable=False,
+                                        className="mb-3"
+                                    ),
+                                ], width=6),
+                            ]),
+                            dcc.Loading(
+                                id="feature-plot-loading",
+                                type="circle",
+                                children=dcc.Graph(id="feature-distribution-plot")
+                            )
                         ])
                     ]),
 
@@ -103,6 +127,119 @@ def create_data_explorer_layout():
                             )
                         ])
                     ]),
+
+                    # =========================================================
+                    # NEW: Spectral Analysis Tab (PSD, Envelope, Cepstrum)
+                    # =========================================================
+                    dbc.Tab(label="📊 Spectral Analysis", tab_id="spectral", children=[
+                        html.Div([
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Label("Analysis Type", className="mt-3"),
+                                    dcc.Dropdown(
+                                        id="spectral-analysis-type",
+                                        options=[
+                                            {"label": "📈 Power Spectral Density (PSD)", "value": "psd"},
+                                            {"label": "🌊 Envelope Spectrum", "value": "envelope"},
+                                            {"label": "🔄 Cepstrum Analysis", "value": "cepstrum"},
+                                        ],
+                                        value="psd",
+                                        clearable=False,
+                                        className="mb-3"
+                                    ),
+                                ], width=6),
+                                dbc.Col([
+                                    html.Label("Fault Class to Analyze", className="mt-3"),
+                                    dcc.Dropdown(
+                                        id="spectral-fault-selector",
+                                        options=[{"label": f.replace("_", " ").title(), "value": f}
+                                                 for f in FAULT_CLASSES],
+                                        value="normal",
+                                        clearable=False,
+                                        className="mb-3"
+                                    ),
+                                ], width=6),
+                            ]),
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Label("Rotational Frequency (Hz)", className="mt-2"),
+                                    dcc.Input(
+                                        id="rotational-freq-input",
+                                        type="number",
+                                        value=60,
+                                        min=1,
+                                        max=500,
+                                        step=1,
+                                        className="form-control mb-3",
+                                        style={"width": "150px"}
+                                    ),
+                                ], width=4),
+                                dbc.Col([
+                                    html.Div([
+                                        dbc.Checklist(
+                                            id="show-harmonics-toggle",
+                                            options=[{"label": " Show Harmonic Markers (1X, 2X, 3X)", "value": "show"}],
+                                            value=["show"],
+                                            className="mt-4"
+                                        )
+                                    ])
+                                ], width=8),
+                            ]),
+                            dcc.Loading(
+                                id="spectral-loading",
+                                type="circle",
+                                children=dcc.Graph(id="spectral-analysis-plot")
+                            ),
+                            # Info card
+                            dbc.Card([
+                                dbc.CardBody([
+                                    html.H6("About This Analysis", className="card-title"),
+                                    html.Div(id="spectral-info-text", className="small text-muted")
+                                ])
+                            ], className="mt-3", style={"backgroundColor": "#f8f9fa"})
+                        ])
+                    ]),
+
+                    # =========================================================
+                    # NEW: Feature Comparison Tab (Spider, Heatmap, Importance)
+                    # =========================================================
+                    dbc.Tab(label="🔬 Feature Comparison", tab_id="comparison", children=[
+                        html.Div([
+                            dbc.Row([
+                                dbc.Col([
+                                    html.Label("Comparison Type", className="mt-3"),
+                                    dcc.Dropdown(
+                                        id="comparison-chart-type",
+                                        options=[
+                                            {"label": "🕸️ Spider/Radar Chart", "value": "spider"},
+                                            {"label": "🔥 Feature Heatmap", "value": "heatmap"},
+                                            {"label": "📊 Feature Importance", "value": "importance"},
+                                        ],
+                                        value="spider",
+                                        clearable=False,
+                                        className="mb-3"
+                                    ),
+                                ], width=6),
+                                dbc.Col([
+                                    html.Label("Normalize Values", className="mt-3"),
+                                    dbc.Checklist(
+                                        id="normalize-features-toggle",
+                                        options=[{"label": " Normalize to 0-1 range", "value": "normalize"}],
+                                        value=["normalize"],
+                                        className="mt-2"
+                                    )
+                                ], width=6),
+                            ]),
+                            dcc.Loading(
+                                id="comparison-loading",
+                                type="circle",
+                                children=dcc.Graph(id="feature-comparison-plot", style={"height": "550px"})
+                            ),
+                            # Legend/description
+                            html.Div(id="comparison-description", className="mt-3 small text-muted text-center")
+                        ])
+                    ]),
+
                 ], id="data-explorer-tabs", active_tab="overview"),
 
                 html.Hr(),
