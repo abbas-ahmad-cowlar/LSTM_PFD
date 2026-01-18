@@ -117,9 +117,44 @@ class DatasetService:
             return None
 
     @staticmethod
+    def _resolve_file_path(file_path: str) -> Path:
+        """
+        Resolve file path, trying multiple base directories.
+        
+        Handles paths that may be:
+        1. Absolute paths
+        2. Relative to project root (LSTM_PFD/)
+        3. Relative to dashboard dir (packages/dashboard/)
+        """
+        path = Path(file_path)
+        
+        # Already absolute and exists
+        if path.is_absolute() and path.exists():
+            return path
+        
+        # Try relative to project root
+        project_root = Path(__file__).resolve().parent.parent.parent.parent
+        project_relative = project_root / file_path
+        if project_relative.exists():
+            return project_relative
+        
+        # Try relative to dashboard dir
+        dashboard_dir = Path(__file__).resolve().parent.parent
+        dashboard_relative = dashboard_dir / file_path
+        if dashboard_relative.exists():
+            return dashboard_relative
+        
+        # Return original path (will fail with clear error)
+        return path
+
+    @staticmethod
     def _load_file_statistics(file_path: str) -> Dict:
         """
         Load statistics from HDF5 file.
+        
+        Handles two HDF5 structures:
+        1. Flat: signals, labels at root level
+        2. Grouped: train/val/test groups with signals, labels inside each
 
         Args:
             file_path: Path to HDF5 file
@@ -128,6 +163,9 @@ class DatasetService:
             Dictionary with file statistics
         """
         try:
+            # Resolve path (handles relative paths)
+            resolved_path = DatasetService._resolve_file_path(file_path)
+            
             stats = {
                 'file_size_mb': 0,
                 'signal_length': 0,
@@ -136,33 +174,85 @@ class DatasetService:
                 'signal_statistics': {}
             }
 
-            with h5py.File(file_path, 'r') as f:
-                # File size
-                stats['file_size_mb'] = Path(file_path).stat().st_size / BYTES_PER_MB
+            # File size (always works)
+            if resolved_path.exists():
+                stats['file_size_mb'] = resolved_path.stat().st_size / BYTES_PER_MB
 
-                # Signal shape
-                if 'signals' in f:
-                    signals = f['signals'][:]
-                    stats['signal_length'] = signals.shape[1] if len(signals.shape) > 1 else len(signals)
-
-                # Sampling rate
-                if 'sampling_rate' in f.attrs:
-                    stats['sampling_rate'] = f.attrs['sampling_rate']
-
-                # Class distribution
-                if 'labels' in f:
-                    labels = f['labels'][:]
-                    unique, counts = np.unique(labels, return_counts=True)
-                    stats['class_distribution'] = {int(k): int(v) for k, v in zip(unique, counts)}
-
-                # Signal statistics (mean, std per class)
+            with h5py.File(str(resolved_path), 'r') as f:
+                signals = None
+                labels = None
+                
+                # Try flat structure first (signals, labels at root)
                 if 'signals' in f and 'labels' in f:
                     signals = f['signals'][:]
                     labels = f['labels'][:]
-
+                
+                # Try grouped structure (train/val/test groups)
+                elif 'train' in f or 'val' in f or 'test' in f:
+                    all_signals = []
+                    all_labels = []
+                    
+                    for split in ['train', 'val', 'test']:
+                        if split in f:
+                            grp = f[split]
+                            if 'signals' in grp:
+                                all_signals.append(grp['signals'][:])
+                            if 'labels' in grp:
+                                all_labels.append(grp['labels'][:])
+                    
+                    if all_signals:
+                        signals = np.concatenate(all_signals, axis=0)
+                    if all_labels:
+                        labels = np.concatenate(all_labels, axis=0)
+                
+                # Extract statistics from loaded data
+                if signals is not None:
+                    stats['signal_length'] = signals.shape[1] if len(signals.shape) > 1 else len(signals)
+                
+                # Sampling rate from attributes
+                if 'sampling_rate' in f.attrs:
+                    stats['sampling_rate'] = f.attrs['sampling_rate']
+                elif 'metadata' in f and 'sampling_rate' in f['metadata'].attrs:
+                    stats['sampling_rate'] = f['metadata'].attrs['sampling_rate']
+                
+                # Get class names from metadata if available
+                fault_class_names = {}
+                if 'metadata' in f and 'fault_classes' in f['metadata']:
+                    fault_classes = f['metadata']['fault_classes'][:]
+                    # Build name mapping from unique labels
+                    if labels is not None:
+                        unique_labels = np.unique(labels)
+                        for i, label_idx in enumerate(unique_labels):
+                            # Try to find a matching fault class name
+                            if label_idx < len(fault_classes):
+                                fault_class_names[int(label_idx)] = fault_classes[label_idx]
+                
+                # Class distribution
+                if labels is not None:
+                    unique, counts = np.unique(labels, return_counts=True)
+                    for k, v in zip(unique, counts):
+                        label_key = int(k)
+                        # Use fault class name if available, otherwise use index
+                        if label_key in fault_class_names:
+                            display_name = fault_class_names[label_key]
+                            if isinstance(display_name, bytes):
+                                display_name = display_name.decode('utf-8')
+                            stats['class_distribution'][display_name] = int(v)
+                        else:
+                            stats['class_distribution'][label_key] = int(v)
+                
+                # Signal statistics (mean, std per class)
+                if signals is not None and labels is not None:
                     for fault_class in np.unique(labels):
                         class_signals = signals[labels == fault_class]
-                        stats['signal_statistics'][int(fault_class)] = {
+                        class_key = int(fault_class)
+                        if class_key in fault_class_names:
+                            display_name = fault_class_names[class_key]
+                            if isinstance(display_name, bytes):
+                                display_name = display_name.decode('utf-8')
+                            class_key = display_name
+                        
+                        stats['signal_statistics'][class_key] = {
                             'mean': float(np.mean(class_signals)),
                             'std': float(np.std(class_signals)),
                             'min': float(np.min(class_signals)),
@@ -174,7 +264,7 @@ class DatasetService:
 
         except Exception as e:
             logger.error(f"Failed to load file statistics: {e}", exc_info=True)
-            return {}
+            return {'file_size_mb': Path(file_path).stat().st_size / BYTES_PER_MB if Path(file_path).exists() else 0}
 
     @staticmethod
     def get_dataset_preview(dataset_id: int, num_samples: int = 3) -> Dict:
