@@ -31,6 +31,8 @@ project_root = Path(__file__).parent.parent
 if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
+from utils.constants import NUM_CLASSES
+
 import argparse
 import numpy as np
 import torch
@@ -344,7 +346,7 @@ def demo_attention_visualization():
     
     # Create model
     model = PatchTST(
-        num_classes=11,
+        num_classes=NUM_CLASSES,
         input_length=10240,  # Smaller for demo
         patch_size=512,
         d_model=64,
