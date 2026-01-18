@@ -15,6 +15,16 @@ from typing import Dict, Tuple
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Import constants
+try:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from utils.constants import SAMPLING_RATE, SIGNAL_LENGTH
+except ImportError:
+    SAMPLING_RATE = 20480
+    SIGNAL_LENGTH = 102400
+
 
 def validate_data_compatibility() -> bool:
     """
@@ -70,7 +80,7 @@ def validate_data_compatibility() -> bool:
         return False
 
 
-def _generate_test_signal(length: int = 102400) -> np.ndarray:
+def _generate_test_signal(length: int = SIGNAL_LENGTH) -> np.ndarray:
     """Generate a test vibration signal."""
     t = np.linspace(0, 5, length)
     signal = (
@@ -85,7 +95,7 @@ def _test_feature_extraction(signal: np.ndarray) -> np.ndarray:
     """Test Phase 0 → Phase 1 data flow."""
     from features.feature_extractor import FeatureExtractor
 
-    extractor = FeatureExtractor(fs=20480)
+    extractor = FeatureExtractor(fs=SAMPLING_RATE)
     features = extractor.extract_features(signal)
 
     # Validate features
@@ -115,7 +125,7 @@ def _test_spectrogram_generation(signal: np.ndarray) -> np.ndarray:
     # Generate STFT spectrogram
     f, t, Zxx = scipy_signal.stft(
         signal,
-        fs=20480,
+        fs=SAMPLING_RATE,
         nperseg=256,
         noverlap=128
     )

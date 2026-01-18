@@ -14,6 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from utils.constants import SAMPLING_RATE
+
 
 @pytest.mark.integration
 class TestClassicalMLPipeline:
@@ -28,7 +30,7 @@ class TestClassicalMLPipeline:
         signals, labels = sample_batch_signals
 
         # 1. Feature extraction
-        extractor = FeatureExtractor(fs=20480)
+        extractor = FeatureExtractor(fs=SAMPLING_RATE)
         features_list = []
 
         for signal in signals:

@@ -15,6 +15,14 @@ import torch
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Import constants
+try:
+    import sys
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from utils.constants import SAMPLING_RATE
+except ImportError:
+    SAMPLING_RATE = 20480
+
 
 class UnifiedMLPipeline:
     """
@@ -146,7 +154,7 @@ class UnifiedMLPipeline:
                 results = pipeline.run(
                     signals=dataset.signals,
                     labels=dataset.labels,
-                    fs=20480
+                    fs=SAMPLING_RATE
                 )
             else:
                 # Load from cache
