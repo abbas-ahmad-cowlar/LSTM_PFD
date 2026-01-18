@@ -14,6 +14,9 @@ import torch.nn as nn
 from pathlib import Path
 import tempfile
 
+# Import NUM_CLASSES to avoid hardcoded magic number
+from utils.constants import NUM_CLASSES
+
 
 class TestCNN1D:
     """Test CNN1D model."""
@@ -22,7 +25,7 @@ class TestCNN1D:
         """Test forward pass output shape."""
         from packages.core.models import CNN1D
 
-        model = CNN1D(num_classes=11, input_channels=1)
+        model = CNN1D(num_classes=NUM_CLASSES, input_channels=1)
         x = torch.randn(4, 1, 5000)  # Batch of 4 signals
 
         output = model(x)
@@ -33,7 +36,7 @@ class TestCNN1D:
         """Test gradient flow through model."""
         from packages.core.models import CNN1D
 
-        model = CNN1D(num_classes=11)
+        model = CNN1D(num_classes=NUM_CLASSES)
         x = torch.randn(2, 1, 5000)
         target = torch.tensor([0, 1])
 
@@ -49,13 +52,13 @@ class TestCNN1D:
         """Test model save/load."""
         from packages.core.models import CNN1D
 
-        model = CNN1D(num_classes=11)
+        model = CNN1D(num_classes=NUM_CLASSES)
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pt') as f:
             torch.save(model.state_dict(), f.name)
 
             # Load model
-            model2 = CNN1D(num_classes=11)
+            model2 = CNN1D(num_classes=NUM_CLASSES)
             model2.load_state_dict(torch.load(f.name))
 
             # Clean up
@@ -69,7 +72,7 @@ class TestResNet1D:
         """Test forward pass output shape."""
         from packages.core.models import ResNet1D
 
-        model = ResNet1D(num_classes=11, input_channels=1)
+        model = ResNet1D(num_classes=NUM_CLASSES, input_channels=1)
         x = torch.randn(4, 1, 5000)
 
         output = model(x)
@@ -80,7 +83,7 @@ class TestResNet1D:
         """Test that residual connections work."""
         from packages.core.models import ResNet1D
 
-        model = ResNet1D(num_classes=11)
+        model = ResNet1D(num_classes=NUM_CLASSES)
         model.eval()
 
         x = torch.randn(2, 1, 5000)
@@ -99,7 +102,7 @@ class TestTransformer:
         from packages.core.models import SignalTransformer
 
         model = SignalTransformer(
-            num_classes=11,
+            num_classes=NUM_CLASSES,
             input_channels=1,
             patch_size=16,
             d_model=128,
@@ -119,7 +122,7 @@ class TestHybridPINN:
         """Test forward pass with physics features."""
         from packages.core.models import HybridPINN
 
-        model = HybridPINN(num_classes=11, physics_dim=32)
+        model = HybridPINN(num_classes=NUM_CLASSES, physics_dim=32)
 
         x = torch.randn(4, 1, 5000)
         physics_features = torch.randn(4, 32)
@@ -132,7 +135,7 @@ class TestHybridPINN:
         """Test forward pass without physics features."""
         from packages.core.models import HybridPINN
 
-        model = HybridPINN(num_classes=11, physics_dim=32)
+        model = HybridPINN(num_classes=NUM_CLASSES, physics_dim=32)
         x = torch.randn(4, 1, 5000)
 
         output = model(x)  # No physics features
@@ -148,14 +151,14 @@ class TestEnsemble:
         from packages.core.models import CNN1D, create_voting_ensemble
 
         # Create base models
-        model1 = CNN1D(num_classes=11)
-        model2 = CNN1D(num_classes=11)
+        model1 = CNN1D(num_classes=NUM_CLASSES)
+        model2 = CNN1D(num_classes=NUM_CLASSES)
 
         # Create ensemble
         ensemble = create_voting_ensemble(
             models=[model1, model2],
             voting_type='soft',
-            num_classes=11
+            num_classes=NUM_CLASSES
         )
 
         x = torch.randn(4, 1, 5000)
@@ -171,7 +174,7 @@ class TestModelFactory:
         """Test create_model factory function."""
         from packages.core.models import create_model
 
-        model = create_model('cnn1d', num_classes=11)
+        model = create_model('cnn1d', num_classes=NUM_CLASSES)
 
         assert model is not None
         assert hasattr(model, 'forward')
@@ -189,7 +192,7 @@ class TestModelFactory:
         """Test checkpoint save/load."""
         from packages.core.models import create_model, save_checkpoint, load_pretrained
 
-        model = create_model('cnn1d', num_classes=11)
+        model = create_model('cnn1d', num_classes=NUM_CLASSES)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             checkpoint_path = Path(tmpdir) / 'model.pt'
@@ -201,7 +204,7 @@ class TestModelFactory:
             loaded_model = load_pretrained(
                 'cnn1d',
                 str(checkpoint_path),
-                num_classes=11
+                num_classes=NUM_CLASSES
             )
 
             assert loaded_model is not None
