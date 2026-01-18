@@ -69,7 +69,7 @@ class TestAPISchemas:
         assert len(FAULT_CLASS_NAMES) == 11
         assert 0 in FAULT_CLASS_NAMES
         assert 10 in FAULT_CLASS_NAMES
-        assert FAULT_CLASS_NAMES[0] == "Normal"
+        assert FAULT_CLASS_NAMES[0] == "Healthy"  # Matches FAULT_TYPE_DISPLAY_NAMES['sain']
 
 
 @pytest.mark.unit
