@@ -20,6 +20,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
+from utils.constants import SAMPLING_RATE, SIGNAL_LENGTH
+
 from typing import Dict, List
 import logging
 
@@ -39,7 +41,7 @@ class BenchmarkSuite:
 
         logger.info(f"Benchmarking feature extraction ({num_samples} samples)...")
 
-        extractor = FeatureExtractor(fs=20480)
+        extractor = FeatureExtractor(fs=SAMPLING_RATE)
 
         # Generate test signals
         signals = [np.random.randn(102400).astype(np.float32) for _ in range(num_samples)]
