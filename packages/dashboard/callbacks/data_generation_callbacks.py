@@ -288,6 +288,13 @@ def register_data_generation_callbacks(app):
             Output('active-generation-id', 'data'),
             Output('generation-poll-interval', 'disabled'),
             Output('start-generation-btn', 'disabled'),
+            Output('start-generation-btn', 'children'),
+            Output('generation-status', 'children', allow_duplicate=True),
+            Output('generation-progress', 'value', allow_duplicate=True),
+            Output('generation-progress', 'style', allow_duplicate=True),
+            Output('progress-divider', 'style', allow_duplicate=True),
+            Output('generation-stats', 'children', allow_duplicate=True),
+            Output('generation-stats', 'style', allow_duplicate=True),
         ],
         Input('start-generation-btn', 'n_clicks'),
         [
@@ -313,18 +320,36 @@ def register_data_generation_callbacks(app):
                         severity_levels, temporal_evolution, noise_layers, speed_variation,
                         load_range, temp_range, aug_enabled, aug_ratio, aug_methods,
                         output_format, random_seed):
-        """Launch dataset generation task."""
+        """Launch dataset generation task with immediate visual feedback."""
         if not n_clicks:
             raise PreventUpdate
 
+        # Default button content
+        default_btn = [html.I(className="fas fa-play me-2"), "Generate Dataset"]
+        generating_btn = [html.I(className="fas fa-spinner fa-spin me-2"), "Generating..."]
+        
         # Validate inputs
         if not dataset_name:
             logger.error("Dataset name is required")
-            return None, True, False
+            return (
+                None, True, False, default_btn,
+                html.Div([
+                    html.I(className="fas fa-exclamation-triangle me-2 text-warning"),
+                    html.Span("Please enter a dataset name", className="text-warning")
+                ]),
+                0, {"display": "none"}, {"display": "none"}, [], {"display": "none"}
+            )
 
         if not fault_types:
             logger.error("At least one fault type must be selected")
-            return None, True, False
+            return (
+                None, True, False, default_btn,
+                html.Div([
+                    html.I(className="fas fa-exclamation-triangle me-2 text-warning"),
+                    html.Span("Please select at least one fault type", className="text-warning")
+                ]),
+                0, {"display": "none"}, {"display": "none"}, [], {"display": "none"}
+            )
 
         # Build configuration dictionary
         config = {
@@ -358,6 +383,8 @@ def register_data_generation_callbacks(app):
             'random_seed': random_seed or DEFAULT_RANDOM_SEED,
         }
 
+        total_signals = len(fault_types) * num_signals
+
         try:
             # Create database record
             with get_db_session() as session:
@@ -365,7 +392,7 @@ def register_data_generation_callbacks(app):
                     name=dataset_name,
                     config=config,
                     status=DatasetGenerationStatus.PENDING,
-                    num_signals=len(fault_types) * num_signals,
+                    num_signals=total_signals,
                     num_faults=len(fault_types),
                 )
                 session.add(generation)
@@ -387,12 +414,54 @@ def register_data_generation_callbacks(app):
 
             logger.info(f"Started dataset generation task {task.id} for generation {generation_id}")
 
-            # Enable polling, return generation ID, disable button
-            return generation_id, False, True
+            # Immediate visual feedback
+            status_content = html.Div([
+                html.I(className="fas fa-spinner fa-spin me-2 text-info"),
+                html.Span(f"Starting generation of '{dataset_name}'...", className="text-info"),
+                html.Br(),
+                html.Small(f"Task ID: {task.id[:8]}...", className="text-muted")
+            ])
+            
+            initial_stats = [
+                html.Div([
+                    html.Strong("Dataset: "),
+                    html.Span(dataset_name)
+                ], className="mb-1"),
+                html.Div([
+                    html.Strong("Signals: "),
+                    html.Span(f"{total_signals:,}")
+                ], className="mb-1"),
+                html.Div([
+                    html.Strong("Fault Types: "),
+                    html.Span(f"{len(fault_types)}")
+                ], className="mb-1"),
+            ]
+
+            # Return with immediate feedback - button disabled, progress visible
+            return (
+                generation_id,       # active-generation-id
+                False,               # generation-poll-interval disabled=False (enable polling)
+                True,                # start-generation-btn disabled=True
+                generating_btn,      # start-generation-btn children
+                status_content,      # generation-status
+                5,                   # generation-progress value (start at 5%)
+                {"display": "block"},  # generation-progress style
+                {"display": "block"},  # progress-divider style
+                initial_stats,       # generation-stats
+                {"display": "block"}   # generation-stats style
+            )
 
         except Exception as e:
             logger.error(f"Failed to start generation: {e}", exc_info=True)
-            return None, True, False
+            return (
+                None, True, False, default_btn,
+                html.Div([
+                    html.I(className="fas fa-exclamation-triangle me-2 text-danger"),
+                    html.Span(f"Error: {str(e)}", className="text-danger")
+                ]),
+                0, {"display": "none"}, {"display": "none"}, [], {"display": "none"}
+            )
+
 
     @app.callback(
         [
@@ -402,15 +471,22 @@ def register_data_generation_callbacks(app):
             Output('progress-divider', 'style'),
             Output('generation-stats', 'children'),
             Output('generation-stats', 'style'),
+            Output('start-generation-btn', 'disabled', allow_duplicate=True),
+            Output('start-generation-btn', 'children', allow_duplicate=True),
+            Output('generation-poll-interval', 'disabled', allow_duplicate=True),
+            Output('recent-generations-list', 'children', allow_duplicate=True),
         ],
         Input('generation-poll-interval', 'n_intervals'),
         State('active-generation-id', 'data'),
         prevent_initial_call=True
     )
     def poll_generation_status(n_intervals, generation_id):
-        """Poll generation status and update progress."""
+        """Poll generation status and update progress with full UI feedback."""
         if not generation_id:
             raise PreventUpdate
+
+        default_btn = [html.I(className="fas fa-play me-2"), "Generate Dataset"]
+        generating_btn = [html.I(className="fas fa-spinner fa-spin me-2"), "Generating..."]
 
         try:
             with get_db_session() as session:
@@ -423,62 +499,95 @@ def register_data_generation_callbacks(app):
                         {"display": "none"},
                         {"display": "none"},
                         [],
-                        {"display": "none"}
+                        {"display": "none"},
+                        False,  # Re-enable button
+                        default_btn,
+                        True,  # Stop polling
+                        no_update
                     )
 
                 if generation.status == DatasetGenerationStatus.RUNNING:
                     progress = generation.progress or 0
                     return (
                         html.Div([
-                            html.I(className="fas fa-spinner fa-spin me-2"),
-                            html.Span(f"Generating... {progress}% complete")
+                            html.I(className="fas fa-spinner fa-spin me-2 text-info"),
+                            html.Span(f"Generating... {progress}% complete", className="text-info")
                         ]),
                         progress,
                         {"display": "block"},
                         {"display": "block"},
                         _create_generation_stats(generation),
-                        {"display": "block"}
+                        {"display": "block"},
+                        True,  # Keep button disabled while running
+                        generating_btn,
+                        False,  # Keep polling
+                        no_update  # Don't refresh recent list yet
                     )
 
                 elif generation.status == DatasetGenerationStatus.COMPLETED:
+                    # Fetch updated recent generations list
+                    recent_list = _get_recent_generations_list(session)
                     return (
                         html.Div([
                             html.I(className="fas fa-check-circle me-2 text-success"),
-                            html.Span("Generation completed successfully!", className="text-success")
+                            html.Span("Generation completed successfully!", className="text-success"),
+                            html.Br(),
+                            html.Small(f"Output: {generation.output_path or 'data/generated'}", className="text-muted")
                         ]),
                         PERCENT_MULTIPLIER,
                         {"display": "block"},
                         {"display": "block"},
                         _create_generation_stats(generation),
-                        {"display": "block"}
+                        {"display": "block"},
+                        False,  # Re-enable button
+                        default_btn,
+                        True,  # Stop polling
+                        recent_list  # Update recent list
                     )
 
                 elif generation.status == DatasetGenerationStatus.FAILED:
+                    # Fetch updated recent generations list
+                    recent_list = _get_recent_generations_list(session)
+                    error_msg = generation.error_message if hasattr(generation, 'error_message') and generation.error_message else "Unknown error"
                     return (
                         html.Div([
                             html.I(className="fas fa-exclamation-triangle me-2 text-danger"),
-                            html.Span("Generation failed", className="text-danger")
+                            html.Span("Generation failed", className="text-danger"),
+                            html.Br(),
+                            html.Small(error_msg, className="text-muted")
                         ]),
                         0,
                         {"display": "none"},
                         {"display": "none"},
                         [],
-                        {"display": "none"}
+                        {"display": "none"},
+                        False,  # Re-enable button
+                        default_btn,
+                        True,  # Stop polling
+                        recent_list  # Update recent list
                     )
 
                 else:  # PENDING
                     return (
-                        html.P("Waiting to start...", className="text-muted"),
+                        html.Div([
+                            html.I(className="fas fa-clock me-2 text-secondary"),
+                            html.Span("Waiting to start...", className="text-muted")
+                        ]),
                         0,
                         {"display": "none"},
                         {"display": "none"},
                         [],
-                        {"display": "none"}
+                        {"display": "none"},
+                        True,  # Keep button disabled
+                        generating_btn,
+                        False,  # Keep polling
+                        no_update
                     )
 
         except Exception as e:
             logger.error(f"Error polling generation status: {e}")
             raise PreventUpdate
+
 
     @app.callback(
         Output('recent-generations-list', 'children'),
@@ -555,6 +664,42 @@ def _create_generation_stats(generation):
             html.Span(generation.output_path or "Generating...")
         ], className="mb-1"),
     ]
+
+
+def _get_recent_generations_list(session):
+    """Get recent generations list for UI display (called within session)."""
+    try:
+        generations = session.query(DatasetGeneration)\
+            .order_by(DatasetGeneration.created_at.desc())\
+            .limit(DEFAULT_RECENT_ITEMS_LIMIT)\
+            .all()
+
+        if not generations:
+            return html.P("No recent generations", className="text-muted")
+
+        items = []
+        for gen in generations:
+            status_icon = _get_status_icon(gen.status)
+            status_color = _get_status_color(gen.status)
+
+            items.append(
+                html.Div([
+                    html.Div([
+                        html.I(className=f"{status_icon} me-2 text-{status_color}"),
+                        html.Strong(gen.name),
+                    ]),
+                    html.Small(
+                        f"{gen.num_signals} signals • {gen.created_at.strftime('%Y-%m-%d %H:%M')}",
+                        className="text-muted"
+                    ),
+                ], className="mb-2 pb-2 border-bottom")
+            )
+
+        return items
+
+    except Exception as e:
+        logger.error(f"Error fetching recent generations: {e}")
+        return html.P("Error loading generations", className="text-danger")
 
 
 def _get_status_icon(status):
