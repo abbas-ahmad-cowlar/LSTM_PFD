@@ -85,26 +85,29 @@ MAX_TRAINING_DURATION = 7200  # 2 hours max per training task
 TASK_POLL_INTERVAL = 2  # seconds between progress polls
 
 # Model Configuration
+# FAULT_CLASSES aligned with Phase 0 data generation order (French -> English)
 FAULT_CLASSES = [
-    "normal", "ball_fault", "inner_race", "outer_race", "combined",
-    "imbalance", "misalignment", "oil_whirl", "cavitation", "looseness", "oil_deficiency"
+    "normal", "misalignment", "imbalance", "looseness", "lubrication",
+    "cavitation", "wear", "oil_whirl", "combined_misalign_imbalance",
+    "combined_wear_lube", "combined_cavit_jeu"
 ]
 NUM_CLASSES = len(FAULT_CLASSES)
 
 # Mapping between Dashboard fault names and Phase 0 fault names
 # Dashboard uses English names, Phase 0 uses French names from data generation
+# These mappings are bidirectional and index-consistent
 DASHBOARD_TO_PHASE0_FAULT_MAP = {
-    "normal": "sain",
-    "misalignment": "desalignement",
-    "imbalance": "desequilibre",
-    "looseness": "jeu",
-    "oil_deficiency": "lubrification",
-    "cavitation": "cavitation",
-    "ball_fault": "usure",  # Using 'wear' as closest match
-    "oil_whirl": "oilwhirl",
-    "inner_race": "mixed_wear_lube",  # These may need custom mapping
-    "outer_race": "mixed_cavit_jeu",
-    "combined": "mixed_misalign_imbalance"
+    "normal": "sain",                                      # Index 0
+    "misalignment": "desalignement",                       # Index 1
+    "imbalance": "desequilibre",                           # Index 2
+    "looseness": "jeu",                                    # Index 3
+    "lubrication": "lubrification",                        # Index 4
+    "cavitation": "cavitation",                            # Index 5
+    "wear": "usure",                                       # Index 6
+    "oil_whirl": "oilwhirl",                               # Index 7
+    "combined_misalign_imbalance": "mixed_misalign_imbalance",  # Index 8
+    "combined_wear_lube": "mixed_wear_lube",               # Index 9
+    "combined_cavit_jeu": "mixed_cavit_jeu"                # Index 10
 }
 
 # Reverse mapping for Phase 0 to Dashboard
