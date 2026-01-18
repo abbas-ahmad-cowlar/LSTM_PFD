@@ -242,9 +242,10 @@ def register_data_explorer_callbacks(app):
             
             params = feature_params.get(feature, {'mean': 0, 'std': 1, 'label': feature})
             
-            # Fault classes to simulate
-            all_fault_classes = ['normal', 'ball_fault', 'inner_race', 'outer_race', 
-                                  'combined', 'imbalance', 'misalignment']
+            # Fault classes aligned with Phase 0 (same order as FAULT_CLASSES)
+            all_fault_classes = ['normal', 'misalignment', 'imbalance', 'looseness', 'lubrication',
+                                  'cavitation', 'wear', 'oil_whirl', 'combined_misalign_imbalance',
+                                  'combined_wear_lube', 'combined_cavit_jeu']
             
             # Apply fault filter
             if fault_filter:
@@ -267,8 +268,8 @@ def register_data_explorer_callbacks(app):
                 np.random.seed(hash(f"{feature}_{fault}") % (2**32))
                 offset = (i - len(active_faults)/2) * params['std'] * 0.3
                 values = np.random.normal(params['mean'] + offset, params['std'], n_samples_per_class)
-                
-                if fault in ['ball_fault', 'inner_race', 'outer_race']:
+                # Fault-specific adjustments
+                if fault in ['looseness', 'cavitation', 'wear']:
                     values = values * 1.2
                 elif fault == 'normal':
                     values = values * 0.8
@@ -461,8 +462,13 @@ def register_data_explorer_callbacks(app):
             n_classes = 7  # Normal + 6 fault types
             
             # Generate clustered 2D data
+            # Fault classes aligned with Phase 0
+            class_names = ['Normal', 'Misalignment', 'Imbalance', 'Looseness', 'Lubrication',
+                          'Cavitation', 'Wear', 'Oil Whirl', 'Combined Misalign+Imbalance',
+                          'Combined Wear+Lube', 'Combined Cavit+Jeu']
+            n_classes = len(class_names)
+            
             x, y, labels = [], [], []
-            class_names = ['Normal', 'Ball Fault', 'Inner Race', 'Outer Race', 'Combined', 'Imbalance', 'Misalignment']
             
             for i in range(n_classes):
                 cx, cy = np.random.randn(2) * 3
@@ -527,16 +533,23 @@ def register_data_explorer_callbacks(app):
                      0.08 * np.sin(2 * np.pi * 3 * omega * t))  # 3X
             
             # Add fault-specific characteristics
-            if fault_class == 'ball_fault':
-                # Ball fault: high frequency components
+            if fault_class == 'looseness':
+                # Looseness: strong higher harmonics
                 signal += 0.2 * np.sin(2 * np.pi * 3.5 * omega * t)
-                signal += 0.1 * np.sin(2 * np.pi * 7 * omega * t)
-            elif fault_class == 'inner_race':
-                # Inner race: modulated signal
+                signal += 0.15 * np.sin(2 * np.pi * 4 * omega * t)
+            elif fault_class == 'lubrication':
+                # Lubrication issues: broadband noise increase
+                signal += 0.15 * np.random.randn(len(t))
+            elif fault_class == 'wear':
+                # Wear: modulated signal with additional harmonics
                 signal = signal * (1 + 0.3 * np.sin(2 * np.pi * 0.4 * omega * t))
-            elif fault_class == 'outer_race':
-                # Outer race: impact-like components
-                signal += 0.25 * np.sin(2 * np.pi * 4.2 * omega * t)
+            elif fault_class == 'oil_whirl':
+                # Oil whirl: sub-synchronous component (~0.4X)
+                signal += 0.3 * np.sin(2 * np.pi * 0.42 * omega * t)
+            elif fault_class == 'cavitation':
+                # Cavitation: random impacts and broadband
+                signal += 0.2 * np.sin(2 * np.pi * 4.2 * omega * t)
+                signal += 0.1 * np.random.randn(len(t))
             elif fault_class == 'misalignment':
                 # Misalignment: strong 2X component
                 signal += 0.35 * np.sin(2 * np.pi * 2 * omega * t + 0.5)
@@ -704,32 +717,38 @@ def register_data_explorer_callbacks(app):
             
             # Feature data (simulated - in production load from actual features)
             feature_names = ['RMS', 'Kurtosis', 'Crest Factor', '2X/1X Ratio', '3X/1X Ratio', 'Skewness']
-            fault_classes = ['Normal', 'Ball Fault', 'Inner Race', 'Outer Race', 
-                            'Misalignment', 'Imbalance', 'Cavitation']
+            fault_classes = ['Normal', 'Misalignment', 'Imbalance', 'Looseness', 
+                            'Lubrication', 'Cavitation', 'Wear', 'Oil Whirl']
             
             # Apply fault filter
             if fault_filter:
                 fault_mapping = {
-                    'normal': 'Normal', 'ball_fault': 'Ball Fault', 'inner_race': 'Inner Race',
-                    'outer_race': 'Outer Race', 'misalignment': 'Misalignment',
-                    'imbalance': 'Imbalance', 'cavitation': 'Cavitation'
+                    'normal': 'Normal', 'misalignment': 'Misalignment', 'imbalance': 'Imbalance',
+                    'looseness': 'Looseness', 'lubrication': 'Lubrication', 'cavitation': 'Cavitation',
+                    'wear': 'Wear', 'oil_whirl': 'Oil Whirl',
+                    'combined_misalign_imbalance': 'Combined Misalign+Imbalance',
+                    'combined_wear_lube': 'Combined Wear+Lube',
+                    'combined_cavit_jeu': 'Combined Cavit+Jeu'
                 }
                 fault_classes = [fault_mapping.get(f, f.replace('_', ' ').title()) 
-                                for f in fault_filter if fault_mapping.get(f) in fault_classes]
+                                for f in fault_filter if f in fault_mapping]
             
             if not fault_classes:
-                fault_classes = ['Normal', 'Ball Fault', 'Inner Race']
-            
-            # Simulated feature values (realistic ranges)
+                fault_classes = ['Normal', 'Misalignment', 'Imbalance']
+            # Simulated feature values (realistic ranges per fault type)
             np.random.seed(42)
             feature_matrix = {
                 'Normal':      [0.05, 3.0, 3.2, 0.01, 0.02, 0.0],
-                'Ball Fault':  [0.15, 5.5, 4.8, 0.08, 0.06, 0.2],
-                'Inner Race':  [0.18, 6.2, 5.2, 0.12, 0.08, 0.3],
-                'Outer Race':  [0.14, 5.0, 4.5, 0.15, 0.05, 0.1],
                 'Misalignment':[0.12, 3.5, 3.8, 0.45, 0.35, 0.1],
                 'Imbalance':   [0.20, 3.2, 3.5, 0.05, 0.02, 0.0],
+                'Looseness':   [0.15, 5.5, 4.8, 0.08, 0.06, 0.2],
+                'Lubrication': [0.14, 4.5, 4.2, 0.10, 0.05, 0.15],
                 'Cavitation':  [0.10, 8.0, 6.0, 0.03, 0.01, 0.5],
+                'Wear':        [0.18, 6.2, 5.2, 0.12, 0.08, 0.3],
+                'Oil Whirl':   [0.16, 4.0, 4.0, 0.30, 0.15, 0.2],
+                'Combined Misalign+Imbalance': [0.25, 4.0, 4.5, 0.40, 0.30, 0.15],
+                'Combined Wear+Lube': [0.22, 5.5, 5.0, 0.15, 0.10, 0.35],
+                'Combined Cavit+Jeu': [0.18, 7.0, 5.5, 0.10, 0.08, 0.45],
             }
             
             # Build matrix for selected faults

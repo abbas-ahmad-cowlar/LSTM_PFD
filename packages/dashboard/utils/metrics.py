@@ -207,7 +207,7 @@ if __name__ == '__main__':
     with INFERENCE_TIME.labels(model='pinn').time():
         time.sleep(0.05)  # Simulate 50ms inference
     
-    INFERENCE_COUNT.labels(model='pinn', fault_class='inner_race').inc()
+    INFERENCE_COUNT.labels(model='pinn', fault_class='wear').inc()
     
     # Print metrics
     print(get_metrics().decode())

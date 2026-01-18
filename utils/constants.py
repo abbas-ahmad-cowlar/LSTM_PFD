@@ -89,29 +89,32 @@ MIXED_FAULT_TYPES: List[str] = [
 ]
 
 # Phase 6 PINN-compatible fault labels (English naming for physics models)
-# These map to the same indices as FAULT_TYPES but use English/physics terminology
+# These map to the SAME indices as FAULT_TYPES - Critical for model correctness!
+# Index must match Phase 0 data generation order exactly.
 FAULT_LABELS_PINN = {
-    0: 'healthy',
-    1: 'misalignment',
-    2: 'imbalance',
-    3: 'outer_race',
-    4: 'inner_race',
-    5: 'ball',
-    6: 'looseness',
-    7: 'oil_whirl',
-    8: 'cavitation',
-    9: 'wear',
-    10: 'lubrication'
+    0: 'healthy',                      # Phase 0: sain
+    1: 'misalignment',                 # Phase 0: desalignement
+    2: 'imbalance',                    # Phase 0: desequilibre
+    3: 'looseness',                    # Phase 0: jeu (bearing clearance)
+    4: 'lubrication',                  # Phase 0: lubrification
+    5: 'cavitation',                   # Phase 0: cavitation
+    6: 'wear',                         # Phase 0: usure
+    7: 'oil_whirl',                    # Phase 0: oilwhirl
+    8: 'combined_misalign_imbalance',  # Phase 0: mixed_misalign_imbalance
+    9: 'combined_wear_lube',           # Phase 0: mixed_wear_lube
+    10: 'combined_cavit_jeu'           # Phase 0: mixed_cavit_jeu
 }
 
 # Use PINN labels as default alias for backward compatibility with Phase 6
 FAULT_LABELS = FAULT_LABELS_PINN
 
 # Dashboard-compatible fault class names (English naming convention)
+# Aligned with FAULT_TYPES/Phase 0 order for index consistency
 # Used by packages/dashboard for UI display
 FAULT_CLASSES: List[str] = [
-    "normal", "ball_fault", "inner_race", "outer_race", "combined",
-    "imbalance", "misalignment", "oil_whirl", "cavitation", "looseness", "oil_deficiency"
+    "normal", "misalignment", "imbalance", "looseness", "lubrication",
+    "cavitation", "wear", "oil_whirl", "combined_misalign_imbalance",
+    "combined_wear_lube", "combined_cavit_jeu"
 ]
 
 
