@@ -50,6 +50,8 @@ def register_data_explorer_callbacks(app):
     )
     def update_class_distribution(dataset_id, fault_filter, severity_filter):
         """Update class distribution chart with filter support."""
+        from dashboard_config import DASHBOARD_TO_PHASE0_FAULT_MAP, PHASE0_TO_DASHBOARD_FAULT_MAP
+        
         if not dataset_id:
             fig = go.Figure()
             fig.update_layout(
@@ -67,26 +69,45 @@ def register_data_explorer_callbacks(app):
                 return fig
 
             # Apply fault class filter if provided
+            # Handle both English (dashboard) and French (Phase0) fault names
             if fault_filter:
-                dist = {k: v for k, v in dist.items() if k in fault_filter}
+                # Build a set of acceptable names (both English and French versions)
+                acceptable_names = set()
+                for f in fault_filter:
+                    acceptable_names.add(f)  # Add English name
+                    acceptable_names.add(f.lower())
+                    # Also add French equivalent
+                    if f in DASHBOARD_TO_PHASE0_FAULT_MAP:
+                        acceptable_names.add(DASHBOARD_TO_PHASE0_FAULT_MAP[f])
+                
+                # Filter distribution
+                dist = {k: v for k, v in dist.items() if k in acceptable_names or k.lower() in acceptable_names}
             
             if not dist:
                 fig = go.Figure()
                 fig.update_layout(annotations=[dict(text="No classes match filter", showarrow=False)])
                 return fig
 
+            # Convert French names to English for display
+            display_dist = {}
+            for k, v in dist.items():
+                display_name = PHASE0_TO_DASHBOARD_FAULT_MAP.get(k, k)
+                display_name = display_name.replace('_', ' ').title()
+                display_dist[display_name] = v
+
             fig = px.bar(
-                x=list(dist.keys()),
-                y=list(dist.values()),
+                x=list(display_dist.keys()),
+                y=list(display_dist.values()),
                 labels={"x": "Fault Class", "y": "Count"},
                 title="Class Distribution",
-                color=list(dist.keys()),
+                color=list(display_dist.keys()),
             )
             fig.update_layout(showlegend=False)
             return fig
         except Exception as e:
             logger.error(f"Error creating chart: {e}")
             return {}
+
 
     # =========================================================================
     # UPDATE SUMMARY STATISTICS
