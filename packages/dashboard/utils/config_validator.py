@@ -132,13 +132,26 @@ class ConfigValidator:
         errors = []
         warnings_list = []
 
-        # Check format
-        if not url.startswith(('postgresql://', 'postgres://')):
-            errors.append(
-                f"❌ DATABASE_URL must start with 'postgresql://' or 'postgres://'\n"
-                f"   Current value: {url[:20]}..."
-            )
-            return ValidationResult(False, errors, warnings_list)
+        # Check format - SQLite is allowed in development/testing, PostgreSQL required in production
+        if env == 'production':
+            if not url.startswith(('postgresql://', 'postgres://')):
+                errors.append(
+                    f"❌ DATABASE_URL must start with 'postgresql://' or 'postgres://' in production\n"
+                    f"   Current value: {url[:20]}..."
+                )
+                return ValidationResult(False, errors, warnings_list)
+        else:
+            # Development/testing: allow SQLite or PostgreSQL
+            if not url.startswith(('postgresql://', 'postgres://', 'sqlite://')):
+                errors.append(
+                    f"❌ DATABASE_URL must start with 'postgresql://', 'postgres://', or 'sqlite://'\n"
+                    f"   Current value: {url[:20]}..."
+                )
+                return ValidationResult(False, errors, warnings_list)
+            
+            # If using SQLite, skip password validation
+            if url.startswith('sqlite://'):
+                return ValidationResult(True, [], [])
 
         # Extract password from URL for validation
         password_match = re.search(r':([^@]+)@', url)

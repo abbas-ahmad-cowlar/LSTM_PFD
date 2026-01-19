@@ -146,7 +146,7 @@ def create_metrics_history_chart():
             cutoff = datetime.utcnow() - timedelta(hours=24)
             logs = session.query(SystemLog).filter(
                 SystemLog.created_at >= cutoff,
-                SystemLog.message == "System metrics"
+                SystemLog.action == "system_metrics"  # Fixed: was SystemLog.message which doesn't exist
             ).order_by(SystemLog.created_at.asc()).limit(288).all()  # Max 288 points (5min intervals for 24h)
 
             if not logs:
