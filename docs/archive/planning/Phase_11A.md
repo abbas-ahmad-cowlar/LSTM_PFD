@@ -1,3 +1,10 @@
+> [!WARNING]
+> **Archived Document**
+> This document is historical and may be outdated.
+> For current information, see the main documentation.
+>
+> *Archived on: 2026-01-20*
+> *Reason: Superseded by consolidated documentation*
 # 📋 PLOTLY DASH APPLICATION: COMPREHENSIVE PLANNING DOCUMENT
 
 **Context:** After reviewing all Phases 0-10, this plan outlines how to build an enterprise-grade Plotly Dash application that integrates with the complete ML pipeline for bearing fault diagnosis.
