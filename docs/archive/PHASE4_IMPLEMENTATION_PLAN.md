@@ -1,3 +1,10 @@
+> [!WARNING]
+> **Archived Document**
+> This document is historical and may be outdated.
+> For current information, see the main documentation.
+>
+> *Archived on: 2026-01-20*
+> *Reason: Superseded by consolidated documentation*
 # Phase 4 Features Implementation Plan
 
 **Created**: 2025-11-22
