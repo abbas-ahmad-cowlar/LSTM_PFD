@@ -72,6 +72,9 @@ app.layout = html.Div([
     # Sidebar - fixed position, outside content flow
     create_sidebar(),
     
+    # Mobile overlay (for closing sidebar on tap outside)
+    html.Div(id="sidebar-overlay", className="sidebar-overlay", n_clicks=0),
+    
     # Main wrapper - everything that needs to shift with sidebar
     html.Div([
         create_header(),
