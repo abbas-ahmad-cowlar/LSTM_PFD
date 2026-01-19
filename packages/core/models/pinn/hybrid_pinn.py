@@ -355,6 +355,25 @@ class HybridPINN(BaseModel):
 
         return output, features
 
+    def get_config(self) -> Dict[str, any]:
+        """
+        Get model configuration dictionary.
+        
+        Required by BaseModel abstract interface.
+        
+        Returns:
+            Dictionary with model hyperparameters
+        """
+        return {
+            'model_name': 'HybridPINN',
+            'num_classes': self.num_classes,
+            'input_length': self.input_length,
+            'backbone': self.backbone_name,
+            'physics_feature_dim': self.physics_feature_dim,
+            'fusion_dim': self.fusion_dim,
+            'dropout': self.dropout_prob,
+        }
+
     def get_model_info(self) -> Dict[str, any]:
         """Get model configuration and statistics."""
         total_params = sum(p.numel() for p in self.parameters())
