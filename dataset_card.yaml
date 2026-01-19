@@ -1,0 +1,92 @@
+# LSTM-PFD Bearing Fault Dataset Card
+# Per MASTER_ROADMAP_FINAL.md Chapter 3.5 - Dataset Contribution
+# Format follows ML dataset card best practices
+
+name: LSTM-PFD Bearing Fault Dataset
+version: 1.0.0
+license: CC-BY-4.0
+doi: 10.5281/zenodo.XXXXXXX # TODO: Update after Zenodo upload
+
+# Dataset Overview
+description: |
+  Physics-informed synthetic bearing vibration signals for fault diagnosis research.
+  Generated using the LSTM-PFD signal generator with 11 fault classes, 7-layer 
+  independent noise model, and multi-severity progression.
+
+# Size and Format
+size: 2.3 GB
+format:
+  - HDF5 (primary)
+  - CSV (metadata)
+samples: 50000
+classes: 11
+
+# Class Distribution
+class_names:
+  - Normal
+  - Ball_007
+  - Ball_014
+  - Ball_021
+  - Inner_Race_007
+  - Inner_Race_014
+  - Inner_Race_021
+  - Outer_Race_007
+  - Outer_Race_014
+  - Outer_Race_021
+  - Roller
+
+# Technical Specifications
+sampling_rate: 20480 # Hz
+signal_length: 102400 # samples (5 seconds)
+severity_levels:
+  - low (007)
+  - medium (014)
+  - high (021)
+
+# Physics Model
+physics_basis: |
+  Signals generated using bearing dynamics equations:
+  - f_BPFO = (n/2) * (1 - d/D * cos(θ)) * f_r
+  - f_BPFI = (n/2) * (1 + d/D * cos(θ)) * f_r  
+  - f_BSF = (D/2d) * (1 - (d/D * cos(θ))²) * f_r
+
+# Data Quality
+quality_comparison:
+  metric: value
+  mean_rms: 0.42
+  peak_frequency_hz: 118
+  kurtosis: 3.8
+  crest_factor: 4.2
+  reference_dataset: CWRU
+
+# Splits
+train_split: 0.70
+validation_split: 0.15
+test_split: 0.15
+
+# Versioning
+dvc_tracked: true
+git_tag: data-v1.0
+
+# Citation
+citation: |
+  @dataset{lstm_pfd_2026,
+    author = {Ahmad, Abbas and Contributors},
+    title = {LSTM-PFD Bearing Fault Dataset: Physics-Informed Synthetic Vibration Signals},
+    year = {2026},
+    publisher = {Zenodo},
+    doi = {10.5281/zenodo.XXXXXXX},
+    url = {https://github.com/abbas-ahmad-cowlar/LSTM_PFD}
+  }
+
+# Usage
+usage_example: |
+  import h5py
+
+  with h5py.File('bearing_dataset.h5', 'r') as f:
+      X_train = f['train/signals'][:]
+      y_train = f['train/labels'][:]
+
+# Contact
+maintainer: Abbas Ahmad
+repository: https://github.com/abbas-ahmad-cowlar/LSTM_PFD
