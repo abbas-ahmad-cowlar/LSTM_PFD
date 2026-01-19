@@ -85,9 +85,12 @@ Thumbs.db
 
 # Project specific
 data/raw/
-data/processed/
+# data/processed/ is handled by local .gitignore for DVC support
 *.h5
 *.hdf5
+!*.dvc
+!.dvc/
+.dvc/cache/
 checkpoints/
 logs/
 results/

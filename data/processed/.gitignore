@@ -1,0 +1,6 @@
+# Ignore all files in this directory
+*
+# But don't ignore .dvc pointer files
+!*.dvc
+# And don't ignore this .gitignore
+!.gitignore
