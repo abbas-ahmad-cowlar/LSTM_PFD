@@ -64,5 +64,20 @@ services:
       redis:
         condition: service_healthy
 
+  # INT-6: Flower UI for Celery task monitoring
+  flower:
+    build: .
+    command: celery -A tasks.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    volumes:
+      - ..:/app
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   postgres_data:
