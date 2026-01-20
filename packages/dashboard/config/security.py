@@ -66,8 +66,8 @@ BACKUP_CODE_BCRYPT_ROUNDS = 12
 # Session token length (URL-safe base64 characters)
 SESSION_TOKEN_LENGTH = 32
 
-# Session inactivity timeout in hours
-SESSION_TIMEOUT_HOURS = 24
+# Session inactivity timeout in hours (Phase 4.1 SEC-1: ≤30 minutes)
+SESSION_TIMEOUT_HOURS = 0.5  # 30 minutes
 
 # Maximum concurrent sessions per user (0 = unlimited)
 MAX_CONCURRENT_SESSIONS = 5
