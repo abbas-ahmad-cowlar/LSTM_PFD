@@ -1,6 +1,12 @@
 """
 Hyperparameter Optimization Campaigns (Phase 11C).
 UI for creating and monitoring HPO campaigns.
+
+Enhanced with:
+- Resume functionality (HPO-5)
+- Export functionality (HPO-6)
+- Parallel Coordinates visualization (HPO-7)
+- Parameter Importance chart (HPO-8)
 """
 import dash_bootstrap_components as dbc
 from dash import html, dcc
@@ -27,6 +33,39 @@ def create_hpo_campaigns_layout():
         dbc.Row([
             dbc.Col([
                 html.Div(id="hpo-campaigns-list")
+            ])
+        ], className="mb-4"),
+
+        # Visualization Section (shown when a campaign is selected)
+        dbc.Row([
+            dbc.Col([
+                dbc.Card([
+                    dbc.CardHeader([
+                        html.H5([html.I(className="fas fa-chart-line me-2"), "Campaign Visualizations"], className="mb-0")
+                    ]),
+                    dbc.CardBody([
+                        dbc.Tabs([
+                            dbc.Tab(label="Parallel Coordinates", tab_id="parallel-coords-tab", children=[
+                                html.Div([
+                                    html.P("Visualize hyperparameter relationships across all trials", className="text-muted mt-2"),
+                                    dcc.Graph(id="hpo-parallel-coords-chart", style={"height": "400px"})
+                                ])
+                            ]),
+                            dbc.Tab(label="Parameter Importance", tab_id="param-importance-tab", children=[
+                                html.Div([
+                                    html.P("See which hyperparameters have the most impact on performance", className="text-muted mt-2"),
+                                    dcc.Graph(id="hpo-param-importance-chart", style={"height": "400px"})
+                                ])
+                            ]),
+                            dbc.Tab(label="Optimization History", tab_id="opt-history-tab", children=[
+                                html.Div([
+                                    html.P("Track the optimization progress over trials", className="text-muted mt-2"),
+                                    dcc.Graph(id="hpo-optimization-history-chart", style={"height": "400px"})
+                                ])
+                            ]),
+                        ], id="hpo-viz-tabs", active_tab="parallel-coords-tab")
+                    ])
+                ], id="hpo-viz-card", className="shadow-sm", style={"display": "none"})
             ])
         ], className="mb-4"),
 
@@ -88,19 +127,102 @@ def create_hpo_campaigns_layout():
             ])
         ], id="hpo-modal", size="lg", is_open=False),
 
+        # Export modal
+        dbc.Modal([
+            dbc.ModalHeader("Export Campaign Results"),
+            dbc.ModalBody([
+                html.P("Select export format for campaign results:"),
+                dbc.RadioItems(
+                    id="hpo-export-format",
+                    options=[
+                        {"label": "JSON - Full trial data", "value": "json"},
+                        {"label": "YAML - Configuration format", "value": "yaml"},
+                        {"label": "Python - Best params as dict", "value": "python"},
+                    ],
+                    value="json",
+                    className="mb-3"
+                ),
+                html.Div(id="hpo-export-preview", className="mt-3")
+            ]),
+            dbc.ModalFooter([
+                dbc.Button("Cancel", id="hpo-export-cancel-btn", color="secondary"),
+                dbc.Button([html.I(className="fas fa-download me-2"), "Download"], 
+                          id="hpo-export-download-btn", color="primary"),
+            ])
+        ], id="hpo-export-modal", size="lg", is_open=False),
+
+        # Hidden stores
+        dcc.Store(id="hpo-selected-campaign-id", data=None),
+        dcc.Download(id="hpo-download-export"),
+
     ], fluid=True)
 
 
 def create_hpo_campaign_card(campaign):
-    """Create a card for an HPO campaign."""
+    """Create a card for an HPO campaign with enhanced controls."""
+    # Determine status color and badge
+    status_colors = {
+        "running": "primary",
+        "completed": "success",
+        "failed": "danger",
+        "paused": "warning",
+        "cancelled": "secondary",
+        "pending": "info",
+    }
+    status_color = status_colors.get(campaign.status, "secondary")
+    
+    # Build action buttons based on status
+    action_buttons = []
+    
+    # View Details - always available
+    action_buttons.append(
+        dbc.Button([html.I(className="fas fa-eye me-1"), "Details"], 
+                   id={"type": "view-hpo-btn", "index": campaign.id}, 
+                   color="info", size="sm", className="me-1")
+    )
+    
+    # Visualizations - available for completed campaigns with trials
+    if campaign.status == "completed" and campaign.completed_trials > 0:
+        action_buttons.append(
+            dbc.Button([html.I(className="fas fa-chart-bar me-1"), "Visualize"], 
+                       id={"type": "viz-hpo-btn", "index": campaign.id}, 
+                       color="primary", size="sm", className="me-1")
+        )
+    
+    # Export - available for completed campaigns
+    if campaign.status == "completed":
+        action_buttons.append(
+            dbc.Button([html.I(className="fas fa-download me-1"), "Export"], 
+                       id={"type": "export-hpo-btn", "index": campaign.id}, 
+                       color="success", size="sm", className="me-1")
+        )
+    
+    # Resume - available for paused/cancelled campaigns
+    if campaign.status in ["paused", "cancelled"]:
+        action_buttons.append(
+            dbc.Button([html.I(className="fas fa-play me-1"), "Resume"], 
+                       id={"type": "resume-hpo-btn", "index": campaign.id}, 
+                       color="warning", size="sm", className="me-1")
+        )
+    
+    # Stop - available for running campaigns
+    if campaign.status == "running":
+        action_buttons.append(
+            dbc.Button([html.I(className="fas fa-stop me-1"), "Stop"], 
+                       id={"type": "stop-hpo-btn", "index": campaign.id}, 
+                       color="danger", size="sm")
+        )
+    
+    # Format best score safely
+    best_score_str = f"{campaign.best_score:.4f}" if campaign.best_score is not None else "N/A"
+    
     return dbc.Card([
         dbc.CardHeader([
             dbc.Row([
-                dbc.Col(html.H5(campaign.name, className="mb-0"), width=6),
+                dbc.Col(html.H5(campaign.name, className="mb-0"), width=8),
                 dbc.Col([
-                    dbc.Badge(campaign.status, color="primary" if campaign.status == "running" else "secondary",
-                              className="float-end")
-                ], width=6),
+                    dbc.Badge(campaign.status.upper(), color=status_color, className="float-end")
+                ], width=4),
             ])
         ]),
         dbc.CardBody([
@@ -112,7 +234,7 @@ def create_hpo_campaign_card(campaign):
                            className="mb-1"),
                 ], width=6),
                 dbc.Col([
-                    html.P([html.Strong("Best Score: "), f"{campaign.best_score:.4f}"], className="mb-1"),
+                    html.P([html.Strong("Best Score: "), best_score_str], className="mb-1"),
                     html.P([html.Strong("Started: "), campaign.created_at.strftime("%Y-%m-%d %H:%M")],
                            className="mb-1"),
                 ], width=6),
@@ -120,14 +242,12 @@ def create_hpo_campaign_card(campaign):
 
             dbc.Progress(
                 value=(campaign.completed_trials / campaign.total_trials * 100) if campaign.total_trials > 0 else 0,
-                className="mt-3"
+                className="mt-3",
+                color=status_color
             ),
         ]),
         dbc.CardFooter([
-            dbc.ButtonGroup([
-                dbc.Button("View Details", href=f"/hpo/{campaign.id}", color="info", size="sm"),
-                dbc.Button("Stop", id={"type": "stop-hpo-btn", "index": campaign.id}, color="danger", size="sm")
-                if campaign.status == "running" else None,
-            ])
+            html.Div(action_buttons, className="d-flex flex-wrap")
         ])
     ], className="mb-3 shadow-sm")
+
