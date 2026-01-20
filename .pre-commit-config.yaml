@@ -51,13 +51,18 @@ repos:
       - id: mixed-line-ending
         args: ['--fix=lf']
 
-  # Type checking (optional - can be slow)
-  # - repo: https://github.com/pre-commit/mirrors-mypy
-  #   rev: v1.7.1
-  #   hooks:
-  #     - id: mypy
-  #       additional_dependencies: [types-all]
-  #       args: ['--ignore-missing-imports']
+  # Type checking (Phase 4.7 CQ-4)
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - types-requests
+          - types-redis
+          - types-PyYAML
+          - types-python-dateutil
+        args: ['--ignore-missing-imports', '--no-strict-optional']
+        exclude: ^(tests/|milestones/|notebooks/)
 
   # Jupyter notebook cleaning
   - repo: https://github.com/kynan/nbstripout
