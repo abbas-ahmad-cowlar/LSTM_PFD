@@ -17,6 +17,7 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 # Navigation items with icons and routes
+# Items can have 'admin_only': True to indicate they require admin role
 NAV_ITEMS = {
     'main': [
         {'id': 'nav-home', 'icon': 'fas fa-home', 'label': 'Home', 'href': '/'},
@@ -41,23 +42,42 @@ NAV_ITEMS = {
     ],
     'Production': [
         {'id': 'nav-deploy', 'icon': 'fas fa-rocket', 'label': 'Deployment', 'href': '/deployment'},
-        {'id': 'nav-api', 'icon': 'fas fa-server', 'label': 'API Monitoring', 'href': '/api-monitoring'},
+        {'id': 'nav-api', 'icon': 'fas fa-server', 'label': 'API Monitoring', 'href': '/api-monitoring', 'admin_only': True},
         {'id': 'nav-testing', 'icon': 'fas fa-vial', 'label': 'Testing & QA', 'href': '/testing'},
     ],
     'System': [
-        {'id': 'nav-health', 'icon': 'fas fa-heartbeat', 'label': 'System Health', 'href': '/system-health'},
+        {'id': 'nav-health', 'icon': 'fas fa-heartbeat', 'label': 'System Health', 'href': '/system-health', 'admin_only': True},
         {'id': 'nav-settings', 'icon': 'fas fa-cog', 'label': 'Settings', 'href': '/settings'},
     ],
 }
 
 
-def create_nav_link(item: dict, collapsed: bool = False):
-    """Create a single navigation link with icon and optional tooltip."""
+def create_nav_link(item: dict, collapsed: bool = False, is_admin: bool = True):
+    """
+    Create a single navigation link with icon and optional tooltip.
+    
+    Args:
+        item: Navigation item dict
+        collapsed: Whether sidebar is collapsed
+        is_admin: Whether current user has admin role
+    """
+    # Skip admin-only items for non-admin users
+    if item.get('admin_only', False) and not is_admin:
+        return None  # Will be filtered out
+    
     icon = html.I(className=f"{item['icon']} nav-icon")
     label = html.Span(item['label'], className="nav-label")
     
+    # Add lock icon for admin-only items
+    if item.get('admin_only', False):
+        admin_badge = html.I(className="fas fa-lock ms-2 admin-badge", 
+                             style={"fontSize": "0.7rem", "opacity": "0.6"})
+        children = [icon, label, admin_badge]
+    else:
+        children = [icon, label]
+    
     return dbc.NavLink(
-        [icon, label],
+        children,
         id=item['id'],
         href=item['href'],
         active="exact",
@@ -65,11 +85,19 @@ def create_nav_link(item: dict, collapsed: bool = False):
     )
 
 
-def create_section(section_name: str, items: list):
-    """Create a navigation section with collapsible header and links."""
+def create_section(section_name: str, items: list, is_admin: bool = True):
+    """
+    Create a navigation section with collapsible header and links.
+    
+    Args:
+        section_name: Section name for header
+        items: List of nav items
+        is_admin: Whether current user has admin role
+    """
     if section_name == 'main':
         # No header for main section, just return links
-        return [create_nav_link(item) for item in items]
+        links = [create_nav_link(item, is_admin=is_admin) for item in items]
+        return [link for link in links if link is not None]  # Filter None items
     
     # Create section ID for collapse functionality
     section_id = section_name.lower().replace(' ', '-')
@@ -85,9 +113,17 @@ def create_section(section_name: str, items: list):
         n_clicks=0
     )
     
+    # Filter links (remove admin-only for non-admin users)
+    nav_links = [create_nav_link(item, is_admin=is_admin) for item in items]
+    nav_links = [link for link in nav_links if link is not None]  # Filter None
+    
+    # If no links visible after filtering, skip entire section
+    if not nav_links:
+        return []
+    
     # Links container (collapsible)
     links = html.Div(
-        [create_nav_link(item) for item in items],
+        nav_links,
         id={'type': 'section-content', 'section': section_id},
         className="sidebar-section-content"
     )
