@@ -27,6 +27,8 @@ import tempfile
 import h5py
 from torch.utils.data import TensorDataset, DataLoader
 
+from utils.constants import NUM_CLASSES, SAMPLING_RATE
+
 
 @pytest.fixture
 def mock_hdf5_dataset():
@@ -39,7 +41,7 @@ def mock_hdf5_dataset():
     num_val = 50
     num_test = 50
     signal_length = 1024
-    num_classes = 11
+    num_classes = NUM_CLASSES
     
     with h5py.File(tmp_path, 'w') as f:
         for split, n in [('train', num_train), ('val', num_val), ('test', num_test)]:
@@ -50,7 +52,7 @@ def mock_hdf5_dataset():
             grp.create_dataset('signals', data=signals)
             grp.create_dataset('labels', data=labels)
         
-        f.attrs['sampling_rate'] = 20480
+        f.attrs['sampling_rate'] = SAMPLING_RATE
         f.attrs['num_classes'] = num_classes
     
     yield tmp_path
