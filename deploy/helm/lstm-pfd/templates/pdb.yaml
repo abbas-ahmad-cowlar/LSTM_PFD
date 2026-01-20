@@ -1,0 +1,21 @@
+# PodDisruptionBudget for high availability
+# Reference: Master Roadmap Chapter 4.3
+{{- if .Values.pdb.enabled }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "lstm-pfd.fullname" . }}-dashboard
+  labels:
+    {{- include "lstm-pfd.dashboard.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.pdb.minAvailable }}
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  {{- else if .Values.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.pdb.maxUnavailable }}
+  {{- else }}
+  minAvailable: 1
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "lstm-pfd.dashboard.selectorLabels" . | nindent 6 }}
+{{- end }}

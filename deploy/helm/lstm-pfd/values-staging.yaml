@@ -1,0 +1,65 @@
+# Staging environment values
+# Reference: Master Roadmap Chapter 4.3
+# Usage: helm install lstm-pfd-staging ./deploy/helm/lstm-pfd -f ./deploy/helm/lstm-pfd/values-staging.yaml
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/your-org/lstm-pfd
+  tag: "develop"
+
+ingress:
+  enabled: true
+  hosts:
+    - host: staging.lstm-pfd.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: lstm-pfd-staging-tls
+      hosts:
+        - staging.lstm-pfd.example.com
+
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+worker:
+  replicas: 1
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+
+pdb:
+  enabled: false
+
+config:
+  debug: "true"
+  logLevel: "DEBUG"
+
+# Use smaller resources in staging
+redis:
+  primary:
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+
+postgresql:
+  primary:
+    persistence:
+      size: 5Gi
