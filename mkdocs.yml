@@ -137,6 +137,8 @@ nav:
       - XAI Methods: research/xai-methods.md
       - Ensemble Strategies: research/ensemble-strategies.md
       - Ablation Studies: research/ablation-studies.md
+      - Project Timeline: research/project-timeline.md
+      - Interactive Visualizations: research/interactive-visualizations.md
       - Reproducibility: research/reproducibility.md
 
   - Deployment:

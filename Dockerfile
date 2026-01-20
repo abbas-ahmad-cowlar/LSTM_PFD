@@ -33,6 +33,9 @@ RUN pip install --upgrade pip && \
 # Stage 3: Application
 FROM base as application
 
+# Create non-root user for security (Phase 4.2 DOC-2)
+RUN groupadd -r appgroup && useradd -r -g appgroup appuser
+
 # Copy installed dependencies from previous stage
 COPY --from=dependencies /usr/local/lib/python3.10/site-packages /usr/local/lib/python3.10/site-packages
 COPY --from=dependencies /usr/local/bin /usr/local/bin
@@ -42,6 +45,12 @@ COPY . /app
 
 # Create necessary directories
 RUN mkdir -p /app/logs /app/checkpoints /app/models
+
+# Set ownership to non-root user
+RUN chown -R appuser:appgroup /app
+
+# Switch to non-root user
+USER appuser
 
 # Expose API port
 EXPOSE 8000

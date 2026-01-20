@@ -1,0 +1,172 @@
+# Prometheus Alert Rules for LSTM-PFD
+# Reference: Master Roadmap Chapter 4.5.3
+#
+# Deploy to Prometheus:
+#   Copy to prometheus/rules/ directory or include via prometheus.yml:
+#   rule_files:
+#     - "alerts/*.yml"
+
+groups:
+  - name: lstm-pfd-alerts
+    rules:
+      # High Error Rate Alert
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(lstm_pfd_requests_total{status="error"}[5m])) 
+          / sum(rate(lstm_pfd_requests_total[5m])) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          service: lstm-pfd
+        annotations:
+          summary: "High error rate detected (>5%)"
+          description: "Error rate is {{ $value | humanizePercentage }} over the last 5 minutes"
+          runbook_url: "https://docs.lstm-pfd.example.com/runbooks/high-error-rate"
+
+      # High Latency Alert
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(lstm_pfd_request_latency_seconds_bucket[5m])) by (le)) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: lstm-pfd
+        annotations:
+          summary: "High P95 latency detected (>2s)"
+          description: "P95 latency is {{ $value | humanizeDuration }} over the last 5 minutes"
+
+      # Inference Latency Alert
+      - alert: HighInferenceLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(lstm_pfd_inference_seconds_bucket[5m])) by (le, model)) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: lstm-pfd
+        annotations:
+          summary: "High inference latency for model {{ $labels.model }}"
+          description: "Model {{ $labels.model }} P95 inference time is {{ $value | humanizeDuration }}"
+
+      # Model Not Loaded
+      - alert: ModelNotLoaded
+        expr: lstm_pfd_model_loaded == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: lstm-pfd
+        annotations:
+          summary: "Model {{ $labels.model }} is not loaded"
+          description: "The model {{ $labels.model }} has been unloaded for more than 2 minutes"
+
+      # High CPU Usage
+      - alert: HighCPUUsage
+        expr: lstm_pfd_system_cpu_percent > 90
+        for: 10m
+        labels:
+          severity: warning
+          service: lstm-pfd
+        annotations:
+          summary: "High CPU usage (>90%)"
+          description: "CPU usage is {{ $value }}% for more than 10 minutes"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: lstm_pfd_system_memory_percent > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: lstm-pfd
+        annotations:
+          summary: "High memory usage (>90%)"
+          description: "Memory usage is {{ $value }}% for more than 5 minutes"
+
+      # Critical Memory Usage
+      - alert: CriticalMemoryUsage
+        expr: lstm_pfd_system_memory_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: lstm-pfd
+        annotations:
+          summary: "Critical memory usage (>95%)"
+          description: "Memory usage is {{ $value }}%, system may OOM soon"
+
+      # No Requests
+      - alert: NoRequests
+        expr: |
+          sum(rate(lstm_pfd_requests_total[5m])) == 0
+        for: 15m
+        labels:
+          severity: warning
+          service: lstm-pfd
+        annotations:
+          summary: "No requests received in 15 minutes"
+          description: "The service has not received any requests. Check if the service is accessible."
+
+      # GPU Memory Alert (if GPUs are used)
+      - alert: HighGPUMemory
+        expr: lstm_pfd_gpu_memory_bytes > 10e9
+        for: 5m
+        labels:
+          severity: warning
+          service: lstm-pfd
+        annotations:
+          summary: "High GPU memory usage on GPU {{ $labels.gpu_id }}"
+          description: "GPU {{ $labels.gpu_id }} is using {{ $value | humanize1024 }}B of memory"
+
+  - name: lstm-pfd-slo
+    rules:
+      # SLO: 99.5% availability
+      - alert: SLOViolation
+        expr: |
+          (
+            sum(rate(lstm_pfd_requests_total{status="success"}[1h])) 
+            / sum(rate(lstm_pfd_requests_total[1h]))
+          ) < 0.995
+        for: 5m
+        labels:
+          severity: critical
+          service: lstm-pfd
+          slo: availability
+        annotations:
+          summary: "SLO violation: Availability below 99.5%"
+          description: "Service availability is {{ $value | humanizePercentage }}, below 99.5% SLO"
+
+      # SLO: P95 latency < 500ms
+      - alert: LatencySLOViolation
+        expr: |
+          histogram_quantile(0.95, sum(rate(lstm_pfd_request_latency_seconds_bucket[1h])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          service: lstm-pfd
+          slo: latency
+        annotations:
+          summary: "SLO violation: P95 latency above 500ms"
+          description: "P95 latency is {{ $value | humanizeDuration }}, above 500ms SLO"
+
+  - name: lstm-pfd-capacity
+    rules:
+      # Approaching Rate Limit
+      - alert: ApproachingRateLimit
+        expr: |
+          sum(rate(lstm_pfd_requests_total[1m])) > 40
+        for: 5m
+        labels:
+          severity: info
+          service: lstm-pfd
+        annotations:
+          summary: "Request rate approaching limits"
+          description: "Request rate is {{ $value }}/s, approaching 50/min limit"
+
+      # High Inference Volume
+      - alert: HighInferenceVolume
+        expr: |
+          sum(rate(lstm_pfd_inferences_total[5m])) * 60 > 500
+        for: 10m
+        labels:
+          severity: info
+          service: lstm-pfd
+        annotations:
+          summary: "High inference volume"
+          description: "Inference rate is {{ $value | humanize }}/min, consider scaling"
