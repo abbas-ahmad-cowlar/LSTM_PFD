@@ -20,6 +20,7 @@ from config.data_config import DataConfig, SignalConfig, FaultConfig, SeverityCo
 from data.signal_generator import SignalGenerator, FaultModeler, NoiseGenerator, SignalMetadata
 from utils.reproducibility import set_seed
 from utils.logging import setup_logging, get_logger
+from utils.constants import SAMPLING_RATE, SIGNAL_LENGTH
 
 logger = get_logger(__name__)
 
@@ -129,8 +130,8 @@ class TestFaultModeler(unittest.TestCase):
 
     def setUp(self):
         """Setup test fixtures."""
-        self.fs = 20480.0
-        self.N = 102400
+        self.fs = float(SAMPLING_RATE)
+        self.N = SIGNAL_LENGTH
         self.omega = np.linspace(0, self.N - 1, self.N) / self.fs * 2 * np.pi
 
     def test_healthy_signal_generation(self):
@@ -267,8 +268,8 @@ class TestNoiseGenerator(unittest.TestCase):
 
     def setUp(self):
         """Setup test fixtures."""
-        self.N = 102400
-        self.fs = 20480.0
+        self.N = SIGNAL_LENGTH
+        self.fs = float(SAMPLING_RATE)
         self.clean_signal = np.sin(2 * np.pi * 60 * np.arange(self.N) / self.fs)
 
     def test_noise_increases_signal_power(self):

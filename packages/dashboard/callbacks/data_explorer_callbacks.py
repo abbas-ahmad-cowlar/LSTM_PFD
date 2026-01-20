@@ -519,7 +519,7 @@ def register_data_explorer_callbacks(app):
         try:
             # Simulated signal for demonstration
             # In production, load actual signal from HDF5
-            fs = 20480  # Sampling frequency (Hz)
+            fs = SAMPLING_RATE  # Sampling frequency (Hz)
             duration = 2.0  # seconds
             t = np.linspace(0, duration, int(fs * duration))
             
