@@ -226,13 +226,24 @@ def run_hpo_campaign_task(self, campaign_id: int):
         # Update campaign to completed
         HPOService.update_campaign_status(campaign_id, ExperimentStatus.COMPLETED)
 
+        # INT-4: Save research artifact on HPO completion
+        try:
+            artifact_path = HPOService.save_research_artifact(campaign_id)
+            if artifact_path:
+                logger.info(f"Saved research artifact: {artifact_path}")
+            else:
+                logger.warning(f"Failed to save research artifact for campaign {campaign_id}")
+        except Exception as artifact_error:
+            logger.error(f"Error saving research artifact: {artifact_error}")
+
         return {
             "success": True,
             "campaign_id": campaign_id,
             "trials_completed": num_trials,
             "best_experiment_id": best_experiment_id,
             "best_score": best_value,
-            "best_params": best_params
+            "best_params": best_params,
+            "artifact_path": artifact_path if 'artifact_path' in locals() else None
         }
 
     except Exception as e:
