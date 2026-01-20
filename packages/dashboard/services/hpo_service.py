@@ -356,3 +356,278 @@ class HPOService:
                     "choices": ["adam", "adamw"]
                 }
             }
+
+    @staticmethod
+    def resume_campaign(campaign_id: int) -> bool:
+        """
+        Resume a paused or cancelled campaign.
+
+        Args:
+            campaign_id: Campaign ID
+
+        Returns:
+            True if campaign was resumed, False otherwise
+        """
+        try:
+            with get_db_session() as session:
+                campaign = session.query(HPOCampaign).filter_by(id=campaign_id).first()
+                if not campaign:
+                    logger.error(f"Campaign {campaign_id} not found")
+                    return False
+
+                # Only resume if paused or cancelled
+                if campaign.status not in [ExperimentStatus.CANCELLED, ExperimentStatus.PAUSED]:
+                    logger.warning(f"Campaign {campaign_id} cannot be resumed (status: {campaign.status})")
+                    return False
+
+                # Update status to pending for resumption
+                campaign.status = ExperimentStatus.PENDING
+                session.commit()
+
+                logger.info(f"Campaign {campaign_id} marked for resumption")
+                return True
+
+        except Exception as e:
+            logger.error(f"Failed to resume campaign {campaign_id}: {e}", exc_info=True)
+            return False
+
+    @staticmethod
+    def export_results(campaign_id: int, format: str = "json") -> Optional[str]:
+        """
+        Export campaign results in the specified format.
+
+        Args:
+            campaign_id: Campaign ID
+            format: Export format (json, yaml, python)
+
+        Returns:
+            Exported content as string, or None on failure
+        """
+        try:
+            campaign = HPOService.get_campaign(campaign_id)
+            if not campaign:
+                return None
+
+            experiments = HPOService.get_campaign_experiments(campaign_id)
+
+            # Build export data
+            export_data = {
+                "campaign": {
+                    "name": campaign["name"],
+                    "model_type": campaign["base_model_type"],
+                    "method": campaign["method"],
+                    "metric": campaign["budget"].get("metric", "val_accuracy"),
+                    "direction": campaign["budget"].get("direction", "maximize"),
+                    "trials_completed": campaign["trials_completed"],
+                    "best_accuracy": campaign["best_accuracy"],
+                },
+                "search_space": campaign["search_space"],
+                "best_params": {},
+                "trials": []
+            }
+
+            # Find best experiment and extract params
+            best_exp_id = campaign.get("best_experiment_id")
+            for exp in experiments:
+                trial_data = {
+                    "trial_id": exp["id"],
+                    "name": exp["name"],
+                    "status": exp["status"],
+                    "hyperparameters": exp.get("hyperparameters", {}),
+                    "test_accuracy": exp.get("test_accuracy"),
+                    "test_loss": exp.get("test_loss"),
+                    "duration_seconds": exp.get("duration_seconds")
+                }
+                export_data["trials"].append(trial_data)
+
+                if exp["id"] == best_exp_id:
+                    export_data["best_params"] = exp.get("hyperparameters", {})
+
+            # Format output
+            if format == "json":
+                return json.dumps(export_data, indent=2)
+            elif format == "yaml":
+                try:
+                    import yaml
+                    return yaml.dump(export_data, default_flow_style=False, sort_keys=False)
+                except ImportError:
+                    # Fallback to JSON if yaml not installed
+                    return json.dumps(export_data, indent=2)
+            elif format == "python":
+                # Return best params as Python dict literal
+                params_str = "best_hyperparameters = " + repr(export_data["best_params"])
+                return params_str
+            else:
+                return json.dumps(export_data, indent=2)
+
+        except Exception as e:
+            logger.error(f"Failed to export campaign {campaign_id}: {e}", exc_info=True)
+            return None
+
+    @staticmethod
+    def get_trials_dataframe(campaign_id: int) -> Optional[Dict]:
+        """
+        Get trial data in a format suitable for visualization.
+
+        Args:
+            campaign_id: Campaign ID
+
+        Returns:
+            Dictionary with trial data for parallel coordinates, etc.
+        """
+        try:
+            experiments = HPOService.get_campaign_experiments(campaign_id)
+            if not experiments:
+                return None
+
+            # Build dataframe-like structure
+            data = {
+                "trial_id": [],
+                "test_accuracy": [],
+                "test_loss": [],
+            }
+
+            # Collect all hyperparameter names
+            all_params = set()
+            for exp in experiments:
+                params = exp.get("hyperparameters", {})
+                all_params.update(params.keys())
+
+            # Initialize param columns
+            for param in all_params:
+                data[param] = []
+
+            # Populate data
+            for exp in experiments:
+                if exp.get("status") not in ["completed"]:
+                    continue  # Only include completed trials
+
+                data["trial_id"].append(exp["id"])
+                data["test_accuracy"].append(exp.get("test_accuracy") or 0)
+                data["test_loss"].append(exp.get("test_loss") or 0)
+
+                params = exp.get("hyperparameters", {})
+                for param in all_params:
+                    data[param].append(params.get(param, None))
+
+            return data
+
+        except Exception as e:
+            logger.error(f"Failed to get trials dataframe for campaign {campaign_id}: {e}", exc_info=True)
+            return None
+
+    @staticmethod
+    def get_parameter_importance(campaign_id: int) -> Optional[Dict]:
+        """
+        Calculate parameter importance using correlation analysis.
+
+        Args:
+            campaign_id: Campaign ID
+
+        Returns:
+            Dictionary with parameter names and importance scores
+        """
+        try:
+            trials_data = HPOService.get_trials_dataframe(campaign_id)
+            if not trials_data or len(trials_data.get("trial_id", [])) < 3:
+                return None
+
+            # Calculate correlation between each param and accuracy
+            target = trials_data.get("test_accuracy", [])
+            if not target:
+                return None
+
+            import numpy as np
+
+            importance = {}
+            skip_keys = {"trial_id", "test_accuracy", "test_loss"}
+
+            for param, values in trials_data.items():
+                if param in skip_keys:
+                    continue
+
+                # Convert to numeric if possible
+                try:
+                    numeric_values = []
+                    for v in values:
+                        if v is None:
+                            numeric_values.append(0)
+                        elif isinstance(v, (int, float)):
+                            numeric_values.append(float(v))
+                        elif isinstance(v, str):
+                            # Encode categorical as hash
+                            numeric_values.append(hash(v) % 1000 / 1000)
+                        else:
+                            numeric_values.append(0)
+
+                    if len(numeric_values) == len(target) and len(target) > 1:
+                        # Calculate absolute correlation
+                        correlation = np.corrcoef(numeric_values, target)[0, 1]
+                        if not np.isnan(correlation):
+                            importance[param] = abs(correlation)
+                        else:
+                            importance[param] = 0.0
+                    else:
+                        importance[param] = 0.0
+                except Exception:
+                    importance[param] = 0.0
+
+            # Normalize to sum to 1
+            total = sum(importance.values())
+            if total > 0:
+                importance = {k: v / total for k, v in importance.items()}
+
+            # Sort by importance
+            importance = dict(sorted(importance.items(), key=lambda x: x[1], reverse=True))
+
+            return importance
+
+        except Exception as e:
+            logger.error(f"Failed to calculate parameter importance for campaign {campaign_id}: {e}", exc_info=True)
+            return None
+
+    @staticmethod
+    def save_research_artifact(campaign_id: int) -> Optional[str]:
+        """
+        Save campaign results as a research artifact (JSON file).
+
+        Args:
+            campaign_id: Campaign ID
+
+        Returns:
+            Path to saved artifact, or None on failure
+        """
+        try:
+            import os
+            from datetime import datetime
+
+            campaign = HPOService.get_campaign(campaign_id)
+            if not campaign:
+                return None
+
+            # Export as JSON
+            export_content = HPOService.export_results(campaign_id, "json")
+            if not export_content:
+                return None
+
+            # Create artifacts directory
+            artifacts_dir = os.path.join(os.getcwd(), "storage", "research_artifacts", "hpo")
+            os.makedirs(artifacts_dir, exist_ok=True)
+
+            # Generate filename
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            safe_name = campaign["name"].replace(" ", "_").replace("/", "_")
+            filename = f"hpo_{safe_name}_{timestamp}.json"
+            filepath = os.path.join(artifacts_dir, filename)
+
+            # Write artifact
+            with open(filepath, "w") as f:
+                f.write(export_content)
+
+            logger.info(f"Saved research artifact: {filepath}")
+            return filepath
+
+        except Exception as e:
+            logger.error(f"Failed to save research artifact for campaign {campaign_id}: {e}", exc_info=True)
+            return None
+
