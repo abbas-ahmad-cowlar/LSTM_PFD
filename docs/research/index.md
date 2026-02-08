@@ -52,7 +52,7 @@ We implement multiple XAI methods for model interpretability:
 
 ## Ensemble Strategies
 
-Our ensemble achieves 98-99% accuracy through:
+Our ensemble achieves [PENDING — run experiment to fill] accuracy through:
 
 ```mermaid
 graph LR
@@ -100,6 +100,6 @@ All experiments are fully reproducible with:
   year = {2025},
   publisher = {GitHub},
   url = {https://github.com/abbas-ahmad-cowlar/LSTM_PFD},
-  note = {98-99\% accuracy on 11-class bearing fault classification}
+  note = {[PENDING] accuracy on 11-class bearing fault classification}
 }
 ```

@@ -1,6 +1,6 @@
 # Ensemble Strategies
 
-This document describes the ensemble learning approaches that achieve 98-99% accuracy.
+This document describes the ensemble learning approaches that achieve [PENDING — run experiment to fill] accuracy.
 
 ## Overview
 
@@ -9,10 +9,10 @@ Ensemble methods combine multiple models to improve prediction accuracy and robu
 ```mermaid
 graph TB
     subgraph "Diversity"
-        A[ResNet-34<br/>96.8%]
-        B[Transformer<br/>96.5%]
-        C[PINN<br/>97.8%]
-        D[EfficientNet<br/>96.2%]
+        A[ResNet-34<br/>PENDING]
+        B[Transformer<br/>PENDING]
+        C[PINN<br/>PENDING]
+        D[EfficientNet<br/>PENDING]
     end
 
     subgraph "Combination"
@@ -27,8 +27,8 @@ graph TB
         D --> F
     end
 
-    E --> G[98.1%]
-    F --> H[98.4%]
+    E --> G[PENDING]
+    F --> H[PENDING]
 ```
 
 ---
@@ -90,13 +90,13 @@ Where $g_i(x)$ is the gating weight for expert $i$.
 
 ## Results
 
-| Strategy               | Accuracy  | Latency | Model Size |
-| ---------------------- | --------- | ------- | ---------- |
-| Single Best (PINN)     | 97.8%     | 25ms    | 47MB       |
-| Hard Voting            | 97.9%     | 85ms    | 188MB      |
-| Soft Voting            | 98.1%     | 85ms    | 188MB      |
-| **Stacking (XGBoost)** | **98.4%** | 95ms    | 195MB      |
-| MoE                    | 98.2%     | 90ms    | 200MB      |
+| Strategy               | Accuracy                           | Latency                            | Model Size                         |
+| ---------------------- | ---------------------------------- | ---------------------------------- | ---------------------------------- |
+| Single Best (PINN)     | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] |
+| Hard Voting            | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] |
+| Soft Voting            | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] |
+| **Stacking (XGBoost)** | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] |
+| MoE                    | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] |
 
 ---
 
@@ -104,11 +104,11 @@ Where $g_i(x)$ is the gating weight for expert $i$.
 
 Ensemble performance depends on model diversity:
 
-| Model Pair            | Correlation | Error Overlap |
-| --------------------- | ----------- | ------------- |
-| ResNet vs Transformer | 0.72        | 45%           |
-| ResNet vs PINN        | 0.68        | 38%           |
-| Transformer vs PINN   | 0.65        | 35%           |
+| Model Pair            | Correlation                        | Error Overlap                      |
+| --------------------- | ---------------------------------- | ---------------------------------- |
+| ResNet vs Transformer | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] |
+| ResNet vs PINN        | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] |
+| Transformer vs PINN   | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] |
 
 !!! tip "Best Practice"
 Combine models with **low error correlation** for maximum ensemble benefit.
