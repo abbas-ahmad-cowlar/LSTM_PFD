@@ -1,7 +1,7 @@
 # Independent Development Blocks (IDB) — Architectural Decomposition
 
 **Role:** Senior Technical Architect Analysis  
-**Last Updated:** January 18, 2026
+**Last Updated:** February 9, 2026
 
 ---
 
@@ -9,7 +9,7 @@
 
 This document proposes a logical decomposition of the **LSTM_PFD** codebase into **Independent Development Blocks (IDBs)**. The goal is to create a structure where separate teams can own specific domains with minimal friction and clear boundaries.
 
-The project naturally decomposes into **5 Top-Level Domains** with **18 Sub-Blocks**:
+The project naturally decomposes into **7 Top-Level Domains** with **22 Sub-Blocks**:
 
 ```mermaid
 graph TD
@@ -18,15 +18,18 @@ graph TD
     ROOT --> DATA[💾 Data Engineering]
     ROOT --> INFRA[🛠️ Infrastructure]
     ROOT --> RESEARCH[🔬 Research & Science]
+    ROOT --> INTEG[🔗 Integration Layer]
+    ROOT --> SECURITY[🔒 Security & Compliance]
 
-    CORE --> CORE_MODELS[Models]
-    CORE --> CORE_TRAINING[Training]
+    CORE --> CORE_MODELS[Models & Transformers]
+    CORE --> CORE_TRAINING[Training & Pipelines]
     CORE --> CORE_EVAL[Evaluation]
     CORE --> CORE_FEATURES[Features]
     CORE --> CORE_XAI[Explainability]
 
     DASH --> DASH_UI[Frontend/UI]
     DASH --> DASH_BACKEND[Backend Services]
+    DASH --> DASH_CALLBACKS[Callbacks]
     DASH --> DASH_TASKS[Async Tasks]
 
     DATA --> DATA_GEN[Signal Generation]
@@ -38,8 +41,17 @@ graph TD
     INFRA --> INFRA_TEST[Testing]
     INFRA --> INFRA_CONFIG[Configuration]
 
-    RESEARCH --> RES_SCRIPTS[Research Scripts]
+    RESEARCH --> RES_SCRIPTS[Research Scripts & Reproducibility]
     RESEARCH --> RES_VIZ[Visualization]
+
+    INTEG --> INTEG_PIPELINE[Unified Pipeline & Registry]
+    INTEG --> INTEG_BRIDGE[Dashboard Integrations]
+    INTEG --> INTEG_UTILS[Shared Utilities]
+
+    SECURITY --> SEC_AUDIT[Dependency & Code Audit]
+    SECURITY --> SEC_AUTH[Auth & Access Control]
+    SECURITY --> SEC_API[API & Network Security]
+    SECURITY --> SEC_MODEL[Model Security]
 ```
 
 ---
@@ -53,8 +65,8 @@ graph TD
 
 | Attribute                 | Detail                                                                                                                                                                                                                                                               |
 | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Scope**                 | All neural network architectures for bearing fault diagnosis: CNN-1D, ResNet-1D, Transformers (ViT-1D, PatchTST, TSMixer), Physics-Informed Neural Networks (PINN), Ensembles (Voting, Stacking, Boosting, Mixture of Experts), and Multi-Modal Fusion (Early/Late). |
-| **Primary Files**         | `packages/core/models/` (61 children: 13 subdirectories + 7 top-level files)                                                                                                                                                                                         |
+| **Scope**                 | All neural network architectures for bearing fault diagnosis: CNN-1D, ResNet-1D, Transformers (ViT-1D, PatchTST, TSMixer), general-purpose transformer implementations (ViT, BERT, GPT, T5, Swin, attention mechanisms), Physics-Informed Neural Networks (PINN), Ensembles (Voting, Stacking, Boosting, Mixture of Experts), and Multi-Modal Fusion (Early/Late). |
+| **Primary Files**         | `packages/core/models/` (61 children: 13 subdirectories + 7 top-level files), `packages/core/transformers/` (general-purpose transformer library), `packages/core/README.md` (core package root)                                                                                                                                                                                         |
 | **Key Interfaces**        | <ul><li>`BaseModel` abstract class — all models inherit from this</li><li>`model_factory.py` — `create_model()`, `create_model_from_config()`, `register_model()`</li><li>Standard PyTorch module interface (`forward()`, `state_dict()`)</li></ul>                  |
 | **Inbound Dependencies**  | `config/model_config.py`, `packages/core/features/` (for input dimensions)                                                                                                                                                                                           |
 | **Outbound Dependencies** | None (pure PyTorch models, stateless)                                                                                                                                                                                                                                |
@@ -78,8 +90,8 @@ graph TD
 
 | Attribute                 | Detail                                                                                                                                                                                                                                                                                                                          |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Scope**                 | Training loops, optimizers, schedulers, loss functions, callbacks, hyperparameter optimization (Grid Search, Random Search, Bayesian), and advanced techniques (Mixed Precision, Progressive Resizing, Knowledge Distillation).                                                                                                 |
-| **Primary Files**         | `packages/core/training/` (23 children)                                                                                                                                                                                                                                                                                         |
+| **Scope**                 | Training loops, optimizers, schedulers, loss functions, callbacks, hyperparameter optimization (Grid Search, Random Search, Bayesian), advanced techniques (Mixed Precision, Progressive Resizing, Knowledge Distillation), and orchestration pipelines (classical ML pipeline, feature pipeline, pipeline validation).              |
+| **Primary Files**         | `packages/core/training/` (23 children), `packages/core/pipelines/` (`classical_ml_pipeline.py`, `feature_pipeline.py`, `pipeline_validator.py`)                                                                                                                                                                                |
 | **Key Interfaces**        | <ul><li>`trainer.py` — Standard training interface</li><li>`cnn_trainer.py`, `pinn_trainer.py`, `spectrogram_trainer.py` — Specialized trainers</li><li>`cnn_callbacks.py` — Callback system (EarlyStopping, ModelCheckpoint, etc.)</li><li>Loss functions: `losses.py`, `cnn_losses.py`, `physics_loss_functions.py`</li></ul> |
 | **Inbound Dependencies**  | `packages/core/models/`, `data/` (DataLoaders), `config/training_config.py`                                                                                                                                                                                                                                                     |
 | **Outbound Dependencies** | Checkpoints → `checkpoints/`, Metrics → `packages/core/evaluation/`                                                                                                                                                                                                                                                             |
@@ -332,8 +344,8 @@ graph TD
 
 | Attribute                 | Detail                                                                                                                                         |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Scope**                 | Standalone research experiments: ablation studies, contrastive physics pretraining, hyperparameter sensitivity, PINN comparisons, OOD testing. |
-| **Primary Files**         | `scripts/research/` (8 scripts)                                                                                                                |
+| **Scope**                 | Standalone research experiments: ablation studies, contrastive physics pretraining, hyperparameter sensitivity, PINN comparisons, OOD testing, and reproducibility infrastructure (seed configs, experiment runners, Zenodo metadata). |
+| **Primary Files**         | `scripts/research/` (8 scripts), `reproducibility/` (config, scripts, metadata)                                                                                                                |
 | **Key Interfaces**        | <ul><li>CLI scripts with argparse</li><li>Output: Results → `results/`, Figures → `visualizations/`</li></ul>                                  |
 | **Inbound Dependencies**  | Core ML packages, Datasets                                                                                                                     |
 | **Outbound Dependencies** | Figures and tables for publications                                                                                                            |
@@ -366,13 +378,109 @@ graph TD
 
 ---
 
-## Integration Layer (Cross-Cutting Concerns)
+## Domain 7: Security & Compliance 🔒
 
-| Component                          | Location  | Purpose                                      | Coupling                        |
-| ---------------------------------- | --------- | -------------------------------------------- | ------------------------------- |
-| `integration/`                     | Root      | Unified pipeline, model registry, validators | High — bridges core ↔ dashboard |
-| `packages/dashboard/integrations/` | Dashboard | Celery ↔ Core ML bridge                      | High                            |
-| `utils/`                           | Root      | Shared utilities                             | Low                             |
+> **Team Ownership:** Security Engineers / DevSecOps  
+> **Primary Concern:** Vulnerability assessment, hardening, compliance audits, and adversarial robustness  
+> **Cross-Cutting:** This domain audits and hardens components owned by all other domains
+
+### 7.0 Security & Compliance Block
+
+| Attribute                 | Detail                                                                                                                                                                                                                                                                        |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scope**                 | Dependency vulnerability scanning, authentication/authorization hardening, API security (rate limiting, CORS, input validation), container/infrastructure security, secrets management, model adversarial robustness, and OWASP compliance.                                   |
+| **Primary Files**         | Cross-cutting: `packages/dashboard/services/authentication_service.py`, `packages/dashboard/services/api_key_service.py`, `Dockerfile`, `docker-compose.yml`, `requirements.txt`, `config/`, `.env`                                                                           |
+| **Key Interfaces**        | <ul><li>Auth layer — JWT config, session management, password hashing</li><li>API gateway — rate limiting, CORS, input sanitization</li><li>Dependency scanner — `pip-audit`, `safety` integration</li><li>Container scanning — Docker image vulnerability analysis</li></ul> |
+| **Inbound Dependencies**  | All domains (audits their code, configs, and dependencies)                                                                                                                                                                                                                    |
+| **Outbound Dependencies** | Security reports, hardening recommendations, CI/CD pipeline gates                                                                                                                                                                                                             |
+| **Definition of Done**    | All OWASP Top 10 categories assessed; dependency audit passes with no critical CVEs; auth hardening checklist complete; container scan passes.                                                                                                                                |
+| **Independence Score**    | **3/10** — Cross-cutting by nature; must audit and interact with every other domain. Cannot operate in isolation.                                                                                                                                                             |
+
+#### Sub-Blocks within Security:
+
+| Sub-Block                         | Scope                                                                                                                                     | Key Deliverables                                                                 |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **7.0.1 Dependency & Code Audit** | Scan `requirements.txt` for known CVEs; static analysis for common vulnerability patterns (SQL injection, path traversal, `eval()` usage) | Dependency audit report, remediation PRs, CI pipeline integration                |
+| **7.0.2 Auth & Access Control**   | Review JWT configuration, session expiry, password hashing (bcrypt rounds), role-based access, API key rotation policies                  | Auth hardening checklist, config recommendations, penetration test results       |
+| **7.0.3 API & Network Security**  | Rate limiting, CORS policy, input validation/sanitization, HTTPS enforcement, header security (CSP, HSTS, X-Frame-Options)                | API security audit, middleware recommendations, security headers config          |
+| **7.0.4 Model Security**          | Adversarial attack resistance (FGSM, PGD), data poisoning defenses, model extraction protection, inference privacy                        | Adversarial robustness report, defense recommendations, model watermarking guide |
+
+#### Key Audit Areas (mapped to existing IDBs):
+
+| Concern                      | Files to Audit                                       | Owner IDB | Risk Level |
+| ---------------------------- | ---------------------------------------------------- | --------- | ---------- |
+| JWT Configuration            | `authentication_service.py`, `config/base_config.py` | IDB 2.2   | 🔴 High    |
+| API Key Storage              | `api_key_service.py`, database models                | IDB 2.2   | 🔴 High    |
+| SQL Injection                | All services using raw queries                       | IDB 4.1   | 🔴 High    |
+| Secret Management            | `.env`, `config/`, `docker-compose.yml`              | IDB 4.4   | 🔴 High    |
+| Container Vulnerabilities    | `Dockerfile`, base images                            | IDB 4.2   | 🟡 Medium  |
+| Dependency CVEs              | `requirements.txt`                                   | All       | 🟡 Medium  |
+| Input Validation             | All API endpoints, form handlers                     | IDB 2.3   | 🟡 Medium  |
+| CORS Policy                  | `app.py`, middleware config                          | IDB 2.1   | 🟡 Medium  |
+| Model Adversarial Robustness | `packages/core/models/`                              | IDB 1.1   | 🟡 Medium  |
+| Data Poisoning               | `data/signal_generator.py`, dataset loaders          | IDB 3.1   | 🟠 Low-Med |
+
+---
+
+## Domain 6: Integration Layer 🔗
+
+> **Team Ownership:** Full-Stack / Platform Engineers  
+> **Primary Concern:** Cross-domain orchestration, shared utilities, and pipeline composition  
+> **Cross-Cutting:** This domain bridges Core ML ↔ Dashboard ↔ Data, providing unified pipelines, model registry, validation, and shared utility code
+
+### 6.1 Unified Pipeline & Model Registry Sub-Block
+
+| Attribute                 | Detail                                                                                                                                                                                                                                                                |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scope**                 | End-to-end ML pipeline orchestration, model registry (versioning, metadata, lifecycle), configuration validation, and data pipeline validation.                                                                                                                        |
+| **Primary Files**         | `integration/unified_pipeline.py` (8.9KB), `integration/model_registry.py` (8.5KB), `integration/configuration_validator.py` (8.8KB), `integration/data_pipeline_validator.py` (6.1KB)                                                                                |
+| **Key Interfaces**        | <ul><li>`UnifiedPipeline` — End-to-end train → evaluate → deploy orchestration</li><li>`ModelRegistry` — Register, version, query, and retrieve models</li><li>`ConfigurationValidator` — Validate cross-domain configuration consistency</li><li>`DataPipelineValidator` — Validate data flow between stages</li></ul> |
+| **Inbound Dependencies**  | `packages/core/models/`, `packages/core/training/`, `packages/core/evaluation/`, `data/`, `config/`                                                                                                                                                                   |
+| **Outbound Dependencies** | Dashboard services (model serving), Deployment (ONNX export)                                                                                                                                                                                                          |
+| **Definition of Done**    | Pipeline can execute train → evaluate → register → deploy end-to-end; validators catch misconfiguration; registry tracks model lineage.                                                                                                                               |
+| **Independence Score**    | **4/10** — High coupling by design; bridges core ↔ dashboard ↔ data. Must coordinate with all upstream domains.                                                                                                                                                       |
+
+---
+
+### 6.2 Dashboard Integrations Sub-Block
+
+| Attribute                 | Detail                                                                                                                                                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Scope**                 | Celery ↔ Core ML bridge: task wrappers that connect dashboard async tasks to core training, evaluation, and XAI pipelines.                                                     |
+| **Primary Files**         | `packages/dashboard/integrations/` (Celery ↔ Core ML bridge modules)                                                                                                          |
+| **Key Interfaces**        | <ul><li>Task bridge functions that translate dashboard requests into Core ML API calls</li><li>Result serialization for dashboard consumption</li></ul>                        |
+| **Inbound Dependencies**  | `packages/dashboard/tasks/`, `packages/dashboard/services/`                                                                                                                    |
+| **Outbound Dependencies** | `packages/core/` (models, training, evaluation, explainability)                                                                                                                |
+| **Definition of Done**    | Bridge functions correctly translate between dashboard and core interfaces; integration tests pass.                                                                             |
+| **Independence Score**    | **3/10** — Pure glue code; tightly coupled to both dashboard and core.                                                                                                         |
+
+---
+
+### 6.3 Shared Utilities Sub-Block
+
+| Attribute                 | Detail                                                                                                                                                                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scope**                 | Cross-cutting utilities used by multiple domains: checkpoint management, device management, early stopping, file I/O, logging, reproducibility, timing, visualization helpers, and project-wide constants.                                                    |
+| **Primary Files**         | `utils/checkpoint_manager.py` (14KB), `utils/constants.py` (24KB), `utils/device_manager.py` (12KB), `utils/early_stopping.py` (12KB), `utils/file_io.py` (12KB), `utils/logger.py`, `utils/logging.py`, `utils/reproducibility.py`, `utils/timer.py` (12KB), `utils/visualization_utils.py` (11KB) |
+| **Key Interfaces**        | <ul><li>`CheckpointManager` — Save/load/resume model checkpoints</li><li>`DeviceManager` — GPU/CPU device allocation</li><li>`EarlyStopping` — Training convergence detection</li><li>`FileIO` — Platform-agnostic file operations</li><li>`constants.py` — Project-wide enums, paths, and configuration constants</li></ul> |
+| **Inbound Dependencies**  | None (utility layer; no domain-specific imports)                                                                                                                                                                                                            |
+| **Outbound Dependencies** | Consumed by all domains (core, dashboard, data, infrastructure)                                                                                                                                                                                             |
+| **Definition of Done**    | All utility functions have docstrings and type hints; unit tests cover edge cases; no circular imports.                                                                                                                                                     |
+| **Independence Score**    | **9/10** — Pure utility code; no upstream dependencies. Can be developed and tested in complete isolation.                                                                                                                                                   |
+
+#### Key Utilities Inventory:
+
+| Utility                    | File                          | Size   | Used By                    |
+| -------------------------- | ----------------------------- | ------ | -------------------------- |
+| Checkpoint Management      | `utils/checkpoint_manager.py` | 14KB   | Training, Evaluation       |
+| Project Constants          | `utils/constants.py`          | 24KB   | All domains                |
+| Device Allocation          | `utils/device_manager.py`     | 12KB   | Training, Models           |
+| Early Stopping             | `utils/early_stopping.py`     | 12KB   | Training                   |
+| File I/O                   | `utils/file_io.py`            | 12KB   | All domains                |
+| Logging                    | `utils/logger.py`, `logging.py` | ~6KB | All domains                |
+| Reproducibility Seeds      | `utils/reproducibility.py`    | 4KB    | Training, Research Scripts |
+| Timer / Profiling          | `utils/timer.py`              | 12KB   | Training, Evaluation       |
+| Visualization Helpers      | `utils/visualization_utils.py`| 11KB   | Visualization, Dashboard   |
 
 ---
 
@@ -389,8 +497,8 @@ Based on the decomposition above, the following team structure is recommended:
 │  │   🧠 ML Core Team    │    │   📊 Platform Team   │            │
 │  │   (2-3 engineers)   │    │   (2-3 engineers)   │            │
 │  ├─────────────────────┤    ├─────────────────────┤            │
-│  │ • Models            │    │ • Frontend/UI       │            │
-│  │ • Training          │    │ • Backend Services  │            │
+│  │ • Models+Transform. │    │ • Frontend/UI       │            │
+│  │ • Training+Pipelines│    │ • Backend Services  │            │
 │  │ • Evaluation        │    │ • Callbacks         │            │
 │  │ • Features          │    │ • Async Tasks       │            │
 │  │ • Explainability    │    │                     │            │
@@ -407,10 +515,24 @@ Based on the decomposition above, the following team structure is recommended:
 │  └─────────────────────┘    └─────────────────────┘            │
 │                                                                 │
 │  ┌─────────────────────────────────────────────────┐            │
-│  │              🔬 Research Team                    │            │
-│  │              (1-2 scientists)                   │            │
+│  │       🔬 Research Team  +  🔗 Integration Team    │            │
+│  │       (1-2 scientists)    (1-2 engineers)     │            │
 │  ├─────────────────────────────────────────────────┤            │
-│  │ • Research Scripts • Visualization             │            │
+│  │ Research:                                     │            │
+│  │ • Scripts+Reproducibility • Visualization      │            │
+│  │ Integration:                                   │            │
+│  │ • Unified Pipeline  • Dashboard Bridge         │            │
+│  │ • Shared Utilities                             │            │
+│  └─────────────────────────────────────────────────┘            │
+│                                                                 │
+│  ┌─────────────────────────────────────────────────┐            │
+│  │          🔒 Security & Compliance Team           │            │
+│  │              (1 engineer / DevSecOps)            │            │
+│  ├─────────────────────────────────────────────────┤            │
+│  │ • Dependency & Code Audit                      │            │
+│  │ • Auth & Access Control                        │            │
+│  │ • API & Network Security                       │            │
+│  │ • Model Security                               │            │
 │  └─────────────────────────────────────────────────┘            │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -424,41 +546,49 @@ Based on the decomposition above, the following team structure is recommended:
 
 ### Cross-Domain Interfaces
 
-| From         | To            | Interface       | Contract                                           |
-| ------------ | ------------- | --------------- | -------------------------------------------------- |
-| **Core ML**  | **Dashboard** | Model Factory   | `create_model(name, config) → BaseModel`           |
-| **Core ML**  | **Dashboard** | Training API    | `Trainer.train(model, dataloader) → History`       |
-| **Core ML**  | **Dashboard** | Evaluation API  | `Evaluator.evaluate(model, dataloader) → Metrics`  |
-| **Data**     | **Core ML**   | DataLoader      | PyTorch `DataLoader` interface                     |
-| **Config**   | **All**       | Configuration   | Pydantic/dataclass config objects                  |
-| **Database** | **Services**  | ORM Models      | SQLAlchemy model classes                           |
-| **Services** | **Callbacks** | Service Methods | Stateless methods returning JSON-serializable data |
-| **Tasks**    | **Services**  | Celery Tasks    | `@celery.task` decorated functions                 |
+| From             | To                | Interface          | Contract                                           |
+| ---------------- | ----------------- | ------------------ | -------------------------------------------------- |
+| **Core ML**      | **Dashboard**     | Model Factory      | `create_model(name, config) → BaseModel`           |
+| **Core ML**      | **Dashboard**     | Training API       | `Trainer.train(model, dataloader) → History`       |
+| **Core ML**      | **Dashboard**     | Evaluation API     | `Evaluator.evaluate(model, dataloader) → Metrics`  |
+| **Data**         | **Core ML**       | DataLoader         | PyTorch `DataLoader` interface                     |
+| **Config**       | **All**           | Configuration      | Pydantic/dataclass config objects                  |
+| **Database**     | **Services**      | ORM Models         | SQLAlchemy model classes                           |
+| **Services**     | **Callbacks**     | Service Methods    | Stateless methods returning JSON-serializable data |
+| **Tasks**        | **Services**      | Celery Tasks       | `@celery.task` decorated functions                 |
+| **Integration**  | **Core ML**       | Unified Pipeline   | `UnifiedPipeline.run(config) → Results`            |
+| **Integration**  | **Dashboard**     | Model Registry     | `ModelRegistry.register(model, metadata) → ID`     |
+| **Integration**  | **All**           | Shared Utilities   | `utils.*` — CheckpointManager, DeviceManager, etc. |
+| **Security**     | **All**           | Audit Reports      | Security scan results, CVE reports, hardening recs |
 
 ---
 
 ## Independence Score Matrix
 
-| Block                 | Score | Reason                                     |
-| --------------------- | :---: | ------------------------------------------ |
-| **Configuration**     | 10/10 | Pure data; no dependencies                 |
-| **Models**            | 9/10  | Stateless PyTorch modules                  |
-| **Features**          | 9/10  | Pure transformation logic                  |
-| **Signal Generation** | 9/10  | Physics simulation; isolated               |
-| **Testing**           | 9/10  | Consumer; read-only                        |
-| **Research Scripts**  | 9/10  | Experimental; isolated                     |
-| **Visualization**     | 9/10  | Output only; no upstream effects           |
-| **Explainability**    | 8/10  | Depends on trained models only             |
-| **Evaluation**        | 8/10  | Reads model outputs                        |
-| **Data Loading**      | 8/10  | Standard PyTorch interfaces                |
-| **Storage Layer**     | 8/10  | Utility layer                              |
-| **Deployment**        | 8/10  | Containerization; isolated                 |
-| **Database**          | 7/10  | Critical; schema changes need coordination |
-| **Training**          | 7/10  | Moderate coupling to data/models           |
-| **Frontend/UI**       | 6/10  | Coupled to callbacks and services          |
-| **Async Tasks**       | 6/10  | Bridges dashboard ↔ core                   |
-| **Backend Services**  | 5/10  | Central orchestration; high coupling       |
-| **Callbacks**         | 4/10  | Highest coupling; glue layer               |
+| Block                      | Score | Reason                                     |
+| -------------------------- | :---: | ------------------------------------------ |
+| **Configuration**          | 10/10 | Pure data; no dependencies                 |
+| **Models**                 | 9/10  | Stateless PyTorch modules                  |
+| **Features**               | 9/10  | Pure transformation logic                  |
+| **Signal Generation**      | 9/10  | Physics simulation; isolated               |
+| **Testing**                | 9/10  | Consumer; read-only                        |
+| **Research Scripts**       | 9/10  | Experimental; isolated                     |
+| **Visualization**          | 9/10  | Output only; no upstream effects           |
+| **Shared Utilities**       | 9/10  | Pure utility code; no upstream deps        |
+| **Explainability**         | 8/10  | Depends on trained models only             |
+| **Evaluation**             | 8/10  | Reads model outputs                        |
+| **Data Loading**           | 8/10  | Standard PyTorch interfaces                |
+| **Storage Layer**          | 8/10  | Utility layer                              |
+| **Deployment**             | 8/10  | Containerization; isolated                 |
+| **Database**               | 7/10  | Critical; schema changes need coordination |
+| **Training**               | 7/10  | Moderate coupling to data/models           |
+| **Frontend/UI**            | 6/10  | Coupled to callbacks and services          |
+| **Async Tasks**            | 6/10  | Bridges dashboard ↔ core                   |
+| **Backend Services**       | 5/10  | Central orchestration; high coupling       |
+| **Callbacks**              | 4/10  | Highest coupling; glue layer               |
+| **Unified Pipeline**       | 4/10  | Cross-domain orchestration                 |
+| **Security & Compliance**  | 3/10  | Cross-cutting; must audit all domains      |
+| **Dashboard Integrations** | 3/10  | Pure glue; coupled to both sides           |
 
 ---
 
@@ -477,11 +607,13 @@ Based on the decomposition above, the following team structure is recommended:
 ```
 main
  ├── develop
- │    ├── feature/core-*      (ML Core Team)
- │    ├── feature/dashboard-* (Platform Team)
- │    ├── feature/data-*      (Data Team)
- │    ├── feature/infra-*     (Infra Team)
- │    └── feature/research-*  (Research Team)
+ │    ├── feature/core-*         (ML Core Team)
+ │    ├── feature/dashboard-*    (Platform Team)
+ │    ├── feature/data-*         (Data Team)
+ │    ├── feature/infra-*        (Infra Team)
+ │    ├── feature/research-*     (Research Team)
+ │    ├── feature/integration-*  (Integration Team)
+ │    └── feature/security-*     (Security Team)
  └── release/*
 ```
 
@@ -489,25 +621,29 @@ main
 
 ## Appendix: File Count Summary
 
-| Domain         | Sub-Block      | File Count | Total Size |
-| -------------- | -------------- | :--------: | :--------: |
-| Core ML        | Models         |     61     |   ~200KB   |
-| Core ML        | Training       |     23     |   ~180KB   |
-| Core ML        | Evaluation     |     16     |   ~130KB   |
-| Core ML        | Features       |     12     |   ~70KB    |
-| Core ML        | Explainability |     8      |   ~60KB    |
-| Dashboard      | Layouts        |     24     |   ~300KB   |
-| Dashboard      | Services       |     26     |   ~300KB   |
-| Dashboard      | Callbacks      |     29     |   ~350KB   |
-| Dashboard      | Tasks          |     11     |   ~85KB    |
-| Data           | Generation     |     6      |   ~90KB    |
-| Data           | Loading        |     16     |   ~200KB   |
-| Infrastructure | Database       |     14     |   ~30KB    |
-| Infrastructure | Deployment     |     ~8     |   ~50KB    |
-| Infrastructure | Testing        |     27     |   ~130KB   |
-| Infrastructure | Config         |     6      |   ~45KB    |
-| Research       | Scripts        |     8      |   ~60KB    |
-| Research       | Visualization  |     13     |   ~100KB   |
+| Domain         | Sub-Block             |  File Count     | Total Size |
+| -------------- | --------------------- | :-------------: | :--------: |
+| Core ML        | Models + Transformers |    61 + ~10     |   ~250KB   |
+| Core ML        | Training + Pipelines  |     23 + 3      |   ~200KB   |
+| Core ML        | Evaluation            |       16        |   ~130KB   |
+| Core ML        | Features              |       12        |   ~70KB    |
+| Core ML        | Explainability        |        8        |   ~60KB    |
+| Dashboard      | Layouts               |       24        |   ~300KB   |
+| Dashboard      | Services              |       26        |   ~300KB   |
+| Dashboard      | Callbacks             |       29        |   ~350KB   |
+| Dashboard      | Tasks                 |       11        |   ~85KB    |
+| Data           | Generation            |        6        |   ~90KB    |
+| Data           | Loading               |       16        |   ~200KB   |
+| Infrastructure | Database              |       14        |   ~30KB    |
+| Infrastructure | Deployment            |       ~8        |   ~50KB    |
+| Infrastructure | Testing               |       27        |   ~130KB   |
+| Infrastructure | Config                |        6        |   ~45KB    |
+| Research       | Scripts + Repro.      |     8 + ~5      |   ~75KB    |
+| Research       | Visualization         |       13        |   ~100KB   |
+| Integration    | Unified Pipeline      |        7        |   ~50KB    |
+| Integration    | Dashboard Bridge      |       ~4        |   ~25KB    |
+| Integration    | Shared Utilities      |       12        |   ~120KB   |
+| Security       | Compliance            |  cross-cutting  |    N/A     |
 
 ---
 

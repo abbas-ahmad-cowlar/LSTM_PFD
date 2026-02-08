@@ -1,95 +1,82 @@
-# LSTM PFD Documentation
+# LSTM-PFD Documentation
 
-Welcome to the **LSTM PFD** documentation - a comprehensive, production-ready bearing fault diagnosis system implementing cutting-edge machine learning and deep learning techniques.
+> Central navigation hub for all project documentation.
 
-<div class="grid cards" markdown>
+## Getting Started
 
-- :material-rocket-launch:{ .lg .middle } **Getting Started**
+| Resource                                              | Description                            |
+| ----------------------------------------------------- | -------------------------------------- |
+| [Getting Started Guide](GETTING_STARTED.md)           | Prerequisites, installation, first run |
+| [Architecture Overview](ARCHITECTURE.md)              | System design, data flow, tech stack   |
+| [Documentation Standards](DOCUMENTATION_STANDARDS.md) | Templates and conventions for docs     |
 
-  ***
+## Developer Guide — Core ML Engine
 
-  Install LSTM PFD, configure your environment, and run your first experiment in minutes.
+| Module         | README                                                                              | Guide/API                                                          |
+| -------------- | ----------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Models         | [packages/core/models/README.md](../packages/core/models/README.md)                 | [API.md](../packages/core/models/API.md)                           |
+| Training       | [packages/core/training/README.md](../packages/core/training/README.md)             | [TRAINING_GUIDE.md](../packages/core/training/TRAINING_GUIDE.md)   |
+| Evaluation     | [packages/core/evaluation/README.md](../packages/core/evaluation/README.md)         | [METRICS_GUIDE.md](../packages/core/evaluation/METRICS_GUIDE.md)   |
+| Features       | [packages/core/features/README.md](../packages/core/features/README.md)             | [FEATURE_CATALOG.md](../packages/core/features/FEATURE_CATALOG.md) |
+| Explainability | [packages/core/explainability/README.md](../packages/core/explainability/README.md) | [XAI_GUIDE.md](../packages/core/explainability/XAI_GUIDE.md)       |
 
-  [:octicons-arrow-right-24: Quick Start](getting-started/quickstart.md)
+## Developer Guide — Dashboard Platform
 
-- :material-chart-box:{ .lg .middle } **Dashboard**
+| Module           | README                                                                                                                           | Guide                                                                   |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Frontend/UI      | [layouts/README.md](../packages/dashboard/layouts/README.md), [components/README.md](../packages/dashboard/components/README.md) | [UI_GUIDE.md](../packages/dashboard/UI_GUIDE.md)                        |
+| Backend Services | [services/README.md](../packages/dashboard/services/README.md)                                                                   | [SERVICE_CATALOG.md](../packages/dashboard/services/SERVICE_CATALOG.md) |
+| Callbacks        | [callbacks/README.md](../packages/dashboard/callbacks/README.md)                                                                 | [CALLBACK_GUIDE.md](../packages/dashboard/callbacks/CALLBACK_GUIDE.md)  |
+| Async Tasks      | [tasks/README.md](../packages/dashboard/tasks/README.md)                                                                         | [TASK_GUIDE.md](../packages/dashboard/tasks/TASK_GUIDE.md)              |
 
-  ***
+## Developer Guide — Data Engineering
 
-  Enterprise-grade web interface for ML operations - no coding required.
+| Module            | README                                                                  | Guide                                                    |
+| ----------------- | ----------------------------------------------------------------------- | -------------------------------------------------------- |
+| Signal Generation | [data/SIGNAL_GENERATION_README.md](../data/SIGNAL_GENERATION_README.md) | [PHYSICS_MODEL_GUIDE.md](../data/PHYSICS_MODEL_GUIDE.md) |
+| Data Loading      | [data/DATA_LOADING_README.md](../data/DATA_LOADING_README.md)           | [DATASET_GUIDE.md](../data/DATASET_GUIDE.md)             |
+| Storage Layer     | [data/STORAGE_README.md](../data/STORAGE_README.md)                     | [HDF5_GUIDE.md](../data/HDF5_GUIDE.md)                   |
 
-  [:octicons-arrow-right-24: Dashboard Guide](user-guide/dashboard/overview.md)
+## Developer Guide — Infrastructure
 
-- :material-api:{ .lg .middle } **API Reference**
+| Module        | README                                                         | Guide                                                             |
+| ------------- | -------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Database      | [database/README.md](../packages/dashboard/database/README.md) | [SCHEMA_GUIDE.md](../packages/dashboard/database/SCHEMA_GUIDE.md) |
+| Deployment    | [deploy/README.md](../deploy/README.md)                        | [DEPLOYMENT_GUIDE.md](../deploy/DEPLOYMENT_GUIDE.md)              |
+| Testing       | [tests/README.md](../tests/README.md)                          | [TESTING_GUIDE.md](../tests/TESTING_GUIDE.md)                     |
+| Configuration | [config/README.md](../config/README.md)                        | [CONFIGURATION_GUIDE.md](../config/CONFIGURATION_GUIDE.md)        |
 
-  ***
+## Developer Guide — Research & Cross-Cutting
 
-  Complete API documentation for programmatic access to all features.
+| Module           | README                                                      | Guide                                                             |
+| ---------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| Research Scripts | [scripts/research/README.md](../scripts/research/README.md) | [EXPERIMENT_GUIDE.md](../scripts/research/EXPERIMENT_GUIDE.md)    |
+| Visualization    | [visualization/README.md](../visualization/README.md)       | [VISUALIZATION_GUIDE.md](../visualization/VISUALIZATION_GUIDE.md) |
+| Integration      | [integration/README.md](../integration/README.md)           | [INTEGRATION_GUIDE.md](../integration/INTEGRATION_GUIDE.md)       |
+| Utilities        | [utils/README.md](../utils/README.md)                       | —                                                                 |
 
-  [:octicons-arrow-right-24: API Docs](api/index.md)
+## Operations
 
-- :material-flask:{ .lg .middle } **Research**
+| Resource            | Location                                                          |
+| ------------------- | ----------------------------------------------------------------- |
+| Deployment Guide    | [deploy/DEPLOYMENT_GUIDE.md](../deploy/DEPLOYMENT_GUIDE.md)       |
+| Configuration Guide | [config/CONFIGURATION_GUIDE.md](../config/CONFIGURATION_GUIDE.md) |
 
-  ***
+## Research
 
-  Physics-informed deep learning, XAI methods, and research-grade documentation.
+| Resource            | Location                                                                |
+| ------------------- | ----------------------------------------------------------------------- |
+| Research Index      | [docs/research/index.md](research/index.md)                             |
+| PINN Theory         | [docs/research/pinn-theory.md](research/pinn-theory.md)                 |
+| XAI Methods         | [docs/research/xai-methods.md](research/xai-methods.md)                 |
+| Ensemble Strategies | [docs/research/ensemble-strategies.md](research/ensemble-strategies.md) |
+| Reproducibility     | [docs/research/reproducibility.md](research/reproducibility.md)         |
 
-  [:octicons-arrow-right-24: Research](research/index.md)
+## Project References
 
-</div>
-
-## Key Features
-
-| Feature              | Description                                    |
-| -------------------- | ---------------------------------------------- |
-| **11 Fault Types**   | Comprehensive classification of bearing faults |
-| **98-99% Accuracy**  | State-of-the-art ensemble models               |
-| **PINN Integration** | Physics-informed neural networks               |
-| **Explainable AI**   | SHAP, LIME, Integrated Gradients               |
-| **Production Ready** | <50ms latency, Docker, Kubernetes              |
-
-## Project Architecture
-
-```mermaid
-graph TB
-    subgraph "Data Layer"
-        A[MAT Import] --> B[HDF5 Cache]
-        B --> C[DataLoader]
-    end
-
-    subgraph "Model Layer"
-        C --> D[Classical ML]
-        C --> E[Deep Learning]
-        C --> F[PINN]
-    end
-
-    subgraph "Production"
-        D --> G[Ensemble]
-        E --> G
-        F --> G
-        G --> H[Quantization]
-        H --> I[ONNX Export]
-        I --> J[REST API]
-    end
-```
-
-## Quick Links
-
-- [Installation Guide](getting-started/installation.md)
-- [Phase-by-Phase Tutorial](user-guide/phases/overview.md)
-- [Dashboard Quick Start](user-guide/dashboard/overview.md)
-- [API Reference](api/index.md)
-- [Contributing Guidelines](contributing/index.md)
-
-## Citation
-
-If you use this project in your research, please cite:
-
-```bibtex
-@software{lstm_pfd_2025,
-  author = {Ahmad, Syed Abbas},
-  title = {LSTM PFD: Advanced Bearing Fault Diagnosis System},
-  year = {2025},
-  url = {https://github.com/abbas-ahmad-cowlar/LSTM_PFD}
-}
-```
+| Resource               | Location                                                                |
+| ---------------------- | ----------------------------------------------------------------------- |
+| Architecture Reference | [INDEPENDENT_DEVELOPMENT_BLOCKS.md](INDEPENDENT_DEVELOPMENT_BLOCKS.md)  |
+| Contributing           | [CONTRIBUTING.md](../CONTRIBUTING.md)                                   |
+| Changelog              | [CHANGELOG.md](../CHANGELOG.md)                                         |
+| Archive                | [docs/archive/ARCHIVE_MASTER_INDEX.md](archive/ARCHIVE_MASTER_INDEX.md) |
