@@ -9,7 +9,7 @@ All plots below support zoom, pan, and hover interactions. Click on legend items
 
 ## Confusion Matrix
 
-Interactive confusion matrix for the ensemble model achieving 98.4% accuracy across all 11 fault classes.
+Interactive confusion matrix for the ensemble model achieving [PENDING — run experiment to fill] accuracy across all 11 fault classes.
 
 <iframe src="../../assets/interactive/confusion_matrix.html" 
         width="100%" height="750px" frameBorder="0"
@@ -20,7 +20,7 @@ Interactive confusion matrix for the ensemble model achieving 98.4% accuracy acr
 
 ## ROC Curves
 
-Multi-class ROC curves (One-vs-Rest) showing excellent classification performance with average AUC of 0.988.
+Multi-class ROC curves (One-vs-Rest) showing classification performance with average AUC of [PENDING — run experiment to fill].
 
 <iframe src="../../assets/interactive/roc_curves.html" 
         width="100%" height="650px" frameBorder="0"
