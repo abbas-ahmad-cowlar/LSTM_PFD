@@ -20,6 +20,7 @@ Thank you for your interest in contributing to LSTM_PFD! This document provides 
 This project adheres to a Code of Conduct. By participating, you are expected to uphold this code.
 
 **Our Standards**:
+
 - Be respectful and inclusive
 - Welcome newcomers
 - Accept constructive criticism gracefully
@@ -113,6 +114,7 @@ git checkout -b fix/your-bug-fix
 ```
 
 **Branch naming conventions**:
+
 - `feature/feature-name` - New features
 - `fix/bug-name` - Bug fixes
 - `docs/doc-name` - Documentation updates
@@ -157,6 +159,7 @@ git commit -m "Add feature X to improve Y
 ```
 
 **Commit message guidelines**:
+
 - Use present tense ("Add feature" not "Added feature")
 - Use imperative mood ("Move cursor to..." not "Moves cursor to...")
 - Limit first line to 72 characters
@@ -203,6 +206,7 @@ pytest -m slow
 ### Writing Tests
 
 **Test Structure**:
+
 ```python
 import pytest
 
@@ -227,6 +231,7 @@ class TestFeatureName:
 ```
 
 **Test Guidelines**:
+
 - Each test should test one thing
 - Use descriptive test names
 - Use fixtures for common setup
@@ -357,20 +362,24 @@ git push origin feature/your-feature-name
 
 ```markdown
 ## Description
+
 Brief description of changes
 
 ## Type of Change
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Breaking change
 - [ ] Documentation update
 
 ## Testing
+
 - [ ] All tests pass
 - [ ] New tests added
 - [ ] Coverage maintained/improved
 
 ## Checklist
+
 - [ ] Code follows project style
 - [ ] Documentation updated
 - [ ] Tests added/updated
@@ -436,16 +445,26 @@ When requesting features, include:
 
 ```
 LSTM_PFD/
-├── api/                    # REST API
-├── deployment/             # Deployment utilities
-├── features/               # Feature extraction
-├── models/                 # Model architectures
-├── training/               # Training utilities
+├── packages/
+│   ├── core/               # Core ML engine
+│   │   ├── models/         # Model architectures
+│   │   ├── training/       # Training pipeline
+│   │   ├── evaluation/     # Metrics & evaluation
+│   │   ├── features/       # Feature extraction
+│   │   └── explainability/ # XAI methods
+│   ├── dashboard/          # Enterprise dashboard
+│   │   ├── layouts/        # UI layouts
+│   │   ├── services/       # Backend services
+│   │   ├── callbacks/      # Dash callbacks
+│   │   └── tasks/          # Celery async tasks
+│   └── deployment/         # Deployment utilities
+├── data/                   # Data engineering
+├── config/                 # Configuration
 ├── tests/                  # Test suite
 │   ├── unit/              # Unit tests
-│   ├── integration/       # Integration tests
-│   └── benchmarks/        # Performance benchmarks
-├── scripts/               # Utility scripts
+│   └── integration/       # Integration tests
+├── scripts/               # Utility & research scripts
+├── deploy/                # Deployment scripts
 └── docs/                  # Documentation
 ```
 
@@ -470,15 +489,15 @@ uvicorn api.main:app --reload
 
 ### Getting Help
 
-- **GitHub Issues**: https://github.com/ORIGINAL_OWNER/LSTM_PFD/issues
-- **Discussions**: https://github.com/ORIGINAL_OWNER/LSTM_PFD/discussions
-- **Email**: your.email@example.com
+- **GitHub Issues**: https://github.com/abbas-ahmad-cowlar/LSTM_PFD/issues
+- **Discussions**: https://github.com/abbas-ahmad-cowlar/LSTM_PFD/discussions
 
 ---
 
 ## 🏆 Recognition
 
 Contributors will be recognized in:
+
 - `CONTRIBUTORS.md` file
 - Release notes
 - Project README
@@ -487,4 +506,4 @@ Thank you for contributing to LSTM_PFD! 🎉
 
 ---
 
-**Last Updated**: November 2025
+**Last Updated**: February 2026
