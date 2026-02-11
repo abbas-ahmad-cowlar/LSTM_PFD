@@ -16,7 +16,7 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, List, Type, Union
+from typing import Optional, List, Type, Union, Dict, Any
 
 
 from packages.core.models.base_model import BaseModel
@@ -208,6 +208,16 @@ class ResNet2DSpectrogram(BaseModel):
             self._load_pretrained_weights()
         else:
             self._initialize_weights()
+
+    def get_config(self) -> Dict[str, Any]:
+        """Get model configuration dictionary."""
+        return {
+            'model': 'ResNet2DSpectrogram',
+            'num_classes': self.num_classes,
+            'input_channels': self.input_channels,
+            'block': self.block.__name__,
+            'dropout': self.dropout,
+        }
 
     def _make_layer(
         self,

@@ -16,7 +16,7 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict, Any
 import math
 
 
@@ -265,6 +265,15 @@ class EfficientNet2DSpectrogram(BaseModel):
         self.fc = nn.Linear(head_channels, num_classes)
 
         self._initialize_weights()
+
+    def get_config(self) -> Dict[str, Any]:
+        """Get model configuration dictionary."""
+        return {
+            'model': 'EfficientNet2DSpectrogram',
+            'num_classes': self.num_classes,
+            'input_channels': self.input_channels,
+            'dropout_rate': self.dropout_rate,
+        }
 
     def _round_filters(self, filters: int, width_mult: float) -> int:
         """Round number of filters based on width multiplier."""

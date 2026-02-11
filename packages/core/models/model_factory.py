@@ -50,6 +50,65 @@ from .hybrid.cnn_transformer import (
     cnn_transformer_large
 )
 
+# PatchTST and TSMixer
+from .transformer.patchtst import PatchTST
+from .transformer.tsmixer import TSMixer
+
+# EfficientNet 1D
+from .efficientnet import (
+    EfficientNet1D,
+    create_efficientnet_b0,
+    create_efficientnet_b1,
+    create_efficientnet_b2,
+    create_efficientnet_b3,
+    create_efficientnet_b4,
+    create_efficientnet_b5,
+    create_efficientnet_b6,
+    create_efficientnet_b7,
+)
+
+# Spectrogram CNN (2D models)
+from .spectrogram_cnn import (
+    ResNet2DSpectrogram,
+    resnet18_2d,
+    resnet34_2d,
+    resnet50_2d,
+    EfficientNet2DSpectrogram,
+    efficientnet_b0 as efficientnet_2d_b0,
+    efficientnet_b1 as efficientnet_2d_b1,
+    efficientnet_b3 as efficientnet_2d_b3,
+)
+
+# Dual-Stream CNN
+from .spectrogram_cnn.dual_stream_cnn import DualStreamCNN
+
+# Fusion models
+from .fusion import (
+    EarlyFusion,
+    create_early_fusion,
+    LateFusion,
+    create_late_fusion,
+)
+
+
+# ---------------------------------------------------------------------------
+# Factory wrapper functions for models that lack them
+# ---------------------------------------------------------------------------
+
+def create_patchtst(num_classes: int = NUM_CLASSES, **kwargs) -> PatchTST:
+    """Create a PatchTST model (Nie et al., 2023)."""
+    return PatchTST(num_classes=num_classes, **kwargs)
+
+
+def create_tsmixer(num_classes: int = NUM_CLASSES, **kwargs) -> TSMixer:
+    """Create a TSMixer model (Chen et al., 2023)."""
+    return TSMixer(num_classes=num_classes, **kwargs)
+
+
+def create_dual_stream_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> DualStreamCNN:
+    """Create a DualStreamCNN model (time + frequency branches)."""
+    return DualStreamCNN(num_classes=num_classes, **kwargs)
+
 
 # Model registry: Maps model names to creation functions
 MODEL_REGISTRY = {
@@ -74,12 +133,46 @@ MODEL_REGISTRY = {
     'vit_small_1d': vit_small_1d,
     'vit_base_1d': vit_base_1d,
 
+    # PatchTST (Nie et al., 2023)
+    'patchtst': create_patchtst,
+    'patch_tst': create_patchtst,
+
+    # TSMixer (Chen et al., 2023)
+    'tsmixer': create_tsmixer,
+    'ts_mixer': create_tsmixer,
+
     # CNN-Transformer Hybrid
     'cnn_transformer': create_cnn_transformer_hybrid,
     'cnn_transformer_hybrid': create_cnn_transformer_hybrid,
     'cnn_transformer_small': cnn_transformer_small,
     'cnn_transformer_base': cnn_transformer_base,
     'cnn_transformer_large': cnn_transformer_large,
+
+    # EfficientNet 1D
+    'efficientnet_b0': create_efficientnet_b0,
+    'efficientnet_b1': create_efficientnet_b1,
+    'efficientnet_b2': create_efficientnet_b2,
+    'efficientnet_b3': create_efficientnet_b3,
+    'efficientnet_b4': create_efficientnet_b4,
+    'efficientnet_b5': create_efficientnet_b5,
+    'efficientnet_b6': create_efficientnet_b6,
+    'efficientnet_b7': create_efficientnet_b7,
+
+    # Spectrogram CNN (2D models — input shape: [B, C, H, W])
+    'resnet18_2d': resnet18_2d,
+    'resnet34_2d': resnet34_2d,
+    'resnet50_2d': resnet50_2d,
+    'efficientnet_2d_b0': efficientnet_2d_b0,
+    'efficientnet_2d_b1': efficientnet_2d_b1,
+    'efficientnet_2d_b3': efficientnet_2d_b3,
+
+    # Dual-Stream CNN (time + frequency branches)
+    'dual_stream': create_dual_stream_cnn,
+    'dual_stream_cnn': create_dual_stream_cnn,
+
+    # Fusion models (require multi-input pipelines)
+    'early_fusion': create_early_fusion,
+    'late_fusion': create_late_fusion,
 
     # Physics-informed
     'pinn': create_hybrid_pinn,
