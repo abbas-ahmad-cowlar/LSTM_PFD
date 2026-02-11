@@ -141,10 +141,10 @@ physics_losses = [
 
 Our PINN implementation achieves:
 
-| Model                | Accuracy  | Physics Consistency |
-| -------------------- | --------- | ------------------- |
-| ResNet-18 (baseline) | 96.4%     | N/A                 |
-| PINN (ours)          | **97.8%** | 94.2%               |
+| Model                | Accuracy                           | Physics Consistency                |
+| -------------------- | ---------------------------------- | ---------------------------------- |
+| ResNet-18 (baseline) | [PENDING — run experiment to fill] | N/A                                |
+| PINN (ours)          | [PENDING — run experiment to fill] | [PENDING — run experiment to fill] |
 
 !!! success "Key Insight"
 Physics constraints act as regularizers, improving generalization especially for rare fault types where training data is limited.
