@@ -12,33 +12,33 @@ Ablation studies systematically remove or modify model components to understand 
 
 ### 1. Architecture Ablations
 
-| Variant       | Modification            | Δ Accuracy |
-| ------------- | ----------------------- | ---------- |
-| Full Model    | Baseline                | 97.8%      |
-| No Residual   | Remove skip connections | -1.2%      |
-| No BatchNorm  | Remove BN layers        | -0.8%      |
-| No Dropout    | Remove regularization   | -0.3%      |
-| Smaller Width | Half channels           | -1.5%      |
+| Variant       | Modification            | Δ Accuracy                          |
+| ------------- | ----------------------- | ----------------------------------- |
+| Full Model    | Baseline                | [PENDING — run experiment to fill]  |
+| No Residual   | Remove skip connections | [PENDING — run experiment to fill]  |
+| No BatchNorm  | Remove BN layers        | [PENDING — run experiment to fill]  |
+| No Dropout    | Remove regularization   | [PENDING — run experiment to fill]  |
+| Smaller Width | Half channels           | [PENDING — run experiment to fill]  |
 
 ### 2. Physics Loss Ablations (PINN)
 
-| Constraint  | Removed                  | Δ Accuracy |
-| ----------- | ------------------------ | ---------- |
-| Full PINN   | Baseline                 | 97.8%      |
-| No Energy   | $\mathcal{L}_{energy}$   | -0.6%      |
-| No Momentum | $\mathcal{L}_{momentum}$ | -0.4%      |
-| No Bearing  | $\mathcal{L}_{bearing}$  | -0.3%      |
-| Data Only   | All physics              | -1.4%      |
+| Constraint  | Removed                  | Δ Accuracy                          |
+| ----------- | ------------------------ | ----------------------------------- |
+| Full PINN   | Baseline                 | [PENDING — run experiment to fill]  |
+| No Energy   | $\mathcal{L}_{energy}$   | [PENDING — run experiment to fill]  |
+| No Momentum | $\mathcal{L}_{momentum}$ | [PENDING — run experiment to fill]  |
+| No Bearing  | $\mathcal{L}_{bearing}$  | [PENDING — run experiment to fill]  |
+| Data Only   | All physics              | [PENDING — run experiment to fill]  |
 
 ### 3. Ensemble Component Ablations
 
-| Removed Model | Δ Accuracy |
-| ------------- | ---------- |
-| None (Full)   | 98.4%      |
-| -ResNet       | -0.4%      |
-| -Transformer  | -0.3%      |
-| -PINN         | -0.6%      |
-| -EfficientNet | -0.2%      |
+| Removed Model | Δ Accuracy                          |
+| ------------- | ----------------------------------- |
+| None (Full)   | [PENDING — run experiment to fill]  |
+| -ResNet       | [PENDING — run experiment to fill]  |
+| -Transformer  | [PENDING — run experiment to fill]  |
+| -PINN         | [PENDING — run experiment to fill]  |
+| -EfficientNet | [PENDING — run experiment to fill]  |
 
 ---
 

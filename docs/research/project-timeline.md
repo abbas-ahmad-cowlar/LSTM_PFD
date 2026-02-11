@@ -39,17 +39,17 @@ flowchart LR
     end
 
     subgraph "Data-Driven Models"
-        P1[Phase 1<br/>Classical ML<br/>95-96%]
-        P2[Phase 2<br/>1D CNN<br/>93-95%]
-        P3[Phase 3<br/>Advanced CNN<br/>96-97%]
-        P4[Phase 4<br/>Transformer<br/>96-97%]
+        P1[Phase 1<br/>Classical ML<br/>PENDING]
+        P2[Phase 2<br/>1D CNN<br/>PENDING]
+        P3[Phase 3<br/>Advanced CNN<br/>PENDING]
+        P4[Phase 4<br/>Transformer<br/>PENDING]
     end
 
     subgraph "Advanced Techniques"
-        P5[Phase 5<br/>Time-Freq<br/>96-98%]
-        P6[Phase 6<br/>PINN<br/>97-98%]
+        P5[Phase 5<br/>Time-Freq<br/>PENDING]
+        P6[Phase 6<br/>PINN<br/>PENDING]
         P7[Phase 7<br/>XAI]
-        P8[Phase 8<br/>Ensemble<br/>98-99%]
+        P8[Phase 8<br/>Ensemble<br/>PENDING]
     end
 
     subgraph Production
@@ -75,10 +75,10 @@ flowchart LR
 
 ```mermaid
 xychart-beta
-    title "Model Accuracy by Phase"
+    title "Model Accuracy by Phase [PENDING — run experiments to fill]"
     x-axis [P1, P2, P3, P4, P5, P6, P8]
     y-axis "Accuracy (%)" 90 --> 100
-    bar [95.5, 94, 96.8, 96.5, 97.4, 97.8, 98.4]
+    bar [0, 0, 0, 0, 0, 0, 0]
 ```
 
 ## Architecture Integration
@@ -117,18 +117,18 @@ flowchart TB
 
 ## Key Milestones
 
-| Phase | Duration | Key Deliverable                          | Accuracy   |
-| ----- | -------- | ---------------------------------------- | ---------- |
-| 0     | 30 days  | Data pipeline with HDF5 caching          | N/A        |
-| 1     | 23 days  | Feature engineering (36→15 features)     | 95-96%     |
-| 2-3   | 61 days  | CNN architectures (ResNet, EfficientNet) | 96-97%     |
-| 4     | 29 days  | Transformer with attention               | 96-97%     |
-| 5     | 14 days  | Time-frequency analysis (STFT/CWT/WVD)   | 96-98%     |
-| 6     | 16 days  | Physics-informed constraints             | 97-98%     |
-| 7     | 12 days  | SHAP, LIME, Integrated Gradients         | N/A        |
-| 8     | 10 days  | Ensemble methods                         | **98-99%** |
-| 9-10  | 39 days  | Quantization, ONNX, CI/CD                | N/A        |
-| 11    | 30 days  | Enterprise web dashboard                 | N/A        |
+| Phase | Duration | Key Deliverable                          | Accuracy                           |
+| ----- | -------- | ---------------------------------------- | ---------------------------------- |
+| 0     | 30 days  | Data pipeline with HDF5 caching          | N/A                                |
+| 1     | 23 days  | Feature engineering (36→15 features)     | [PENDING — run experiment to fill] |
+| 2-3   | 61 days  | CNN architectures (ResNet, EfficientNet) | [PENDING — run experiment to fill] |
+| 4     | 29 days  | Transformer with attention               | [PENDING — run experiment to fill] |
+| 5     | 14 days  | Time-frequency analysis (STFT/CWT/WVD)   | [PENDING — run experiment to fill] |
+| 6     | 16 days  | Physics-informed constraints             | [PENDING — run experiment to fill] |
+| 7     | 12 days  | SHAP, LIME, Integrated Gradients         | N/A                                |
+| 8     | 10 days  | Ensemble methods                         | [PENDING — run experiment to fill] |
+| 9-10  | 39 days  | Quantization, ONNX, CI/CD                | N/A                                |
+| 11    | 30 days  | Enterprise web dashboard                 | N/A                                |
 
 **Total Development Time**: ~264 days (9 months)
 

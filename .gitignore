@@ -84,6 +84,7 @@ venv.bak/
 Thumbs.db
 
 # Project specific
+site/
 data/raw/
 # data/processed/ is handled by local .gitignore for DVC support
 *.h5
