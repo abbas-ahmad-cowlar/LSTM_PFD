@@ -276,6 +276,15 @@ class MultitaskPINN(BaseModel):
 
         return total_loss, loss_dict
 
+    def get_config(self) -> Dict[str, any]:
+        """Get model configuration dictionary (satisfies BaseModel ABC)."""
+        return {
+            'model_type': 'MultitaskPINN',
+            'backbone': self.backbone_name,
+            'num_fault_classes': self.num_fault_classes,
+            'num_severity_levels': self.num_severity_levels,
+        }
+
     def get_model_info(self) -> Dict[str, any]:
         """Get model configuration and statistics."""
         total_params = sum(p.numel() for p in self.parameters())
@@ -288,10 +297,7 @@ class MultitaskPINN(BaseModel):
         severity_head_params = sum(p.numel() for p in self.severity_head.parameters())
 
         return {
-            'model_name': 'MultitaskPINN',
-            'backbone': self.backbone_name,
-            'num_fault_classes': self.num_fault_classes,
-            'num_severity_levels': self.num_severity_levels,
+            **self.get_config(),
             'total_params': total_params,
             'trainable_params': trainable_params,
             'encoder_params': encoder_params,

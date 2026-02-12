@@ -262,17 +262,23 @@ class PhysicsConstrainedCNN(BaseModel):
 
         return predictions, physics_loss, loss_dict
 
+    def get_config(self) -> Dict[str, any]:
+        """Get model configuration dictionary (satisfies BaseModel ABC)."""
+        return {
+            'model_type': 'PhysicsConstrainedCNN',
+            'backbone': self.backbone_name,
+            'num_classes': self.num_classes,
+            'input_length': self.input_length,
+            'sample_rate': self.sample_rate,
+        }
+
     def get_model_info(self) -> Dict[str, any]:
         """Get model configuration and statistics."""
         total_params = sum(p.numel() for p in self.parameters())
         trainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
 
         return {
-            'model_name': 'PhysicsConstrainedCNN',
-            'backbone': self.backbone_name,
-            'num_classes': self.num_classes,
-            'input_length': self.input_length,
-            'sample_rate': self.sample_rate,
+            **self.get_config(),
             'total_params': total_params,
             'trainable_params': trainable_params
         }
