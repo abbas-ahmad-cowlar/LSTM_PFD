@@ -90,6 +90,23 @@ from .fusion import (
     create_late_fusion,
 )
 
+# PINN variants
+from .pinn.physics_constrained_cnn import (
+    PhysicsConstrainedCNN,
+    AdaptivePhysicsConstrainedCNN,
+    create_physics_constrained_cnn,
+)
+from .pinn.multitask_pinn import (
+    MultitaskPINN,
+    AdaptiveMultitaskPINN,
+    create_multitask_pinn,
+)
+from .pinn.knowledge_graph_pinn import KnowledgeGraphPINN
+
+# Contrastive models
+from .contrastive.signal_encoder import SignalEncoder
+from .contrastive.classifier import ContrastiveClassifier
+
 
 # ---------------------------------------------------------------------------
 # Factory wrapper functions for models that lack them
@@ -108,6 +125,31 @@ def create_tsmixer(num_classes: int = NUM_CLASSES, **kwargs) -> TSMixer:
 def create_dual_stream_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> DualStreamCNN:
     """Create a DualStreamCNN model (time + frequency branches)."""
     return DualStreamCNN(num_classes=num_classes, **kwargs)
+
+
+def _create_multitask_pinn(num_classes: int = NUM_CLASSES, **kwargs) -> MultitaskPINN:
+    """Adapter for create_multitask_pinn (uses num_fault_classes internally)."""
+    return create_multitask_pinn(num_fault_classes=num_classes, **kwargs)
+
+
+def _create_adaptive_multitask_pinn(num_classes: int = NUM_CLASSES, **kwargs):
+    """Create AdaptiveMultitaskPINN via adapter."""
+    return create_multitask_pinn(num_fault_classes=num_classes, adaptive=True, **kwargs)
+
+
+def create_knowledge_graph_pinn(num_classes: int = NUM_CLASSES, **kwargs) -> KnowledgeGraphPINN:
+    """Create a KnowledgeGraphPINN model."""
+    return KnowledgeGraphPINN(num_classes=num_classes, **kwargs)
+
+
+def create_signal_encoder(num_classes: int = NUM_CLASSES, **kwargs) -> SignalEncoder:
+    """Create a SignalEncoder for contrastive learning."""
+    return SignalEncoder(num_classes=num_classes, **kwargs)
+
+
+def create_contrastive_classifier(num_classes: int = NUM_CLASSES, **kwargs) -> ContrastiveClassifier:
+    """Create a ContrastiveClassifier with default encoder."""
+    return ContrastiveClassifier(num_classes=num_classes, **kwargs)
 
 
 # Model registry: Maps model names to creation functions
@@ -178,6 +220,23 @@ MODEL_REGISTRY = {
     'pinn': create_hybrid_pinn,
     'hybrid_pinn': create_hybrid_pinn,
     'physics_informed': create_hybrid_pinn,
+
+    # Physics-Constrained CNN
+    'physics_cnn': create_physics_constrained_cnn,
+    'physics_constrained_cnn': create_physics_constrained_cnn,
+    'adaptive_physics_cnn': lambda **kw: create_physics_constrained_cnn(adaptive=True, **kw),
+
+    # Multi-task PINN
+    'multitask_pinn': _create_multitask_pinn,
+    'adaptive_multitask_pinn': _create_adaptive_multitask_pinn,
+
+    # Knowledge Graph PINN
+    'knowledge_graph_pinn': create_knowledge_graph_pinn,
+    'kg_pinn': create_knowledge_graph_pinn,
+
+    # Contrastive learning models
+    'signal_encoder': create_signal_encoder,
+    'contrastive_classifier': create_contrastive_classifier,
 }
 
 
