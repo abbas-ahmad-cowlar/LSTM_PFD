@@ -422,18 +422,24 @@ class KnowledgeGraphPINN(BaseModel):
 
         return logits, attention
 
+    def get_config(self) -> Dict[str, any]:
+        """Get model configuration dictionary (satisfies BaseModel ABC)."""
+        return {
+            'model_type': 'KnowledgeGraphPINN',
+            'backbone': self.backbone_name,
+            'num_classes': self.num_classes,
+            'node_feature_dim': self.node_feature_dim,
+            'gcn_hidden_dim': self.gcn_hidden_dim,
+            'num_gcn_layers': len(self.gcn_layers),
+        }
+
     def get_model_info(self) -> Dict[str, any]:
         """Get model configuration and statistics."""
         total_params = sum(p.numel() for p in self.parameters())
         trainable_params = sum(p.numel() for p in self.parameters() if p.requires_grad)
 
         return {
-            'model_name': 'KnowledgeGraphPINN',
-            'backbone': self.backbone_name,
-            'num_classes': self.num_classes,
-            'node_feature_dim': self.node_feature_dim,
-            'gcn_hidden_dim': self.gcn_hidden_dim,
-            'num_gcn_layers': len(self.gcn_layers),
+            **self.get_config(),
             'total_params': total_params,
             'trainable_params': trainable_params,
             'num_graph_edges': int(np.sum(self.kg.adjacency_matrix > 0))
