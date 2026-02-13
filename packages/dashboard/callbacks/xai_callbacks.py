@@ -197,6 +197,11 @@ def register_xai_callbacks(app):
                 config['params']['num_perturbations'] = perturbations or 1000
             elif method == 'integrated_gradients':
                 config['params']['ig_steps'] = 50
+            elif method == 'counterfactual':
+                config['params']['max_iterations'] = 500
+                config['params']['confidence_threshold'] = 0.9
+            elif method == 'activation_maps':
+                config['params']['target_layer'] = None  # Auto-detect
 
             # Launch Celery task
             task = generate_explanation_task.delay(config)
@@ -320,6 +325,39 @@ def register_xai_callbacks(app):
 
                 details = _create_attribution_details(results, method)
 
+            elif method == 'counterfactual':
+                # Counterfactual visualizations
+                signal_fig = XAIVisualization.create_counterfactual_signal_plot(
+                    signal=results['signal'],
+                    counterfactual=results['counterfactual'],
+                    perturbation=results['perturbation'],
+                    predicted_class=predicted_class,
+                    target_class=results.get('target_class')
+                )
+
+                importance_fig = XAIVisualization.create_counterfactual_importance(
+                    perturbation=results['perturbation'],
+                    target_class=results.get('target_class'),
+                    top_k=20
+                )
+
+                details = _create_counterfactual_details(results)
+
+            elif method == 'activation_maps':
+                # Activation maps visualizations
+                signal_fig = XAIVisualization.create_activation_maps_plot(
+                    signal=results['signal'],
+                    layer_stats=results.get('layer_stats', []),
+                    predicted_class=predicted_class
+                )
+
+                importance_fig = XAIVisualization.create_activation_layer_summary(
+                    layer_stats=results.get('layer_stats', []),
+                    predicted_class=predicted_class
+                )
+
+                details = _create_activation_maps_details(results)
+
             else:
                 raise ValueError(f"Unknown method: {method}")
 
@@ -375,7 +413,9 @@ def register_xai_callbacks(app):
                     'shap': 'primary',
                     'lime': 'success',
                     'integrated_gradients': 'info',
-                    'gradcam': 'warning'
+                    'gradcam': 'warning',
+                    'counterfactual': 'danger',
+                    'activation_maps': 'secondary'
                 }
                 badge_color = method_colors.get(exp['method'], 'secondary')
 
@@ -637,5 +677,102 @@ def _create_attribution_details(result: Dict[str, Any], method: str) -> html.Div
         html.Small([
             html.I(className="fas fa-info-circle me-2"),
             f"{method_name} shows which input features are most important for the prediction."
+        ], className="text-muted")
+    ])
+
+
+def _create_counterfactual_details(result: Dict[str, Any]) -> html.Div:
+    """Create counterfactual explanation details panel."""
+    target_class = result.get('target_class', 0)
+    predicted_class = result.get('predicted_class', 0)
+    fault_classes = XAIVisualization.FAULT_CLASSES
+
+    pred_label = fault_classes[predicted_class] if predicted_class < len(fault_classes) else f"Class {predicted_class}"
+    target_label = fault_classes[target_class] if target_class < len(fault_classes) else f"Class {target_class}"
+
+    return html.Div([
+        html.H6("Counterfactual Explanation Details", className="mb-3"),
+
+        dbc.Row([
+            dbc.Col([
+                html.Small("Original Class:", className="text-muted"),
+                html.P(pred_label, className="text-primary mb-2")
+            ], width=6),
+            dbc.Col([
+                html.Small("Target Class:", className="text-muted"),
+                html.P(target_label, className="text-danger mb-2")
+            ], width=6),
+        ]),
+
+        dbc.Row([
+            dbc.Col([
+                html.Small("Original Confidence:", className="text-muted"),
+                html.P(f"{result.get('original_confidence', 0):.4f}", className="mb-2")
+            ], width=6),
+            dbc.Col([
+                html.Small("Final Confidence:", className="text-muted"),
+                html.P(f"{result.get('final_confidence', 0):.4f}", className="mb-2")
+            ], width=6),
+        ]),
+
+        dbc.Row([
+            dbc.Col([
+                html.Small("Perturbation L2:", className="text-muted"),
+                html.P(f"{result.get('perturbation_l2', 0):.4f}", className="mb-2")
+            ], width=6),
+            dbc.Col([
+                html.Small("Iterations:", className="text-muted"),
+                html.P(f"{result.get('iterations', 0)}", className="mb-2")
+            ], width=6),
+        ]),
+
+        html.Hr(),
+
+        html.Small([
+            html.I(className="fas fa-info-circle me-2"),
+            "Counterfactuals show the minimal changes needed to flip the model's prediction. ",
+            html.Span("Yellow", style={"color": "#ffc107"}),
+            " highlighted regions indicate where changes are concentrated."
+        ], className="text-muted")
+    ])
+
+
+def _create_activation_maps_details(result: Dict[str, Any]) -> html.Div:
+    """Create activation maps explanation details panel."""
+    layer_stats = result.get('layer_stats', [])
+    num_layers = result.get('num_conv_layers', 0)
+
+    return html.Div([
+        html.H6("Activation Maps Details", className="mb-3"),
+
+        dbc.Row([
+            dbc.Col([
+                html.Small("Conv Layers:", className="text-muted"),
+                html.P(f"{num_layers}", className="mb-2")
+            ], width=6),
+            dbc.Col([
+                html.Small("Signal Length:", className="text-muted"),
+                html.P(f"{result.get('signal_length', 0):,} samples", className="mb-2")
+            ], width=6),
+        ]),
+
+        html.Hr(),
+
+        html.H6("Layer Summary", className="mb-2"),
+        html.Div([
+            dbc.Row([
+                dbc.Col(html.Small(stat['layer'], className="text-monospace"), width=5),
+                dbc.Col(html.Small(f"{stat['num_filters']} filters"), width=3),
+                dbc.Col(html.Small(f"mean={stat['mean_activation']:.3f}"), width=4),
+            ], className="mb-1")
+            for stat in layer_stats[:10]  # Show up to 10
+        ]),
+
+        html.Hr(),
+
+        html.Small([
+            html.I(className="fas fa-info-circle me-2"),
+            "Activation maps show how information flows through the network. ",
+            "Higher activations indicate features the model deems important."
         ], className="text-muted")
     ])
