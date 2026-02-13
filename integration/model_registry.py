@@ -66,6 +66,7 @@ class ModelRegistry:
                 recall REAL,
                 f1_score REAL,
                 training_date TEXT,
+                training_duration_s REAL,
                 hyperparameters TEXT,
                 model_path TEXT,
                 onnx_path TEXT,
@@ -121,10 +122,11 @@ class ModelRegistry:
         cursor.execute('''
             INSERT INTO models (
                 model_name, phase, accuracy, precision, recall, f1_score,
-                training_date, hyperparameters, model_path, onnx_path,
+                training_date, training_duration_s, hyperparameters,
+                model_path, onnx_path,
                 size_mb, inference_latency_ms, num_parameters,
                 dataset_name, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
             model_name,
             phase,
@@ -133,6 +135,7 @@ class ModelRegistry:
             kwargs.get('recall'),
             kwargs.get('f1_score'),
             kwargs.get('training_date', datetime.now().isoformat()),
+            kwargs.get('training_duration_s'),
             hyperparameters_json,
             model_path,
             kwargs.get('onnx_path'),
@@ -280,4 +283,81 @@ class ModelRegistry:
         df = pd.read_sql_query('SELECT * FROM models ORDER BY accuracy DESC', conn)
         conn.close()
 
+        return df
+
+    # ------------------------------------------------------------------ #
+    #  Convenience helpers  (added for integration layer)
+    # ------------------------------------------------------------------ #
+    def auto_register(self, results: Dict[str, Any], phase: str = 'unknown') -> Optional[int]:
+        """
+        One-call registration from an adapter results dict.
+
+        Extracts standard keys (test_accuracy, model_path, precision, etc.)
+        and delegates to :meth:`register_model`.
+
+        Args:
+            results: The dict returned by any adapter's ``train()``
+            phase:   Pipeline phase label (e.g. 'deep_learning', 'classical')
+
+        Returns:
+            model_id if registered, None if results indicate failure
+        """
+        if not results.get('success', False):
+            logger.debug('auto_register skipped: results indicate failure')
+            return None
+
+        model_name = results.get(
+            'best_model_name',
+            results.get('model_type', 'unknown'),
+        )
+        accuracy = float(results.get('test_accuracy', 0))
+        model_path = results.get('model_path', '')
+
+        return self.register_model(
+            model_name=model_name,
+            phase=phase,
+            accuracy=accuracy,
+            model_path=model_path,
+            precision=results.get('precision'),
+            recall=results.get('recall'),
+            f1_score=results.get('f1_score'),
+            training_duration_s=results.get('training_time'),
+            hyperparameters=results.get('hyperparameters', {}),
+        )
+
+    def get_leaderboard(
+        self,
+        metric: str = 'accuracy',
+        phase: Optional[str] = None,
+        limit: int = 20,
+    ) -> pd.DataFrame:
+        """
+        Return a ranked leaderboard of models.
+
+        Args:
+            metric: Column to sort by (descending)
+            phase:  Optional filter (e.g. 'deep_learning')
+            limit:  Max rows to return
+
+        Returns:
+            DataFrame sorted by *metric* descending
+
+        Example:
+            >>> lb = registry.get_leaderboard('accuracy', phase='deep_learning', limit=10)
+            >>> print(lb[['model_name', 'accuracy', 'f1_score']])
+        """
+        conn = sqlite3.connect(self.db_path)
+
+        query = f'SELECT * FROM models WHERE {metric} IS NOT NULL'
+        params: list = []
+
+        if phase:
+            query += ' AND phase = ?'
+            params.append(phase)
+
+        query += f' ORDER BY {metric} DESC LIMIT ?'
+        params.append(limit)
+
+        df = pd.read_sql_query(query, conn, params=params)
+        conn.close()
         return df

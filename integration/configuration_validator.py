@@ -295,3 +295,99 @@ def generate_config_template(output_path: str = 'configs/template_config.yaml'):
         yaml.dump(template, f, default_flow_style=False, sort_keys=False)
 
     logger.info(f"✓ Configuration template saved: {output_path}")
+
+
+# ------------------------------------------------------------------ #
+#  Model-specific config validation  (used by adapters)
+# ------------------------------------------------------------------ #
+
+# Classical ML model types (not in MODEL_REGISTRY — they use sklearn)
+CLASSICAL_MODEL_TYPES = {'rf', 'svm', 'gbm', 'random_forest', 'gradient_boosting'}
+
+
+def validate_model_config(
+    model_type: str,
+    hyperparameters: Dict[str, Any] | None = None,
+) -> bool:
+    """
+    Validate a model training config before dispatching to an adapter.
+
+    Checks:
+      - model_type is known (in MODEL_REGISTRY or classical list)
+      - learning_rate is in (0, 10)
+      - batch_size is in [1, 4096]
+      - num_epochs / n_trials is positive
+      - weight_decay is non-negative
+
+    Args:
+        model_type:       e.g. 'resnet34_1d', 'rf', 'cnn_transformer'
+        hyperparameters:  optional dict of training hyperparameters
+
+    Returns:
+        True if valid
+
+    Raises:
+        ValueError: with detail message if invalid
+
+    Example:
+        >>> validate_model_config('resnet34_1d', {'lr': 0.001})
+        True
+        >>> validate_model_config('nonexistent_model')
+        ValueError: Unknown model_type 'nonexistent_model'. ...
+    """
+    errors: List[str] = []
+    hp = hyperparameters or {}
+
+    # ---- model_type ---- #
+    mt_lower = model_type.lower().strip()
+    if mt_lower not in CLASSICAL_MODEL_TYPES:
+        try:
+            import sys
+            from pathlib import Path as _Path
+            project_root = str(_Path(__file__).resolve().parent.parent)
+            if project_root not in sys.path:
+                sys.path.insert(0, project_root)
+            from packages.core.models.model_factory import list_available_models
+            available = list_available_models()
+            if mt_lower not in available:
+                errors.append(
+                    f"Unknown model_type '{model_type}'. "
+                    f"Available DL models: {available[:10]}... "
+                    f"Classical models: {sorted(CLASSICAL_MODEL_TYPES)}"
+                )
+        except ImportError:
+            # model_factory not importable — skip check
+            pass
+
+    # ---- learning rate ---- #
+    lr = hp.get('lr', hp.get('learning_rate'))
+    if lr is not None:
+        lr = float(lr)
+        if not (0 < lr < 10):
+            errors.append(f"learning_rate={lr} out of range (0, 10)")
+
+    # ---- batch size ---- #
+    bs = hp.get('batch_size')
+    if bs is not None:
+        bs = int(bs)
+        if not (1 <= bs <= 4096):
+            errors.append(f"batch_size={bs} out of range [1, 4096]")
+
+    # ---- epochs / trials ---- #
+    for key in ('num_epochs', 'epochs', 'n_trials'):
+        val = hp.get(key)
+        if val is not None and int(val) < 1:
+            errors.append(f"{key}={val} must be ≥ 1")
+
+    # ---- weight decay ---- #
+    wd = hp.get('weight_decay')
+    if wd is not None and float(wd) < 0:
+        errors.append(f"weight_decay={wd} must be ≥ 0")
+
+    if errors:
+        raise ValueError(
+            f"Config validation failed for model_type='{model_type}': "
+            + "; ".join(errors)
+        )
+
+    return True
