@@ -44,6 +44,8 @@ def create_xai_dashboard_layout():
                                 {"label": "LIME (Local Interpretable Model-agnostic Explanations)", "value": "lime"},
                                 {"label": "Integrated Gradients", "value": "integrated_gradients"},
                                 {"label": "Grad-CAM (Gradient-weighted Class Activation Mapping)", "value": "gradcam"},
+                                {"label": "Counterfactual Explanations", "value": "counterfactual"},
+                                {"label": "Activation Maps (Layer Visualization)", "value": "activation_maps"},
                             ],
                             value="shap",
                             className="mb-3"

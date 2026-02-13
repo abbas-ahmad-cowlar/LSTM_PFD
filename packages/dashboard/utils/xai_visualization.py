@@ -495,3 +495,333 @@ class XAIVisualization:
         )
 
         return fig
+
+    @staticmethod
+    def create_counterfactual_signal_plot(
+        signal: List[float],
+        counterfactual: List[float],
+        perturbation: List[float],
+        predicted_class: Optional[int] = None,
+        target_class: Optional[int] = None
+    ) -> go.Figure:
+        """
+        Create interactive Plotly visualization of counterfactual explanation.
+
+        Shows original signal, counterfactual signal, and the perturbation needed.
+
+        Args:
+            signal: Original signal values
+            counterfactual: Counterfactual signal values
+            perturbation: Difference between counterfactual and original
+            predicted_class: Original predicted class
+            target_class: Target class for counterfactual
+
+        Returns:
+            Plotly Figure with 3-panel subplot
+        """
+        signal_np = np.array(signal)
+        cf_np = np.array(counterfactual)
+        diff_np = np.array(perturbation)
+        time = np.arange(len(signal_np))
+
+        # Create figure with subplots
+        fig = make_subplots(
+            rows=3, cols=1,
+            row_heights=[0.4, 0.4, 0.2],
+            subplot_titles=(
+                "Original vs Counterfactual Signal",
+                "Counterfactual Signal",
+                "Required Perturbation"
+            ),
+            vertical_spacing=0.08
+        )
+
+        # Plot 1: Original signal
+        fig.add_trace(
+            go.Scatter(
+                x=time, y=signal_np,
+                name='Original',
+                line=dict(color='#1f77b4', width=1.5),
+                hovertemplate='<b>Original</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
+            ),
+            row=1, col=1
+        )
+
+        # Overlay counterfactual
+        fig.add_trace(
+            go.Scatter(
+                x=time, y=cf_np,
+                name='Counterfactual',
+                line=dict(color='#dc3545', width=1.5, dash='dot'),
+                hovertemplate='<b>Counterfactual</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
+            ),
+            row=1, col=1
+        )
+
+        # Plot 2: Counterfactual alone
+        fig.add_trace(
+            go.Scatter(
+                x=time, y=cf_np,
+                name='Counterfactual Signal',
+                line=dict(color='#dc3545', width=1.5),
+                showlegend=False,
+                fill='tozeroy',
+                fillcolor='rgba(220, 53, 69, 0.1)',
+                hovertemplate='<b>Counterfactual</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
+            ),
+            row=2, col=1
+        )
+
+        # Plot 3: Perturbation (difference)
+        colors = ['rgba(220, 53, 69, 0.6)' if v < 0 else 'rgba(40, 167, 69, 0.6)' for v in diff_np]
+
+        fig.add_trace(
+            go.Bar(
+                x=time, y=diff_np,
+                name='Perturbation',
+                marker_color=colors,
+                marker_line_width=0,
+                hovertemplate='<b>Perturbation</b><br>Time: %{x}<br>Δ: %{y:.4f}<extra></extra>'
+            ),
+            row=3, col=1
+        )
+
+        fig.add_hline(y=0, line_dash="dash", line_color="black", line_width=1, row=3, col=1)
+
+        # Highlight significant changes on overlay plot
+        threshold = np.abs(diff_np).std() * 2
+        significant = np.abs(diff_np) > threshold
+        sig_regions = []
+        in_region = False
+        start = 0
+        for i in range(len(significant)):
+            if significant[i] and not in_region:
+                start = i
+                in_region = True
+            elif not significant[i] and in_region:
+                sig_regions.append((start, i))
+                in_region = False
+        if in_region:
+            sig_regions.append((start, len(significant)))
+
+        for s, e in sig_regions:
+            fig.add_vrect(x0=s, x1=e, fillcolor='rgba(255, 193, 7, 0.2)',
+                         layer="below", line_width=0, row=1, col=1)
+
+        # Title
+        title = "Counterfactual Explanation"
+        if predicted_class is not None and predicted_class < len(XAIVisualization.FAULT_CLASSES):
+            title += f" ({XAIVisualization.FAULT_CLASSES[predicted_class]}"
+            if target_class is not None and target_class < len(XAIVisualization.FAULT_CLASSES):
+                title += f" → {XAIVisualization.FAULT_CLASSES[target_class]}"
+            title += ")"
+
+        fig.update_layout(
+            title=dict(text=title, font=dict(size=16, color='#2c3e50')),
+            height=750,
+            template='plotly_white',
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            margin=dict(l=60, r=60, t=100, b=60)
+        )
+
+        fig.update_xaxes(title_text="Time Steps", row=3, col=1)
+        fig.update_yaxes(title_text="Amplitude", row=1, col=1)
+        fig.update_yaxes(title_text="Amplitude", row=2, col=1)
+        fig.update_yaxes(title_text="Change (Δ)", row=3, col=1)
+
+        return fig
+
+    @staticmethod
+    def create_counterfactual_importance(
+        perturbation: List[float],
+        target_class: Optional[int] = None,
+        top_k: int = 20
+    ) -> go.Figure:
+        """
+        Create bar chart of top perturbation magnitudes for counterfactual.
+
+        Args:
+            perturbation: Perturbation values
+            target_class: Target class
+            top_k: Number of top time steps to show
+
+        Returns:
+            Plotly Figure with importance bars
+        """
+        diff_np = np.abs(np.array(perturbation))
+        top_indices = np.argsort(diff_np)[-top_k:][::-1]
+        top_values = np.array(perturbation)[top_indices]
+        labels = [f"Time {i}" for i in top_indices]
+        colors = ['#dc3545' if v < 0 else '#28a745' for v in top_values]
+
+        fig = go.Figure(go.Bar(
+            y=labels, x=np.abs(top_values),
+            orientation='h',
+            marker_color=colors,
+            marker_line_color='#2c3e50',
+            marker_line_width=0.5,
+            text=[f"{v:+.4f}" for v in top_values],
+            textposition='outside',
+            hovertemplate='<b>%{y}</b><br>Change: %{x:.4f}<extra></extra>'
+        ))
+
+        title = f"Top {top_k} Time Steps with Largest Changes"
+        if target_class is not None and target_class < len(XAIVisualization.FAULT_CLASSES):
+            title += f"<br><sub>Target: {XAIVisualization.FAULT_CLASSES[target_class]}</sub>"
+
+        fig.update_layout(
+            title=dict(text=title, font=dict(size=16, color='#2c3e50')),
+            xaxis_title="Absolute Perturbation",
+            height=max(400, top_k * 25),
+            template='plotly_white',
+            margin=dict(l=100, r=60, t=100, b=60),
+            showlegend=False
+        )
+
+        return fig
+
+    @staticmethod
+    def create_activation_maps_plot(
+        signal: List[float],
+        layer_stats: List[Dict[str, Any]],
+        predicted_class: Optional[int] = None
+    ) -> go.Figure:
+        """
+        Create activation maps visualization showing layer-by-layer statistics.
+
+        Args:
+            signal: Original signal
+            layer_stats: Layer activation statistics
+            predicted_class: Predicted class
+
+        Returns:
+            Plotly Figure with activation analysis
+        """
+        signal_np = np.array(signal)
+        time = np.arange(len(signal_np))
+
+        # Create subplots
+        fig = make_subplots(
+            rows=2, cols=1,
+            row_heights=[0.5, 0.5],
+            subplot_titles=("Input Signal", "Layer Activation Magnitudes"),
+            vertical_spacing=0.12
+        )
+
+        # Plot 1: Signal
+        fig.add_trace(
+            go.Scatter(
+                x=time, y=signal_np,
+                name='Signal',
+                line=dict(color='#1f77b4', width=1.5),
+                fill='tozeroy',
+                fillcolor='rgba(31, 119, 180, 0.2)',
+                hovertemplate='<b>Signal</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
+            ),
+            row=1, col=1
+        )
+
+        # Plot 2: Layer activation bar chart
+        if layer_stats:
+            layers = [s['layer'] for s in layer_stats]
+            mean_acts = [s['mean_activation'] for s in layer_stats]
+            max_acts = [s['max_activation'] for s in layer_stats]
+            num_filters = [s['num_filters'] for s in layer_stats]
+
+            fig.add_trace(
+                go.Bar(
+                    x=layers, y=mean_acts,
+                    name='Mean Activation',
+                    marker_color='#17a2b8',
+                    hovertemplate='<b>%{x}</b><br>Mean: %{y:.4f}<br>'
+                                  'Filters: %{customdata}<extra></extra>',
+                    customdata=num_filters
+                ),
+                row=2, col=1
+            )
+
+            fig.add_trace(
+                go.Bar(
+                    x=layers, y=max_acts,
+                    name='Max Activation',
+                    marker_color='#fd7e14',
+                    hovertemplate='<b>%{x}</b><br>Max: %{y:.4f}<extra></extra>'
+                ),
+                row=2, col=1
+            )
+
+        title = "Activation Maps Analysis"
+        if predicted_class is not None and predicted_class < len(XAIVisualization.FAULT_CLASSES):
+            title += f" (Predicted: {XAIVisualization.FAULT_CLASSES[predicted_class]})"
+
+        fig.update_layout(
+            title=dict(text=title, font=dict(size=16, color='#2c3e50')),
+            height=700,
+            template='plotly_white',
+            barmode='group',
+            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            margin=dict(l=60, r=60, t=100, b=60)
+        )
+
+        fig.update_xaxes(title_text="Time Steps", row=1, col=1)
+        fig.update_xaxes(title_text="Layer", row=2, col=1, tickangle=-45)
+        fig.update_yaxes(title_text="Amplitude", row=1, col=1)
+        fig.update_yaxes(title_text="Activation Value", row=2, col=1)
+
+        return fig
+
+    @staticmethod
+    def create_activation_layer_summary(
+        layer_stats: List[Dict[str, Any]],
+        predicted_class: Optional[int] = None
+    ) -> go.Figure:
+        """
+        Create a summary chart of filter counts and spatial sizes across layers.
+
+        Args:
+            layer_stats: Layer activation statistics
+            predicted_class: Predicted class
+
+        Returns:
+            Plotly Figure with layer summary
+        """
+        if not layer_stats:
+            fig = go.Figure()
+            fig.update_layout(
+                title="No convolutional layers found",
+                template='plotly_white',
+                height=400
+            )
+            return fig
+
+        layers = [s['layer'] for s in layer_stats]
+        num_filters = [s['num_filters'] for s in layer_stats]
+        spatial_sizes = [str(s['spatial_size']) for s in layer_stats]
+
+        fig = go.Figure(go.Bar(
+            x=layers,
+            y=num_filters,
+            marker_color='#6f42c1',
+            marker_line_width=0.5,
+            marker_line_color='#2c3e50',
+            text=[f"{n} filters\n{s}" for n, s in zip(num_filters, spatial_sizes)],
+            textposition='outside',
+            hovertemplate='<b>%{x}</b><br>Filters: %{y}<br>Spatial: %{text}<extra></extra>'
+        ))
+
+        title = "Network Architecture: Filter Counts per Layer"
+        if predicted_class is not None and predicted_class < len(XAIVisualization.FAULT_CLASSES):
+            title += f"<br><sub>Predicted: {XAIVisualization.FAULT_CLASSES[predicted_class]}</sub>"
+
+        fig.update_layout(
+            title=dict(text=title, font=dict(size=16, color='#2c3e50')),
+            yaxis_title="Number of Filters",
+            xaxis_title="Layer",
+            height=400,
+            template='plotly_white',
+            margin=dict(l=60, r=60, t=100, b=100),
+            showlegend=False,
+            xaxis_tickangle=-45
+        )
+
+        return fig
