@@ -49,6 +49,18 @@ class DeepLearningAdapter:
         try:
             logger.info(f"Starting deep learning training: {config['model_type']}")
 
+            # ---- validate config (optional, non-blocking) ---- #
+            try:
+                from integration.configuration_validator import validate_model_config
+                validate_model_config(
+                    config['model_type'],
+                    config.get('hyperparameters', {}),
+                )
+            except ImportError:
+                pass  # validator not available
+            except ValueError as val_err:
+                return {"success": False, "error": f"Config validation failed: {val_err}"}
+
             # Load data
             train_loader, val_loader, test_loader, num_classes = DeepLearningAdapter._load_data(config)
 
@@ -177,7 +189,7 @@ class DeepLearningAdapter:
 
             logger.info(f"Training complete. Test Accuracy: {test_acc:.2%}, F1: {f1:.2%}")
 
-            return {
+            results = {
                 "success": True,
                 "model_type": config["model_type"],
                 "total_epochs": epoch,
@@ -191,6 +203,16 @@ class DeepLearningAdapter:
                 "training_time": total_time,
                 "history": training_history,
             }
+
+            # ---- register in ModelRegistry (optional, non-blocking) ---- #
+            try:
+                from integration.model_registry import ModelRegistry
+                registry = ModelRegistry()
+                registry.auto_register(results, phase='deep_learning')
+            except Exception as reg_err:
+                logger.debug(f"ModelRegistry registration skipped: {reg_err}")
+
+            return results
 
         except Exception as e:
             logger.error(f"Deep learning training failed: {e}", exc_info=True)
