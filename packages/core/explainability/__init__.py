@@ -46,6 +46,11 @@ from .anchors import (
     plot_anchor_explanation,
     compare_anchors
 )
+from .counterfactual_explanations import (
+    CounterfactualGenerator,
+    plot_counterfactual_explanation,
+    plot_optimization_history
+)
 
 __all__ = [
     # Core XAI methods
@@ -76,5 +81,9 @@ __all__ = [
     'Anchor',
     'AnchorExplainer',
     'plot_anchor_explanation',
-    'compare_anchors'
+    'compare_anchors',
+    # Counterfactual explanations
+    'CounterfactualGenerator',
+    'plot_counterfactual_explanation',
+    'plot_optimization_history',
 ]

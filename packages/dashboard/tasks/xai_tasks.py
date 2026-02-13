@@ -112,6 +112,22 @@ def generate_explanation_task(self, config: dict):
                 target_layer=None
             )
 
+        elif method == 'counterfactual':
+            result = XAIService.generate_counterfactual(
+                model=model,
+                signal=signal,
+                target_class=config.get('params', {}).get('target_class', None),
+                max_iterations=config.get('params', {}).get('max_iterations', 500),
+                confidence_threshold=config.get('params', {}).get('confidence_threshold', 0.9)
+            )
+
+        elif method == 'activation_maps':
+            result = XAIService.generate_activation_maps(
+                model=model,
+                signal=signal,
+                target_layer=config.get('params', {}).get('target_layer', None)
+            )
+
         else:
             raise ValueError(f"Unknown XAI method: {method}")
 

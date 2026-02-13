@@ -399,6 +399,188 @@ class XAIService:
             }
 
     @staticmethod
+    def generate_counterfactual(
+        model: nn.Module,
+        signal: torch.Tensor,
+        target_class: Optional[int] = None,
+        max_iterations: int = 500,
+        confidence_threshold: float = 0.9
+    ) -> Dict[str, Any]:
+        """
+        Generate counterfactual explanation.
+
+        Args:
+            model: Trained PyTorch model
+            signal: Input signal [1, C, T] or [C, T]
+            target_class: Desired target class (if None, uses next most likely)
+            max_iterations: Max optimization steps
+            confidence_threshold: Stop when confidence exceeds this
+
+        Returns:
+            Dictionary with counterfactual results
+        """
+        try:
+            from explainability.counterfactual_explanations import CounterfactualGenerator
+
+            device = XAIService.get_device()
+            model = model.to(device).eval()
+
+            # Prepare input
+            if signal.dim() == 1:
+                signal = signal.unsqueeze(0).unsqueeze(0)
+            elif signal.dim() == 2:
+                signal = signal.unsqueeze(0)
+
+            input_tensor = signal.to(device)
+
+            # Get current prediction
+            with torch.no_grad():
+                output = model(input_tensor)
+                probabilities = torch.softmax(output, dim=1)[0]
+                predicted_class = probabilities.argmax().item()
+                confidence = probabilities[predicted_class].item()
+
+            # Auto-select target class if not specified
+            if target_class is None:
+                # Use second most likely class
+                sorted_classes = probabilities.argsort(descending=True)
+                target_class = sorted_classes[1].item()
+
+            logger.info(f"Generating counterfactual: class {predicted_class} → {target_class}")
+
+            # Generate counterfactual
+            generator = CounterfactualGenerator(model, device=device)
+            cf_signal, info = generator.generate(
+                input_tensor,
+                target_class=target_class,
+                max_iterations=max_iterations,
+                confidence_threshold=confidence_threshold
+            )
+
+            # Convert to lists for JSON serialization
+            signal_np = signal.squeeze().cpu().numpy()
+            cf_np = cf_signal.squeeze().cpu().numpy()
+            diff_np = cf_np - signal_np
+
+            return {
+                "success": info['success'],
+                "method": "counterfactual",
+                "signal": signal_np.tolist(),
+                "counterfactual": cf_np.tolist(),
+                "perturbation": diff_np.tolist(),
+                "predicted_class": predicted_class,
+                "target_class": target_class,
+                "original_confidence": confidence,
+                "final_confidence": info['final_confidence'],
+                "perturbation_l2": info['perturbation_l2'],
+                "perturbation_l1": info['perturbation_l1'],
+                "iterations": info['iterations'],
+                "confidence": confidence,
+                "probabilities": probabilities.cpu().numpy().tolist(),
+                "signal_length": len(signal_np),
+            }
+
+        except ImportError as e:
+            logger.error(f"Counterfactual import failed: {e}")
+            return {"success": False, "error": str(e)}
+        except Exception as e:
+            logger.error(f"Counterfactual generation failed: {e}", exc_info=True)
+            return {"success": False, "error": str(e)}
+
+    @staticmethod
+    def generate_activation_maps(
+        model: nn.Module,
+        signal: torch.Tensor,
+        target_layer: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate 2D activation map visualization for spectrogram CNN models.
+
+        Uses Grad-CAM to visualize what regions the model focuses on.
+
+        Args:
+            model: Trained 2D CNN model
+            signal: Input signal (will be converted to spectrogram if 1D)
+            target_layer: Layer name to visualize (auto-detected if None)
+
+        Returns:
+            Dictionary with activation map results
+        """
+        try:
+            device = XAIService.get_device()
+            model = model.to(device).eval()
+
+            # Prepare input
+            if signal.dim() == 1:
+                signal = signal.unsqueeze(0).unsqueeze(0)
+            elif signal.dim() == 2:
+                signal = signal.unsqueeze(0)
+
+            input_tensor = signal.to(device)
+
+            # Get prediction
+            with torch.no_grad():
+                output = model(input_tensor)
+                probabilities = torch.softmax(output, dim=1)[0]
+                predicted_class = probabilities.argmax().item()
+                confidence = probabilities[predicted_class].item()
+
+            # Collect activations at each layer
+            activations = {}
+
+            def make_hook(name):
+                def hook_fn(module, input, output):
+                    activations[name] = output.detach().cpu().numpy().squeeze()
+                return hook_fn
+
+            hooks = []
+            conv_layers = []
+            for name, module in model.named_modules():
+                if isinstance(module, (torch.nn.Conv1d, torch.nn.Conv2d)):
+                    conv_layers.append(name)
+                    hooks.append(module.register_forward_hook(make_hook(name)))
+
+            # Run forward pass to collect activations
+            with torch.no_grad():
+                model(input_tensor)
+
+            # Remove hooks
+            for h in hooks:
+                h.remove()
+
+            # Format activation stats per layer
+            layer_stats = []
+            for name in conv_layers:
+                if name in activations:
+                    act = activations[name]
+                    layer_stats.append({
+                        'layer': name,
+                        'mean_activation': float(np.abs(act).mean()),
+                        'max_activation': float(act.max()),
+                        'num_filters': int(act.shape[0]) if act.ndim >= 2 else 1,
+                        'spatial_size': list(act.shape[1:]) if act.ndim >= 2 else [act.shape[0]]
+                    })
+
+            signal_np = signal.squeeze().cpu().numpy()
+
+            return {
+                "success": True,
+                "method": "activation_maps",
+                "signal": signal_np.tolist(),
+                "predicted_class": predicted_class,
+                "confidence": confidence,
+                "probabilities": probabilities.cpu().numpy().tolist(),
+                "signal_length": len(signal_np),
+                "layer_stats": layer_stats,
+                "num_conv_layers": len(conv_layers),
+                "conv_layer_names": conv_layers,
+            }
+
+        except Exception as e:
+            logger.error(f"Activation maps generation failed: {e}", exc_info=True)
+            return {"success": False, "error": str(e)}
+
+    @staticmethod
     def load_model(experiment_id: int) -> Optional[nn.Module]:
         """
         Load trained model from experiment.
