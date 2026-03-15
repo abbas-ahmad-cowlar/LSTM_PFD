@@ -67,15 +67,20 @@ class CacheService:
 
     @staticmethod
     def invalidate_pattern(pattern: str) -> int:
-        """Invalidate all keys matching pattern."""
+        """Invalidate all keys matching pattern using SCAN (production-safe)."""
         if redis_client is None:
             return 0
 
         try:
-            keys = redis_client.keys(pattern)
-            if keys:
-                return redis_client.delete(*keys)
-            return 0
+            deleted = 0
+            cursor = 0
+            while True:
+                cursor, keys = redis_client.scan(cursor=cursor, match=pattern, count=100)
+                if keys:
+                    deleted += redis_client.delete(*keys)
+                if cursor == 0:
+                    break
+            return deleted
         except Exception as e:
             logger.error(f"Cache invalidate error for pattern '{pattern}': {e}")
             return 0
