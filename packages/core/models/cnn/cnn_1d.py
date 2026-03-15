@@ -16,8 +16,8 @@ import torch
 import torch.nn as nn
 from typing import Dict, Any, Optional, Tuple
 
-from packages.core.models.base_model import BaseModel
-from packages.core.models.cnn.conv_blocks import ConvBlock1D
+from ..base_model import BaseModel
+from .conv_blocks import ConvBlock1D
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
@@ -306,6 +306,21 @@ def test_cnn_1d():
     print("\n" + "=" * 60)
     print("✅ All CNN1D tests passed!")
     print("=" * 60)
+
+
+
+def create_cnn1d(num_classes: int = NUM_CLASSES, **kwargs) -> CNN1D:
+    """
+    Factory function to create CNN1D model.
+
+    Args:
+        num_classes: Number of output classes
+        **kwargs: Additional arguments passed to CNN1D
+
+    Returns:
+        CNN1D model instance
+    """
+    return CNN1D(num_classes=num_classes, **kwargs)
 
 
 if __name__ == "__main__":

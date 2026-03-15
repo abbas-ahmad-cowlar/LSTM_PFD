@@ -6,7 +6,7 @@ This module re-exports all public symbols so that existing imports
 (``from .hybrid_pinn import ...``) continue to work transparently.
 """
 
-from packages.core.models.pinn.hybrid_pinn import (  # noqa: F401
+from .pinn.hybrid_pinn import (  # noqa: F401
     HybridPINN,
     create_hybrid_pinn,
 )

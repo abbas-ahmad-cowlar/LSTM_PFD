@@ -20,13 +20,7 @@ Author: Critical Deficiency Fix #3 (Priority: 95)
 Date: 2026-01-18
 """
 
-import sys
 from pathlib import Path
-
-# Add project root to path if needed
-project_root = Path(__file__).parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
 
 import h5py
 import numpy as np
@@ -136,7 +130,7 @@ class StreamingHDF5Dataset(Dataset):
         if hasattr(self._local, 'file') and self._local.file is not None:
             try:
                 self._local.file.close()
-            except:
+            except Exception:
                 pass
     
     def get_metadata(self) -> Dict[str, Any]:
@@ -356,7 +350,7 @@ def test_streaming_dataset():
             if hasattr(loader.dataset._local, 'file') and loader.dataset._local.file:
                 try:
                     loader.dataset._local.file.close()
-                except:
+                except Exception:
                     pass
     del loaders
     

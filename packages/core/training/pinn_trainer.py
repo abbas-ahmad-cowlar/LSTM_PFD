@@ -28,13 +28,9 @@ from typing import Optional, Dict, List, Callable, Tuple
 from pathlib import Path
 import time
 from tqdm import tqdm
-import sys
 
-# Add parent directory for imports
-sys.path.append(str(Path(__file__).parent.parent))
-
-from training.trainer import Trainer, TrainingState
-from training.physics_loss_functions import (
+from .trainer import Trainer, TrainingState
+from .physics_loss_functions import (
     FrequencyConsistencyLoss,
     SommerfeldConsistencyLoss,
     TemporalSmoothnessLoss,

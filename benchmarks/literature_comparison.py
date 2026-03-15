@@ -17,17 +17,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-def compare_with_cwru_benchmark(
+def compare_with_journal_bearing_benchmark(
     model,
     model_name: str = "Our Model",
     save_results: bool = True
 ) -> Dict[str, Any]:
     """
-    Compare model with Case Western Reserve University (CWRU) benchmark.
+    Compare model with published journal/hydrodynamic bearing fault diagnosis results.
 
-    CWRU bearing dataset is the standard benchmark in bearing fault diagnosis
-    literature. This function evaluates the model on CWRU data and compares
-    with published results.
+    Compares model performance against published baselines for bearing fault
+    diagnosis from vibration signals.
 
     Args:
         model: Trained model (PyTorch or scikit-learn)
@@ -38,21 +37,17 @@ def compare_with_cwru_benchmark(
         Dictionary with comparison results
 
     Example:
-        >>> from benchmarks import compare_with_cwru_benchmark
+        >>> from benchmarks import compare_with_journal_bearing_benchmark
         >>> model = load_model('checkpoints/best_model.pth')
-        >>> results = compare_with_cwru_benchmark(model, "ResNet34")
+        >>> results = compare_with_journal_bearing_benchmark(model, "ResNet34")
         >>> print(f"Our accuracy: {results['our_accuracy']:.2%}")
         >>> print(f"Literature best: {results['literature_best']:.2%}")
-
-    Note:
-        CWRU dataset must be downloaded separately from:
-        https://engineering.case.edu/bearingdatacenter
     """
     logger.info("="*60)
-    logger.info("CWRU Benchmark Comparison")
+    logger.info("Journal Bearing Fault Diagnosis Benchmark Comparison")
     logger.info("="*60)
 
-    # Published baselines from literature
+    # Published baselines from bearing fault diagnosis literature
     published_results = {
         'Zhang et al. (2017) - Deep CNN': 0.972,
         'Lei et al. (2018) - LSTM': 0.951,
@@ -62,17 +57,15 @@ def compare_with_cwru_benchmark(
         'Chen et al. (2022) - Graph Neural Net': 0.989,
     }
 
-    # Placeholder for actual CWRU evaluation
+    # Placeholder for actual evaluation
     # In real implementation, would:
-    # 1. Load CWRU dataset
-    # 2. Preprocess signals
-    # 3. Fine-tune model on CWRU
-    # 4. Evaluate on test set
+    # 1. Load generated dataset
+    # 2. Evaluate model on test set
+    # 3. Compare with published results
 
     logger.warning(
-        "CWRU dataset not found. Using placeholder accuracy.\n"
-        "Download CWRU dataset from: "
-        "https://engineering.case.edu/bearingdatacenter"
+        "Using placeholder accuracy. "
+        "Run full evaluation pipeline to get real results."
     )
 
     # Placeholder accuracy (replace with actual evaluation)
@@ -117,7 +110,7 @@ def compare_with_cwru_benchmark(
 
     # Save results
     if save_results:
-        output_path = Path('results/benchmarks/cwru_comparison.csv')
+        output_path = Path('results/benchmarks/literature_comparison.csv')
         output_path.parent.mkdir(parents=True, exist_ok=True)
         comparison_df.to_csv(output_path, index=False)
         logger.info(f"\n✓ Results saved: {output_path}")

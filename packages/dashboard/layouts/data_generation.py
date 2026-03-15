@@ -356,7 +356,7 @@ def create_data_generation_layout():
                                     dbc.Input(
                                         id="import-dataset-name-input",
                                         type="text",
-                                        placeholder="e.g., cwru_bearing_data",
+                                        placeholder="e.g., my_bearing_data",
                                         className="mb-3"
                                     ),
 

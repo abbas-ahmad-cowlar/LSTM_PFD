@@ -6,7 +6,7 @@ This module re-exports all public symbols so that existing imports
 (``from .resnet_1d import ...``) continue to work transparently.
 """
 
-from packages.core.models.resnet.resnet_1d import (  # noqa: F401
+from .resnet.resnet_1d import (  # noqa: F401
     ResNet1D,
     create_resnet18_1d,
     create_resnet34_1d,
