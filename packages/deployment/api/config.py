@@ -8,6 +8,7 @@ Date: 2025-11-20
 """
 
 from pydantic_settings import BaseSettings
+from pydantic import Field
 from typing import Optional
 from pathlib import Path
 from utils.constants import SIGNAL_LENGTH
@@ -47,7 +48,7 @@ class Settings(BaseSettings):
     log_file: Optional[str] = "logs/api.log"
 
     # CORS
-    cors_origins: list = ["*"]
+    cors_origins: list = Field(default=["http://localhost:8050", "http://localhost:3000"], env="CORS_ORIGINS")
 
     # Security (optional)
     api_key: Optional[str] = None

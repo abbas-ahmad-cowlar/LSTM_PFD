@@ -29,7 +29,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import sys
-sys.path.append('/home/user/LSTM_PFD')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from models.ensemble import (

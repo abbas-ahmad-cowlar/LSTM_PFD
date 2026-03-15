@@ -272,7 +272,11 @@ class CNNTrainer:
 
             # Update learning rate scheduler
             if self.lr_scheduler is not None:
-                self.lr_scheduler.step()
+                if isinstance(self.lr_scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    metric = val_metrics.get('loss', train_metrics['loss']) if val_metrics else train_metrics['loss']
+                    self.lr_scheduler.step(metric)
+                else:
+                    self.lr_scheduler.step()
 
             # Log metrics
             current_lr = self.optimizer.param_groups[0]['lr']
