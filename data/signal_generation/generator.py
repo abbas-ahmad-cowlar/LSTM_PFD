@@ -26,6 +26,7 @@ from utils.constants import FAULT_TYPES, NUM_CLASSES, SAMPLING_RATE
 from .metadata import SignalMetadata
 from .fault_modeler import FaultModeler
 from .noise_generator import NoiseGenerator
+from data.signal_validation import validate_signal
 
 logger = get_logger(__name__)
 
@@ -105,6 +106,17 @@ class SignalGenerator:
 
                 # Generate single signal
                 signal, metadata = self.generate_single_signal(fault, is_augmented)
+
+                # Post-generation validation (warn, don't drop)
+                val_errors = validate_signal(
+                    signal,
+                    expected_length=self.config.signal.N,
+                    label=f"{fault}_{n:03d}",
+                    raise_on_error=False,
+                )
+                if val_errors:
+                    for err in val_errors:
+                        logger.warning(f"Signal validation: {err}")
 
                 all_signals.append(signal)
                 all_metadata.append(metadata)

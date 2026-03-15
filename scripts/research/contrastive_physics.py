@@ -451,7 +451,7 @@ Examples:
         
         # Load pretrained encoder
         encoder = SignalEncoder()
-        checkpoint = torch.load(args.checkpoint, map_location=device)
+        checkpoint = torch.load(args.checkpoint, map_location=device, weights_only=True)
         encoder.load_state_dict(checkpoint['encoder_state_dict'])
         
         # Split data

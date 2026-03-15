@@ -24,6 +24,7 @@ from utils.logging import get_logger
 from data.signal_generator import SignalGenerator
 from data.augmentation import SignalAugmenter, random_augment
 from config.data_config import DataConfig
+from data.signal_validation import validate_batch
 
 logger = get_logger(__name__)
 
@@ -199,7 +200,8 @@ class BearingFaultDataset(Dataset):
         cls,
         hdf5_path: Path,
         split: str = 'train',
-        transform: Optional[Callable] = None
+        transform: Optional[Callable] = None,
+        validate: bool = False,
     ) -> 'BearingFaultDataset':
         """
         Load dataset from HDF5 file.
@@ -287,7 +289,20 @@ class BearingFaultDataset(Dataset):
 
         logger.info(f"Loaded {len(signals)} samples from {split} split")
 
-        return cls(signals, labels, None, transform)
+        dataset = cls(signals, labels, None, transform)
+
+        # Optional post-load validation
+        if validate:
+            report = validate_batch(signals, labels)
+            if report.failed > 0:
+                logger.warning(
+                    f"HDF5 validation ({split}): {report.failed}/{report.total_signals} "
+                    f"signals failed validation"
+                )
+            else:
+                logger.info(f"HDF5 validation ({split}): all {report.total_signals} signals passed")
+
+        return dataset
 
 
 class AugmentedBearingDataset(BearingFaultDataset):

@@ -194,7 +194,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [ ] **4.12** Add CLI to `xai_metrics.py`
 - [ ] **4.13** Add statistical significance tests (paired t-test/Wilcoxon) to `transformer_benchmark.py`
 - [ ] **4.14** Standardize all research outputs: CSV + JSON + LaTeX tables + publication-quality PNGs
-- [ ] **4.15** Ensure all scripts use `utils.reproducibility.set_seed` (replace 4 local implementations)
+- [x] **4.15** Replaced 5 local seed implementations with canonical `utils.reproducibility.set_seed` imports
 
 ### 4C: Publication Preparation
 - [ ] **4.16** Update IEEE TII manuscript with real experimental results
