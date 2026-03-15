@@ -123,12 +123,12 @@ class SignalGenerator:
                 all_labels.append(fault)
                 total_signals += 1
 
-            logger.info(f"  ✓ Generated {num_total_for_fault} signals ({num_base} base + {num_augmented} augmented)")
+            logger.info(f"  [OK] Generated {num_total_for_fault} signals ({num_base} base + {num_augmented} augmented)")
 
         generation_time = time.time() - generation_start
 
         logger.info("=" * 60)
-        logger.info("✅ DATA GENERATION COMPLETE")
+        logger.info("[DONE] DATA GENERATION COMPLETE")
         logger.info(f"  Total signals: {total_signals}")
         logger.info(f"  Fault types: {len(fault_types)}")
         logger.info(f"  Generation time: {generation_time:.2f} s ({total_signals/generation_time:.2f} signals/s)")
