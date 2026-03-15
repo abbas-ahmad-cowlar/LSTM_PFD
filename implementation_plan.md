@@ -7,7 +7,7 @@
 >
 > **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
 >
-> **Last Updated**: 2026-03-15T10:30 PKT — Phase 1 complete, Phase 2 mostly done (2.1-2.3, 2.5-2.10, 2.13-2.17, 2.21-2.22 all done). Phase 6 security done. Phase 3 smoke-tested (22 commits).
+> **Last Updated**: 2026-03-15T10:40 PKT — Phase 1 complete, Phase 2 ~80% done (20/28 items). Phase 6 security done. Phase 3 smoke-tested (25 commits).
 
 ---
 
@@ -97,7 +97,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [x] **2.8** All 35 top-level models now inherit `BaseModel` with `get_config()` — includes PatchTST, TSMixer, AttentionCNN1D, LightweightAttentionCNN, MultiScaleCNN1D, DilatedMultiScaleCNN, SignalEncoder, ContrastiveClassifier, all PINN/hybrid/fusion/ensemble/spectrogram models
 - [x] **2.9** Complete model registry in `model_factory.py` — 65+ entries covering all models with factory functions
 - [x] **2.10** Added `register_model()` decorator supporting both function and decorator usage
-- [ ] **2.11** Add `export_onnx()` and `predict()` to `BaseModel`
+- [x] **2.11** Added `export_onnx()` (ONNX export with dynamic batch axes) and `predict()` (inference helper returning class indices or softmax probabilities) to `BaseModel` — inherited by all 35 models
 - [x] **2.12** N/A — only 1 `ConvBlock1D` in `cnn/conv_blocks.py`, no duplicates to consolidate
 - [x] **2.13** Consolidated PositionalEncoding — PatchTST now imports from `signal_transformer.py` (-20 lines)
 - [x] **2.14** Converted `legacy_ensemble.py` to re-export shim — imports from `ensemble/` subpackage, provides backward-compat aliases (-360 lines)
@@ -114,7 +114,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [x] **2.17** Externalized physics magic numbers into `utils/physics_constants.py` (`BearingPhysics`, `ViscosityModel`, `FaultAmplitudes`, `NoiseDefaults`)
 - [x] **2.18** N/A — noise layer count docstring not found, likely already fixed
 - [x] **2.19** Unified random state to `np.random` in `spectrogram_augmentation.py` (5 calls) and `signal_augmentation.py` (2 calls) — removed `import random`
-- [ ] **2.20** Add post-generation signal validation (NaN, Inf, std range checks)
+- [x] **2.20** Signal validation integrated in `generator.py` (line 111: `validate_signal()` called during generation with NaN/Inf/std/outlier checks)
 - [ ] **2.20b** Integrate `data_validator.py` into dataset `from_hdf5()` / `__init__()` methods — currently the 17KB validator exists but is never called from any dataset class *(IDB 3.2 audit)*
 
 ### 2D: Dashboard Cleanup
