@@ -1,136 +1,99 @@
 """
-Progressive Resizing for Signal Training
+Progressive Resizing Trainer — trains on progressively longer signals.
 
-Train models with progressively longer signals for faster convergence.
+Inherits from BaseTrainer for the single-epoch loop; adds the multi-stage
+``train_progressive()`` method that adjusts signal length across stages.
 
-Strategy:
-    Stage 1: Short signals (25600 samples) → Fast initial training
-    Stage 2: Medium signals (51200 samples) → Refine features
-    Stage 3: Full signals (102400 samples) → Final accuracy
-
-Benefits:
-- 2-3× faster initial convergence
-- Better regularization (short signals act as augmentation)
-- Improved final accuracy
-- GPU memory efficient in early stages
-
-Reference:
-- Howard et al. (2018). "fastai: A Layered API for Deep Learning"
-- Progressive resizing strategy from fast.ai
+Author: Phase 2 - CNN Implementation
+Date: 2025-11-20
 """
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
-from typing import List, Tuple, Optional, Dict
+from typing import Optional, Dict, List, Any, Tuple
+from pathlib import Path
 import numpy as np
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+import time
+
+from utils.logging import get_logger
+from .base_trainer import BaseTrainer
+
+logger = get_logger(__name__)
 
 
 class ResizableSignalDataset(Dataset):
     """
-    Dataset wrapper that resizes signals to specified length.
+    Wrapper that truncates or pads signals to a target length.
+
+    Used by ProgressiveResizingTrainer to progressively increase the
+    signal length seen during training.
 
     Args:
-        base_dataset: Original dataset with full-length signals
-        target_length: Target signal length
-        resize_method: 'interpolate' or 'crop' or 'subsample'
+        signals: Original signal array (N, L) or (N, C, L)
+        labels: Label array (N,)
+        target_length: Desired signal length
     """
 
-    def __init__(
-        self,
-        base_dataset: Dataset,
-        target_length: int,
-        resize_method: str = 'interpolate'
-    ):
-        self.base_dataset = base_dataset
+    def __init__(self, signals: np.ndarray, labels: np.ndarray, target_length: int):
+        self.signals = signals
+        self.labels = labels
         self.target_length = target_length
-        self.resize_method = resize_method
 
-    def __len__(self):
-        return len(self.base_dataset)
+    def __len__(self) -> int:
+        return len(self.labels)
 
-    def __getitem__(self, idx):
-        signal, label = self.base_dataset[idx]
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, torch.Tensor]:
+        signal = self.signals[idx]
 
-        # Ensure signal is tensor
-        if not isinstance(signal, torch.Tensor):
-            signal = torch.tensor(signal, dtype=torch.float32)
+        # Ensure shape is (C, L)
+        if signal.ndim == 1:
+            signal = signal[np.newaxis, :]  # (1, L)
 
-        # Resize signal
-        signal = self.resize_signal(signal, self.target_length)
+        original_length = signal.shape[-1]
 
-        return signal, label
-
-    def resize_signal(self, signal: torch.Tensor, target_length: int) -> torch.Tensor:
-        """
-        Resize signal to target length.
-
-        Args:
-            signal: Input signal [C, T] or [T]
-            target_length: Target length
-
-        Returns:
-            Resized signal
-        """
-        # Handle 1D or 2D signals
-        if signal.dim() == 1:
-            signal = signal.unsqueeze(0)  # [T] → [1, T]
-            squeeze_output = True
+        if original_length >= self.target_length:
+            # Truncate
+            signal_resized = signal[..., : self.target_length]
         else:
-            squeeze_output = False
-
-        current_length = signal.shape[1]
-
-        if current_length == target_length:
-            result = signal
-        elif self.resize_method == 'interpolate':
-            # Interpolation (smooth resizing)
-            signal = signal.unsqueeze(0)  # [C, T] → [1, C, T]
-            result = torch.nn.functional.interpolate(
-                signal,
-                size=target_length,
-                mode='linear',
-                align_corners=False
-            )
-            result = result.squeeze(0)  # [1, C, T] → [C, T]
-        elif self.resize_method == 'crop':
-            # Center crop
-            if current_length > target_length:
-                start = (current_length - target_length) // 2
-                result = signal[:, start:start + target_length]
+            # Pad with zeros
+            pad_width = self.target_length - original_length
+            if signal.ndim == 2:
+                signal_resized = np.pad(signal, ((0, 0), (0, pad_width)), mode="constant")
             else:
-                # Pad if too short
-                pad = target_length - current_length
-                result = torch.nn.functional.pad(signal, (0, pad))
-        elif self.resize_method == 'subsample':
-            # Subsample (decimation)
-            if current_length > target_length:
-                step = current_length // target_length
-                result = signal[:, ::step][:, :target_length]
-            else:
-                # Repeat if too short
-                repeats = (target_length // current_length) + 1
-                result = signal.repeat(1, repeats)[:, :target_length]
-        else:
-            raise ValueError(f"Unknown resize method: {self.resize_method}")
+                signal_resized = np.pad(signal, ((0, pad_width),), mode="constant")
 
-        if squeeze_output:
-            result = result.squeeze(0)
-
-        return result
+        signal_tensor = torch.tensor(signal_resized, dtype=torch.float32)
+        label_tensor = torch.tensor(self.labels[idx], dtype=torch.long)
+        return signal_tensor, label_tensor
 
 
-class ProgressiveResizingTrainer:
+class ProgressiveResizingTrainer(BaseTrainer):
     """
-    Trainer with progressive signal length schedule.
+    Trains on progressively longer signals (curriculum-style).
+
+    Stages: start at ``start_length`` and double until reaching ``full_length``.
+    Each stage runs ``epochs_per_stage`` epochs before the next.
 
     Args:
-        model: Model to train
+        model: PyTorch model to train
         optimizer: Optimizer
         criterion: Loss function
-        device: Device to train on
-        schedule: List of (signal_length, epochs) tuples
+        device: 'cuda' or 'cpu'
+        lr_scheduler: Optional learning-rate scheduler
+        max_grad_norm: Gradient clipping max norm
+        gradient_accumulation_steps: Gradient accumulation steps
+        mixed_precision: Use AMP FP16
+        checkpoint_dir: Where to save checkpoints
+        start_length: Initial signal length (default 1024)
+        full_length: Full signal length (default 102400)
+        epochs_per_stage: Epochs per progressive stage (default 5)
+
+    Examples:
+        >>> trainer = ProgressiveResizingTrainer(model, optimizer, criterion,
+        ...     device='cuda', start_length=1024, full_length=102400)
+        >>> history = trainer.train_progressive(train_signals, train_labels,
+        ...     val_signals, val_labels, batch_size=32)
     """
 
     def __init__(
@@ -138,211 +101,101 @@ class ProgressiveResizingTrainer:
         model: nn.Module,
         optimizer: torch.optim.Optimizer,
         criterion: nn.Module,
-        device: str = 'cpu',
-        schedule: Optional[List[Tuple[int, int]]] = None
+        device: str = "cpu",
+        lr_scheduler=None,
+        max_grad_norm: float = 1.0,
+        gradient_accumulation_steps: int = 1,
+        mixed_precision: bool = False,
+        checkpoint_dir: Optional[Path] = None,
+        start_length: int = 1024,
+        full_length: int = 102400,
+        epochs_per_stage: int = 5,
     ):
-        self.model = model.to(device)
-        self.optimizer = optimizer
-        self.criterion = criterion
-        self.device = device
+        super().__init__(
+            model=model,
+            optimizer=optimizer,
+            criterion=criterion,
+            device=device,
+            lr_scheduler=lr_scheduler,
+            max_grad_norm=max_grad_norm,
+            gradient_accumulation_steps=gradient_accumulation_steps,
+            mixed_precision=mixed_precision,
+            checkpoint_dir=checkpoint_dir,
+        )
+        self.start_length = start_length
+        self.full_length = full_length
+        self.epochs_per_stage = epochs_per_stage
 
-        # Default 3-stage schedule
-        if schedule is None:
-            self.schedule = [
-                (25600, 30),   # Stage 1: Short signals, 30 epochs
-                (51200, 20),   # Stage 2: Medium signals, 20 epochs
-                (102400, 50),  # Stage 3: Full signals, 50 epochs
-            ]
-        else:
-            self.schedule = schedule
+        logger.info(
+            f"ProgressiveResizingTrainer initialized — "
+            f"stages: {start_length} → {full_length}, "
+            f"{epochs_per_stage} epochs/stage"
+        )
 
-    def train_epoch(
-        self,
-        train_loader: DataLoader,
-        epoch: int
-    ) -> Dict[str, float]:
-        """Train for one epoch."""
-        self.model.train()
+    # -- Template hook --------------------------------------------------
 
-        total_loss = 0.0
-        correct = 0
-        total = 0
+    def _forward_pass(
+        self, inputs: torch.Tensor, targets: torch.Tensor, **kwargs: Any
+    ) -> torch.Tensor:
+        return self.model(inputs)
 
-        for inputs, labels in train_loader:
-            inputs = inputs.to(self.device)
-            labels = labels.to(self.device)
-
-            # Forward pass
-            outputs = self.model(inputs)
-            loss = self.criterion(outputs, labels)
-
-            # Backward pass
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
-
-            # Metrics
-            batch_size = labels.size(0)
-            total_loss += loss.item() * batch_size
-            _, predicted = torch.max(outputs, 1)
-            total += batch_size
-            correct += (predicted == labels).sum().item()
-
-        return {
-            'train_loss': total_loss / total,
-            'train_accuracy': 100.0 * correct / total
-        }
-
-    def evaluate(self, val_loader: DataLoader) -> Dict[str, float]:
-        """Evaluate model."""
-        self.model.eval()
-
-        total_loss = 0.0
-        correct = 0
-        total = 0
-
-        with torch.no_grad():
-            for inputs, labels in val_loader:
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
-
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, labels)
-
-                total_loss += loss.item() * labels.size(0)
-                _, predicted = torch.max(outputs, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-
-        return {
-            'val_loss': total_loss / total,
-            'val_accuracy': 100.0 * correct / total
-        }
+    # -- Progressive training -------------------------------------------
 
     def train_progressive(
         self,
-        base_train_dataset: Dataset,
-        base_val_dataset: Dataset,
+        train_signals: np.ndarray,
+        train_labels: np.ndarray,
+        val_signals: Optional[np.ndarray] = None,
+        val_labels: Optional[np.ndarray] = None,
         batch_size: int = 32,
-        num_workers: int = 4,
-        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None
-    ) -> Dict[str, list]:
+    ) -> Dict[str, List[float]]:
         """
-        Train with progressive resizing schedule.
+        Run the progressive resizing curriculum.
 
-        Args:
-            base_train_dataset: Training dataset with full-length signals
-            base_val_dataset: Validation dataset with full-length signals
-            batch_size: Batch size
-            num_workers: Number of data loading workers
-            scheduler: Optional learning rate scheduler
-
-        Returns:
-            Training history
+        Returns the accumulated training history across all stages.
         """
-        history = {
-            'stage_lengths': [],
-            'train_loss': [],
-            'train_accuracy': [],
-            'val_loss': [],
-            'val_accuracy': []
-        }
+        # Build length schedule: powers of 2 from start_length to full_length
+        lengths = []
+        length = self.start_length
+        while length < self.full_length:
+            lengths.append(length)
+            length *= 2
+        lengths.append(self.full_length)
 
-        for stage_idx, (signal_length, stage_epochs) in enumerate(self.schedule):
-            print(f"\n{'='*60}")
-            print(f"Stage {stage_idx + 1}: Signal length = {signal_length}, Epochs = {stage_epochs}")
-            print(f"{'='*60}")
+        logger.info(f"Progressive schedule: {lengths}")
 
-            # Create resized datasets
+        for stage_idx, current_length in enumerate(lengths):
+            logger.info(
+                f"\n{'='*60}\n"
+                f"Stage {stage_idx + 1}/{len(lengths)} — Signal length: {current_length}\n"
+                f"{'='*60}"
+            )
+
+            # Build dataloaders for this stage
             train_dataset = ResizableSignalDataset(
-                base_train_dataset,
-                target_length=signal_length,
-                resize_method='interpolate'
+                train_signals, train_labels, current_length
             )
-
-            val_dataset = ResizableSignalDataset(
-                base_val_dataset,
-                target_length=signal_length,
-                resize_method='interpolate'
-            )
-
-            # Create data loaders
             train_loader = DataLoader(
-                train_dataset,
-                batch_size=batch_size,
-                shuffle=True,
-                num_workers=num_workers
+                train_dataset, batch_size=batch_size, shuffle=True, num_workers=0
             )
 
-            val_loader = DataLoader(
-                val_dataset,
-                batch_size=batch_size,
-                shuffle=False,
-                num_workers=num_workers
+            val_loader = None
+            if val_signals is not None and val_labels is not None:
+                val_dataset = ResizableSignalDataset(
+                    val_signals, val_labels, current_length
+                )
+                val_loader = DataLoader(
+                    val_dataset, batch_size=batch_size, shuffle=False, num_workers=0
+                )
+
+            # Use inherited fit() for this stage
+            self.fit(
+                train_loader,
+                val_loader,
+                num_epochs=self.epochs_per_stage,
+                save_best=True,
+                verbose=True,
             )
 
-            # Train for this stage
-            for epoch in range(stage_epochs):
-                train_metrics = self.train_epoch(train_loader, epoch)
-                val_metrics = self.evaluate(val_loader)
-
-                if scheduler is not None:
-                    if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-                        scheduler.step(val_metrics['val_loss'])
-                    else:
-                        scheduler.step()
-
-                # Track history
-                history['stage_lengths'].append(signal_length)
-                history['train_loss'].append(train_metrics['train_loss'])
-                history['train_accuracy'].append(train_metrics['train_accuracy'])
-                history['val_loss'].append(val_metrics['val_loss'])
-                history['val_accuracy'].append(val_metrics['val_accuracy'])
-
-                # Print progress
-                print(f"Epoch {epoch+1}/{stage_epochs} "
-                      f"(Length={signal_length}): "
-                      f"Train Loss={train_metrics['train_loss']:.4f}, "
-                      f"Train Acc={train_metrics['train_accuracy']:.2f}%, "
-                      f"Val Loss={val_metrics['val_loss']:.4f}, "
-                      f"Val Acc={val_metrics['val_accuracy']:.2f}%")
-
-        return history
-
-
-# Example usage
-if __name__ == "__main__":
-    print("Progressive Resizing Training Framework")
-    print("\nExample usage:")
-    print("""
-    # Create model
-    model = create_resnet18_1d(num_classes=NUM_CLASSES)
-
-    # Setup training
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    criterion = nn.CrossEntropyLoss()
-
-    # Progressive training schedule
-    schedule = [
-        (25600, 30),   # Stage 1: Short signals
-        (51200, 20),   # Stage 2: Medium signals
-        (102400, 50),  # Stage 3: Full signals
-    ]
-
-    trainer = ProgressiveResizingTrainer(
-        model=model,
-        optimizer=optimizer,
-        criterion=criterion,
-        device='cuda',
-        schedule=schedule
-    )
-
-    # Train with progressive resizing
-    history = trainer.train_progressive(
-        base_train_dataset=train_dataset,
-        base_val_dataset=val_dataset,
-        batch_size=32
-    )
-
-    print(f"Final validation accuracy: {history['val_accuracy'][-1]:.2f}%")
-    """)
+        logger.info("Progressive resizing training complete!")
+        return self.history

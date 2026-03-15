@@ -107,6 +107,37 @@ from .pinn.knowledge_graph_pinn import KnowledgeGraphPINN
 from .contrastive.signal_encoder import SignalEncoder
 from .contrastive.classifier import ContrastiveClassifier
 
+# CNN Attention and Multi-Scale models
+from .cnn.attention_cnn import AttentionCNN1D, LightweightAttentionCNN
+from .cnn.multi_scale_cnn import MultiScaleCNN1D, DilatedMultiScaleCNN
+
+# Hybrid models (CNN-LSTM, CNN-TCN, MultiScaleCNN)
+from .hybrid.cnn_lstm import CNNLSTM
+from .hybrid.cnn_tcn import CNNTCN, create_cnn_tcn
+from .hybrid.multiscale_cnn import MultiScaleCNN
+
+# ResNet variants (WideResNet, SE-ResNet)
+from .resnet.wide_resnet import (
+    WideResNet1D,
+    create_wide_resnet16_8,
+    create_wide_resnet16_10,
+    create_wide_resnet22_8,
+    create_wide_resnet28_10,
+)
+from .resnet.se_resnet import (
+    SEResNet1D,
+    create_se_resnet18_1d,
+    create_se_resnet34_1d,
+    create_se_resnet50_1d,
+)
+from .resnet.resnet_1d import create_resnet50_1d
+
+# Ensemble models (new ensemble types)
+from .ensemble.voting_ensemble import VotingEnsemble as VotingEnsembleV2
+from .ensemble.stacking_ensemble import StackingEnsemble
+from .ensemble.mixture_of_experts import MixtureOfExperts
+from .ensemble.boosting_ensemble import BoostingEnsemble
+
 
 # ---------------------------------------------------------------------------
 # Factory wrapper functions for models that lack them
@@ -150,6 +181,36 @@ def create_signal_encoder(num_classes: int = NUM_CLASSES, **kwargs) -> SignalEnc
 def create_contrastive_classifier(num_classes: int = NUM_CLASSES, **kwargs) -> ContrastiveClassifier:
     """Create a ContrastiveClassifier with default encoder."""
     return ContrastiveClassifier(num_classes=num_classes, **kwargs)
+
+
+def create_attention_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> AttentionCNN1D:
+    """Create an AttentionCNN1D model."""
+    return AttentionCNN1D(num_classes=num_classes, **kwargs)
+
+
+def create_lightweight_attention_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> LightweightAttentionCNN:
+    """Create a LightweightAttentionCNN model."""
+    return LightweightAttentionCNN(num_classes=num_classes, **kwargs)
+
+
+def create_multi_scale_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> MultiScaleCNN1D:
+    """Create a MultiScaleCNN1D model."""
+    return MultiScaleCNN1D(num_classes=num_classes, **kwargs)
+
+
+def create_dilated_multi_scale_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> DilatedMultiScaleCNN:
+    """Create a DilatedMultiScaleCNN model."""
+    return DilatedMultiScaleCNN(num_classes=num_classes, **kwargs)
+
+
+def create_cnn_lstm(num_classes: int = NUM_CLASSES, **kwargs) -> CNNLSTM:
+    """Create a CNN-LSTM hybrid model."""
+    return CNNLSTM(num_classes=num_classes, **kwargs)
+
+
+def create_multiscale_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> MultiScaleCNN:
+    """Create a multi-scale CNN hybrid model."""
+    return MultiScaleCNN(num_classes=num_classes, **kwargs)
 
 
 # Model registry: Maps model names to creation functions
@@ -237,18 +298,74 @@ MODEL_REGISTRY = {
     # Contrastive learning models
     'signal_encoder': create_signal_encoder,
     'contrastive_classifier': create_contrastive_classifier,
+
+    # Attention CNN models
+    'attention_cnn': create_attention_cnn,
+    'attention_cnn_1d': create_attention_cnn,
+    'lightweight_attention_cnn': create_lightweight_attention_cnn,
+
+    # Multi-Scale CNN models
+    'multi_scale_cnn': create_multi_scale_cnn,
+    'multi_scale_cnn_1d': create_multi_scale_cnn,
+    'dilated_multi_scale_cnn': create_dilated_multi_scale_cnn,
+
+    # Hybrid models
+    'cnn_lstm': create_cnn_lstm,
+    'cnn_tcn': create_cnn_tcn,
+    'multiscale_cnn': create_multiscale_cnn,
+
+    # ResNet variants
+    'resnet50': create_resnet50_1d,
+    'resnet50_1d': create_resnet50_1d,
+    'wide_resnet16_8': create_wide_resnet16_8,
+    'wide_resnet16_10': create_wide_resnet16_10,
+    'wide_resnet22_8': create_wide_resnet22_8,
+    'wide_resnet28_10': create_wide_resnet28_10,
+    'se_resnet18': create_se_resnet18_1d,
+    'se_resnet18_1d': create_se_resnet18_1d,
+    'se_resnet34': create_se_resnet34_1d,
+    'se_resnet34_1d': create_se_resnet34_1d,
+    'se_resnet50': create_se_resnet50_1d,
+    'se_resnet50_1d': create_se_resnet50_1d,
 }
 
 
-def register_model(name: str, creation_fn: callable):
+def register_model(name_or_fn=None, name: str = None):
     """
     Register a new model type.
 
+    Can be used as a function or as a decorator:
+
+        # As a function:
+        register_model('my_model', my_creation_fn)
+
+        # As a decorator:
+        @register_model('my_model')
+        def create_my_model(num_classes=11, **kwargs):
+            ...
+
     Args:
-        name: Model name (used in create_model)
-        creation_fn: Function that creates the model
+        name_or_fn: Model name (str) when used as decorator, or
+                     model name (str) when used as function with 2 args.
+        name: Model name when used as function with keyword args.
     """
-    MODEL_REGISTRY[name.lower()] = creation_fn
+    # Usage: register_model('name', fn)
+    if isinstance(name_or_fn, str) and name is None:
+        model_name = name_or_fn
+        def decorator(fn):
+            MODEL_REGISTRY[model_name.lower()] = fn
+            return fn
+        return decorator
+    # Usage: register_model(name='name', creation_fn=fn)  (legacy)
+    elif name_or_fn is not None and callable(name_or_fn) and name is not None:
+        MODEL_REGISTRY[name.lower()] = name_or_fn
+    # Usage: register_model('name', fn)  via positional args
+    elif isinstance(name_or_fn, str):
+        def _register(creation_fn):
+            MODEL_REGISTRY[name_or_fn.lower()] = creation_fn
+        return _register
+    else:
+        raise ValueError("register_model requires a name string")
 
 
 def list_available_models() -> List[str]:

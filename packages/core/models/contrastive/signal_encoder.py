@@ -11,8 +11,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from packages.core.models.base_model import BaseModel
 
-class SignalEncoder(nn.Module):
+
+class SignalEncoder(BaseModel):
     """
     CNN-based signal encoder that produces embeddings for contrastive learning.
     Architecture inspired by SimCLR projection heads.
@@ -89,7 +91,3 @@ class SignalEncoder(nn.Module):
             'model_type': 'SignalEncoder',
             'embedding_dim': self.embedding_dim,
         }
-
-    def get_num_params(self):
-        """Return total number of parameters."""
-        return sum(p.numel() for p in self.parameters())

@@ -25,7 +25,9 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
+
+from packages.core.models.base_model import BaseModel
 
 
 class InceptionModule1D(nn.Module):
@@ -165,7 +167,7 @@ class DilatedConvBlock(nn.Module):
         return x
 
 
-class MultiScaleCNN1D(nn.Module):
+class MultiScaleCNN1D(BaseModel):
     """
     Multi-Scale 1D CNN with Inception modules
 
@@ -304,12 +306,17 @@ class MultiScaleCNN1D(nn.Module):
 
         return x
 
-    def get_num_params(self) -> int:
-        """Get total number of trainable parameters"""
-        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+    def get_config(self) -> Dict[str, Any]:
+        """Get model configuration dictionary."""
+        return {
+            'model_type': 'MultiScaleCNN1D',
+            'num_classes': self.num_classes,
+            'input_length': self.input_length,
+            'in_channels': self.in_channels,
+        }
 
 
-class DilatedMultiScaleCNN(nn.Module):
+class DilatedMultiScaleCNN(BaseModel):
     """
     Multi-scale CNN using dilated convolutions
 
@@ -415,9 +422,13 @@ class DilatedMultiScaleCNN(nn.Module):
 
         return x
 
-    def get_num_params(self) -> int:
-        """Get total number of trainable parameters"""
-        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+    def get_config(self) -> Dict[str, Any]:
+        """Get model configuration dictionary."""
+        return {
+            'model_type': 'DilatedMultiScaleCNN',
+            'num_classes': self.num_classes,
+            'input_length': self.input_length,
+        }
 
 
 def test_multi_scale_cnn():

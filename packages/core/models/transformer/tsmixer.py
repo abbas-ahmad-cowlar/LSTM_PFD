@@ -33,9 +33,12 @@ Reference:
     Forecasting." arXiv preprint arXiv:2303.06053 (2023).
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
-from typing import Optional
+from typing import Optional, Dict, Any
+
+from packages.core.models.base_model import BaseModel
 
 
 class TemporalMixingBlock(nn.Module):
@@ -158,7 +161,7 @@ class TSMixerBlock(nn.Module):
         return x
 
 
-class TSMixer(nn.Module):
+class TSMixer(BaseModel):
     """
     TSMixer model for time-series classification.
     
@@ -281,6 +284,17 @@ class TSMixer(nn.Module):
         
         return logits
     
+    def get_config(self) -> Dict[str, Any]:
+        """Get model configuration dictionary."""
+        return {
+            'model_type': 'TSMixer',
+            'num_classes': self.num_classes,
+            'input_length': self.input_length,
+            'n_features': self.n_features,
+            'd_model': self.d_model,
+            'seq_len': self.seq_len,
+        }
+
     def get_features(self, x: torch.Tensor) -> torch.Tensor:
         """Extract features before classification head."""
         if x.dim() == 2:

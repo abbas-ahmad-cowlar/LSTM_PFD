@@ -1,426 +1,231 @@
 """
-Knowledge Distillation Training Framework
+Knowledge Distillation Trainer.
 
-Train smaller "student" models using larger "teacher" models to
-transfer knowledge without directly copying weights.
+Inherits from BaseTrainer; overrides _forward_pass and _compute_loss
+to implement teacher–student distillation.
 
-Key benefits:
-- Student models often match teacher accuracy with fewer parameters
-- Combines soft targets (teacher) and hard targets (true labels)
-- Enables model compression for deployment
-
-Reference:
-- Hinton et al. (2015). "Distilling the Knowledge in a Neural Network"
-- Teacher-student learning framework
-
-Example:
-    Train ResNet-50 (teacher) → Distill to ResNet-18 (student)
-    Student achieves 95-96% accuracy (within 1% of teacher's 97%)
-    Student is 2-3× faster inference than teacher
+Author: Phase 2 - CNN Implementation
+Date: 2025-11-20
 """
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from typing import Optional, Dict, Tuple
-import numpy as np
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+from typing import Optional, Dict, List, Any
+from pathlib import Path
+
+from utils.logging import get_logger
+from .base_trainer import BaseTrainer
+
+logger = get_logger(__name__)
 
 
 class DistillationLoss(nn.Module):
     """
-    Combined loss for knowledge distillation.
+    Combined distillation + cross-entropy loss.
 
-    Loss = α × SoftLoss(student, teacher) + (1-α) × HardLoss(student, labels)
-
-    Where:
-    - SoftLoss: KL divergence between softened predictions
-    - HardLoss: Standard cross-entropy with true labels
-    - α: Weight balancing soft vs hard targets
+    L = α · T² · KL(soft_student ‖ soft_teacher) + (1 - α) · CE(student, labels)
 
     Args:
-        temperature: Temperature for softening predictions (higher = softer)
-        alpha: Weight for soft loss vs hard loss
-        hard_loss_type: Type of hard loss ('cross_entropy' or 'mse')
+        temperature: Softmax temperature for soft targets
+        alpha: Weight for distillation loss (1 - alpha → hard-label loss)
     """
 
-    def __init__(
-        self,
-        temperature: float = 4.0,
-        alpha: float = 0.7,
-        hard_loss_type: str = 'cross_entropy'
-    ):
+    def __init__(self, temperature: float = 4.0, alpha: float = 0.7):
         super().__init__()
-
         self.temperature = temperature
         self.alpha = alpha
-        self.hard_loss_type = hard_loss_type
-
-        if hard_loss_type == 'cross_entropy':
-            self.hard_loss_fn = nn.CrossEntropyLoss()
-        elif hard_loss_type == 'mse':
-            self.hard_loss_fn = nn.MSELoss()
-        else:
-            raise ValueError(f"Unknown hard loss type: {hard_loss_type}")
+        self.ce_loss = nn.CrossEntropyLoss()
 
     def forward(
         self,
         student_logits: torch.Tensor,
         teacher_logits: torch.Tensor,
-        labels: torch.Tensor
-    ) -> Tuple[torch.Tensor, Dict[str, float]]:
+        targets: torch.Tensor,
+    ) -> torch.Tensor:
         """
-        Compute distillation loss.
-
         Args:
-            student_logits: Student model output [B, num_classes]
-            teacher_logits: Teacher model output [B, num_classes]
-            labels: True labels [B]
-
-        Returns:
-            total_loss: Combined loss
-            loss_dict: Dictionary with loss components
+            student_logits: (B, C) raw logits from student
+            teacher_logits: (B, C) raw logits from teacher
+            targets: (B,) ground-truth class indices
         """
         T = self.temperature
 
-        # Soft targets from teacher (KL divergence)
-        student_soft = F.log_softmax(student_logits / T, dim=1)
-        teacher_soft = F.softmax(teacher_logits / T, dim=1)
+        # Soft targets (KL Divergence)
+        soft_student = F.log_softmax(student_logits / T, dim=1)
+        soft_teacher = F.softmax(teacher_logits / T, dim=1)
+        kl_loss = F.kl_div(soft_student, soft_teacher, reduction="batchmean") * (T * T)
 
-        soft_loss = F.kl_div(
-            student_soft,
-            teacher_soft,
-            reduction='batchmean'
-        ) * (T * T)  # Scale by T^2 to match gradient magnitudes
+        # Hard targets
+        ce = self.ce_loss(student_logits, targets)
 
-        # Hard targets from true labels
-        if self.hard_loss_type == 'cross_entropy':
-            hard_loss = self.hard_loss_fn(student_logits, labels)
-        else:  # MSE with one-hot labels
-            num_classes = student_logits.size(1)
-            labels_onehot = F.one_hot(labels, num_classes).float()
-            hard_loss = self.hard_loss_fn(
-                F.softmax(student_logits, dim=1),
-                labels_onehot
-            )
-
-        # Combined loss
-        total_loss = self.alpha * soft_loss + (1 - self.alpha) * hard_loss
-
-        loss_dict = {
-            'soft_loss': soft_loss.item(),
-            'hard_loss': hard_loss.item(),
-            'total_loss': total_loss.item()
-        }
-
-        return total_loss, loss_dict
+        return self.alpha * kl_loss + (1 - self.alpha) * ce
 
 
-class DistillationTrainer:
+class DistillationTrainer(BaseTrainer):
     """
-    Trainer for knowledge distillation.
+    Knowledge distillation trainer (teacher → student).
+
+    Freezes the teacher model and trains the student via a
+    combination of soft-target KL loss and hard-target CE loss.
 
     Args:
-        teacher_model: Pre-trained teacher model
-        student_model: Student model to train
-        criterion: Distillation loss function
-        optimizer: Optimizer for student model
-        device: Device to train on
+        student: Student model (trainable)
+        teacher: Teacher model (frozen)
+        optimizer: Optimizer for student parameters
+        device: 'cuda' or 'cpu'
+        lr_scheduler: Optional learning-rate scheduler
+        max_grad_norm: Gradient clipping max norm
+        gradient_accumulation_steps: Gradient accumulation steps
+        mixed_precision: Use AMP FP16
+        checkpoint_dir: Where to save checkpoints
+        temperature: Distillation temperature (default 4.0)
+        alpha: Weight for distillation loss (default 0.7)
+
+    Examples:
+        >>> teacher = load_pretrained_model()
+        >>> student = SmallCNN(num_classes=11)
+        >>> optimizer = torch.optim.Adam(student.parameters())
+        >>> trainer = DistillationTrainer(student, teacher, optimizer, device='cuda')
+        >>> history = trainer.fit(train_loader, val_loader, num_epochs=50)
     """
 
     def __init__(
         self,
-        teacher_model: nn.Module,
-        student_model: nn.Module,
-        criterion: DistillationLoss,
+        student: nn.Module,
+        teacher: nn.Module,
         optimizer: torch.optim.Optimizer,
-        device: str = 'cpu'
+        device: str = "cpu",
+        lr_scheduler=None,
+        max_grad_norm: float = 1.0,
+        gradient_accumulation_steps: int = 1,
+        mixed_precision: bool = False,
+        checkpoint_dir: Optional[Path] = None,
+        temperature: float = 4.0,
+        alpha: float = 0.7,
     ):
-        self.teacher_model = teacher_model.to(device)
-        self.student_model = student_model.to(device)
-        self.criterion = criterion
-        self.optimizer = optimizer
-        self.device = device
+        distillation_loss = DistillationLoss(temperature=temperature, alpha=alpha)
 
-        # Freeze teacher model
-        self.teacher_model.eval()
-        for param in self.teacher_model.parameters():
+        super().__init__(
+            model=student,
+            optimizer=optimizer,
+            criterion=distillation_loss,
+            device=device,
+            lr_scheduler=lr_scheduler,
+            max_grad_norm=max_grad_norm,
+            gradient_accumulation_steps=gradient_accumulation_steps,
+            mixed_precision=mixed_precision,
+            checkpoint_dir=checkpoint_dir,
+        )
+
+        # Freeze teacher
+        self.teacher = teacher.to(device)
+        self.teacher.eval()
+        for param in self.teacher.parameters():
             param.requires_grad = False
+
+        self.temperature = temperature
+        self.alpha = alpha
+
+        logger.info(
+            f"DistillationTrainer initialized — "
+            f"temperature={temperature}, alpha={alpha}"
+        )
+
+    # -- Template hooks -------------------------------------------------
+
+    def _forward_pass(
+        self, inputs: torch.Tensor, targets: torch.Tensor, **kwargs: Any
+    ) -> torch.Tensor:
+        """Forward pass through the student model."""
+        return self.model(inputs)
+
+    def _compute_loss(
+        self,
+        outputs: torch.Tensor,
+        targets: torch.Tensor,
+        **kwargs: Any,
+    ) -> torch.Tensor:
+        """
+        Override: compute combined distillation + CE loss.
+
+        Re-runs teacher in no-grad to get teacher logits.
+        """
+        with torch.no_grad():
+            teacher_logits = self.teacher(kwargs.get("inputs", targets))
+
+        return self.criterion(outputs, teacher_logits, targets)
+
+    # -- Override train_epoch to thread inputs through _compute_loss -----
 
     def train_epoch(
         self,
         train_loader: DataLoader,
-        epoch: int
+        **kwargs: Any,
     ) -> Dict[str, float]:
-        """
-        Train for one epoch with distillation.
-
-        Args:
-            train_loader: Training data loader
-            epoch: Current epoch number
-
-        Returns:
-            Dictionary with training metrics
-        """
-        self.student_model.train()
-
-        total_loss = 0.0
-        total_soft_loss = 0.0
-        total_hard_loss = 0.0
+        """Training epoch that passes inputs to _compute_loss for teacher."""
+        self.model.train()
+        running_loss = 0.0
         correct = 0
         total = 0
 
-        for batch_idx, (inputs, labels) in enumerate(train_loader):
+        for batch_idx, (inputs, targets) in enumerate(train_loader):
             inputs = inputs.to(self.device)
-            labels = labels.to(self.device)
+            targets = targets.to(self.device)
 
-            # Get teacher predictions (no gradient)
-            with torch.no_grad():
-                teacher_logits = self.teacher_model(inputs)
+            # Forward
+            if self.mixed_precision:
+                with torch.cuda.amp.autocast():
+                    student_logits = self._forward_pass(inputs, targets)
+                    with torch.no_grad():
+                        teacher_logits = self.teacher(inputs)
+                    loss = self.criterion(student_logits, teacher_logits, targets)
+            else:
+                student_logits = self._forward_pass(inputs, targets)
+                with torch.no_grad():
+                    teacher_logits = self.teacher(inputs)
+                loss = self.criterion(student_logits, teacher_logits, targets)
 
-            # Get student predictions
-            student_logits = self.student_model(inputs)
+            # Scale for gradient accumulation
+            loss = loss / self.gradient_accumulation_steps
 
-            # Compute distillation loss
-            loss, loss_dict = self.criterion(student_logits, teacher_logits, labels)
+            # Backward
+            if self.mixed_precision:
+                self.scaler.scale(loss).backward()
+            else:
+                loss.backward()
 
-            # Backpropagation
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+            # Optimizer step (with grad accumulation)
+            if (batch_idx + 1) % self.gradient_accumulation_steps == 0:
+                if self.max_grad_norm > 0:
+                    if self.mixed_precision:
+                        self.scaler.unscale_(self.optimizer)
+                    torch.nn.utils.clip_grad_norm_(
+                        self.model.parameters(), self.max_grad_norm
+                    )
 
-            # Track metrics
-            batch_size = labels.size(0)
-            total_loss += loss_dict['total_loss'] * batch_size
-            total_soft_loss += loss_dict['soft_loss'] * batch_size
-            total_hard_loss += loss_dict['hard_loss'] * batch_size
-
-            # Accuracy
-            _, predicted = torch.max(student_logits, 1)
-            total += batch_size
-            correct += (predicted == labels).sum().item()
-
-        # Average metrics
-        metrics = {
-            'train_loss': total_loss / total,
-            'train_soft_loss': total_soft_loss / total,
-            'train_hard_loss': total_hard_loss / total,
-            'train_accuracy': 100.0 * correct / total
-        }
-
-        return metrics
-
-    def evaluate(
-        self,
-        val_loader: DataLoader
-    ) -> Dict[str, float]:
-        """
-        Evaluate student model.
-
-        Args:
-            val_loader: Validation data loader
-
-        Returns:
-            Dictionary with validation metrics
-        """
-        self.student_model.eval()
-
-        correct = 0
-        total = 0
-        total_loss = 0.0
-
-        with torch.no_grad():
-            for inputs, labels in val_loader:
-                inputs = inputs.to(self.device)
-                labels = labels.to(self.device)
-
-                # Student predictions
-                student_logits = self.student_model(inputs)
-
-                # Teacher predictions
-                teacher_logits = self.teacher_model(inputs)
-
-                # Loss
-                loss, _ = self.criterion(student_logits, teacher_logits, labels)
-                total_loss += loss.item() * labels.size(0)
-
-                # Accuracy
-                _, predicted = torch.max(student_logits, 1)
-                total += labels.size(0)
-                correct += (predicted == labels).sum().item()
-
-        metrics = {
-            'val_loss': total_loss / total,
-            'val_accuracy': 100.0 * correct / total
-        }
-
-        return metrics
-
-    def train(
-        self,
-        train_loader: DataLoader,
-        val_loader: DataLoader,
-        epochs: int,
-        scheduler: Optional[torch.optim.lr_scheduler._LRScheduler] = None
-    ) -> Dict[str, list]:
-        """
-        Full training loop with distillation.
-
-        Args:
-            train_loader: Training data loader
-            val_loader: Validation data loader
-            epochs: Number of epochs
-            scheduler: Optional learning rate scheduler
-
-        Returns:
-            Dictionary with training history
-        """
-        history = {
-            'train_loss': [],
-            'train_accuracy': [],
-            'val_loss': [],
-            'val_accuracy': []
-        }
-
-        best_val_acc = 0.0
-
-        for epoch in range(epochs):
-            # Train
-            train_metrics = self.train_epoch(train_loader, epoch)
-
-            # Validate
-            val_metrics = self.evaluate(val_loader)
-
-            # Update learning rate
-            if scheduler is not None:
-                if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
-                    scheduler.step(val_metrics['val_loss'])
+                if self.mixed_precision:
+                    self.scaler.step(self.optimizer)
+                    self.scaler.update()
                 else:
-                    scheduler.step()
+                    self.optimizer.step()
 
-            # Track history
-            history['train_loss'].append(train_metrics['train_loss'])
-            history['train_accuracy'].append(train_metrics['train_accuracy'])
-            history['val_loss'].append(val_metrics['val_loss'])
-            history['val_accuracy'].append(val_metrics['val_accuracy'])
+                self.optimizer.zero_grad()
 
-            # Print progress
-            print(f"Epoch {epoch+1}/{epochs}")
-            print(f"  Train Loss: {train_metrics['train_loss']:.4f}, "
-                  f"Train Acc: {train_metrics['train_accuracy']:.2f}%")
-            print(f"  Val Loss: {val_metrics['val_loss']:.4f}, "
-                  f"Val Acc: {val_metrics['val_accuracy']:.2f}%")
+            # Metrics
+            batch_size = targets.size(0)
+            running_loss += loss.item() * self.gradient_accumulation_steps * batch_size
+            _, predicted = student_logits.max(1)
+            total += batch_size
+            correct += predicted.eq(targets).sum().item()
 
-            # Save best model
-            if val_metrics['val_accuracy'] > best_val_acc:
-                best_val_acc = val_metrics['val_accuracy']
-                print(f"  → New best validation accuracy: {best_val_acc:.2f}%")
+        return {
+            "loss": running_loss / max(total, 1),
+            "accuracy": 100.0 * correct / max(total, 1),
+        }
 
-        return history
-
-
-def compare_teacher_student(
-    teacher_model: nn.Module,
-    student_model: nn.Module,
-    test_loader: DataLoader,
-    device: str = 'cpu'
-) -> Dict[str, float]:
-    """
-    Compare teacher and student model performance.
-
-    Args:
-        teacher_model: Teacher model
-        student_model: Student model
-        test_loader: Test data loader
-        device: Device to run on
-
-    Returns:
-        Dictionary with comparison metrics
-    """
-    teacher_model.eval()
-    student_model.eval()
-
-    teacher_correct = 0
-    student_correct = 0
-    both_correct = 0
-    total = 0
-
-    with torch.no_grad():
-        for inputs, labels in test_loader:
-            inputs = inputs.to(device)
-            labels = labels.to(device)
-
-            # Teacher predictions
-            teacher_logits = teacher_model(inputs)
-            _, teacher_pred = torch.max(teacher_logits, 1)
-
-            # Student predictions
-            student_logits = student_model(inputs)
-            _, student_pred = torch.max(student_logits, 1)
-
-            # Count correct predictions
-            teacher_mask = (teacher_pred == labels)
-            student_mask = (student_pred == labels)
-
-            teacher_correct += teacher_mask.sum().item()
-            student_correct += student_mask.sum().item()
-            both_correct += (teacher_mask & student_mask).sum().item()
-            total += labels.size(0)
-
-    # Count parameters
-    teacher_params = sum(p.numel() for p in teacher_model.parameters())
-    student_params = sum(p.numel() for p in student_model.parameters())
-
-    comparison = {
-        'teacher_accuracy': 100.0 * teacher_correct / total,
-        'student_accuracy': 100.0 * student_correct / total,
-        'accuracy_gap': 100.0 * (teacher_correct - student_correct) / total,
-        'agreement': 100.0 * both_correct / total,
-        'teacher_params': teacher_params,
-        'student_params': student_params,
-        'compression_ratio': teacher_params / student_params
-    }
-
-    return comparison
-
-
-# Example usage
-if __name__ == "__main__":
-    print("Knowledge Distillation Framework")
-    print("\nExample usage:")
-    print("""
-    # Create teacher and student models
-    teacher = create_resnet50_1d(num_classes=NUM_CLASSES)
-    student = create_resnet18_1d(num_classes=NUM_CLASSES)
-
-    # Load pre-trained teacher
-    teacher.load_state_dict(torch.load('teacher_model.pth'))
-
-    # Setup distillation
-    criterion = DistillationLoss(temperature=4.0, alpha=0.7)
-    optimizer = torch.optim.Adam(student.parameters(), lr=0.001)
-
-    trainer = DistillationTrainer(
-        teacher_model=teacher,
-        student_model=student,
-        criterion=criterion,
-        optimizer=optimizer,
-        device='cuda'
-    )
-
-    # Train student with distillation
-    history = trainer.train(
-        train_loader=train_loader,
-        val_loader=val_loader,
-        epochs=50
-    )
-
-    # Compare teacher vs student
-    comparison = compare_teacher_student(
-        teacher, student, test_loader, device='cuda'
-    )
-    print(f"Teacher accuracy: {comparison['teacher_accuracy']:.2f}%")
-    print(f"Student accuracy: {comparison['student_accuracy']:.2f}%")
-    print(f"Compression ratio: {comparison['compression_ratio']:.1f}×")
-    """)
+    # Backward-compat alias: train() → fit()
+    def train(self, *args, **kwargs):
+        """Backward-compatible alias. Use ``fit()`` instead."""
+        return self.fit(*args, **kwargs)

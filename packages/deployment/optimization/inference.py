@@ -103,7 +103,7 @@ class TorchInferenceEngine(BaseInferenceEngine):
         """
         logger.info(f"Loading PyTorch model from {model_path}")
 
-        checkpoint = torch.load(model_path, map_location=self.device)
+        checkpoint = torch.load(model_path, map_location=self.device, weights_only=True)
 
         if isinstance(checkpoint, dict) and 'model_state_dict' in checkpoint:
             # Checkpoint format

@@ -10,10 +10,11 @@ Extracted from: scripts/research/contrastive_physics.py
 import torch
 import torch.nn as nn
 
+from packages.core.models.base_model import BaseModel
 from .signal_encoder import SignalEncoder
 
 
-class ContrastiveClassifier(nn.Module):
+class ContrastiveClassifier(BaseModel):
     """
     Classifier that uses pretrained encoder features.
     Encoder weights can be frozen or fine-tuned.
@@ -60,7 +61,3 @@ class ContrastiveClassifier(nn.Module):
             'model_type': 'ContrastiveClassifier',
             'freeze_encoder': self.freeze_encoder,
         }
-
-    def get_num_params(self):
-        """Return total number of parameters."""
-        return sum(p.numel() for p in self.parameters())

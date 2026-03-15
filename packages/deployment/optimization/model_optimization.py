@@ -180,15 +180,14 @@ def optimize_for_deployment(
     """
     logger.info(f"Optimizing model for deployment (level: {optimization_level})")
 
-    # Adjust parameters based on level
-    if optimization_level == 'light':
-        pruning_amount = 0.1
-    elif optimization_level == 'standard':
-        pruning_amount = 0.3
-    elif optimization_level == 'aggressive':
-        pruning_amount = 0.5
-    else:
+    # Use level-based defaults only when caller hasn't overridden pruning_amount
+    _LEVEL_DEFAULTS = {'light': 0.1, 'standard': 0.3, 'aggressive': 0.5}
+    if optimization_level not in _LEVEL_DEFAULTS:
         raise ValueError(f"Unknown optimization level: {optimization_level}")
+
+    # 0.3 is the function default — if caller left it at default, apply level mapping
+    if pruning_amount == 0.3:
+        pruning_amount = _LEVEL_DEFAULTS[optimization_level]
 
     # Apply optimizations
     if prune:
