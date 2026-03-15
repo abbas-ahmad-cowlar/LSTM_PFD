@@ -1,6 +1,6 @@
 """Data generation and management module for LSTM_PFD pipeline."""
 
-from .signal_generator import SignalGenerator, FaultModeler, NoiseGenerator
+from .signal_generator import SignalGenerator, FaultModeler, NoiseGenerator, SignalMetadata
 from .matlab_importer import MatlabImporter, MatlabSignalData, load_matlab_reference
 from .data_validator import SignalValidator, ValidationResult, validate_against_matlab
 from .augmentation import SignalAugmenter, random_augment
@@ -13,11 +13,21 @@ from .dataset import (
 )
 from .dataloader import (
     create_dataloader,
+    create_cnn_dataloader,
+    create_cnn_dataloaders,
     create_train_val_test_loaders,
     worker_init_fn_seed,
     compute_class_weights,
     InfiniteDataLoader,
-    prefetch_to_device
+    prefetch_to_device,
+    collate_signals,
+    DataLoaderConfig,
+)
+from .signal_validation import (
+    validate_signal,
+    validate_batch,
+    ValidationReport,
+    SignalValidationError,
 )
 from .transforms import (
     Compose,
@@ -65,6 +75,7 @@ __all__ = [
     'SignalGenerator',
     'FaultModeler',
     'NoiseGenerator',
+    'SignalMetadata',
     # MATLAB import/validation
     'MatlabImporter',
     'MatlabSignalData',
@@ -95,11 +106,20 @@ __all__ = [
     'create_tfr_dataloaders',
     # DataLoaders
     'create_dataloader',
+    'create_cnn_dataloader',
+    'create_cnn_dataloaders',
     'create_train_val_test_loaders',
     'worker_init_fn_seed',
     'compute_class_weights',
     'InfiniteDataLoader',
     'prefetch_to_device',
+    'collate_signals',
+    'DataLoaderConfig',
+    # Signal validation
+    'validate_signal',
+    'validate_batch',
+    'ValidationReport',
+    'SignalValidationError',
     # Transforms
     'Compose',
     'Normalize',

@@ -8,7 +8,7 @@ from .spectrogram_trainer import SpectrogramTrainer
 from .progressive_resizing import ProgressiveResizingTrainer, ResizableSignalDataset
 from .knowledge_distillation import DistillationTrainer, DistillationLoss
 from .callbacks import EarlyStopping, ModelCheckpoint
-from .losses import FocalLoss, LabelSmoothingLoss
+from .losses import FocalLoss, LabelSmoothingCrossEntropy
 
 __all__ = [
     # Base
@@ -29,6 +29,7 @@ __all__ = [
     'ModelCheckpoint',
     # Loss Functions
     'FocalLoss',
-    'LabelSmoothingLoss',
+    'LabelSmoothingCrossEntropy',
 ]
+
 
