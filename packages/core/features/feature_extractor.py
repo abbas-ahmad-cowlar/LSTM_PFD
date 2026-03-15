@@ -43,7 +43,7 @@ class FeatureExtractor:
         >>> print(f"Total features: {len(features)}")  # 36
     """
 
-    def __init__(self, fs: float = 20480):
+    def __init__(self, fs: float = SAMPLING_RATE):
         """
         Initialize feature extractor.
 

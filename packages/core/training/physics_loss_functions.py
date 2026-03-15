@@ -19,7 +19,7 @@ from typing import Dict, Optional, Tuple
 
 from ..models.physics.bearing_dynamics import BearingDynamics
 from ..models.physics.fault_signatures import FaultSignatureDatabase
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
 
 
 class FrequencyConsistencyLoss(nn.Module):
@@ -33,7 +33,7 @@ class FrequencyConsistencyLoss(nn.Module):
 
     def __init__(
         self,
-        sample_rate: int = 20480,
+        sample_rate: int = SAMPLING_RATE,
         n_fft: int = 2048,
         top_k: int = 5,
         tolerance: float = 0.1
@@ -360,7 +360,7 @@ class SpectralDistanceLoss(nn.Module):
     the full spectrum rather than just peak frequencies.
     """
 
-    def __init__(self, sample_rate: int = 20480, n_fft: int = 2048):
+    def __init__(self, sample_rate: int = SAMPLING_RATE, n_fft: int = 2048):
         """
         Initialize spectral distance loss.
 
