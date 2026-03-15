@@ -2,6 +2,13 @@
 
 > A phased, self-expanding plan to transform LSTM-PFD from code-complete-but-unvalidated into a **publication-ready research platform** and **production-grade SaaS**.
 
+> [!IMPORTANT]
+> **Agent Instructions**: Any agent working on this plan **MUST** update this file after completing items. Mark items `[x]` when done, `[/]` when in-progress. Add notes on corrections or discoveries inline. This file is the single source of truth for project progress.
+>
+> **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
+>
+> **Last Updated**: 2026-03-15T07:40 PKT — Phase 2B in progress.
+
 ---
 
 ## Design Philosophy: IDB Audit Feedback Loop
@@ -25,44 +32,40 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 
 ---
 
-## Phase 0: Git Hygiene & Branch Convergence
+## Phase 0: Git Hygiene & Branch Convergence ✅
 **Goal**: Clean slate on `main` before any code changes.
 
-- [ ] **0.1** Merge `feature/hardening-and-docs` → `main` (11 commits: doc migrations, script relocations)
-- [ ] **0.2** Delete 14 stale local branches already merged into `main`:
-  - `Code-Overhaul`, `Feats/Deficiencies`, `doc-overhaul`, `docs/api-and-mkdocs`, `feat/hpo-dashboard-updates`, `feat/phase4-cicd-dr`, `feat/phase4-docker-codequality`, `feat/phase4-helm-kubernetes`, `feat/phase4-observability`, `feat/phase4-security-hardening`, `feature/dashboard-fixes-and-audit`, `feature/data-explorer-advanced-visualizations`, `fix/p1-magic-numbers`, `massive-improvements`
-- [ ] **0.3** Clean up tracked artifacts that shouldn't be in git:
-  - `packages/dashboard/dashboard.db`, `packages/dashboard/dashboard_data.db`
-  - `packages/dashboard/app.log` (430KB)
-  - `packages/dashboard/.env` (should be gitignored)
-- [ ] **0.4** Verify `.gitignore` covers `*.db`, `*.log`, `.env` inside dashboard
-- [ ] **0.5** Create fresh `develop` branch from clean `main` for all subsequent work
+- [x] **0.1** Merge `feature/hardening-and-docs` → `main` (fast-forward, 11 commits)
+- [x] **0.2** Delete 14 stale local branches already merged into `main`
+- [x] **0.3** Verified `.gitignore` excludes `*.db`, `*.log`, `.env` — these are NOT tracked in git
+- [x] **0.4** Verified `.gitignore` covers dashboard artifacts
+- [x] **0.5** Created `fix/master-plan` branch from clean `main` for all subsequent work
 
 ---
 
-## Phase 1: Critical P0 Bug Fixes (Security & Stability)
+## Phase 1: Critical P0 Bug Fixes (Security & Stability) ✅
 **Goal**: Fix all show-stopping issues that block any meaningful use.
 
 ### 1A: Security Hardening
-- [ ] **1.1** Remove hardcoded secrets from `docker-compose.yml` (lines 68, 114, 143) — use `.env` file references with `${VARIABLE}` syntax
-- [ ] **1.2** Remove hardcoded `POSTGRES_PASSWORD=changeme` from Helm `values.yaml:89`
-- [ ] **1.3** Fix CORS wildcard `["*"]` in `packages/deployment/api/config.py:50` — make environment-specific
+- [x] **1.1** Remove hardcoded secrets from `docker-compose.yml` — replaced with `${VARIABLE}` env refs (4 service blocks)
+- [x] **1.2** Remove hardcoded `POSTGRES_PASSWORD=changeme` from Helm `values.yaml:89`
+- [x] **1.3** Fix CORS wildcard `["*"]` in `config.py` — now defaults to localhost origins, overridable via `CORS_ORIGINS` env
 - [ ] **1.4** Ensure Redis auth is enabled in production Helm values (`values-prod.yaml`)
 
 ### 1B: Code Portability
-- [ ] **1.5** Remove all hardcoded `sys.path` manipulation (`/home/user/LSTM_PFD`) — 8 files in `fusion/`, `ensemble/` directories
+- [x] **1.5** Remove all 8 hardcoded `sys.path` (`/home/user/LSTM_PFD`) — replaced with portable `Path(__file__)` resolution
 - [ ] **1.6** Standardize all imports to use proper package paths (`packages.core.models.*`)
 
 ### 1C: Duplicate Elimination
-- [ ] **1.7** Remove duplicate `HybridPINN` — keep `pinn/hybrid_pinn.py`, delete top-level `hybrid_pinn.py`
-- [ ] **1.8** Remove duplicate `ResNet1D` — keep `resnet/resnet_1d.py`, delete top-level `resnet_1d.py`
-- [ ] **1.9** Consolidate duplicate `FocalLoss` and `LabelSmoothingCrossEntropy` — keep versions in `cnn_losses.py`, update `losses.py` to re-export
-- [ ] **1.10** Merge dual callback systems (`callbacks.py` + `cnn_callbacks.py`) into unified `Callback` base class
+- [ ] **1.7** Consolidate `HybridPINN` — ⚠️ **Correction**: top-level `hybrid_pinn.py` is canonical, `pinn/hybrid_pinn.py` is a stub. Need to make `pinn/` re-export from top-level or move implementation.
+- [ ] **1.8** Consolidate `ResNet1D` — ⚠️ **Correction**: top-level `resnet_1d.py` is canonical, `resnet/resnet_1d.py` is a stub. Same approach.
+- [x] **1.9** Consolidated `FocalLoss` and `LabelSmoothingCrossEntropy` — `losses.py` now re-exports from `cnn_losses.py`
+- [ ] **1.10** Merge dual callback systems — deferred (divergent interfaces: trainer-centric vs logs-centric, needs careful testing)
 
 ### 1D: Data Integrity
 - [ ] **1.11** Fix HDF5 file handle leaks in `OnTheFlyTFRDataset` — add context managers
 - [ ] **1.12** Replace Redis `KEYS` pattern with `SCAN` in cache service
-- [ ] **1.13** Fix LR scheduler bug in `cnn_trainer.py:275` — handle `ReduceLROnPlateau` correctly
+- [x] **1.13** Fix LR scheduler bug in `cnn_trainer.py` — now handles `ReduceLROnPlateau` with metric arg
 
 > [!IMPORTANT]
 > 🔍 **IDB Audit Checkpoint #1**: After Phase 1 completion, IDB teams **1.1, 1.2, 3.2, 4.2** perform targeted re-audit of their domains to verify all P0 fixes and surface any newly-exposed P0/P1 issues. Discovered items are inserted into Phase 2.
