@@ -1,108 +1,31 @@
 """
 Loss Functions for Fault Diagnosis
 
-Implements various loss functions:
-- Focal Loss (for class imbalance)
-- Label Smoothing Cross Entropy
-- Physics-Informed Loss (for PINN models)
+Consolidated loss module — re-exports canonical implementations from cnn_losses
+and adds physics-specific losses.
+
+Available losses:
+- FocalLoss (from cnn_losses)
+- LabelSmoothingCrossEntropy (from cnn_losses)
+- SupConLoss (from cnn_losses)
+- PhysicsInformedLoss (defined here)
+- compute_class_weights (defined here)
+- create_criterion (from cnn_losses)
 """
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import Optional
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+from utils.constants import NUM_CLASSES
 
-
-class FocalLoss(nn.Module):
-    """
-    Focal Loss for addressing class imbalance.
-
-    Reference: Lin et al. (2017). "Focal Loss for Dense Object Detection"
-
-    Args:
-        alpha: Weighting factor for classes (default: None)
-        gamma: Focusing parameter (default: 2.0)
-        reduction: 'none', 'mean', or 'sum' (default: 'mean')
-    """
-    def __init__(
-        self,
-        alpha: Optional[torch.Tensor] = None,
-        gamma: float = 2.0,
-        reduction: str = 'mean'
-    ):
-        super().__init__()
-        self.alpha = alpha
-        self.gamma = gamma
-        self.reduction = reduction
-
-    def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            inputs: Predictions [B, num_classes]
-            targets: Ground truth labels [B]
-
-        Returns:
-            Focal loss value
-        """
-        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
-        pt = torch.exp(-ce_loss)
-        focal_loss = (1 - pt) ** self.gamma * ce_loss
-
-        if self.alpha is not None:
-            if self.alpha.device != inputs.device:
-                self.alpha = self.alpha.to(inputs.device)
-            alpha_t = self.alpha[targets]
-            focal_loss = alpha_t * focal_loss
-
-        if self.reduction == 'mean':
-            return focal_loss.mean()
-        elif self.reduction == 'sum':
-            return focal_loss.sum()
-        else:
-            return focal_loss
-
-
-class LabelSmoothingCrossEntropy(nn.Module):
-    """
-    Cross entropy loss with label smoothing.
-
-    Args:
-        smoothing: Label smoothing factor (default: 0.1)
-        reduction: 'none', 'mean', or 'sum' (default: 'mean')
-    """
-    def __init__(self, smoothing: float = 0.1, reduction: str = 'mean'):
-        super().__init__()
-        self.smoothing = smoothing
-        self.reduction = reduction
-
-    def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
-        """
-        Args:
-            inputs: Predictions [B, num_classes]
-            targets: Ground truth labels [B]
-
-        Returns:
-            Label smoothing loss
-        """
-        log_probs = F.log_softmax(inputs, dim=1)
-        num_classes = inputs.size(1)
-
-        # One-hot encode targets
-        targets_one_hot = F.one_hot(targets, num_classes).float()
-
-        # Apply label smoothing
-        smooth_targets = targets_one_hot * (1 - self.smoothing) + self.smoothing / num_classes
-
-        # Compute loss
-        loss = -(smooth_targets * log_probs).sum(dim=1)
-
-        if self.reduction == 'mean':
-            return loss.mean()
-        elif self.reduction == 'sum':
-            return loss.sum()
-        else:
-            return loss
+# Re-export canonical implementations (avoid duplication)
+from training.cnn_losses import (
+    FocalLoss,
+    LabelSmoothingCrossEntropy,
+    SupConLoss,
+    create_criterion,
+)
 
 
 class PhysicsInformedLoss(nn.Module):
