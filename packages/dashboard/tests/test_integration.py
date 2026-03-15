@@ -113,7 +113,7 @@ class TestDatabaseModels:
                 description="Test dataset for integration tests",
                 num_samples=100,
                 num_classes=NUM_CLASSES,
-                sampling_rate=20480,
+                sampling_rate=SAMPLING_RATE,
                 signal_length = SIGNAL_LENGTH,
                 file_path="/path/to/test.h5"
             )
@@ -129,7 +129,7 @@ class TestDatabaseModels:
                 name="Experiment Test Dataset",
                 num_samples=100,
                 num_classes=NUM_CLASSES,
-                sampling_rate=20480,
+                sampling_rate=SAMPLING_RATE,
                 signal_length = SIGNAL_LENGTH,
                 file_path="/path/to/test.h5"
             )
@@ -158,7 +158,7 @@ class TestDatabaseModels:
                 name="Status Test Dataset",
                 num_samples=100,
                 num_classes=NUM_CLASSES,
-                sampling_rate=20480,
+                sampling_rate=SAMPLING_RATE,
                 signal_length = SIGNAL_LENGTH,
                 file_path="/path/to/test.h5"
             )
@@ -223,7 +223,7 @@ class TestWorkflows:
                 name="Workflow Test Dataset",
                 num_samples=1430,
                 num_classes=NUM_CLASSES,
-                sampling_rate=20480,
+                sampling_rate=SAMPLING_RATE,
                 signal_length = SIGNAL_LENGTH,
                 file_path="/path/to/test.h5"
             )
@@ -256,17 +256,6 @@ class TestWorkflows:
             assert exp.name == "Workflow Test Experiment"
             assert exp.model_type == "resnet34"
             assert exp.dataset_id == dataset_id
-
-
-@pytest.mark.skipif(True, reason="Requires actual dash app running")
-class TestDashCallbacks:
-    """Test Dash callbacks (requires app instance)."""
-
-    def test_navigation_callback(self, client):
-        """Test navigation between pages."""
-        # This would require selenium or dash testing tools
-        pass
-
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

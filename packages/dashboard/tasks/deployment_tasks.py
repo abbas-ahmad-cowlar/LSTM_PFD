@@ -4,6 +4,7 @@ Celery tasks for model deployment operations.
 """
 from tasks import celery_app
 from utils.logger import setup_logger
+from utils.constants import SIGNAL_LENGTH
 from services.deployment_service import DeploymentService
 from pathlib import Path
 import traceback
@@ -56,7 +57,7 @@ def quantize_model_task(self, experiment_id: int, quantization_type: str = "dyna
             # For static quantization, we need calibration data
             # This is simplified - in production, use actual calibration data
             import torch
-            calibration_data = torch.randn(10, 1, 102400)
+            calibration_data = torch.randn(10, 1, SIGNAL_LENGTH)
             quantized_model = DeploymentService.quantize_model_static(model, calibration_data)
         else:
             raise ValueError(f"Unknown quantization type: {quantization_type}")
@@ -157,7 +158,7 @@ def export_onnx_task(self, experiment_id: int, opset_version: int = 14, optimize
         success = DeploymentService.export_to_onnx(
             model,
             save_path,
-            input_shape=(1, 1, 102400),
+            input_shape=(1, 1, SIGNAL_LENGTH),
             opset_version=opset_version,
             optimize=optimize,
             dynamic_axes=dynamic_axes
