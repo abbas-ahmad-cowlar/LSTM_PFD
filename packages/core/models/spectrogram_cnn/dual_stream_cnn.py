@@ -44,7 +44,7 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Union, Tuple
+from typing import Optional, Union, Tuple, Dict, Any
 
 
 from packages.core.models.base_model import BaseModel
@@ -297,6 +297,19 @@ class DualStreamCNN(BaseModel):
 
         spectrograms = torch.stack(spectrograms).unsqueeze(1)  # [B, 1, H, W]
         return spectrograms.to(signal.device)
+
+    def get_config(self) -> Dict[str, Any]:
+        """Get model configuration dictionary."""
+        return {
+            'model_type': 'DualStreamCNN',
+            'num_classes': self.num_classes,
+            'fusion_type': self.fusion_type,
+            'fusion_dim': self.fusion_dim,
+            'tfr_type': self.tfr_type,
+            'time_feat_dim': self.time_feat_dim,
+            'freq_feat_dim': self.freq_feat_dim,
+        }
+
 
 
 class AttentionFusion(nn.Module):

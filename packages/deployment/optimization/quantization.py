@@ -453,7 +453,7 @@ def load_quantized_model(
         ...     num_classes=NUM_CLASSES
         ... )
     """
-    checkpoint = torch.load(checkpoint_path, map_location='cpu')
+    checkpoint = torch.load(checkpoint_path, map_location='cpu', weights_only=True)
 
     # Create model instance
     model = model_class(*args, **kwargs)

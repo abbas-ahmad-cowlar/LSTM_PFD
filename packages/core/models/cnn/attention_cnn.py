@@ -24,8 +24,10 @@ from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any
 import math
+
+from packages.core.models.base_model import BaseModel
 
 
 class ChannelAttention(nn.Module):
@@ -178,7 +180,7 @@ class AttentionConvBlock(nn.Module):
         return x
 
 
-class AttentionCNN1D(nn.Module):
+class AttentionCNN1D(BaseModel):
     """
     1D CNN with Attention Mechanisms for Bearing Fault Diagnosis
 
@@ -288,12 +290,17 @@ class AttentionCNN1D(nn.Module):
 
         return x
 
-    def get_num_params(self) -> int:
-        """Get total number of trainable parameters"""
-        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+    def get_config(self) -> Dict[str, Any]:
+        """Get model configuration dictionary."""
+        return {
+            'model_type': 'AttentionCNN1D',
+            'num_classes': self.num_classes,
+            'input_length': self.input_length,
+            'in_channels': self.in_channels,
+        }
 
 
-class LightweightAttentionCNN(nn.Module):
+class LightweightAttentionCNN(BaseModel):
     """
     Lightweight attention CNN with fewer parameters
 
@@ -364,9 +371,13 @@ class LightweightAttentionCNN(nn.Module):
         x = self.classifier(x)
         return x
 
-    def get_num_params(self) -> int:
-        """Get total number of trainable parameters"""
-        return sum(p.numel() for p in self.parameters() if p.requires_grad)
+    def get_config(self) -> Dict[str, Any]:
+        """Get model configuration dictionary."""
+        return {
+            'model_type': 'LightweightAttentionCNN',
+            'num_classes': self.num_classes,
+            'input_length': self.input_length,
+        }
 
 
 def test_attention_cnn():

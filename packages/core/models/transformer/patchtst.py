@@ -34,10 +34,13 @@ Reference:
     with Transformers." ICLR 2023.
 """
 
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 import math
 import torch
 import torch.nn as nn
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any
+
+from packages.core.models.base_model import BaseModel
 
 
 from .signal_transformer import PositionalEncoding
@@ -125,7 +128,7 @@ class TransformerEncoderBlock(nn.Module):
         return x
 
 
-class PatchTST(nn.Module):
+class PatchTST(BaseModel):
     """
     Patch Time Series Transformer for classification.
     
@@ -151,8 +154,8 @@ class PatchTST(nn.Module):
     
     def __init__(
         self,
-        num_classes: int = 11,
-        input_length: int = 102400,
+        num_classes: int = NUM_CLASSES,
+        input_length: int = SIGNAL_LENGTH,
         patch_size: int = 1024,
         in_channels: int = 1,
         d_model: int = 128,
@@ -165,8 +168,13 @@ class PatchTST(nn.Module):
         
         self.num_classes = num_classes
         self.input_length = input_length
-        self.patch_size = patch_size
-        self.d_model = d_model
+        self.in_channels = in_channels
+        self._patch_size = patch_size
+        self._d_model = d_model
+        self._n_heads = n_heads
+        self._n_layers = n_layers
+        self._dropout = dropout
+        self._d_ff = d_ff # Store d_ff for get_config
         
         if d_ff is None:
             d_ff = 4 * d_model
@@ -258,6 +266,22 @@ class PatchTST(nn.Module):
         
         return logits
     
+    def get_config(self) -> Dict[str, Any]:
+        """Get model configuration dictionary."""
+        return {
+            'model_type': 'PatchTST',
+            'num_classes': self.num_classes,
+            'input_length': self.input_length,
+            'in_channels': self.in_channels,
+            'patch_size': self._patch_size,
+            'd_model': self._d_model,
+            'n_heads': self._n_heads,
+            'n_layers': self._n_layers,
+            'd_ff': self._d_ff,
+            'dropout': self._dropout,
+            'num_patches': self.num_patches,
+        }
+
     def get_attention_maps(self, x: torch.Tensor) -> torch.Tensor:
         """Extract attention maps for visualization."""
         if x.dim() == 2:

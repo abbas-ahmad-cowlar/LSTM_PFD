@@ -417,7 +417,7 @@ def main():
         demo_attention_visualization()
     elif args.model and args.signal:
         # Load model and signal
-        checkpoint = torch.load(args.model, map_location='cpu')
+        checkpoint = torch.load(args.model, map_location='cpu', weights_only=True)
         # Would need model class info to instantiate
         print("Model loading from checkpoint requires model class information")
     else:

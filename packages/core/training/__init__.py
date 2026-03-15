@@ -1,5 +1,6 @@
 """Training infrastructure for deep learning models."""
 
+from .base_trainer import BaseTrainer
 from .trainer import Trainer, TrainingState
 from .cnn_trainer import CNNTrainer
 from .pinn_trainer import PINNTrainer
@@ -10,6 +11,8 @@ from .callbacks import CallbackManager, EarlyStoppingCallback, ModelCheckpointCa
 from .losses import FocalLoss, LabelSmoothingLoss
 
 __all__ = [
+    # Base
+    'BaseTrainer',
     # Core Trainers
     'Trainer',
     'TrainingState',
