@@ -71,6 +71,9 @@ postgresql:
         memory: 4Gi
 
 redis:
+  auth:
+    enabled: true
+    password: ""  # REQUIRED: Set via --set redis.auth.password=xxx
   primary:
     resources:
       limits:

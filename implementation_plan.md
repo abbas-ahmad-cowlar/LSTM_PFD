@@ -7,7 +7,7 @@
 >
 > **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
 >
-> **Last Updated**: 2026-03-15T08:50 PKT — IDB 4.2 audit: inserted 9 new steps (6.0a, 6.0b, 6.0c, 6.5a–6.5e, 6.16a), confirmed root compose P0 fixes resolved, flagged dashboard compose hardcoded secrets (P0), api/main.py sys.path hack, ONNX static quantization stub, deprecated CI/CD Actions.
+> **Last Updated**: 2026-03-15T08:55 PKT — Items 1.5b, 1.5c, 1.11c done. Phase 1 nearly complete.
 
 ---
 
@@ -54,8 +54,8 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 
 ### 1B: Code Portability
 - [x] **1.5** Remove all `sys.path` hacks — Phase 1: removed hardcoded `/home/user/LSTM_PFD` paths. Phase 2 (IDB 1.1 audit): removed 8 remaining `sys.path.insert()` calls in `fusion/`, `ensemble/`, `transformer/`, `hybrid/` — all replaced with relative imports (`from ..base_model import BaseModel`)
-- [ ] **1.5b** Remove 3 remaining `sys.path` hacks in `training/`: `pinn_trainer.py:34`, `spectrogram_trainer.py:34`, `physics_loss_functions.py:23` — replace with relative imports *(discovered by IDB 1.2 audit)*. **Also**: `packages/deployment/api/main.py:28` has `sys.path.insert(0, ...)` *(IDB 4.2 audit)*
-- [ ] **1.5c** Remove 2 remaining `sys.path` hacks in `data/`: `streaming_hdf5_dataset.py:27-29`, `contrast_learning_tfr.py:34-35` — replace with relative imports *(discovered by IDB 3.2 audit)*
+- [x] **1.5b** Removed sys.path hacks from `pinn_trainer.py`, `spectrogram_trainer.py`, `physics_loss_functions.py` (relative imports), and `api/main.py` (relative imports)
+- [x] **1.5c** Removed sys.path hacks from `streaming_hdf5_dataset.py` and `contrast_learning_tfr.py`
 - [x] **1.6** Standardize all imports to use proper package paths — shim files (`hybrid_pinn.py`, `resnet_1d.py`) converted from absolute to relative imports; `cnn/cnn_1d.py` also converted
 
 ### 1C: Duplicate Elimination
@@ -68,7 +68,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 ### 1D: Data Integrity
 - [ ] **1.11** Fix HDF5 file handle leaks in `OnTheFlyTFRDataset` — add context managers
 - [ ] **1.11b** Fix HDF5 file handle leak in `MultiTFRDataset` — same pattern as 1.11, adopt thread-local handles *(IDB 3.2 audit)*
-- [ ] **1.11c** Replace 4 bare `except:` clauses with `except Exception:` in `streaming_hdf5_dataset.py` (lines 139, 359) and `tfr_dataset.py` (lines 206, 285) *(IDB 3.2 audit)*
+- [x] **1.11c** Fixed 2 bare `except:` in `streaming_hdf5_dataset.py` → `except Exception:`. `tfr_dataset.py` already clean (no bare excepts found).
 - [ ] **1.11d** Fix thread-safety in `StreamingHDF5Dataset` LRU cache — add `threading.Lock` or disable cache when `num_workers > 0` *(IDB 3.2 audit)*
 - [ ] **1.12** Replace Redis `KEYS` pattern with `SCAN` in cache service
 - [x] **1.13** Fix LR scheduler bug in `cnn_trainer.py` — now handles `ReduceLROnPlateau` with metric arg
