@@ -7,7 +7,7 @@
 >
 > **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
 >
-> **Last Updated**: 2026-03-15T09:30 PKT — Phase 1+2 mechanical fixes done (12 commits). Remaining Phase 2 are heavy refactors.
+> **Last Updated**: 2026-03-15T09:50 PKT — Phase 1 complete, Phase 2 mechanical done, Phase 6 security fixes done (14 commits).
 
 ---
 
@@ -240,9 +240,9 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 **Goal**: Make the Docker/K8s deployment actually deployable.
 
 ### 6A: Docker Fix-ups
-- [ ] **6.0a** Fix dashboard `docker-compose.yml` — replace 3 hardcoded `lstm_password` occurrences with `${POSTGRES_PASSWORD:?...}` env-var refs *(IDB 4.2 audit P0)*
-- [ ] **6.0b** Remove `sys.path.insert()` from `api/main.py:28` — install packages properly or use relative imports *(IDB 4.2 audit P1)*
-- [ ] **6.0c** Create `.env.example` file documenting all required environment variables (`POSTGRES_PASSWORD`, `SECRET_KEY`, `CORS_ORIGINS`, etc.) *(IDB 4.2 audit P2)*
+- [x] **6.0a** Fixed docker-compose.yml — replaced 3 hardcoded `lstm_password` with `${POSTGRES_PASSWORD:?...}` env-var refs
+- [x] **6.0b** N/A — `sys.path.insert()` already removed from `api/main.py` in Phase 1
+- [x] **6.0c** Updated `.env.example` — replaced hardcoded password with `CHANGE_ME` placeholder, added `POSTGRES_PASSWORD` var
 - [ ] **6.1** Create `nginx.conf` (referenced by `docker-compose.yml` but doesn't exist)
 - [ ] **6.2** Create `ssl/` directory structure with self-signed cert generation script
 - [ ] **6.3** Harden dashboard `Dockerfile` — add non-root user, health check, multi-stage build
@@ -250,9 +250,9 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [ ] **6.5** Verify `docker-compose up` actually starts all 7 services cleanly
 - [ ] **6.5a** Fix ONNX static quantization stub (`onnx_export.py:474-476`) — either implement calibration-based static quantization or raise `NotImplementedError` instead of silently returning FP32 model *(IDB 4.2 audit P1)*
 - [ ] **6.5b** Fix `benchmark_inference()` in `inference.py:474-479` — currently skips PyTorch backend; implement `model_class` parameter support *(IDB 4.2 audit P1)*
-- [ ] **6.5c** Add `weights_only=True` to all `torch.load()` calls in `quantization.py:456` and `inference.py:106` — security fix for arbitrary code execution via pickle *(IDB 4.2 audit P2)*
-- [ ] **6.5d** Replace deprecated `onnx.optimizer` usage (`onnx_export.py:225,236,250`) with separate `onnxoptimizer` package *(IDB 4.2 audit P2)*
-- [ ] **6.5e** Fix `optimize_for_deployment()` parameter shadowing (`model_optimization.py:183-189`) — `pruning_amount` parameter is overwritten by `optimization_level`; either remove the parameter or respect it as an override *(IDB 4.2 audit P2)*
+- [x] **6.5c** Added `weights_only=True` to `torch.load()` in `quantization.py`, `inference.py`, and `attention_viz.py` — security fix
+- [x] **6.5d** N/A — `onnx.optimizer` not found in codebase; already clean
+- [x] **6.5e** Fixed `optimize_for_deployment()` parameter shadowing — `pruning_amount` now respects caller override instead of being unconditionally overwritten
 
 ### 6B: Kubernetes & Helm
 - [ ] **6.6** Add GPU resource requests (`nvidia.com/gpu`) to K8s deployment
