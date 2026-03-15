@@ -23,7 +23,6 @@ from utils.constants import SIGNAL_LENGTH
 import torch
 import numpy as np
 from typing import Tuple, Optional
-import random
 
 from utils.logging import get_logger
 
@@ -84,7 +83,7 @@ class Mixup(SignalAugmentation):
         Returns:
             Mixed signal, mixed label (if labels provided), lambda value
         """
-        if random.random() > self.prob:
+        if np.random.random() > self.prob:
             # No mixup
             return signal1, label1, 1.0
 
@@ -326,7 +325,7 @@ class TimeShift(SignalAugmentation):
         """
         signal_length = signal.shape[-1]
         max_shift_samples = int(signal_length * self.max_shift)
-        shift = random.randint(-max_shift_samples, max_shift_samples)
+        shift = np.random.randint(-max_shift_samples, max_shift_samples + 1)
 
         return torch.roll(signal, shifts=shift, dims=-1)
 
@@ -376,7 +375,7 @@ class WindowSlicing(SignalAugmentation):
         if self.strategy == 'center':
             start = (signal_length - self.window_size) // 2
         else:  # random
-            start = random.randint(0, signal_length - self.window_size)
+            start = np.random.randint(0, signal_length - self.window_size + 1)
 
         return signal[..., start:start + self.window_size]
 
@@ -413,7 +412,7 @@ class ComposeAugmentations:
             Augmented signal
         """
         for aug in self.augmentations:
-            if random.random() < self.prob:
+            if np.random.random() < self.prob:
                 signal = aug(signal)
 
         return signal

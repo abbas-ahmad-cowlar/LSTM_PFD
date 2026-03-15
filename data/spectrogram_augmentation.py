@@ -25,7 +25,6 @@ import torch
 import torch.nn as nn
 import numpy as np
 from typing import Tuple, Optional
-import random
 
 
 class SpecAugment(nn.Module):
@@ -68,7 +67,7 @@ class SpecAugment(nn.Module):
         Returns:
             Augmented spectrogram
         """
-        if random.random() > self.p:
+        if np.random.random() > self.p:
             return spectrogram
 
         if spectrogram.dim() == 3:
@@ -87,14 +86,14 @@ class SpecAugment(nn.Module):
 
         # Frequency masking
         for _ in range(self.num_freq_masks):
-            f = random.randint(0, self.freq_mask_param)
-            f0 = random.randint(0, max(1, H - f))
+            f = np.random.randint(0, self.freq_mask_param + 1)
+            f0 = np.random.randint(0, max(1, H - f))
             spec_aug[:, f0:f0+f, :] = self.mask_value
 
         # Time masking
         for _ in range(self.num_time_masks):
-            t = random.randint(0, self.time_mask_param)
-            t0 = random.randint(0, max(1, W - t))
+            t = np.random.randint(0, self.time_mask_param + 1)
+            t0 = np.random.randint(0, max(1, W - t))
             spec_aug[:, :, t0:t0+t] = self.mask_value
 
         return spec_aug
@@ -135,7 +134,7 @@ class TimeWarp(nn.Module):
         center = W // 2
 
         # Random warp distance
-        warp = random.randint(-self.W, self.W)
+        warp = np.random.randint(-self.W, self.W + 1)
 
         # Create grid for interpolation
         if warp == 0:
@@ -276,15 +275,15 @@ class RandomErasing(nn.Module):
 
         for _ in range(10):  # Try up to 10 times
             # Sample area and aspect ratio
-            target_area = random.uniform(*self.scale) * area
-            aspect_ratio = random.uniform(*self.ratio)
+            target_area = np.random.uniform(*self.scale) * area
+            aspect_ratio = np.random.uniform(*self.ratio)
 
             h = int(round(np.sqrt(target_area * aspect_ratio)))
             w = int(round(np.sqrt(target_area / aspect_ratio)))
 
             if h < H and w < W:
-                i = random.randint(0, H - h)
-                j = random.randint(0, W - w)
+                i = np.random.randint(0, H - h)
+                j = np.random.randint(0, W - w)
 
                 spec_erased = spectrogram.clone()
                 spec_erased[..., i:i+h, j:j+w] = self.value
