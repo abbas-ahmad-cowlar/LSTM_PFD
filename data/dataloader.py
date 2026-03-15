@@ -1,5 +1,5 @@
 """
-DataLoader factory and utilities for efficient data loading.
+Unified DataLoader factory and utilities for efficient data loading.
 
 Purpose:
     Simplified DataLoader creation with best practices:
@@ -7,21 +7,63 @@ Purpose:
     - Pin memory for GPU transfer
     - Reproducible shuffling
     - Batch size auto-tuning
+    - Configuration presets (fast training, debugging, memory-efficient)
+
+This module consolidates the former ``dataloader.py`` and ``cnn_dataloader.py``
+into a single canonical module.
 
 Author: Syed Abbas Ahmad
-Date: 2025-11-19
+Date: 2025-11-19  (consolidated 2026-03-15)
 """
 
 import torch
 from torch.utils.data import DataLoader, Dataset
-from typing import Optional, Callable, Dict, Any
+from typing import Optional, Callable, Dict, Any, Tuple, List
 import multiprocessing as mp
+import numpy as np
 
 from utils.logging import get_logger
 from data.dataset import BearingFaultDataset, collate_fn_with_metadata
 
 logger = get_logger(__name__)
 
+
+# ---------------------------------------------------------------------------
+# Collate functions
+# ---------------------------------------------------------------------------
+
+def collate_signals(batch: List[Tuple[torch.Tensor, int]]) -> Tuple[torch.Tensor, torch.Tensor]:
+    """
+    Custom collate function for batching signals.
+
+    Stacks signals into batch tensor [B, 1, T] (or [B, T]) and labels into [B].
+
+    Args:
+        batch: List of (signal, label) tuples from Dataset
+
+    Returns:
+        (batch_signals, batch_labels) tuple:
+            - batch_signals: Tensor [B, …]
+            - batch_labels: Tensor [B]
+    """
+    signals, labels = zip(*batch)
+
+    # Stack signals: List of tensors → [B, …]
+    batch_signals = torch.stack(signals, dim=0)
+
+    # Stack labels: List of int → [B]
+    batch_labels = torch.tensor(labels, dtype=torch.long)
+
+    return batch_signals, batch_labels
+
+
+# Keep original name as alias for backward compatibility
+collate_fn = collate_signals
+
+
+# ---------------------------------------------------------------------------
+# Core DataLoader creation
+# ---------------------------------------------------------------------------
 
 def create_dataloader(
     dataset: Dataset,
@@ -32,7 +74,8 @@ def create_dataloader(
     drop_last: bool = False,
     collate_fn: Optional[Callable] = None,
     worker_init_fn: Optional[Callable] = None,
-    persistent_workers: bool = False
+    persistent_workers: bool = False,
+    prefetch_factor: Optional[int] = None,
 ) -> DataLoader:
     """
     Create DataLoader with sensible defaults for bearing fault diagnosis.
@@ -47,6 +90,7 @@ def create_dataloader(
         collate_fn: Custom collate function (default: None)
         worker_init_fn: Worker initialization function (default: None)
         persistent_workers: Keep workers alive between epochs (default: False)
+        prefetch_factor: Number of batches to prefetch per worker (default: None)
 
     Returns:
         Configured DataLoader
@@ -71,6 +115,14 @@ def create_dataloader(
         pin_memory = False
         logger.debug("CUDA not available, disabling pin_memory")
 
+    # Persistent workers only make sense with num_workers > 0
+    if num_workers == 0:
+        persistent_workers = False
+
+    # Resolve prefetch_factor
+    if prefetch_factor is None and num_workers > 0:
+        prefetch_factor = 2  # PyTorch default
+
     # Create DataLoader
     dataloader = DataLoader(
         dataset,
@@ -81,7 +133,8 @@ def create_dataloader(
         drop_last=drop_last,
         collate_fn=collate_fn,
         worker_init_fn=worker_init_fn,
-        persistent_workers=persistent_workers and num_workers > 0
+        persistent_workers=persistent_workers and num_workers > 0,
+        prefetch_factor=prefetch_factor if num_workers > 0 else None,
     )
 
     logger.info(
@@ -91,6 +144,14 @@ def create_dataloader(
 
     return dataloader
 
+
+# CNN-specific convenience alias
+create_cnn_dataloader = create_dataloader
+
+
+# ---------------------------------------------------------------------------
+# Multi-split DataLoader factories
+# ---------------------------------------------------------------------------
 
 def create_train_val_test_loaders(
     train_dataset: Dataset,
@@ -179,6 +240,90 @@ def create_train_val_test_loaders(
     }
 
 
+def create_cnn_dataloaders(
+    train_dataset: Dataset,
+    val_dataset: Optional[Dataset] = None,
+    test_dataset: Optional[Dataset] = None,
+    batch_size: int = 32,
+    num_workers: int = 4,
+    pin_memory: bool = True
+) -> Dict[str, DataLoader]:
+    """
+    Create train/val/test DataLoaders with appropriate settings.
+
+    Training loader: shuffle=True, persistent_workers=True
+    Val/test loaders: shuffle=False, drop_last=False
+
+    Args:
+        train_dataset: Training dataset
+        val_dataset: Optional validation dataset
+        test_dataset: Optional test dataset
+        batch_size: Batch size for all loaders
+        num_workers: Number of parallel workers
+        pin_memory: Whether to pin memory
+
+    Returns:
+        Dictionary with 'train', 'val', 'test' DataLoaders (if provided)
+
+    Example:
+        >>> loaders = create_cnn_dataloaders(
+        ...     train_dataset=train_ds,
+        ...     val_dataset=val_ds,
+        ...     test_dataset=test_ds,
+        ...     batch_size=32
+        ... )
+        >>> train_loader = loaders['train']
+        >>> val_loader = loaders['val']
+    """
+    loaders = {}
+
+    # Training loader (shuffle, drop last incomplete batch)
+    loaders['train'] = create_dataloader(
+        dataset=train_dataset,
+        batch_size=batch_size,
+        shuffle=True,
+        num_workers=num_workers,
+        pin_memory=pin_memory,
+        drop_last=True,
+        collate_fn=collate_signals,
+        persistent_workers=True if num_workers > 0 else False
+    )
+
+    # Validation loader (no shuffle, keep all samples)
+    if val_dataset is not None:
+        loaders['val'] = create_dataloader(
+            dataset=val_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            drop_last=False,
+            collate_fn=collate_signals,
+            persistent_workers=True if num_workers > 0 else False
+        )
+
+    # Test loader (no shuffle, keep all samples)
+    if test_dataset is not None:
+        loaders['test'] = create_dataloader(
+            dataset=test_dataset,
+            batch_size=batch_size,
+            shuffle=False,
+            num_workers=num_workers,
+            pin_memory=pin_memory,
+            drop_last=False,
+            collate_fn=collate_signals,
+            persistent_workers=True if num_workers > 0 else False
+        )
+
+    logger.info(f"Created {len(loaders)} DataLoaders: {list(loaders.keys())}")
+
+    return loaders
+
+
+# ---------------------------------------------------------------------------
+# Worker utilities
+# ---------------------------------------------------------------------------
+
 def worker_init_fn_seed(worker_id: int):
     """
     Worker initialization function for reproducible data loading.
@@ -195,7 +340,6 @@ def worker_init_fn_seed(worker_id: int):
         ...     worker_init_fn=worker_init_fn_seed
         ... )
     """
-    import numpy as np
     import random
 
     # Set unique seed per worker
@@ -203,6 +347,10 @@ def worker_init_fn_seed(worker_id: int):
     np.random.seed(seed + worker_id)
     random.seed(seed + worker_id)
 
+
+# ---------------------------------------------------------------------------
+# Batch size estimation
+# ---------------------------------------------------------------------------
 
 def estimate_optimal_batch_size(
     dataset: Dataset,
@@ -225,12 +373,6 @@ def estimate_optimal_batch_size(
 
     Returns:
         Optimal batch size
-
-    Example:
-        >>> optimal_bs = estimate_optimal_batch_size(
-        ...     dataset, model, device=torch.device('cuda')
-        ... )
-        >>> print(f"Optimal batch size: {optimal_bs}")
     """
     if not torch.cuda.is_available():
         logger.warning("CUDA not available, returning initial batch size")
@@ -279,6 +421,10 @@ def estimate_optimal_batch_size(
     return optimal_batch_size
 
 
+# ---------------------------------------------------------------------------
+# Class weights
+# ---------------------------------------------------------------------------
+
 def compute_class_weights(dataset: BearingFaultDataset) -> torch.Tensor:
     """
     Compute class weights for imbalanced datasets.
@@ -318,6 +464,10 @@ def compute_class_weights(dataset: BearingFaultDataset) -> torch.Tensor:
     return weights
 
 
+# ---------------------------------------------------------------------------
+# DataLoader stats
+# ---------------------------------------------------------------------------
+
 def get_dataloader_stats(dataloader: DataLoader) -> Dict[str, Any]:
     """
     Compute statistics about DataLoader configuration.
@@ -327,10 +477,6 @@ def get_dataloader_stats(dataloader: DataLoader) -> Dict[str, Any]:
 
     Returns:
         Dictionary with statistics
-
-    Example:
-        >>> stats = get_dataloader_stats(train_loader)
-        >>> print(f"Batches per epoch: {stats['num_batches']}")
     """
     dataset = dataloader.dataset
     batch_size = dataloader.batch_size
@@ -346,13 +492,15 @@ def get_dataloader_stats(dataloader: DataLoader) -> Dict[str, Any]:
     }
 
     # Compute iteration time estimate (rough)
-    # Assume ~10ms per batch for data loading
     estimated_time_per_epoch_sec = stats['num_batches'] * 0.01
-
     stats['estimated_time_per_epoch_sec'] = estimated_time_per_epoch_sec
 
     return stats
 
+
+# ---------------------------------------------------------------------------
+# Infinite DataLoader
+# ---------------------------------------------------------------------------
 
 class InfiniteDataLoader:
     """
@@ -369,12 +517,6 @@ class InfiniteDataLoader:
     """
 
     def __init__(self, dataloader: DataLoader):
-        """
-        Initialize infinite loader.
-
-        Args:
-            dataloader: DataLoader to wrap
-        """
         self.dataloader = dataloader
         self.iterator = None
 
@@ -396,6 +538,10 @@ class InfiniteDataLoader:
         return batch
 
 
+# ---------------------------------------------------------------------------
+# Device prefetching
+# ---------------------------------------------------------------------------
+
 def prefetch_to_device(
     dataloader: DataLoader,
     device: torch.device,
@@ -413,10 +559,6 @@ def prefetch_to_device(
 
     Yields:
         Batches on target device
-
-    Example:
-        >>> for batch in prefetch_to_device(train_loader, device):
-        ...     outputs = model(batch['signals'])
     """
     for batch in dataloader:
         # Move to device
@@ -430,3 +572,55 @@ def prefetch_to_device(
             batch = batch.to(device, non_blocking=non_blocking)
 
         yield batch
+
+
+# ---------------------------------------------------------------------------
+# Configuration presets
+# ---------------------------------------------------------------------------
+
+class DataLoaderConfig:
+    """
+    Configuration class for DataLoader settings.
+
+    Provides presets for different scenarios (fast training, debugging, etc.)
+    """
+
+    @staticmethod
+    def fast_training(batch_size: int = 64) -> dict:
+        """Configuration for fast training (maximize throughput)."""
+        return {
+            'batch_size': batch_size,
+            'num_workers': 8,
+            'pin_memory': True,
+            'persistent_workers': True
+        }
+
+    @staticmethod
+    def debugging(batch_size: int = 8) -> dict:
+        """Configuration for debugging (single-threaded, no prefetch)."""
+        return {
+            'batch_size': batch_size,
+            'num_workers': 0,
+            'pin_memory': False,
+            'persistent_workers': False
+        }
+
+    @staticmethod
+    def memory_efficient(batch_size: int = 16) -> dict:
+        """Configuration for limited memory (smaller batch, fewer workers)."""
+        return {
+            'batch_size': batch_size,
+            'num_workers': 2,
+            'pin_memory': False,
+            'persistent_workers': False
+        }
+
+    @staticmethod
+    def default(batch_size: int = 32) -> dict:
+        """Default balanced configuration."""
+        return {
+            'batch_size': batch_size,
+            'num_workers': 4,
+            'pin_memory': True,
+            'persistent_workers': True
+        }
