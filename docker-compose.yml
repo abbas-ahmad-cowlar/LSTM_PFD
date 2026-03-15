@@ -63,9 +63,9 @@ services:
     image: postgres:15-alpine
     container_name: lstm_pfd_dashboard_db
     environment:
-      POSTGRES_DB: lstm_dashboard
-      POSTGRES_USER: lstm_user
-      POSTGRES_PASSWORD: lstm_password
+      POSTGRES_DB: ${POSTGRES_DB:-lstm_dashboard}
+      POSTGRES_USER: ${POSTGRES_USER:-lstm_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
     ports:
       - "5432:5432"
     volumes:
@@ -107,11 +107,11 @@ services:
       - ./checkpoints:/app/checkpoints
       - ./outputs:/app/outputs
     environment:
-      - DATABASE_URL=postgresql://lstm_user:lstm_password@dashboard_postgres:5432/lstm_dashboard
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-lstm_user}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@dashboard_postgres:5432/${POSTGRES_DB:-lstm_dashboard}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - SECRET_KEY=development_secret_key_change_in_production
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
     depends_on:
       dashboard_postgres:
         condition: service_healthy
@@ -136,12 +136,12 @@ services:
       - ./checkpoints:/app/checkpoints
       - ./outputs:/app/outputs
     environment:
-      - DATABASE_URL=postgresql://lstm_user:lstm_password@dashboard_postgres:5432/lstm_dashboard
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-lstm_user}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@dashboard_postgres:5432/${POSTGRES_DB:-lstm_dashboard}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - SECRET_KEY=development_secret_key_change_in_production
-      - DEBUG=True
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - DEBUG=${DEBUG:-False}
       - APP_HOST=0.0.0.0
       - APP_PORT=8050
     depends_on:
@@ -171,8 +171,8 @@ services:
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - SECRET_KEY=development_secret_key_change_in_production
-      - DATABASE_URL=postgresql://lstm_user:lstm_password@dashboard_postgres:5432/lstm_dashboard
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-lstm_user}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@dashboard_postgres:5432/${POSTGRES_DB:-lstm_dashboard}
     depends_on:
       - redis
       - celery_worker

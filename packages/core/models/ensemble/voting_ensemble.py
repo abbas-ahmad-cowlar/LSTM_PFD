@@ -19,7 +19,8 @@ from typing import List, Dict, Optional, Tuple
 from sklearn.metrics import accuracy_score
 from itertools import product
 import sys
-sys.path.append('/home/user/LSTM_PFD')
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent.parent.parent))
 from packages.core.models.base_model import BaseModel
 
 

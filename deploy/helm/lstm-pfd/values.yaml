@@ -86,7 +86,7 @@ redis:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "changeme"
+    postgresPassword: ""  # REQUIRED: Set via --set postgresql.auth.postgresPassword=xxx
     username: "postgres"
     database: "lstm_pfd"
   host: ""  # Auto-generated if empty
