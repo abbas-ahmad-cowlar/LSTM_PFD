@@ -80,6 +80,7 @@ class StreamingHDF5Dataset(Dataset):
         # LRU cache for frequently accessed samples
         self._cache: Dict[int, np.ndarray] = {}
         self._cache_order: List[int] = []
+        self._cache_lock = threading.Lock()
     
     def _get_file_handle(self) -> h5py.File:
         """Get thread-local file handle."""
@@ -95,24 +96,28 @@ class StreamingHDF5Dataset(Dataset):
         if idx < 0 or idx >= self.num_samples:
             raise IndexError(f"Index {idx} out of range [0, {self.num_samples})")
         
-        # Check cache first
-        if idx in self._cache:
-            signal = self._cache[idx]
+        # Check cache first (thread-safe)
+        with self._cache_lock:
+            cached = self._cache.get(idx)
+        
+        if cached is not None:
+            signal = cached
         else:
             # Read from HDF5
             f = self._get_file_handle()
             signal = f[self.split]['signals'][idx]
             
-            # Update cache
+            # Update cache (thread-safe)
             if self.cache_size > 0:
-                self._cache[idx] = signal
-                self._cache_order.append(idx)
-                
-                # Evict oldest if cache full
-                if len(self._cache) > self.cache_size:
-                    oldest = self._cache_order.pop(0)
-                    if oldest in self._cache:
-                        del self._cache[oldest]
+                with self._cache_lock:
+                    self._cache[idx] = signal
+                    self._cache_order.append(idx)
+                    
+                    # Evict oldest if cache full
+                    if len(self._cache) > self.cache_size:
+                        oldest = self._cache_order.pop(0)
+                        if oldest in self._cache:
+                            del self._cache[oldest]
         
         label = self.labels[idx]
         
