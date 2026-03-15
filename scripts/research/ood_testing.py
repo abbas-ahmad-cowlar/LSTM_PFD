@@ -376,7 +376,7 @@ def demo_ood_testing():
     print("OOD TESTING DEMO")
     print("=" * 60)
     
-    np.random.seed(42)
+    set_seed(42)
     
     # Create synthetic data with 10 classes (Normal + 9 faults)
     n_per_class = 100

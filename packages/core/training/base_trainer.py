@@ -7,25 +7,36 @@ Purpose:
       - CNNTrainer
       - ProgressiveResizingTrainer
       - DistillationTrainer
+      - PINNTrainer
+      - SpectrogramTrainer
 
     Subclasses override only the pieces that differ:
-      _forward_pass, _compute_loss, _backward_pass, _optimizer_step
+      _forward_pass, _compute_loss, _on_epoch_end
 
 Author: Syed Abbas Ahmad
 Date: 2025-11-20
+Updated: 2026-03-15 — Unified hierarchy (absorbed Trainer features: tqdm, callbacks)
 """
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, TYPE_CHECKING
 from pathlib import Path
 import time
+import warnings
 
+from tqdm import tqdm
 from utils.logging import get_logger
 
+if TYPE_CHECKING:
+    from .callbacks import Callback
+
 logger = get_logger(__name__)
+
+# Checkpoint format version — bump when changing the schema
+_CHECKPOINT_VERSION = 2
 
 
 class BaseTrainer(ABC):
@@ -46,6 +57,7 @@ class BaseTrainer(ABC):
         gradient_accumulation_steps: Effective batch-size multiplier
         mixed_precision: Use AMP FP16 training
         checkpoint_dir: Directory for saving checkpoints
+        callbacks: Optional list of Callback objects
     """
 
     def __init__(
@@ -59,6 +71,7 @@ class BaseTrainer(ABC):
         gradient_accumulation_steps: int = 1,
         mixed_precision: bool = False,
         checkpoint_dir: Optional[Path] = None,
+        callbacks: Optional[List["Callback"]] = None,
     ):
         # Guard against requesting AMP without CUDA
         if mixed_precision and not torch.cuda.is_available():
@@ -75,6 +88,7 @@ class BaseTrainer(ABC):
         self.gradient_accumulation_steps = gradient_accumulation_steps
         self.mixed_precision = mixed_precision
         self.checkpoint_dir = Path(checkpoint_dir) if checkpoint_dir else None
+        self.callbacks = callbacks or []
 
         # AMP scaler
         self.scaler = torch.cuda.amp.GradScaler() if mixed_precision else None
@@ -124,6 +138,31 @@ class BaseTrainer(ABC):
         """
         return self.criterion(outputs, targets)
 
+    def _on_epoch_end(
+        self,
+        epoch: int,
+        num_epochs: int,
+        train_metrics: Dict[str, float],
+        val_metrics: Dict[str, float],
+    ) -> None:
+        """
+        Hook called at end of each epoch, before scheduler step.
+
+        Subclasses can override to update adaptive parameters
+        (e.g. PINN physics lambda scheduling).
+        """
+
+    # ------------------------------------------------------------------
+    # Callback helpers
+    # ------------------------------------------------------------------
+
+    def _fire_callbacks(self, hook_name: str, **kwargs: Any) -> None:
+        """Call a named hook on all registered callbacks."""
+        for cb in self.callbacks:
+            method = getattr(cb, hook_name, None)
+            if method is not None:
+                method(self, **kwargs)
+
     # ------------------------------------------------------------------
     # Concrete skeleton methods
     # ------------------------------------------------------------------
@@ -139,7 +178,13 @@ class BaseTrainer(ABC):
         correct = 0
         total = 0
 
-        for batch_idx, (inputs, targets) in enumerate(train_loader):
+        pbar = tqdm(
+            train_loader,
+            desc=f"Epoch {self.current_epoch + 1} [Train]",
+            leave=False,
+        )
+
+        for batch_idx, (inputs, targets) in enumerate(pbar):
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
 
@@ -185,6 +230,12 @@ class BaseTrainer(ABC):
             total += batch_size
             correct += predicted.eq(targets).sum().item()
 
+            # Update progress bar
+            pbar.set_postfix({
+                "loss": f"{running_loss / max(total, 1):.4f}",
+                "acc": f"{100.0 * correct / max(total, 1):.2f}%",
+            })
+
         return {
             "loss": running_loss / max(total, 1),
             "accuracy": 100.0 * correct / max(total, 1),
@@ -205,7 +256,13 @@ class BaseTrainer(ABC):
         correct = 0
         total = 0
 
-        for inputs, targets in val_loader:
+        pbar = tqdm(
+            val_loader,
+            desc=f"Epoch {self.current_epoch + 1} [Val]",
+            leave=False,
+        )
+
+        for inputs, targets in pbar:
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
 
@@ -222,6 +279,11 @@ class BaseTrainer(ABC):
             _, predicted = outputs.max(1)
             total += batch_size
             correct += predicted.eq(targets).sum().item()
+
+            pbar.set_postfix({
+                "loss": f"{running_loss / max(total, 1):.4f}",
+                "acc": f"{100.0 * correct / max(total, 1):.2f}%",
+            })
 
         return {
             "loss": running_loss / max(total, 1),
@@ -250,16 +312,22 @@ class BaseTrainer(ABC):
             Training history dictionary.
         """
         logger.info(f"Starting training for {num_epochs} epochs")
+        self._fire_callbacks("on_train_begin")
 
         for epoch in range(num_epochs):
             self.current_epoch = epoch
             start = time.time()
+
+            self._fire_callbacks("on_epoch_begin", epoch=epoch)
 
             # Train
             train_metrics = self.train_epoch(train_loader)
 
             # Validate
             val_metrics = self.validate_epoch(val_loader)
+
+            # Subclass hook (e.g., PINN lambda scheduling)
+            self._on_epoch_end(epoch, num_epochs, train_metrics, val_metrics)
 
             # Scheduler step
             if self.lr_scheduler is not None:
@@ -297,6 +365,12 @@ class BaseTrainer(ABC):
                 msg += f", LR: {current_lr:.6f}"
                 logger.info(msg)
 
+            # Fire epoch-end callbacks
+            epoch_metrics = {**train_metrics}
+            if val_metrics:
+                epoch_metrics.update({f"val_{k}": v for k, v in val_metrics.items()})
+            self._fire_callbacks("on_epoch_end", epoch=epoch, metrics=epoch_metrics)
+
             # Save best
             if save_best and val_metrics and val_metrics["accuracy"] > self.best_val_acc:
                 self.best_val_acc = val_metrics["accuracy"]
@@ -306,6 +380,7 @@ class BaseTrainer(ABC):
                     f"✓ New best model saved (Val Acc: {self.best_val_acc:.2f}%)"
                 )
 
+        self._fire_callbacks("on_train_end")
         logger.info("Training complete!")
         return self.history
 
@@ -322,7 +397,8 @@ class BaseTrainer(ABC):
         self.checkpoint_dir.mkdir(parents=True, exist_ok=True)
         filepath = self.checkpoint_dir / filename
 
-        checkpoint = {
+        checkpoint: Dict[str, Any] = {
+            "version": _CHECKPOINT_VERSION,
             "epoch": self.current_epoch,
             "model_state_dict": self.model.state_dict(),
             "optimizer_state_dict": self.optimizer.state_dict(),
@@ -331,15 +407,24 @@ class BaseTrainer(ABC):
             "history": self.history,
         }
 
+        # Optional: model config
+        if hasattr(self.model, "get_config"):
+            checkpoint["model_config"] = self.model.get_config()
+
+        # Scheduler state
         if self.lr_scheduler is not None:
             checkpoint["scheduler_state_dict"] = self.lr_scheduler.state_dict()
+
+        # AMP scaler state
+        if self.scaler is not None:
+            checkpoint["scaler_state_dict"] = self.scaler.state_dict()
 
         torch.save(checkpoint, filepath)
         logger.info(f"Checkpoint saved to {filepath}")
 
     def load_checkpoint(self, filepath: Path) -> None:
         """Load checkpoint from file."""
-        checkpoint = torch.load(filepath, map_location=self.device)
+        checkpoint = torch.load(filepath, map_location=self.device, weights_only=False)
 
         self.model.load_state_dict(checkpoint["model_state_dict"])
         self.optimizer.load_state_dict(checkpoint["optimizer_state_dict"])
@@ -351,7 +436,13 @@ class BaseTrainer(ABC):
         if self.lr_scheduler is not None and "scheduler_state_dict" in checkpoint:
             self.lr_scheduler.load_state_dict(checkpoint["scheduler_state_dict"])
 
-        logger.info(f"Checkpoint loaded from {filepath}")
+        if self.scaler is not None and "scaler_state_dict" in checkpoint:
+            self.scaler.load_state_dict(checkpoint["scaler_state_dict"])
+
+        ckpt_version = checkpoint.get("version", 1)
+        logger.info(
+            f"Checkpoint loaded from {filepath} (format v{ckpt_version})"
+        )
 
     def get_current_lr(self) -> float:
         """Get current learning rate."""

@@ -7,7 +7,7 @@ from .pinn_trainer import PINNTrainer
 from .spectrogram_trainer import SpectrogramTrainer
 from .progressive_resizing import ProgressiveResizingTrainer, ResizableSignalDataset
 from .knowledge_distillation import DistillationTrainer, DistillationLoss
-from .callbacks import CallbackManager, EarlyStoppingCallback, ModelCheckpointCallback
+from .callbacks import EarlyStopping, ModelCheckpoint
 from .losses import FocalLoss, LabelSmoothingLoss
 
 __all__ = [
@@ -25,10 +25,10 @@ __all__ = [
     'ResizableSignalDataset',
     'DistillationLoss',
     # Callbacks
-    'CallbackManager',
-    'EarlyStoppingCallback',
-    'ModelCheckpointCallback',
+    'EarlyStopping',
+    'ModelCheckpoint',
     # Loss Functions
     'FocalLoss',
     'LabelSmoothingLoss',
 ]
+
