@@ -7,7 +7,7 @@
 >
 > **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
 >
-> **Last Updated**: 2026-03-15T10:15 PKT — Phase 1 complete, Phase 2 major items done, Phase 6 security done, Phase 3 smoke-tested (20 commits).
+> **Last Updated**: 2026-03-15T10:30 PKT — Phase 1 complete, Phase 2 mostly done (2.1-2.3, 2.5-2.10, 2.13-2.17, 2.21-2.22 all done). Phase 6 security done. Phase 3 smoke-tested (22 commits).
 
 ---
 
@@ -89,19 +89,19 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [x] **2.2d** Fixed batch-level loss averaging in both trainers — now uses `loss.item() * batch_size` and divides by total samples
 - [x] **2.3** Implemented mixin architecture in `mixins.py`: `MixedPrecisionMixin`, `PhysicsLossMixin`, `SpecAugmentMixin`
 - [ ] **2.4** Standardize checkpoint format with version field, model config, optimizer/scheduler/scaler states
-- [ ] **2.5** Consolidate loss functions into `training/losses/` subdirectory (classification, contrastive, physics, distillation)
-- [ ] **2.6** Consolidate schedulers: merge `cnn_schedulers.py` + `transformer_schedulers.py` → `training/schedulers.py`
+- [x] **2.5** Consolidated loss functions into `training/losses/` subdirectory — `losses.py` is now a re-export shim, real implementations in `losses/classification.py`, `physics_loss_functions.py`, `contrastive/losses.py`
+- [x] **2.6** Consolidated schedulers: `schedulers.py` (417 lines) has all implementations + unified factory `create_scheduler()`. `cnn_schedulers.py` and `transformer_schedulers.py` are now backward-compat re-export shims
 - [x] **2.7** Deleted deprecated `optimizers.py` — no code imports it (all use `cnn_optimizer.py`)
 
 ### 2B: Model Architecture Cleanup
-- [ ] **2.8** Make all models inherit `BaseModel` — `PatchTST` (`transformer/patchtst.py`), `TSMixer` (`transformer/tsmixer.py`), `AttentionCNN1D` + `LightweightAttentionCNN` (`cnn/attention_cnn.py`), `MultiScaleCNN1D` + `DilatedMultiScaleCNN` (`cnn/multi_scale_cnn.py`), `SignalEncoder` (`contrastive/signal_encoder.py`), `ContrastiveClassifier` (`contrastive/classifier.py`) — add `get_config()` to each
-- [ ] **2.9** Complete model registry in `model_factory.py` — register all ~55 models
-- [ ] **2.10** Add decorator-based auto-registration: `@register_model("name")`
+- [x] **2.8** All 35 top-level models now inherit `BaseModel` with `get_config()` — includes PatchTST, TSMixer, AttentionCNN1D, LightweightAttentionCNN, MultiScaleCNN1D, DilatedMultiScaleCNN, SignalEncoder, ContrastiveClassifier, all PINN/hybrid/fusion/ensemble/spectrogram models
+- [x] **2.9** Complete model registry in `model_factory.py` — 65+ entries covering all models with factory functions
+- [x] **2.10** Added `register_model()` decorator supporting both function and decorator usage
 - [ ] **2.11** Add `export_onnx()` and `predict()` to `BaseModel`
 - [x] **2.12** N/A — only 1 `ConvBlock1D` in `cnn/conv_blocks.py`, no duplicates to consolidate
 - [x] **2.13** Consolidated PositionalEncoding — PatchTST now imports from `signal_transformer.py` (-20 lines)
 - [x] **2.14** Converted `legacy_ensemble.py` to re-export shim — imports from `ensemble/` subpackage, provides backward-compat aliases (-360 lines)
-- [ ] **2.15** Replace all 45+ hardcoded magic numbers (`102400`, `20480`, `5000`) with constants from `utils/constants.py`
+- [x] **2.15** Replaced magic numbers: TSMixer (102400→SIGNAL_LENGTH, 11→NUM_CLASSES), `progressive_resizing.py` (102400→SIGNAL_LENGTH), `physics_loss_functions.py` (4×20480→SAMPLING_RATE), `pinn_trainer.py` (20480→SAMPLING_RATE), `feature_extractor.py` (20480→SAMPLING_RATE), `schedulers.py` (deprecated verbose=True removed)
 - [ ] **2.8b** Audit and document `training/contrastive/` sub-module (5 files: `dataset.py`, `losses.py`, `physics_similarity.py`, `pretrainer.py`, `__init__.py`) — currently undocumented and not covered by any IDB report *(IDB 1.2 audit)*
 
 ### 2C: Data Pipeline Cleanup
