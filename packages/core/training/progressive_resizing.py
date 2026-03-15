@@ -17,6 +17,7 @@ import numpy as np
 import time
 
 from utils.logging import get_logger
+from utils.constants import SIGNAL_LENGTH
 from .base_trainer import BaseTrainer
 
 logger = get_logger(__name__)
@@ -108,7 +109,7 @@ class ProgressiveResizingTrainer(BaseTrainer):
         mixed_precision: bool = False,
         checkpoint_dir: Optional[Path] = None,
         start_length: int = 1024,
-        full_length: int = 102400,
+        full_length: int = SIGNAL_LENGTH,
         epochs_per_stage: int = 5,
     ):
         super().__init__(

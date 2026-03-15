@@ -134,7 +134,6 @@ def create_plateau_scheduler(
         patience=patience,
         threshold=threshold,
         min_lr=min_lr,
-        verbose=True,
     )
     logger.info(f"ReduceLROnPlateau: mode={mode}, patience={patience}, factor={factor}")
     return scheduler

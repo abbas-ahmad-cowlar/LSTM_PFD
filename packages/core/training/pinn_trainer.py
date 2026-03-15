@@ -30,6 +30,7 @@ import numpy as np
 from tqdm import tqdm
 
 from utils.logging import get_logger
+from utils.constants import SAMPLING_RATE
 from .base_trainer import BaseTrainer
 from .physics_loss_functions import (
     FrequencyConsistencyLoss,
@@ -88,7 +89,7 @@ class PINNTrainer(BaseTrainer):
         lambda_temporal: float = 0.0,
         adaptive_lambda: bool = True,
         lambda_schedule: str = "linear",
-        sample_rate: int = 20480,
+        sample_rate: int = SAMPLING_RATE,
         metadata_keys: Optional[List[str]] = None,
     ):
         super().__init__(
