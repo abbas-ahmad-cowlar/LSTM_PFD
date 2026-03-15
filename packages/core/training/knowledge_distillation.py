@@ -191,21 +191,21 @@ class DistillationTrainer:
             self.optimizer.step()
 
             # Track metrics
-            total_loss += loss_dict['total_loss']
-            total_soft_loss += loss_dict['soft_loss']
-            total_hard_loss += loss_dict['hard_loss']
+            batch_size = labels.size(0)
+            total_loss += loss_dict['total_loss'] * batch_size
+            total_soft_loss += loss_dict['soft_loss'] * batch_size
+            total_hard_loss += loss_dict['hard_loss'] * batch_size
 
             # Accuracy
             _, predicted = torch.max(student_logits, 1)
-            total += labels.size(0)
+            total += batch_size
             correct += (predicted == labels).sum().item()
 
         # Average metrics
-        num_batches = len(train_loader)
         metrics = {
-            'train_loss': total_loss / num_batches,
-            'train_soft_loss': total_soft_loss / num_batches,
-            'train_hard_loss': total_hard_loss / num_batches,
+            'train_loss': total_loss / total,
+            'train_soft_loss': total_soft_loss / total,
+            'train_hard_loss': total_hard_loss / total,
             'train_accuracy': 100.0 * correct / total
         }
 
@@ -243,7 +243,7 @@ class DistillationTrainer:
 
                 # Loss
                 loss, _ = self.criterion(student_logits, teacher_logits, labels)
-                total_loss += loss.item()
+                total_loss += loss.item() * labels.size(0)
 
                 # Accuracy
                 _, predicted = torch.max(student_logits, 1)
@@ -251,7 +251,7 @@ class DistillationTrainer:
                 correct += (predicted == labels).sum().item()
 
         metrics = {
-            'val_loss': total_loss / len(val_loader),
+            'val_loss': total_loss / total,
             'val_accuracy': 100.0 * correct / total
         }
 
@@ -294,7 +294,10 @@ class DistillationTrainer:
 
             # Update learning rate
             if scheduler is not None:
-                scheduler.step()
+                if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    scheduler.step(val_metrics['val_loss'])
+                else:
+                    scheduler.step()
 
             # Track history
             history['train_loss'].append(train_metrics['train_loss'])
