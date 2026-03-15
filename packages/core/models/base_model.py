@@ -307,6 +307,79 @@ class BaseModel(nn.Module, ABC):
         """
         raise NotImplementedError("Activation extraction requires forward hooks")
 
+    def export_onnx(
+        self,
+        path: Path,
+        input_shape: Tuple[int, ...] = (1, 1, SIGNAL_LENGTH),
+        opset_version: int = 14,
+        dynamic_axes: Optional[Dict[str, Dict[int, str]]] = None,
+    ) -> Path:
+        """
+        Export model to ONNX format for deployment.
+
+        Args:
+            path: Output file path (.onnx)
+            input_shape: Shape of dummy input (batch, channels, length)
+            opset_version: ONNX opset version
+            dynamic_axes: Optional dynamic axes for variable-length inputs
+
+        Returns:
+            Path to saved ONNX file
+
+        Example:
+            >>> model.export_onnx(Path('model.onnx'))
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        if dynamic_axes is None:
+            dynamic_axes = {
+                'input': {0: 'batch_size'},
+                'output': {0: 'batch_size'},
+            }
+
+        self.eval()
+        device = next(self.parameters()).device
+        dummy_input = torch.randn(*input_shape, device=device)
+
+        torch.onnx.export(
+            self,
+            dummy_input,
+            str(path),
+            opset_version=opset_version,
+            input_names=['input'],
+            output_names=['output'],
+            dynamic_axes=dynamic_axes,
+        )
+        logger.info(f"Exported ONNX model to {path} (opset={opset_version})")
+        return path
+
+    @torch.no_grad()
+    def predict(
+        self,
+        x: torch.Tensor,
+        return_probs: bool = False,
+    ) -> torch.Tensor:
+        """
+        Run inference and return predicted class indices (or probabilities).
+
+        Args:
+            x: Input tensor (batch, ...) on the same device as model
+            return_probs: If True return softmax probabilities instead of class indices
+
+        Returns:
+            Predicted class indices (batch,) or probabilities (batch, num_classes)
+
+        Example:
+            >>> preds = model.predict(batch_tensor)         # [0, 3, 1, ...]
+            >>> probs = model.predict(batch_tensor, return_probs=True)
+        """
+        self.eval()
+        logits = self.forward(x)
+        if return_probs:
+            return torch.softmax(logits, dim=-1)
+        return logits.argmax(dim=-1)
+
     def to_device(self, device: torch.device) -> 'BaseModel':
         """
         Move model to device and return self for chaining.
