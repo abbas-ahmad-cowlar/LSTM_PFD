@@ -7,7 +7,7 @@
 >
 > **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
 >
-> **Last Updated**: 2026-03-15T10:40 PKT — Phase 1 complete, Phase 2 ~80% done (20/28 items). Phase 6 security done. Phase 3 smoke-tested (25 commits).
+> **Last Updated**: 2026-03-15T10:50 PKT — Phase 1 complete, Phase 2 ~85% done (21/28 items). Phase 6 security done. Phase 3 smoke-tested (26 commits). Approaching Audit Checkpoint #2.
 
 ---
 
@@ -107,7 +107,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 ### 2C: Data Pipeline Cleanup
 - [x] **2.16** Split `signal_generator.py` into `data/signal_generation/` package: `generator.py`, `fault_modeler.py`, `noise_generator.py`, `metadata.py`, `__init__.py`
 - [x] **2.16b** Replaced duplicate `Compose` in `cnn_transforms.py` with import from canonical `transforms.py`; added `__repr__` to canonical
-- [ ] **2.16c** Merge duplicate dataloader modules `dataloader.py` + `cnn_dataloader.py` into single `dataloader.py` with all features (`DataLoaderConfig`, `InfiniteDataLoader`, `prefetch_to_device`, `compute_class_weights`) *(IDB 3.2 audit)*
+- [x] **2.16c** Dataloader merge complete — `dataloader.py` (627 lines) has all features (DataLoaderConfig, InfiniteDataLoader, prefetch_to_device, compute_class_weights). `cnn_dataloader.py` is a 27-line re-export shim
 - [x] **2.16d** Added 40+ missing exports to `data/__init__.py` — CNN datasets, streaming datasets, TFR datasets, CNN transforms
 - [x] **2.16e** Verified: no `print()` calls in `tfr_dataset.py` (already clean)
 - [x] **2.16f** Drop CWRU entirely — deleted orphaned `data/__pycache__/cwru_dataset.cpython-314.pyc`, removed all CWRU references from 12 files (`dataset_card.yaml`, `benchmarks/`, `data/` READMEs, `tests/`, `scripts/`, dashboard, docs), renamed `compare_with_cwru_benchmark` → `compare_with_journal_bearing_benchmark`, updated `dataset_card.yaml` class names to match actual hydrodynamic fault types
