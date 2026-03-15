@@ -7,7 +7,7 @@
 >
 > **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
 >
-> **Last Updated**: 2026-03-15T08:55 PKT — Items 1.5b, 1.5c, 1.11c done. Phase 1 nearly complete.
+> **Last Updated**: 2026-03-15T09:10 PKT — Phase 1 complete (7 commits). Moving to Phase 2.
 
 ---
 
@@ -50,7 +50,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [x] **1.1** Remove hardcoded secrets from `docker-compose.yml` — replaced with `${VARIABLE}` env refs (4 service blocks)
 - [x] **1.2** Remove hardcoded `POSTGRES_PASSWORD=changeme` from Helm `values.yaml:89`
 - [x] **1.3** Fix CORS wildcard `["*"]` in `config.py` — now defaults to localhost origins, overridable via `CORS_ORIGINS` env
-- [ ] **1.4** Ensure Redis auth is enabled in production Helm values (`values-prod.yaml`)
+- [x] **1.4** Redis auth enabled in production Helm values — added `redis.auth.enabled: true` and `password: ""` with instructions to set via `--set`
 
 ### 1B: Code Portability
 - [x] **1.5** Remove all `sys.path` hacks — Phase 1: removed hardcoded `/home/user/LSTM_PFD` paths. Phase 2 (IDB 1.1 audit): removed 8 remaining `sys.path.insert()` calls in `fusion/`, `ensemble/`, `transformer/`, `hybrid/` — all replaced with relative imports (`from ..base_model import BaseModel`)
@@ -66,11 +66,11 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [x] **1.10b** Consolidated `CNN1D` — top-level `cnn_1d.py` (232 lines) converted to re-export shim pointing to canonical `cnn/cnn_1d.py` (313 lines); `create_cnn1d` factory added to canonical file
 
 ### 1D: Data Integrity
-- [ ] **1.11** Fix HDF5 file handle leaks in `OnTheFlyTFRDataset` — add context managers
-- [ ] **1.11b** Fix HDF5 file handle leak in `MultiTFRDataset` — same pattern as 1.11, adopt thread-local handles *(IDB 3.2 audit)*
+- [x] **1.11** Fixed HDF5 file handle leaks in `OnTheFlyTFRDataset` — added `close()` method with `_h5_closed` flag
+- [x] **1.11b** Fixed HDF5 file handle leak in `MultiTFRDataset` — same pattern with `close()` and `_h5_closed`
 - [x] **1.11c** Fixed 2 bare `except:` in `streaming_hdf5_dataset.py` → `except Exception:`. `tfr_dataset.py` already clean (no bare excepts found).
-- [ ] **1.11d** Fix thread-safety in `StreamingHDF5Dataset` LRU cache — add `threading.Lock` or disable cache when `num_workers > 0` *(IDB 3.2 audit)*
-- [ ] **1.12** Replace Redis `KEYS` pattern with `SCAN` in cache service
+- [x] **1.11d** Fixed thread-safety in `StreamingHDF5Dataset` LRU cache — added `threading.Lock` around `_cache` dict and `_cache_order` list
+- [x] **1.12** Replaced Redis `KEYS` with `SCAN` iterator in `cache_service.py` — production-safe cursor-based pattern match
 - [x] **1.13** Fix LR scheduler bug in `cnn_trainer.py` — now handles `ReduceLROnPlateau` with metric arg
 
 > [!IMPORTANT]
