@@ -138,6 +138,7 @@ class OnTheFlyTFRDataset(Dataset):
         self.tfr_type = tfr_type
         self.transform = transform
         self.cache_in_memory = cache_in_memory
+        self._h5_closed = False
 
         # Default TFR parameters
         if tfr_params is None:
@@ -155,7 +156,7 @@ class OnTheFlyTFRDataset(Dataset):
         if cache_in_memory:
             print("Loading all signals to memory...")
             self.signals = self.signals[:]
-            self.h5_file.close()
+            self.close()
 
         # Initialize TFR generator
         if tfr_type == 'stft':
@@ -198,13 +199,17 @@ class OnTheFlyTFRDataset(Dataset):
 
         return tfr_tensor, label_tensor
 
-    def __del__(self):
-        # Close HDF5 file
-        if hasattr(self, 'h5_file') and not self.cache_in_memory:
+    def close(self):
+        """Explicitly close the HDF5 file handle."""
+        if hasattr(self, 'h5_file') and not self._h5_closed:
             try:
                 self.h5_file.close()
-            except:
+                self._h5_closed = True
+            except Exception:
                 pass
+
+    def __del__(self):
+        self.close()
 
 
 class MultiTFRDataset(Dataset):
@@ -234,6 +239,7 @@ class MultiTFRDataset(Dataset):
 
         self.tfr_types = tfr_types
         self.transform = transform
+        self._h5_closed = False
 
         # Load signals
         self.h5_file = h5py.File(signals_cache, 'r')
@@ -278,12 +284,17 @@ class MultiTFRDataset(Dataset):
 
         return tfrs, label
 
-    def __del__(self):
-        if hasattr(self, 'h5_file'):
+    def close(self):
+        """Explicitly close the HDF5 file handle."""
+        if hasattr(self, 'h5_file') and not self._h5_closed:
             try:
                 self.h5_file.close()
-            except:
+                self._h5_closed = True
+            except Exception:
                 pass
+
+    def __del__(self):
+        self.close()
 
 
 def create_tfr_dataloaders(
