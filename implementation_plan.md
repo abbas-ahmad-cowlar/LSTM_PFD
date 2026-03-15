@@ -7,7 +7,7 @@
 >
 > **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
 >
-> **Last Updated**: 2026-03-15T09:10 PKT — Phase 1 complete (7 commits). Moving to Phase 2.
+> **Last Updated**: 2026-03-15T09:15 PKT — Phase 1 complete, Phase 2 quick wins done (8 commits total).
 
 ---
 
@@ -85,13 +85,13 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [ ] **2.1** Create `BaseTrainer` abstract class with template method pattern (`_forward_pass`, `_compute_loss`, `_backward_pass`, `_optimizer_step`)
 - [ ] **2.2** Refactor `CNNTrainer`, `ProgressiveResizingTrainer`, `DistillationTrainer` to inherit `BaseTrainer` *(IDB 1.2 audit: `PINNTrainer` and `SpectrogramTrainer` already inherit from `Trainer`; only 3 trainers remain standalone)*
 - [ ] **2.2b** Rename `PINNTrainer.train()` → `PINNTrainer.fit()` with backward-compat alias — API inconsistency with base `Trainer.fit()` *(IDB 1.2 audit)*
-- [ ] **2.2c** Fix ReduceLROnPlateau in `ProgressiveResizingTrainer` (`progressive_resizing.py:289`) and `DistillationTrainer` (`knowledge_distillation.py:297`) — uses unsafe `scheduler.step()` without metric *(IDB 1.2 audit)*
-- [ ] **2.2d** Fix batch-level loss averaging in `ProgressiveResizingTrainer` and `DistillationTrainer` — should use sample-weighted `loss.item() * batch_size` instead of `total_loss / len(loader)` *(IDB 1.2 audit)*
+- [x] **2.2c** Fixed ReduceLROnPlateau in `progressive_resizing.py` and `knowledge_distillation.py` — now checks isinstance and passes val_loss as metric
+- [x] **2.2d** Fixed batch-level loss averaging in both trainers — now uses `loss.item() * batch_size` and divides by total samples
 - [ ] **2.3** Implement mixin architecture: `MixedPrecisionMixin`, `PhysicsLossMixin`, `SpecAugmentMixin`
 - [ ] **2.4** Standardize checkpoint format with version field, model config, optimizer/scheduler/scaler states
 - [ ] **2.5** Consolidate loss functions into `training/losses/` subdirectory (classification, contrastive, physics, distillation)
 - [ ] **2.6** Consolidate schedulers: merge `cnn_schedulers.py` + `transformer_schedulers.py` → `training/schedulers.py`
-- [ ] **2.7** Remove deprecated `optimizers.py`, update all references to `cnn_optimizer.py`
+- [x] **2.7** Deleted deprecated `optimizers.py` — no code imports it (all use `cnn_optimizer.py`)
 
 ### 2B: Model Architecture Cleanup
 - [ ] **2.8** Make all models inherit `BaseModel` — `PatchTST` (`transformer/patchtst.py`), `TSMixer` (`transformer/tsmixer.py`), `AttentionCNN1D` + `LightweightAttentionCNN` (`cnn/attention_cnn.py`), `MultiScaleCNN1D` + `DilatedMultiScaleCNN` (`cnn/multi_scale_cnn.py`), `SignalEncoder` (`contrastive/signal_encoder.py`), `ContrastiveClassifier` (`contrastive/classifier.py`) — add `get_config()` to each
@@ -100,7 +100,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [ ] **2.11** Add `export_onnx()` and `predict()` to `BaseModel`
 - [ ] **2.12** Consolidate duplicate `ConvBlock` implementations
 - [ ] **2.13** Consolidate 3 duplicate `PositionalEncoding` implementations in `transformer/`
-- [ ] **2.14** Remove `legacy_ensemble.py` (superseded by `ensemble/`)
+- [x] **2.14** Converted `legacy_ensemble.py` to re-export shim — imports from `ensemble/` subpackage, provides backward-compat aliases (-360 lines)
 - [ ] **2.15** Replace all 45+ hardcoded magic numbers (`102400`, `20480`, `5000`) with constants from `utils/constants.py`
 - [ ] **2.8b** Audit and document `training/contrastive/` sub-module (5 files: `dataset.py`, `losses.py`, `physics_similarity.py`, `pretrainer.py`, `__init__.py`) — currently undocumented and not covered by any IDB report *(IDB 1.2 audit)*
 
@@ -127,7 +127,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 
 ### 2E: Test Infrastructure
 - [ ] **2.27** Move all `if __name__ == "__main__": test_*()` code from production files to `tests/`
-- [ ] **2.27b** Fix undefined variable `signal_length` (should be `SIGNAL_LENGTH`) in embedded tests: `cnn_dataset.py:372,382`, `cnn_dataloader.py:295` — tests crash with `NameError` *(IDB 3.2 audit)*
+- [x] **2.27b** Verified: `signal_length` NameError not found in current files — already fixed by IDB agents or different version
 - [ ] **2.28** Populate `__init__.py` exports in `packages/core/training/`
 - [ ] **2.29** Add missing dashboard callback tests (tightly coupled UI/Service layer)
 
