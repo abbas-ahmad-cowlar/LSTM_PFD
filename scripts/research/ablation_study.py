@@ -845,11 +845,8 @@ class AblationStudyRunner:
         
     def _set_seed(self, seed: int):
         """Set random seed for reproducibility."""
-        np.random.seed(seed)
-        if HAS_TORCH:
-            torch.manual_seed(seed)
-            if torch.cuda.is_available():
-                torch.cuda.manual_seed_all(seed)
+        from utils.reproducibility import set_seed
+        set_seed(seed)
                 
     def _calculate_significance(self):
         """Calculate significance of differences from baseline."""

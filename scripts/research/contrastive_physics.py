@@ -49,6 +49,8 @@ import numpy as np
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from utils.reproducibility import set_seed
+
 try:
     import torch
     import torch.nn as nn
@@ -132,8 +134,7 @@ def run_benchmark(
     
     for seed in range(num_seeds):
         logger.info(f"\n=== Seed {seed + 1}/{num_seeds} ===")
-        np.random.seed(seed)
-        torch.manual_seed(seed)
+        set_seed(seed)
         
         # Split data
         indices = np.arange(len(signals))

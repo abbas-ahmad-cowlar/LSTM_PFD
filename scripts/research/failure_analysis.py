@@ -274,7 +274,8 @@ def main():
     
     if args.demo:
         # Generate demo data for testing
-        np.random.seed(42)
+        from utils.reproducibility import set_seed
+        set_seed(42)
         n_samples = 1000
         n_classes = 11
         signal_length = 2048

@@ -5,98 +5,59 @@ Provides support for FP16 training to:
 - Reduce memory usage
 - Speed up training
 - Maintain numerical stability
+
+Note: BaseTrainer already has full AMP support via ``mixed_precision=True``.
+This module provides a convenience subclass and utility functions.
 """
 
 import torch
 import torch.nn as nn
-from torch.cuda.amp import autocast, GradScaler
-from typing import Optional
-from .trainer import Trainer
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
+from torch.cuda.amp import GradScaler
+from typing import Optional, Any
+
+from .base_trainer import BaseTrainer
 
 
-class MixedPrecisionTrainer(Trainer):
+class MixedPrecisionTrainer(BaseTrainer):
     """
-    Trainer with mixed precision training support.
+    Convenience trainer that defaults to mixed precision.
 
-    Automatically handles:
-    - Gradient scaling
-    - Autocast contexts
-    - Gradient clipping with FP16
+    Equivalent to creating any BaseTrainer subclass with
+    ``mixed_precision=True``.  Kept for backward compatibility.
 
     Args:
-        Same as Trainer, with additional:
-        grad_scaler: Optional GradScaler instance (created if None)
+        Same as BaseTrainer, but ``mixed_precision`` defaults to True.
     """
+
     def __init__(
         self,
         model: nn.Module,
-        train_loader,
-        val_loader=None,
-        optimizer=None,
-        criterion=None,
-        device='cuda',
+        optimizer: torch.optim.Optimizer,
+        criterion: Optional[nn.Module] = None,
+        device: str = "cuda",
+        lr_scheduler=None,
+        max_grad_norm: float = 1.0,
+        gradient_accumulation_steps: int = 1,
+        checkpoint_dir=None,
         callbacks=None,
-        gradient_accumulation_steps=1,
-        max_grad_norm=1.0,
-        grad_scaler: Optional[GradScaler] = None
     ):
-        # Initialize parent with mixed_precision=True
         super().__init__(
             model=model,
-            train_loader=train_loader,
-            val_loader=val_loader,
             optimizer=optimizer,
-            criterion=criterion,
+            criterion=criterion or nn.CrossEntropyLoss(),
             device=device,
-            callbacks=callbacks,
-            gradient_accumulation_steps=gradient_accumulation_steps,
+            lr_scheduler=lr_scheduler,
             max_grad_norm=max_grad_norm,
-            mixed_precision=True
+            gradient_accumulation_steps=gradient_accumulation_steps,
+            mixed_precision=True,
+            checkpoint_dir=checkpoint_dir,
+            callbacks=callbacks,
         )
 
-        # Create or use provided scaler
-        if grad_scaler is None:
-            self.scaler = GradScaler()
-        else:
-            self.scaler = grad_scaler
-
-    def _backward_pass(self, loss: torch.Tensor, optimizer: torch.optim.Optimizer):
-        """
-        Backward pass with gradient scaling.
-
-        Args:
-            loss: Loss tensor
-            optimizer: Optimizer instance
-        """
-        # Scale loss and backward
-        self.scaler.scale(loss).backward()
-
-    def _optimizer_step(self, optimizer: torch.optim.Optimizer):
-        """
-        Optimizer step with gradient unscaling and clipping.
-
-        Args:
-            optimizer: Optimizer instance
-        """
-        # Unscale gradients
-        self.scaler.unscale_(optimizer)
-
-        # Clip gradients
-        if self.max_grad_norm > 0:
-            torch.nn.utils.clip_grad_norm_(
-                self.model.parameters(),
-                self.max_grad_norm
-            )
-
-        # Optimizer step
-        self.scaler.step(optimizer)
-
-        # Update scaler
-        self.scaler.update()
-
-        # Zero gradients
-        optimizer.zero_grad()
+    def _forward_pass(
+        self, inputs: torch.Tensor, targets: torch.Tensor, **kwargs: Any
+    ) -> torch.Tensor:
+        return self.model(inputs)
 
 
 def enable_mixed_precision():
@@ -125,13 +86,11 @@ def check_mixed_precision_support() -> bool:
         print("CUDA not available - mixed precision not supported")
         return False
 
-    # Check for FP16 support
-    device = torch.device('cuda')
+    device = torch.device("cuda")
     try:
-        # Test FP16 operations
         x = torch.randn(10, 10, device=device, dtype=torch.float16)
         y = torch.randn(10, 10, device=device, dtype=torch.float16)
-        z = torch.matmul(x, y)
+        _ = torch.matmul(x, y)
 
         print("Mixed precision training supported")
         return True
