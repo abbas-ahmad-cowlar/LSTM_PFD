@@ -7,7 +7,7 @@
 >
 > **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
 >
-> **Last Updated**: 2026-03-15T09:15 PKT — Phase 1 complete, Phase 2 quick wins done (8 commits total).
+> **Last Updated**: 2026-03-15T09:30 PKT — Phase 1+2 mechanical fixes done (12 commits). Remaining Phase 2 are heavy refactors.
 
 ---
 
@@ -84,7 +84,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 ### 2A: Training Infrastructure Unification
 - [ ] **2.1** Create `BaseTrainer` abstract class with template method pattern (`_forward_pass`, `_compute_loss`, `_backward_pass`, `_optimizer_step`)
 - [ ] **2.2** Refactor `CNNTrainer`, `ProgressiveResizingTrainer`, `DistillationTrainer` to inherit `BaseTrainer` *(IDB 1.2 audit: `PINNTrainer` and `SpectrogramTrainer` already inherit from `Trainer`; only 3 trainers remain standalone)*
-- [ ] **2.2b** Rename `PINNTrainer.train()` → `PINNTrainer.fit()` with backward-compat alias — API inconsistency with base `Trainer.fit()` *(IDB 1.2 audit)*
+- [x] **2.2b** N/A — PINNTrainer already uses `fit()` from parent `Trainer`, no standalone `train()` method exists
 - [x] **2.2c** Fixed ReduceLROnPlateau in `progressive_resizing.py` and `knowledge_distillation.py` — now checks isinstance and passes val_loss as metric
 - [x] **2.2d** Fixed batch-level loss averaging in both trainers — now uses `loss.item() * batch_size` and divides by total samples
 - [ ] **2.3** Implement mixin architecture: `MixedPrecisionMixin`, `PhysicsLossMixin`, `SpecAugmentMixin`
@@ -98,22 +98,22 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [ ] **2.9** Complete model registry in `model_factory.py` — register all ~55 models
 - [ ] **2.10** Add decorator-based auto-registration: `@register_model("name")`
 - [ ] **2.11** Add `export_onnx()` and `predict()` to `BaseModel`
-- [ ] **2.12** Consolidate duplicate `ConvBlock` implementations
-- [ ] **2.13** Consolidate 3 duplicate `PositionalEncoding` implementations in `transformer/`
+- [x] **2.12** N/A — only 1 `ConvBlock1D` in `cnn/conv_blocks.py`, no duplicates to consolidate
+- [x] **2.13** Consolidated PositionalEncoding — PatchTST now imports from `signal_transformer.py` (-20 lines)
 - [x] **2.14** Converted `legacy_ensemble.py` to re-export shim — imports from `ensemble/` subpackage, provides backward-compat aliases (-360 lines)
 - [ ] **2.15** Replace all 45+ hardcoded magic numbers (`102400`, `20480`, `5000`) with constants from `utils/constants.py`
 - [ ] **2.8b** Audit and document `training/contrastive/` sub-module (5 files: `dataset.py`, `losses.py`, `physics_similarity.py`, `pretrainer.py`, `__init__.py`) — currently undocumented and not covered by any IDB report *(IDB 1.2 audit)*
 
 ### 2C: Data Pipeline Cleanup
 - [ ] **2.16** Split monolithic `signal_generator.py` (37KB, 935 lines) into focused modules
-- [ ] **2.16b** Delete duplicate `Compose` from `cnn_transforms.py` → import from `transforms.py`; add `__repr__` to canonical `Compose` *(IDB 3.2 audit)*
+- [x] **2.16b** Replaced duplicate `Compose` in `cnn_transforms.py` with import from canonical `transforms.py`; added `__repr__` to canonical
 - [ ] **2.16c** Merge duplicate dataloader modules `dataloader.py` + `cnn_dataloader.py` into single `dataloader.py` with all features (`DataLoaderConfig`, `InfiniteDataLoader`, `prefetch_to_device`, `compute_class_weights`) *(IDB 3.2 audit)*
-- [ ] **2.16d** Add missing exports to `data/__init__.py`: `RawSignalDataset`, `CachedRawSignalDataset`, `StreamingHDF5Dataset`, `ChunkedStreamingDataset`, `SpectrogramDataset`, `OnTheFlyTFRDataset`, `MultiTFRDataset`, `create_streaming_dataloaders`, `create_tfr_dataloaders`, CNN transforms *(IDB 3.2 audit)*
-- [ ] **2.16e** Replace `print()` with `logger.info()` in `tfr_dataset.py` (7 instances) *(IDB 3.2 audit)*
+- [x] **2.16d** Added 40+ missing exports to `data/__init__.py` — CNN datasets, streaming datasets, TFR datasets, CNN transforms
+- [x] **2.16e** Verified: no `print()` calls in `tfr_dataset.py` (already clean)
 - [x] **2.16f** Drop CWRU entirely — deleted orphaned `data/__pycache__/cwru_dataset.cpython-314.pyc`, removed all CWRU references from 12 files (`dataset_card.yaml`, `benchmarks/`, `data/` READMEs, `tests/`, `scripts/`, dashboard, docs), renamed `compare_with_cwru_benchmark` → `compare_with_journal_bearing_benchmark`, updated `dataset_card.yaml` class names to match actual hydrodynamic fault types
 - [ ] **2.17** Externalize physics magic numbers into `PhysicsConstants` dataclass or YAML
-- [ ] **2.18** Fix noise layer count docstring (7 → 8)
-- [ ] **2.19** Unify random state to `np.random` only (remove `random.random()` from augmentation)
+- [x] **2.18** N/A — noise layer count docstring not found, likely already fixed
+- [x] **2.19** Unified random state to `np.random` in `spectrogram_augmentation.py` (5 calls) and `signal_augmentation.py` (2 calls) — removed `import random`
 - [ ] **2.20** Add post-generation signal validation (NaN, Inf, std range checks)
 - [ ] **2.20b** Integrate `data_validator.py` into dataset `from_hdf5()` / `__init__()` methods — currently the 17KB validator exists but is never called from any dataset class *(IDB 3.2 audit)*
 
@@ -128,7 +128,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 ### 2E: Test Infrastructure
 - [ ] **2.27** Move all `if __name__ == "__main__": test_*()` code from production files to `tests/`
 - [x] **2.27b** Verified: `signal_length` NameError not found in current files — already fixed by IDB agents or different version
-- [ ] **2.28** Populate `__init__.py` exports in `packages/core/training/`
+- [x] **2.28** Populated `training/__init__.py` with exports for all trainers, callbacks, and loss functions
 - [ ] **2.29** Add missing dashboard callback tests (tightly coupled UI/Service layer)
 
 > [!IMPORTANT]
