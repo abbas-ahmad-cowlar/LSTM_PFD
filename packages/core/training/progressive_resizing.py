@@ -182,13 +182,14 @@ class ProgressiveResizingTrainer:
             self.optimizer.step()
 
             # Metrics
-            total_loss += loss.item()
+            batch_size = labels.size(0)
+            total_loss += loss.item() * batch_size
             _, predicted = torch.max(outputs, 1)
-            total += labels.size(0)
+            total += batch_size
             correct += (predicted == labels).sum().item()
 
         return {
-            'train_loss': total_loss / len(train_loader),
+            'train_loss': total_loss / total,
             'train_accuracy': 100.0 * correct / total
         }
 
@@ -208,13 +209,13 @@ class ProgressiveResizingTrainer:
                 outputs = self.model(inputs)
                 loss = self.criterion(outputs, labels)
 
-                total_loss += loss.item()
+                total_loss += loss.item() * labels.size(0)
                 _, predicted = torch.max(outputs, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
         return {
-            'val_loss': total_loss / len(val_loader),
+            'val_loss': total_loss / total,
             'val_accuracy': 100.0 * correct / total
         }
 
@@ -286,7 +287,10 @@ class ProgressiveResizingTrainer:
                 val_metrics = self.evaluate(val_loader)
 
                 if scheduler is not None:
-                    scheduler.step()
+                    if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                        scheduler.step(val_metrics['val_loss'])
+                    else:
+                        scheduler.step()
 
                 # Track history
                 history['stage_lengths'].append(signal_length)
