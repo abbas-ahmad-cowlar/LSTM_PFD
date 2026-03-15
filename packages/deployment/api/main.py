@@ -22,14 +22,10 @@ import time
 import logging
 from pathlib import Path
 from typing import Optional
-import sys
-
-# Add project root to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
-from api.config import settings
-from api.schemas import (
+from .config import settings
+from .schemas import (
     PredictionRequest,
     PredictionResponse,
     BatchPredictionRequest,
@@ -39,7 +35,7 @@ from api.schemas import (
     ErrorResponse,
     FAULT_CLASS_NAMES
 )
-from deployment.inference import OptimizedInferenceEngine, InferenceConfig
+from ..inference import OptimizedInferenceEngine, InferenceConfig
 
 # Configure logging
 logging.basicConfig(

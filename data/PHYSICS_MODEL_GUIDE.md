@@ -11,8 +11,7 @@ The signal generator implements a **Sommerfeld-scaled hydrodynamic bearing model
 3. A **7-layer noise model** — simulating realistic sensor/environmental interference
 4. **Transient modulation** — optional non-stationary behavior
 
-> [!IMPORTANT]
-> The physics model implements **journal/hydrodynamic bearing** dynamics (Sommerfeld number, oil whirl, clearance ratio). The project also uses the **CWRU ball bearing** dataset for benchmarking — these are fundamentally different bearing types. Do not assume the synthetic signals are physically equivalent to CWRU data. See `docs/idb_reports/compiled/PROJECT_SCOPE_ANALYSIS.md` for details on this scope mismatch.
+> The physics model implements **journal/hydrodynamic bearing** dynamics (Sommerfeld number, oil whirl, clearance ratio). The synthetic signals model fault types specific to hydrodynamic bearings (oil whirl, cavitation, stick-slip lubrication). See the fault signature equations below for details.
 
 ## 2. Core Equations
 
@@ -263,7 +262,7 @@ graph TD
 > [!WARNING]
 > These are important caveats about the physics model's fidelity.
 
-1. **Journal bearing assumption:** The model implements hydrodynamic (journal) bearing physics. The CWRU benchmark dataset uses ball bearings with fundamentally different failure modes (inner race, outer race, ball defects). The synthetic fault types (oil whirl, cavitation, Sommerfeld-based lubrication) do not correspond to ball bearing defects.
+1. **Journal bearing assumption:** The model implements hydrodynamic (journal) bearing physics. The synthetic fault types (oil whirl, cavitation, Sommerfeld-based lubrication) are specific to journal bearings and do not correspond to rolling element bearing defects (inner race, outer race, ball).
 
 2. **Simplified equations:** The fault signature equations use empirical amplitude constants (e.g., 0.35 for 2X misalignment) that are not derived from finite-element or CFD simulations. These are heuristic coefficients chosen to produce distinguishable signatures.
 
@@ -285,7 +284,7 @@ graph TD
 | Fault signature spectral correctness      | `[PENDING VALIDATION]` |
 | Noise floor SNR measurement               | `[PENDING VALIDATION]` |
 | Classification accuracy on synthetic data | `[PENDING VALIDATION]` |
-| Transfer learning to real CWRU data       | `[PENDING VALIDATION]` |
+
 | Sommerfeld-fault correlation analysis     | `[PENDING VALIDATION]` |
 
 ## Related Documentation

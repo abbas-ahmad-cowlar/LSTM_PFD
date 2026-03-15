@@ -9,9 +9,10 @@ doi: 10.5281/zenodo.XXXXXXX # TODO: Update after Zenodo upload
 
 # Dataset Overview
 description: |
-  Physics-informed synthetic bearing vibration signals for fault diagnosis research.
-  Generated using the LSTM-PFD signal generator with 11 fault classes, 7-layer 
-  independent noise model, and multi-severity progression.
+  Physics-informed synthetic hydrodynamic journal bearing vibration signals
+  for fault diagnosis research. Generated using the LSTM-PFD signal generator
+  with 11 fault classes, 7-layer independent noise model, Sommerfeld-scaled
+  physics, and multi-severity progression.
 
 # Size and Format
 size: 2.3 GB
@@ -23,32 +24,36 @@ classes: 11
 
 # Class Distribution
 class_names:
-  - Normal
-  - Ball_007
-  - Ball_014
-  - Ball_021
-  - Inner_Race_007
-  - Inner_Race_014
-  - Inner_Race_021
-  - Outer_Race_007
-  - Outer_Race_014
-  - Outer_Race_021
-  - Roller
+  - sain                        # Normal / Healthy
+  - desalignement               # Misalignment (2X + 3X harmonics)
+  - desequilibre                # Imbalance (1X dominant, speed² scaling)
+  - jeu                         # Bearing Clearance (sub-synchronous + 1X + 2X)
+  - lubrification               # Lubrication (stick-slip + metal contact)
+  - cavitation                  # Cavitation (high-freq bursts, Hann-windowed)
+  - usure                       # Wear (broadband + asperity harmonics)
+  - oilwhirl                    # Oil Whirl (sub-sync ~0.42-0.48× speed)
+  - mixed_misalign_imbalance    # Mixed: Misalignment + Imbalance
+  - mixed_wear_lube             # Mixed: Wear + Lubrication
+  - mixed_cavit_jeu             # Mixed: Cavitation + Clearance
 
 # Technical Specifications
 sampling_rate: 20480 # Hz
 signal_length: 102400 # samples (5 seconds)
 severity_levels:
-  - low (007)
-  - medium (014)
-  - high (021)
+  - incipient (20-45%)
+  - mild (45-70%)
+  - moderate (70-90%)
+  - severe (90-100%)
 
 # Physics Model
 physics_basis: |
-  Signals generated using bearing dynamics equations:
-  - f_BPFO = (n/2) * (1 - d/D * cos(θ)) * f_r
-  - f_BPFI = (n/2) * (1 + d/D * cos(θ)) * f_r  
-  - f_BSF = (D/2d) * (1 - (d/D * cos(θ))²) * f_r
+  Signals generated using Sommerfeld-scaled hydrodynamic bearing dynamics:
+  - Sommerfeld number: S = S_base × viscosity × speed / load (clamped 0.05–0.5)
+  - Oil whirl frequency: f_whirl ≈ 0.42–0.48 × rotational speed
+  - Physics factor: sqrt(S / S_base) for amplitude scaling
+  - Reynolds number: 500–5000 (laminar regime)
+  - Clearance ratio: 0.001–0.003
+  See data/PHYSICS_MODEL_GUIDE.md for detailed equations.
 
 # Data Quality
 quality_comparison:
@@ -57,7 +62,6 @@ quality_comparison:
   peak_frequency_hz: 118
   kurtosis: 3.8
   crest_factor: 4.2
-  reference_dataset: CWRU
 
 # Splits
 train_split: 0.70

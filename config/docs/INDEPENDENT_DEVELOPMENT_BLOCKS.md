@@ -250,8 +250,8 @@ graph TD
 
 | Attribute                 | Detail                                                                                                                                                                                                    |
 | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Scope**                 | PyTorch datasets and dataloaders for training: standard datasets, streaming HDF5, CNN-specific loaders, CWRU benchmark, contrastive learning, spectrogram datasets, and wavelet/Wigner-Ville transforms.  |
-| **Primary Files**         | `data/dataset.py`, `data/dataloader.py`, `data/cnn_dataset.py`, `data/streaming_hdf5_dataset.py`, `data/cwru_dataset.py`, `data/tfr_dataset.py`                                                           |
+| **Scope**                 | PyTorch datasets and dataloaders for training: standard datasets, streaming HDF5, CNN-specific loaders, contrastive learning, spectrogram datasets, and wavelet/Wigner-Ville transforms.  |
+| **Primary Files**         | `data/dataset.py`, `data/dataloader.py`, `data/cnn_dataset.py`, `data/streaming_hdf5_dataset.py`, `data/tfr_dataset.py`                                                           |
 | **Key Interfaces**        | <ul><li>PyTorch `Dataset` and `DataLoader` interfaces</li><li>Streaming: `StreamingHDF5Dataset` for memory-efficient loading</li><li>Transforms: `data/transforms.py`, `data/cnn_transforms.py`</li></ul> |
 | **Inbound Dependencies**  | Raw data files (HDF5, MAT, CSV)                                                                                                                                                                           |
 | **Outbound Dependencies** | Batched tensors → Training pipelines                                                                                                                                                                      |

@@ -288,7 +288,7 @@ Measures: accuracy, max softmax probability (confidence calibration), prediction
 
 Compare against published results on:
 
-- **CWRU Bearing Dataset** (6 published baselines, 2017-2022)
+- **Published literature baselines** (6 baselines, 2017-2022)
 - **PHM Data Challenge** (2009 winners)
 - **Sample efficiency curves** (50–1000 samples)
 
@@ -342,7 +342,7 @@ The [xai_dashboard.py](file:///c:/Users/COWLAR/projects/LSTM_PFD/packages/dashbo
 | OOD testing              | ✅ Implemented | Severity + type shift scenarios            |
 | Dashboard                | ✅ Implemented | Full-stack Dash/Celery/PostgreSQL          |
 | **Experimental results** | ⏳ **PENDING** | No benchmark numbers yet                   |
-| **CWRU benchmark run**   | ⏳ **PENDING** | Infrastructure ready, needs execution      |
+| **Benchmark runs**       | ⏳ **PENDING** | Infrastructure ready, needs execution      |
 | Documentation            | 🔄 In progress | MkDocs overhaul ongoing                    |
 
 ---

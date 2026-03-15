@@ -25,15 +25,11 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from typing import Optional, Dict, List, Callable
-import sys
 from pathlib import Path
 import numpy as np
 from tqdm import tqdm
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent))
-
-from trainer import Trainer, TrainingState
+from .trainer import Trainer, TrainingState
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 
 

@@ -7,7 +7,7 @@
 >
 > **Branch**: All work is on `fix/master-plan` (do NOT commit directly to `main`).
 >
-> **Last Updated**: 2026-03-15T07:40 PKT — Phase 2B in progress.
+> **Last Updated**: 2026-03-15T08:50 PKT — IDB 4.2 audit: inserted 9 new steps (6.0a, 6.0b, 6.0c, 6.5a–6.5e, 6.16a), confirmed root compose P0 fixes resolved, flagged dashboard compose hardcoded secrets (P0), api/main.py sys.path hack, ONNX static quantization stub, deprecated CI/CD Actions.
 
 ---
 
@@ -53,17 +53,23 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [ ] **1.4** Ensure Redis auth is enabled in production Helm values (`values-prod.yaml`)
 
 ### 1B: Code Portability
-- [x] **1.5** Remove all 8 hardcoded `sys.path` (`/home/user/LSTM_PFD`) — replaced with portable `Path(__file__)` resolution
-- [ ] **1.6** Standardize all imports to use proper package paths (`packages.core.models.*`)
+- [x] **1.5** Remove all `sys.path` hacks — Phase 1: removed hardcoded `/home/user/LSTM_PFD` paths. Phase 2 (IDB 1.1 audit): removed 8 remaining `sys.path.insert()` calls in `fusion/`, `ensemble/`, `transformer/`, `hybrid/` — all replaced with relative imports (`from ..base_model import BaseModel`)
+- [ ] **1.5b** Remove 3 remaining `sys.path` hacks in `training/`: `pinn_trainer.py:34`, `spectrogram_trainer.py:34`, `physics_loss_functions.py:23` — replace with relative imports *(discovered by IDB 1.2 audit)*. **Also**: `packages/deployment/api/main.py:28` has `sys.path.insert(0, ...)` *(IDB 4.2 audit)*
+- [ ] **1.5c** Remove 2 remaining `sys.path` hacks in `data/`: `streaming_hdf5_dataset.py:27-29`, `contrast_learning_tfr.py:34-35` — replace with relative imports *(discovered by IDB 3.2 audit)*
+- [x] **1.6** Standardize all imports to use proper package paths — shim files (`hybrid_pinn.py`, `resnet_1d.py`) converted from absolute to relative imports; `cnn/cnn_1d.py` also converted
 
 ### 1C: Duplicate Elimination
-- [ ] **1.7** Consolidate `HybridPINN` — ⚠️ **Correction**: top-level `hybrid_pinn.py` is canonical, `pinn/hybrid_pinn.py` is a stub. Need to make `pinn/` re-export from top-level or move implementation.
-- [ ] **1.8** Consolidate `ResNet1D` — ⚠️ **Correction**: top-level `resnet_1d.py` is canonical, `resnet/resnet_1d.py` is a stub. Same approach.
+- [x] **1.7** Consolidated `HybridPINN` — top-level converted to re-export shim, `pinn/hybrid_pinn.py` is canonical (480 lines)
+- [x] **1.8** Consolidated `ResNet1D` — top-level converted to re-export shim, `resnet/resnet_1d.py` is canonical (378 lines)
 - [x] **1.9** Consolidated `FocalLoss` and `LabelSmoothingCrossEntropy` — `losses.py` now re-exports from `cnn_losses.py`
-- [ ] **1.10** Merge dual callback systems — deferred (divergent interfaces: trainer-centric vs logs-centric, needs careful testing)
+- [ ] **1.10** Merge dual callback systems — deferred (divergent interfaces: trainer-centric vs logs-centric, needs careful testing). *IDB 1.2 audit confirms `cnn_callbacks.py` is the more complete system (has batch hooks, `CallbackList`); merge `callbacks.py` INTO `cnn_callbacks.py`.*
+- [x] **1.10b** Consolidated `CNN1D` — top-level `cnn_1d.py` (232 lines) converted to re-export shim pointing to canonical `cnn/cnn_1d.py` (313 lines); `create_cnn1d` factory added to canonical file
 
 ### 1D: Data Integrity
 - [ ] **1.11** Fix HDF5 file handle leaks in `OnTheFlyTFRDataset` — add context managers
+- [ ] **1.11b** Fix HDF5 file handle leak in `MultiTFRDataset` — same pattern as 1.11, adopt thread-local handles *(IDB 3.2 audit)*
+- [ ] **1.11c** Replace 4 bare `except:` clauses with `except Exception:` in `streaming_hdf5_dataset.py` (lines 139, 359) and `tfr_dataset.py` (lines 206, 285) *(IDB 3.2 audit)*
+- [ ] **1.11d** Fix thread-safety in `StreamingHDF5Dataset` LRU cache — add `threading.Lock` or disable cache when `num_workers > 0` *(IDB 3.2 audit)*
 - [ ] **1.12** Replace Redis `KEYS` pattern with `SCAN` in cache service
 - [x] **1.13** Fix LR scheduler bug in `cnn_trainer.py` — now handles `ReduceLROnPlateau` with metric arg
 
@@ -77,7 +83,10 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 
 ### 2A: Training Infrastructure Unification
 - [ ] **2.1** Create `BaseTrainer` abstract class with template method pattern (`_forward_pass`, `_compute_loss`, `_backward_pass`, `_optimizer_step`)
-- [ ] **2.2** Refactor `CNNTrainer`, `PINNTrainer`, `SpectrogramTrainer`, `ProgressiveResizingTrainer`, `DistillationTrainer` to inherit `BaseTrainer`
+- [ ] **2.2** Refactor `CNNTrainer`, `ProgressiveResizingTrainer`, `DistillationTrainer` to inherit `BaseTrainer` *(IDB 1.2 audit: `PINNTrainer` and `SpectrogramTrainer` already inherit from `Trainer`; only 3 trainers remain standalone)*
+- [ ] **2.2b** Rename `PINNTrainer.train()` → `PINNTrainer.fit()` with backward-compat alias — API inconsistency with base `Trainer.fit()` *(IDB 1.2 audit)*
+- [ ] **2.2c** Fix ReduceLROnPlateau in `ProgressiveResizingTrainer` (`progressive_resizing.py:289`) and `DistillationTrainer` (`knowledge_distillation.py:297`) — uses unsafe `scheduler.step()` without metric *(IDB 1.2 audit)*
+- [ ] **2.2d** Fix batch-level loss averaging in `ProgressiveResizingTrainer` and `DistillationTrainer` — should use sample-weighted `loss.item() * batch_size` instead of `total_loss / len(loader)` *(IDB 1.2 audit)*
 - [ ] **2.3** Implement mixin architecture: `MixedPrecisionMixin`, `PhysicsLossMixin`, `SpecAugmentMixin`
 - [ ] **2.4** Standardize checkpoint format with version field, model config, optimizer/scheduler/scaler states
 - [ ] **2.5** Consolidate loss functions into `training/losses/` subdirectory (classification, contrastive, physics, distillation)
@@ -85,7 +94,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [ ] **2.7** Remove deprecated `optimizers.py`, update all references to `cnn_optimizer.py`
 
 ### 2B: Model Architecture Cleanup
-- [ ] **2.8** Make `TSMixer`, `PatchTST`, `AttentionCNN1D`, `LightweightAttentionCNN`, `MultiScaleCNN1D`, `DilatedMultiScaleCNN` inherit `BaseModel`
+- [ ] **2.8** Make all models inherit `BaseModel` — `PatchTST` (`transformer/patchtst.py`), `TSMixer` (`transformer/tsmixer.py`), `AttentionCNN1D` + `LightweightAttentionCNN` (`cnn/attention_cnn.py`), `MultiScaleCNN1D` + `DilatedMultiScaleCNN` (`cnn/multi_scale_cnn.py`), `SignalEncoder` (`contrastive/signal_encoder.py`), `ContrastiveClassifier` (`contrastive/classifier.py`) — add `get_config()` to each
 - [ ] **2.9** Complete model registry in `model_factory.py` — register all ~55 models
 - [ ] **2.10** Add decorator-based auto-registration: `@register_model("name")`
 - [ ] **2.11** Add `export_onnx()` and `predict()` to `BaseModel`
@@ -93,13 +102,20 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 - [ ] **2.13** Consolidate 3 duplicate `PositionalEncoding` implementations in `transformer/`
 - [ ] **2.14** Remove `legacy_ensemble.py` (superseded by `ensemble/`)
 - [ ] **2.15** Replace all 45+ hardcoded magic numbers (`102400`, `20480`, `5000`) with constants from `utils/constants.py`
+- [ ] **2.8b** Audit and document `training/contrastive/` sub-module (5 files: `dataset.py`, `losses.py`, `physics_similarity.py`, `pretrainer.py`, `__init__.py`) — currently undocumented and not covered by any IDB report *(IDB 1.2 audit)*
 
 ### 2C: Data Pipeline Cleanup
 - [ ] **2.16** Split monolithic `signal_generator.py` (37KB, 935 lines) into focused modules
+- [ ] **2.16b** Delete duplicate `Compose` from `cnn_transforms.py` → import from `transforms.py`; add `__repr__` to canonical `Compose` *(IDB 3.2 audit)*
+- [ ] **2.16c** Merge duplicate dataloader modules `dataloader.py` + `cnn_dataloader.py` into single `dataloader.py` with all features (`DataLoaderConfig`, `InfiniteDataLoader`, `prefetch_to_device`, `compute_class_weights`) *(IDB 3.2 audit)*
+- [ ] **2.16d** Add missing exports to `data/__init__.py`: `RawSignalDataset`, `CachedRawSignalDataset`, `StreamingHDF5Dataset`, `ChunkedStreamingDataset`, `SpectrogramDataset`, `OnTheFlyTFRDataset`, `MultiTFRDataset`, `create_streaming_dataloaders`, `create_tfr_dataloaders`, CNN transforms *(IDB 3.2 audit)*
+- [ ] **2.16e** Replace `print()` with `logger.info()` in `tfr_dataset.py` (7 instances) *(IDB 3.2 audit)*
+- [x] **2.16f** Drop CWRU entirely — deleted orphaned `data/__pycache__/cwru_dataset.cpython-314.pyc`, removed all CWRU references from 12 files (`dataset_card.yaml`, `benchmarks/`, `data/` READMEs, `tests/`, `scripts/`, dashboard, docs), renamed `compare_with_cwru_benchmark` → `compare_with_journal_bearing_benchmark`, updated `dataset_card.yaml` class names to match actual hydrodynamic fault types
 - [ ] **2.17** Externalize physics magic numbers into `PhysicsConstants` dataclass or YAML
 - [ ] **2.18** Fix noise layer count docstring (7 → 8)
 - [ ] **2.19** Unify random state to `np.random` only (remove `random.random()` from augmentation)
 - [ ] **2.20** Add post-generation signal validation (NaN, Inf, std range checks)
+- [ ] **2.20b** Integrate `data_validator.py` into dataset `from_hdf5()` / `__init__()` methods — currently the 17KB validator exists but is never called from any dataset class *(IDB 3.2 audit)*
 
 ### 2D: Dashboard Cleanup
 - [ ] **2.21** Split `settings.py` (1,005 lines) into 6 modules under `layouts/settings/`
@@ -111,6 +127,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 
 ### 2E: Test Infrastructure
 - [ ] **2.27** Move all `if __name__ == "__main__": test_*()` code from production files to `tests/`
+- [ ] **2.27b** Fix undefined variable `signal_length` (should be `SIGNAL_LENGTH`) in embedded tests: `cnn_dataset.py:372,382`, `cnn_dataloader.py:295` — tests crash with `NameError` *(IDB 3.2 audit)*
 - [ ] **2.28** Populate `__init__.py` exports in `packages/core/training/`
 - [ ] **2.29** Add missing dashboard callback tests (tightly coupled UI/Service layer)
 
@@ -223,11 +240,19 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 **Goal**: Make the Docker/K8s deployment actually deployable.
 
 ### 6A: Docker Fix-ups
+- [ ] **6.0a** Fix dashboard `docker-compose.yml` — replace 3 hardcoded `lstm_password` occurrences with `${POSTGRES_PASSWORD:?...}` env-var refs *(IDB 4.2 audit P0)*
+- [ ] **6.0b** Remove `sys.path.insert()` from `api/main.py:28` — install packages properly or use relative imports *(IDB 4.2 audit P1)*
+- [ ] **6.0c** Create `.env.example` file documenting all required environment variables (`POSTGRES_PASSWORD`, `SECRET_KEY`, `CORS_ORIGINS`, etc.) *(IDB 4.2 audit P2)*
 - [ ] **6.1** Create `nginx.conf` (referenced by `docker-compose.yml` but doesn't exist)
 - [ ] **6.2** Create `ssl/` directory structure with self-signed cert generation script
 - [ ] **6.3** Harden dashboard `Dockerfile` — add non-root user, health check, multi-stage build
 - [ ] **6.4** Add CPU/memory resource limits to dashboard `docker-compose.yml`
 - [ ] **6.5** Verify `docker-compose up` actually starts all 7 services cleanly
+- [ ] **6.5a** Fix ONNX static quantization stub (`onnx_export.py:474-476`) — either implement calibration-based static quantization or raise `NotImplementedError` instead of silently returning FP32 model *(IDB 4.2 audit P1)*
+- [ ] **6.5b** Fix `benchmark_inference()` in `inference.py:474-479` — currently skips PyTorch backend; implement `model_class` parameter support *(IDB 4.2 audit P1)*
+- [ ] **6.5c** Add `weights_only=True` to all `torch.load()` calls in `quantization.py:456` and `inference.py:106` — security fix for arbitrary code execution via pickle *(IDB 4.2 audit P2)*
+- [ ] **6.5d** Replace deprecated `onnx.optimizer` usage (`onnx_export.py:225,236,250`) with separate `onnxoptimizer` package *(IDB 4.2 audit P2)*
+- [ ] **6.5e** Fix `optimize_for_deployment()` parameter shadowing (`model_optimization.py:183-189`) — `pruning_amount` parameter is overwritten by `optimization_level`; either remove the parameter or respect it as an override *(IDB 4.2 audit P2)*
 
 ### 6B: Kubernetes & Helm
 - [ ] **6.6** Add GPU resource requests (`nvidia.com/gpu`) to K8s deployment
@@ -245,6 +270,7 @@ The 18 IDB teams are already defined in `config/docs/idb_reports/`:
 
 ### 6D: CI/CD Verification
 - [ ] **6.16** Verify all 6 GitHub Actions workflows pass on current codebase
+- [ ] **6.16a** Update deprecated GitHub Actions versions: `actions/checkout@v3`→`v4`, `actions/setup-python@v4`→`v5`, replace archived `actions/create-release@v1` with `softprops/action-gh-release` *(IDB 4.2 audit P2)*
 - [ ] **6.17** Fix any broken workflow steps
 - [ ] **6.18** Add workflow for automated model testing on PR
 

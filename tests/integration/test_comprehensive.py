@@ -302,26 +302,8 @@ class TestStreamingDataloaderIntegration:
         print(f"\n  ✓ Trained {len(losses)} batches with streaming dataloader")
 
 
-@pytest.mark.integration
-class TestCWRUDatasetIntegration:
-    """Test CWRU dataset with training pipeline."""
-    
-    def test_cwru_dataset_creation(self):
-        """Test CWRU dataset can be created with mock data."""
-        from data.cwru_dataset import segment_signal, load_cwru_mat_file
-        
-        # Test segmentation
-        signal = np.random.randn(12000).astype(np.float32)
-        segments = segment_signal(signal, segment_length=2048, overlap=0.5)
-        
-        assert segments.shape[0] > 0
-        assert segments.shape[1] == 2048
-        
-        # Verify normalization
-        for segment in segments[:5]:
-            assert np.abs(np.mean(segment)) < 0.1  # Approximately zero mean
-        
-        print(f"\n  ✓ Segmented signal into {segments.shape[0]} segments")
+
+
 
 
 @pytest.mark.integration  

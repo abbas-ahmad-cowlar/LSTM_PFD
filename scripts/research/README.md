@@ -71,7 +71,7 @@ python scripts/research/xai_metrics.py
 
 ### Using Real Data
 
-Scripts that accept `--data-path` can use the CWRU bearing dataset:
+Scripts that accept `--data-path` can use the generated bearing dataset:
 
 ```bash
 python scripts/research/ablation_study.py --data-path data/processed/signals_cache.h5 --epochs 100

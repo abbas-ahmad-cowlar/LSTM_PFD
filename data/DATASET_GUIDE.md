@@ -8,8 +8,7 @@ Use this decision tree to select the appropriate class for your workflow:
 
 ```mermaid
 flowchart TD
-    A{Data source?} -->|CWRU .mat files| B[CWRUDataset]
-    A -->|Precomputed spectrograms .npz| C[SpectrogramDataset]
+    A{Data source?} -->|Precomputed spectrograms .npz| C[SpectrogramDataset]
     A -->|HDF5 signals| D{Fits in RAM?}
     A -->|SignalGenerator output| E{Need augmentation?}
     A -->|NumPy arrays| F{CNN or LSTM?}
@@ -39,7 +38,7 @@ flowchart TD
 | CNN training (large files)      | `CachedRawSignalDataset`  | Disk-streaming    | HDF5                  |
 | Memory-efficient streaming      | `StreamingHDF5Dataset`    | Streaming         | HDF5                  |
 | Better I/O on HDD/network       | `ChunkedStreamingDataset` | Chunked-streaming | HDF5                  |
-| CWRU benchmark                  | `CWRUDataset`             | In-memory         | .mat files            |
+
 | Precomputed spectrograms        | `SpectrogramDataset`      | In-memory         | .npz files            |
 | On-the-fly TFR                  | `OnTheFlyTFRDataset`      | On-the-fly        | HDF5 signals          |
 | Multi-stream TFR                | `MultiTFRDataset`         | On-the-fly        | HDF5 signals          |
@@ -267,17 +266,6 @@ dataset.h5
     └── test_samples       → int
 ```
 
-### CWRU .mat File Structure
-
-CWRU files contain MATLAB arrays. The loader in `cwru_dataset.py` searches for keys containing:
-
-- `DE_time` → Drive End accelerometer data (primary)
-- `FE_time` → Fan End accelerometer data
-- `BA_time` → Base accelerometer data
-- `RPM` → Shaft speed
-
-Sampling rate: **12,000 Hz** (12 kHz).
-
 ### Spectrogram .npz Structure
 
 Consumed by `SpectrogramDataset`:
@@ -298,7 +286,7 @@ spectrograms.npz
 | `RawSignalDataset`        | `(1, T)`                          | Channel-first for CNN             |
 | `CachedRawSignalDataset`  | `(1, T)`                          | Channel-first for CNN             |
 | `StreamingHDF5Dataset`    | `(T,)`                            | Raw from HDF5                     |
-| `CWRUDataset`             | `(T,)` where T = `segment_length` | Segmented windows                 |
+
 | `SpectrogramDataset`      | `(C, H, W)`                       | 2D image-like                     |
 | `OnTheFlyTFRDataset`      | `(C, H, W)`                       | Computed on-the-fly               |
 
