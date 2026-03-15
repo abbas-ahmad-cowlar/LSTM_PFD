@@ -21,22 +21,12 @@ from .base_trainer import BaseTrainer
 logger = get_logger(__name__)
 
 
-class DistillationLoss(nn.Module):
-    """
-    Combined distillation + cross-entropy loss.
+# Import from canonical location
+from .losses.distillation import DistillationLoss  # noqa: F811
 
-    L = α · T² · KL(soft_student ‖ soft_teacher) + (1 - α) · CE(student, labels)
 
-    Args:
-        temperature: Softmax temperature for soft targets
-        alpha: Weight for distillation loss (1 - alpha → hard-label loss)
-    """
-
-    def __init__(self, temperature: float = 4.0, alpha: float = 0.7):
-        super().__init__()
-        self.temperature = temperature
-        self.alpha = alpha
-        self.ce_loss = nn.CrossEntropyLoss()
+class _DistillationLossCompat(DistillationLoss):
+    """Backward-compat alias — DistillationLoss is now in training.losses.distillation."""
 
     def forward(
         self,

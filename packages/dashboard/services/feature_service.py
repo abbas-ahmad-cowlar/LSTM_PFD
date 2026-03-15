@@ -9,6 +9,7 @@ import h5py
 from database.connection import get_db_session
 from models.dataset import Dataset
 from utils.logger import setup_logger
+from utils.constants import SAMPLING_RATE
 
 logger = setup_logger(__name__)
 
@@ -57,7 +58,7 @@ class FeatureService:
 
                 # Get sampling rate
                 config = config or {}
-                fs = config.get('sampling_rate', 20480)
+                fs = config.get('sampling_rate', SAMPLING_RATE)
 
                 start_time = time.time()
 

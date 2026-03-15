@@ -22,7 +22,11 @@ from collections import Counter
 
 from utils.logging import get_logger
 from data.signal_generator import SignalGenerator
-from data.augmentation import SignalAugmenter, random_augment
+try:
+    from data.augmentation import SignalAugmenter, random_augment
+except ImportError:
+    SignalAugmenter = None
+    random_augment = None
 from config.data_config import DataConfig
 from data.signal_validation import validate_batch
 

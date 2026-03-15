@@ -184,3 +184,8 @@ FILES_PER_MINUTE_IMPORT = 10  # Estimated files imported per minute
 # ============================================================================
 DEFAULT_PAGE_SIZE = 20
 
+# ============================================================================
+# Dashboard Refresh Intervals (milliseconds)
+# ============================================================================
+REFRESH_INTERVAL_MS = 5000
+

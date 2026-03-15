@@ -3,7 +3,11 @@
 from .signal_generator import SignalGenerator, FaultModeler, NoiseGenerator, SignalMetadata
 from .matlab_importer import MatlabImporter, MatlabSignalData, load_matlab_reference
 from .data_validator import SignalValidator, ValidationResult, validate_against_matlab
-from .augmentation import SignalAugmenter, random_augment
+try:
+    from .augmentation import SignalAugmenter, random_augment
+except ImportError:
+    SignalAugmenter = None
+    random_augment = None
 from .dataset import (
     BearingFaultDataset,
     AugmentedBearingDataset,

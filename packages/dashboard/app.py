@@ -66,8 +66,8 @@ app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     dcc.Store(id='session-store', storage_type='session'),
     dcc.Store(id='comparison-cart', storage_type='session', data=[]),
-    dcc.Interval(id='refresh-interval', interval=5000, n_intervals=0),
-    dcc.Interval(id='system-health-interval', interval=5000, n_intervals=0),
+    dcc.Interval(id='refresh-interval', interval=REFRESH_INTERVAL_MS, n_intervals=0),
+    dcc.Interval(id='system-health-interval', interval=REFRESH_INTERVAL_MS, n_intervals=0),
     
     # Sidebar - fixed position, outside content flow
     create_sidebar(),
@@ -93,7 +93,7 @@ app.layout = html.Div([
 
 # Register all callbacks
 from callbacks import register_all_callbacks
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE, REFRESH_INTERVAL_MS
 register_all_callbacks(app)
 
 if __name__ == '__main__':
