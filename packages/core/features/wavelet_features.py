@@ -166,7 +166,7 @@ def compute_quefrency_centroid(signal: np.ndarray, fs: float) -> float:
     return centroid
 
 
-def extract_wavelet_features(signal: np.ndarray, fs: float = 20480) -> Dict[str, float]:
+def extract_wavelet_features(signal: np.ndarray, fs: float = SAMPLING_RATE) -> Dict[str, float]:
     """
     Extract all 7 wavelet-based features.
 
