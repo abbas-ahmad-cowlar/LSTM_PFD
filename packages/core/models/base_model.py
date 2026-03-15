@@ -253,7 +253,7 @@ class BaseModel(nn.Module, ABC):
         if device is None:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-        checkpoint = torch.load(path, map_location=device)
+        checkpoint = torch.load(path, map_location=device, weights_only=True)
 
         # Create model instance (subclass must handle config)
         # This is a placeholder - actual instantiation depends on subclass

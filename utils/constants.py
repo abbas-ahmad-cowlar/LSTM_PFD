@@ -620,6 +620,21 @@ DEFAULT_LOCAL_HOST: str = "localhost"  # Default hostname
 
 
 # ==============================================================================
+# PHYSICS CONSTANTS (re-exported from utils.physics_constants)
+# ==============================================================================
+
+from utils.physics_constants import (  # noqa: E402
+    BearingPhysics,
+    ViscosityModel,
+    FaultAmplitudes,
+    NoiseDefaults,
+    BEARING_PHYSICS,
+    VISCOSITY_MODEL,
+    FAULT_AMPLITUDES,
+    NOISE_DEFAULTS,
+)
+
+# ==============================================================================
 # VERSION INFO
 # ==============================================================================
 
