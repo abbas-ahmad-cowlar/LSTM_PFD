@@ -186,8 +186,8 @@ class TSMixer(BaseModel):
     
     def __init__(
         self,
-        num_classes: int = 11,
-        input_length: int = 102400,
+        num_classes: int = NUM_CLASSES,
+        input_length: int = SIGNAL_LENGTH,
         n_features: int = 1,
         n_blocks: int = 4,
         d_model: int = 256,
@@ -319,8 +319,8 @@ def test_tsmixer():
     
     # Create model
     model = TSMixer(
-        num_classes=11,
-        input_length=102400,
+        num_classes=NUM_CLASSES,
+        input_length=SIGNAL_LENGTH,
         n_features=1,
         n_blocks=4,
         d_model=256,
@@ -333,7 +333,7 @@ def test_tsmixer():
     print(f"Reduced sequence length: {model.seq_len}")
     
     # Test forward pass
-    x = torch.randn(4, 1, 102400)
+    x = torch.randn(4, 1, SIGNAL_LENGTH)
     
     model.eval()
     with torch.no_grad():
@@ -342,7 +342,7 @@ def test_tsmixer():
     print(f"\nInput shape:  {x.shape}")
     print(f"Output shape: {output.shape}")
     
-    assert output.shape == (4, 11), f"Expected (4, 11), got {output.shape}"
+    assert output.shape == (4, NUM_CLASSES), f"Expected (4, {NUM_CLASSES}), got {output.shape}"
     
     # Test feature extraction
     features = model.get_features(x)
