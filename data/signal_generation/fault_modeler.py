@@ -259,3 +259,227 @@ class FaultModeler:
 
         else:
             raise ValueError(f"Unknown fault type: {fault_type}")
+
+    # ── Advanced Physics Effects (V2) ─────────────────────────────────
+
+    def apply_advanced_physics(
+        self,
+        x: np.ndarray,
+        omega: float,
+        Omega: float,
+        temperature_C: float,
+    ) -> np.ndarray:
+        """
+        Apply all enabled advanced physics effects to a signal.
+
+        Args:
+            x: Input signal [N,]
+            omega: Angular velocity (rad/s)
+            Omega: Rotational speed (Hz)
+            temperature_C: Operating temperature (°C)
+
+        Returns:
+            Modified signal with advanced physics applied
+        """
+        adv = self.config.advanced_physics
+
+        if adv.speed_transients:
+            x = self._apply_speed_transient(x, omega)
+
+        if adv.speed_fluctuation:
+            x = self._apply_speed_fluctuation(x, omega, adv.speed_fluctuation_pct,
+                                               adv.speed_fluctuation_bandwidth_hz)
+
+        if adv.rotor_dynamics:
+            x = self._apply_rotor_dynamics(x, Omega, adv.critical_speed_hz,
+                                            adv.damping_ratio)
+
+        if adv.cross_coupling:
+            x = self._apply_cross_coupling(x, omega, adv.coupling_ratio,
+                                            adv.phase_offset_deg)
+
+        if adv.thermal_growth:
+            x = self._apply_thermal_growth(x, temperature_C,
+                                            adv.thermal_growth_rate,
+                                            adv.thermal_time_constant_s)
+
+        if adv.axial_vibration:
+            x = self._apply_axial_vibration(x, omega, adv.axial_coupling_ratio,
+                                             adv.axial_thrust_freq_ratio)
+
+        return x
+
+    def _apply_speed_transient(
+        self,
+        x: np.ndarray,
+        omega: float,
+    ) -> np.ndarray:
+        """Apply run-up / coast-down speed profile.
+
+        Creates a linear or exponential frequency sweep in the first
+        and/or last portion of the signal, simulating machine startup
+        or shutdown transients.
+        """
+        adv = self.config.advanced_physics
+        ramp_samples = int(adv.speed_ramp_duration_s * self.fs)
+        ramp_samples = min(ramp_samples, self.N // 4)  # Max 25% of signal
+
+        if ramp_samples < 10:
+            return x
+
+        x_out = x.copy()
+
+        # Decide transient type: 0=run-up, 1=coast-down, 2=both
+        transient_type = np.random.randint(0, 3)
+
+        if adv.speed_ramp_type == 'exponential':
+            ramp_up = 1 - np.exp(-3 * np.linspace(0, 1, ramp_samples))
+            ramp_down = np.exp(-3 * np.linspace(0, 1, ramp_samples))
+        else:  # linear
+            ramp_up = np.linspace(0.1, 1.0, ramp_samples)
+            ramp_down = np.linspace(1.0, 0.1, ramp_samples)
+
+        if transient_type in (0, 2):  # run-up
+            # Instantaneous frequency sweep: omega varies during ramp
+            phase_integral = np.cumsum(omega * ramp_up) / self.fs
+            freq_mod = np.sin(phase_integral)
+            # Amplitude ramp
+            x_out[:ramp_samples] *= ramp_up
+            # Add swept tone component
+            x_out[:ramp_samples] += 0.05 * ramp_up * freq_mod
+
+        if transient_type in (1, 2):  # coast-down
+            phase_integral = np.cumsum(omega * ramp_down) / self.fs
+            freq_mod = np.sin(phase_integral)
+            x_out[-ramp_samples:] *= ramp_down
+            x_out[-ramp_samples:] += 0.05 * ramp_down * freq_mod
+
+        return x_out
+
+    def _apply_speed_fluctuation(
+        self,
+        x: np.ndarray,
+        omega: float,
+        fluctuation_pct: float,
+        bandwidth_hz: float,
+    ) -> np.ndarray:
+        """Apply realistic speed fluctuation via frequency modulation.
+
+        Models real-world speed variations from load transients, controller
+        response, and mechanical coupling effects. Implemented as
+        low-pass-filtered random walk modulating instantaneous frequency.
+        """
+        # Generate random walk for speed variation
+        speed_noise = np.cumsum(np.random.randn(self.N)) / np.sqrt(self.N)
+        speed_noise = speed_noise / (np.std(speed_noise) + 1e-10) * fluctuation_pct
+
+        # Low-pass filter to bandwidth
+        from scipy.signal import butter, filtfilt
+        nyq = self.fs / 2
+        if bandwidth_hz < nyq:
+            b, a = butter(2, bandwidth_hz / nyq, btype='low')
+            speed_noise = filtfilt(b, a, speed_noise)
+
+        # Apply as amplitude modulation (simplified frequency modulation)
+        modulation = 1 + speed_noise
+        return x * modulation
+
+    def _apply_rotor_dynamics(
+        self,
+        x: np.ndarray,
+        Omega: float,
+        critical_speed_hz: float,
+        damping_ratio: float,
+    ) -> np.ndarray:
+        """Apply critical speed resonance amplification.
+
+        When operating speed is near a critical speed, vibration amplitude
+        is amplified by the resonance transfer function:
+            H(f) = 1 / sqrt((1 - r²)² + (2·ζ·r)²)
+        where r = f/f_critical and ζ is the damping ratio.
+        """
+        r = Omega / critical_speed_hz
+        # Transfer function magnitude
+        denominator = np.sqrt((1 - r**2)**2 + (2 * damping_ratio * r)**2)
+        amplification = 1.0 / max(denominator, 0.1)  # Cap at 10x
+
+        # Also add resonance-excited harmonics
+        resonance_component = (
+            0.05 * (amplification - 1) *
+            np.sin(2 * np.pi * critical_speed_hz * self.t +
+                   np.random.rand() * 2 * np.pi)
+        )
+
+        return x * min(amplification, 5.0) + resonance_component
+
+    def _apply_cross_coupling(
+        self,
+        x: np.ndarray,
+        omega: float,
+        coupling_ratio: float,
+        phase_offset_deg: float,
+    ) -> np.ndarray:
+        """Apply cross-coupling stiffness effects.
+
+        Hydrodynamic bearings have asymmetric stiffness matrices where
+        the cross-coupled stiffness Kxy creates a force perpendicular
+        to displacement. This adds a 90°-phase-shifted component.
+        """
+        phase_rad = np.deg2rad(phase_offset_deg)
+
+        # Extract dominant 1X component and create cross-coupled version
+        # Use Hilbert transform for phase shifting
+        from scipy.signal import hilbert
+        analytic = hilbert(x)
+        x_shifted = np.real(analytic * np.exp(1j * phase_rad))
+
+        return x + coupling_ratio * x_shifted
+
+    def _apply_thermal_growth(
+        self,
+        x: np.ndarray,
+        temperature_C: float,
+        growth_rate: float,
+        time_constant_s: float,
+    ) -> np.ndarray:
+        """Apply thermal growth effects.
+
+        Shaft thermal expansion changes the bearing clearance over time,
+        causing a progressive amplitude drift. Modeled as an exponential
+        approach to steady-state thermal equilibrium.
+        """
+        # Temperature rise profile (exponential approach)
+        delta_T = temperature_C - 40.0  # Difference from cold start
+        thermal_profile = delta_T * (1 - np.exp(-self.t / time_constant_s))
+
+        # Clearance change → amplitude scaling
+        # As clearance decreases, vibration increases
+        clearance_factor = 1 + growth_rate * thermal_profile
+        return x * clearance_factor
+
+    def _apply_axial_vibration(
+        self,
+        x: np.ndarray,
+        omega: float,
+        coupling_ratio: float,
+        thrust_freq_ratio: float,
+    ) -> np.ndarray:
+        """Apply axial vibration component.
+
+        Real bearings transmit axial vibration through thrust faces
+        and coupling misalignment. This adds an axial component
+        proportional to radial amplitude at thrust-related frequencies.
+        """
+        axial_freq = omega * thrust_freq_ratio
+        phase = np.random.rand() * 2 * np.pi
+
+        # Axial component: proportional to RMS of radial signal
+        rms = np.sqrt(np.mean(x**2)) + 1e-10
+        axial = coupling_ratio * rms * np.sin(axial_freq * self.t + phase)
+
+        # Add 2X axial harmonic (common in angular misalignment)
+        axial += 0.3 * coupling_ratio * rms * np.sin(
+            2 * axial_freq * self.t + np.random.rand() * 2 * np.pi
+        )
+
+        return x + axial

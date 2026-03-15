@@ -188,6 +188,12 @@ class SignalGenerator:
         )
         x += x_fault
 
+        # Apply advanced physics effects (V2 — only if any toggles are on)
+        if self.config.advanced_physics.get_enabled_effects():
+            x = self.fault_modeler.apply_advanced_physics(
+                x, omega, Omega, temperature_C
+            )
+
         # Data augmentation
         aug_params = self._apply_augmentation(x, is_augmented)
 
@@ -219,7 +225,7 @@ class SignalGenerator:
             augmentation=aug_params,
             noise_sources=noise_sources_applied,
             generation_timestamp=time.strftime("%Y-%m-%d %H:%M:%S"),
-            generator_version="Python_v1.0",
+            generator_version="Python_v2.0",
             rng_seed=self.config.rng_seed,
             is_overlapping_fault='mixed_' in fault
         )
@@ -521,6 +527,16 @@ class SignalGenerator:
         # Create HDF5 file
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
+        # ── Config Versioning prep ────────────────────────────────────
+        import hashlib
+        config_dict = asdict(self.config)
+        config_json_str = json.dumps(config_dict, default=str, sort_keys=True)
+        config_hash = hashlib.md5(config_json_str.encode()).hexdigest()[:8]
+        version_tag = getattr(
+            self, '_version_tag',
+            f"v{datetime.now().strftime('%Y%m%d_%H%M')}"
+        )
+
         with h5py.File(output_path, 'w') as f:
             # Store global attributes
             f.attrs['num_classes'] = NUM_CLASSES
@@ -568,6 +584,34 @@ class SignalGenerator:
                 metadata_json = [json.dumps(asdict(m)) for m in metadata]
                 dt = h5py.string_dtype(encoding='utf-8')
                 f.create_dataset('metadata', data=metadata_json, dtype=dt)
+
+            # ── Config Versioning (V2) ────────────────────────────────
+            f.attrs['config_json'] = config_json_str
+            f.attrs['config_hash'] = config_hash
+            f.attrs['config_version'] = version_tag
+            f.attrs['generator_version'] = 'Python_v2.0'
+            f.attrs['advanced_physics_effects'] = json.dumps(
+                self.config.advanced_physics.get_enabled_effects()
+            )
+
+        # Save standalone config JSON sidecar for easy inspection
+        config_sidecar = output_path.parent / 'dataset_config.json'
+        with open(config_sidecar, 'w') as cf:
+            json.dump({
+                'config': config_dict,
+                'config_hash': config_hash,
+                'version_tag': version_tag,
+                'generation_timestamp': datetime.now().isoformat(),
+                'generator_version': 'Python_v2.0',
+                'advanced_physics_enabled': self.config.advanced_physics.get_enabled_effects(),
+                'total_signals': len(signals),
+                'split_sizes': {
+                    'train': len(X_train),
+                    'val': len(X_val),
+                    'test': len(X_test),
+                },
+            }, cf, indent=2, default=str)
+        logger.info(f"Config saved: {config_sidecar}")
 
         logger.info(
             f"Created HDF5 with splits - Train: {len(X_train)}, "
