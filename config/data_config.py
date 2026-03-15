@@ -243,6 +243,76 @@ class TransientConfig(BaseConfig):
 
 
 @dataclass
+class AdvancedPhysicsConfig(BaseConfig):
+    """Advanced physics effects (V2).
+
+    All toggles default to False to preserve backward compatibility.
+    Enable selectively for higher-fidelity signal generation.
+    """
+
+    # Run-up / coast-down speed profiles
+    speed_transients: bool = False
+    speed_ramp_duration_s: float = 1.0  # Duration of ramp-up/down (seconds)
+    speed_ramp_type: str = 'linear'  # 'linear' or 'exponential'
+
+    # Realistic speed fluctuation (random walk around nominal)
+    speed_fluctuation: bool = False
+    speed_fluctuation_pct: float = 0.03  # 3% std deviation
+    speed_fluctuation_bandwidth_hz: float = 5.0  # Low-pass cutoff for fluctuation
+
+    # Rotor dynamics (critical speed resonance amplification)
+    rotor_dynamics: bool = False
+    critical_speed_hz: float = 45.0  # 1st forward critical speed
+    damping_ratio: float = 0.05  # Modal damping ratio
+    second_critical_hz: float = 120.0  # 2nd critical (optional)
+
+    # Cross-coupling stiffness (asymmetric hydrodynamic bearing)
+    cross_coupling: bool = False
+    coupling_ratio: float = 0.3  # Kxy/Kxx ratio
+    phase_offset_deg: float = 90.0  # Cross-coupling phase
+
+    # Thermal growth (shaft expansion → clearance change over time)
+    thermal_growth: bool = False
+    thermal_growth_rate: float = 0.001  # Clearance change per °C per second
+    thermal_time_constant_s: float = 300.0  # Thermal time constant
+
+    # Axial vibration component
+    axial_vibration: bool = False
+    axial_coupling_ratio: float = 0.15  # Fraction of radial amplitude
+    axial_thrust_freq_ratio: float = 1.0  # Multiple of shaft speed
+
+    def get_schema(self) -> Dict[str, Any]:
+        return {
+            "type": "object",
+            "properties": {
+                "speed_transients": {"type": "boolean"},
+                "speed_fluctuation": {"type": "boolean"},
+                "rotor_dynamics": {"type": "boolean"},
+                "cross_coupling": {"type": "boolean"},
+                "thermal_growth": {"type": "boolean"},
+                "axial_vibration": {"type": "boolean"},
+            }
+        }
+
+    def get_enabled_effects(self) -> List[str]:
+        """Return list of currently enabled advanced physics effects."""
+        effects = []
+        if self.speed_transients:
+            effects.append('speed_transients')
+        if self.speed_fluctuation:
+            effects.append('speed_fluctuation')
+        if self.rotor_dynamics:
+            effects.append('rotor_dynamics')
+        if self.cross_coupling:
+            effects.append('cross_coupling')
+        if self.thermal_growth:
+            effects.append('thermal_growth')
+        if self.axial_vibration:
+            effects.append('axial_vibration')
+        return effects
+
+
+@dataclass
 class AugmentationConfig(BaseConfig):
     """Data augmentation configuration."""
 
@@ -287,6 +357,7 @@ class DataConfig(BaseConfig):
     noise: NoiseConfig = field(default_factory=NoiseConfig)
     operating: OperatingConfig = field(default_factory=OperatingConfig)
     physics: PhysicsConfig = field(default_factory=PhysicsConfig)
+    advanced_physics: AdvancedPhysicsConfig = field(default_factory=AdvancedPhysicsConfig)
     transient: TransientConfig = field(default_factory=TransientConfig)
     augmentation: AugmentationConfig = field(default_factory=AugmentationConfig)
 

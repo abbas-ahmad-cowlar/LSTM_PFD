@@ -153,6 +153,53 @@ class NoiseDefaults:
 
 
 # ---------------------------------------------------------------------------
+# Rotor dynamics parameters (V2 advanced physics)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class RotorDynamics:
+    """Rotor dynamics parameters for critical speed and resonance effects.
+
+    Used by AdvancedPhysicsConfig when rotor_dynamics is enabled.
+    Values are typical for mid-size industrial turbomachinery (API 684).
+    """
+
+    first_critical_hz: float = 45.0
+    """First forward critical speed (Hz)."""
+
+    second_critical_hz: float = 120.0
+    """Second forward critical speed (Hz)."""
+
+    damping_ratio: float = 0.05
+    """Modal damping ratio (dimensionless, typically 0.02-0.10)."""
+
+    amplification_factor: float = 10.0
+    """Peak amplification at critical speed (Q = 1/(2*zeta))."""
+
+    resonance_bandwidth_hz: float = 5.0
+    """Half-power bandwidth around critical speed."""
+
+    @property
+    def quality_factor(self) -> float:
+        """Quality factor Q = 1/(2*zeta)."""
+        return 1.0 / (2.0 * self.damping_ratio)
+
+
+@dataclass(frozen=True)
+class CrossCouplingDefaults:
+    """Default cross-coupling stiffness parameters for hydrodynamic bearings."""
+
+    kxy_ratio: float = 0.30
+    """Cross-coupled stiffness ratio Kxy/Kxx (typically 0.2-0.5)."""
+
+    phase_offset_deg: float = 90.0
+    """Phase offset between direct and cross-coupled components."""
+
+    damping_cross_ratio: float = 0.10
+    """Cross-coupled damping ratio Cxy/Cxx."""
+
+
+# ---------------------------------------------------------------------------
 # Convenience singletons
 # ---------------------------------------------------------------------------
 
@@ -160,3 +207,5 @@ BEARING_PHYSICS = BearingPhysics()
 VISCOSITY_MODEL = ViscosityModel()
 FAULT_AMPLITUDES = FaultAmplitudes()
 NOISE_DEFAULTS = NoiseDefaults()
+ROTOR_DYNAMICS = RotorDynamics()
+CROSS_COUPLING = CrossCouplingDefaults()
