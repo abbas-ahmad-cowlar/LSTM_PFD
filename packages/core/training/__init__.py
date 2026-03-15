@@ -1,4 +1,31 @@
 """Training infrastructure for deep learning models."""
 
-# Will be populated as training modules are created
-__all__ = []
+from .trainer import Trainer, TrainingState
+from .cnn_trainer import CNNTrainer
+from .pinn_trainer import PINNTrainer
+from .spectrogram_trainer import SpectrogramTrainer
+from .progressive_resizing import ProgressiveResizingTrainer, ResizableSignalDataset
+from .knowledge_distillation import DistillationTrainer, DistillationLoss
+from .callbacks import CallbackManager, EarlyStoppingCallback, ModelCheckpointCallback
+from .losses import FocalLoss, LabelSmoothingLoss
+
+__all__ = [
+    # Core Trainers
+    'Trainer',
+    'TrainingState',
+    'CNNTrainer',
+    'PINNTrainer',
+    'SpectrogramTrainer',
+    'ProgressiveResizingTrainer',
+    'DistillationTrainer',
+    # Support Classes
+    'ResizableSignalDataset',
+    'DistillationLoss',
+    # Callbacks
+    'CallbackManager',
+    'EarlyStoppingCallback',
+    'ModelCheckpointCallback',
+    # Loss Functions
+    'FocalLoss',
+    'LabelSmoothingLoss',
+]
