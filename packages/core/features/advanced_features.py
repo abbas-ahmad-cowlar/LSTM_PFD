@@ -24,7 +24,7 @@ from scipy import signal as sp_signal
 from scipy.stats import entropy
 
 
-def extract_cwt_features(signal_data: np.ndarray, fs: float = 20480) -> Dict[str, float]:
+def extract_cwt_features(signal_data: np.ndarray, fs: float = SAMPLING_RATE) -> Dict[str, float]:
     """
     Extract Continuous Wavelet Transform features.
 
@@ -290,7 +290,7 @@ def extract_nonlinear_features(signal_data: np.ndarray) -> Dict[str, float]:
     return features
 
 
-def extract_advanced_features(signal_data: np.ndarray, fs: float = 20480) -> Dict[str, float]:
+def extract_advanced_features(signal_data: np.ndarray, fs: float = SAMPLING_RATE) -> Dict[str, float]:
     """
     Extract all 16 advanced features.
 
