@@ -22,17 +22,10 @@ Usage:
     )
 """
 
-import sys
-from pathlib import Path
-
 import torch
 import torch.nn as nn
 import numpy as np
 from torch.utils.data import DataLoader
-
-# Add project root to path
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
 
 # ---------------------------------------------------------------------------
 # Re-export from canonical packages (classes were extracted from this file)
