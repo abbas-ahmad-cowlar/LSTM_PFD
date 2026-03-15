@@ -238,40 +238,7 @@ class AddGaussianNoise:
         return signal + noise
 
 
-class Compose:
-    """
-    Compose multiple transforms into a single pipeline.
-
-    Args:
-        transforms: List of transform objects
-
-    Example:
-        >>> transform = Compose([
-        ...     Normalize1D(),
-        ...     RandomAmplitudeScale(p=0.5),
-        ...     AddGaussianNoise(p=0.3),
-        ...     ToTensor1D()
-        ... ])
-        >>> signal = np.random.randn(SIGNAL_LENGTH)
-        >>> tensor = transform(signal)
-    """
-
-    def __init__(self, transforms: list):
-        self.transforms = transforms
-
-    def __call__(self, signal):
-        """Apply all transforms sequentially."""
-        for transform in self.transforms:
-            signal = transform(signal)
-        return signal
-
-    def __repr__(self):
-        format_string = self.__class__.__name__ + '('
-        for t in self.transforms:
-            format_string += '\n'
-            format_string += f'    {t}'
-        format_string += '\n)'
-        return format_string
+from data.transforms import Compose  # noqa: F401 — canonical source
 
 
 def get_train_transforms(augment: bool = True) -> Compose:

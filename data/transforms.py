@@ -51,6 +51,14 @@ class Compose:
             signal = transform(signal)
         return signal
 
+    def __repr__(self):
+        format_string = self.__class__.__name__ + '('
+        for t in self.transforms:
+            format_string += '\n'
+            format_string += f'    {t}'
+        format_string += '\n)'
+        return format_string
+
 
 class Normalize:
     """
