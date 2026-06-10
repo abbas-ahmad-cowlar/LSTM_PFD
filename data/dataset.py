@@ -604,3 +604,48 @@ def collate_fn_with_metadata(batch: List[Tuple]) -> Dict[str, torch.Tensor]:
         'signals': signals,
         'labels': labels
     }
+
+
+class WindowedView(Dataset):
+    """
+    Non-overlapping window view over a record-level dataset (Dataset v2 §A).
+
+    Splits each record's signal into ``num_windows`` equal windows and exposes
+    them as individual samples. Group-awareness is inherent: window i of
+    record r carries r's label and lives in whatever split r belongs to —
+    construct this view per split and windows can never cross splits.
+
+    Args:
+        base: A dataset returning (signal[L], label) — e.g. BearingFaultDataset.
+        window_length: Samples per window (e.g. 20480 = 1 s @ 20480 Hz).
+
+    Example:
+        >>> train = BearingFaultDataset.from_hdf5(path, split='train')
+        >>> train_windows = WindowedView(train, window_length=20480)
+        >>> len(train_windows) == len(train) * 5  # for 5 s records
+    """
+
+    def __init__(self, base: Dataset, window_length: int):
+        self.base = base
+        self.window_length = window_length
+
+        first_signal, _ = base[0]
+        record_length = first_signal.shape[-1]
+        if window_length > record_length:
+            raise ValueError(
+                f"window_length {window_length} exceeds record length {record_length}"
+            )
+        self.windows_per_record = record_length // window_length
+
+    def __len__(self) -> int:
+        return len(self.base) * self.windows_per_record
+
+    def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
+        record_idx, window_idx = divmod(idx, self.windows_per_record)
+        signal, label = self.base[record_idx]
+        start = window_idx * self.window_length
+        return signal[..., start:start + self.window_length], label
+
+    def record_index(self, idx: int) -> int:
+        """Map a window index back to its source record (for leakage checks)."""
+        return idx // self.windows_per_record

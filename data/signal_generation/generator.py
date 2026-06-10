@@ -150,7 +150,8 @@ class SignalGenerator:
     def generate_single_signal(
         self,
         fault: str,
-        is_augmented: bool = False
+        is_augmented: bool = False,
+        severity_override: Optional[str] = None,
     ) -> Tuple[np.ndarray, SignalMetadata]:
         """
         Generate a single fault signal with metadata.
@@ -158,12 +159,17 @@ class SignalGenerator:
         Args:
             fault: Fault type name
             is_augmented: Whether this is an augmented sample
+            severity_override: Force a specific severity level (one of
+                config.severity.levels) instead of random choice. Used for
+                deterministic severity stratification (dataset v2).
 
         Returns:
             Tuple of (signal array, metadata object)
         """
         # Severity configuration
-        severity, severity_factor, severity_curve, has_evolution = self._configure_severity(fault)
+        severity, severity_factor, severity_curve, has_evolution = self._configure_severity(
+            fault, severity_override
+        )
 
         # Operating conditions
         Omega, omega, speed_variation, load_factor, load_percent, temperature_C, temp_factor, operating_factor, amp_base = self._configure_operating_conditions()
@@ -232,10 +238,20 @@ class SignalGenerator:
 
         return x, metadata
 
-    def _configure_severity(self, fault: str) -> Tuple[str, float, np.ndarray, bool]:
+    def _configure_severity(
+        self, fault: str, severity_override: Optional[str] = None
+    ) -> Tuple[str, float, np.ndarray, bool]:
         """Configure severity level and temporal evolution."""
         if self.config.severity.enabled and fault != 'sain':
-            severity = np.random.choice(self.config.severity.levels)
+            if severity_override is not None:
+                if severity_override not in self.config.severity.levels:
+                    raise ValueError(
+                        f"Unknown severity '{severity_override}'; "
+                        f"expected one of {self.config.severity.levels}"
+                    )
+                severity = severity_override
+            else:
+                severity = np.random.choice(self.config.severity.levels)
             severity_range = self.config.severity.ranges[severity]
             severity_factor = severity_range[0] + (severity_range[1] - severity_range[0]) * np.random.rand()
         else:
