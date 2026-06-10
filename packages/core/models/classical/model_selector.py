@@ -16,7 +16,6 @@ from sklearn.model_selection import cross_val_score
 
 from .svm_classifier import SVMClassifier
 from .random_forest import RandomForestClassifier
-from .neural_network import MLPClassifier
 from .gradient_boosting import GradientBoostingClassifier
 
 
@@ -86,18 +85,6 @@ class ModelSelector:
             'hyperparams': rf.get_params()
         }
         print(f"  Random Forest validation accuracy: {rf_acc:.4f}")
-
-        # Neural Network
-        print("Training Neural Network...")
-        nn = MLPClassifier(random_state=self.random_state)
-        nn.train(X_train, y_train, hyperparams=hyperparams.get('nn', None))
-        nn_acc = nn.score(X_val, y_val)
-        results['NeuralNetwork'] = {
-            'model': nn,
-            'accuracy': nn_acc,
-            'hyperparams': nn.get_params()
-        }
-        print(f"  Neural Network validation accuracy: {nn_acc:.4f}")
 
         # Gradient Boosting
         print("Training Gradient Boosting...")

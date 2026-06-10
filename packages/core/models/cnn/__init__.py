@@ -1,26 +1,27 @@
 """
-CNN models for end-to-end learning from raw vibration signals.
+1D CNN models for end-to-end learning from raw vibration signals.
 
-Purpose:
-    1D Convolutional Neural Networks for bearing fault diagnosis:
-    - Conv blocks: Reusable Conv1D-BN-ReLU-Dropout-Pool modules
-    - CNN architectures: Configurable depth and width
-    - Attention mechanisms: SE blocks, CBAM
-    - Model variants: Shallow, deep, residual architectures
-
-Author: Syed Abbas Ahmad
-Date: 2025-11-20
+- CNN1D: 5-block baseline CNN (Tier 1; the proven reference model)
+- AttentionCNN1D: CNN with attention for XAI-friendly saliency (Tier 1)
+- MultiScaleCNN1D: parallel multi-band kernels (Tier 2)
+- Conv blocks: reusable Conv1D building blocks
 """
 
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
-from packages.core.models.cnn.conv_blocks import (
+from .conv_blocks import (
     ConvBlock1D,
     ResidualConvBlock1D,
     SeparableConv1D
 )
+from .cnn_1d import CNN1D, create_cnn1d
+from .attention_cnn import AttentionCNN1D
+from .multi_scale_cnn import MultiScaleCNN1D
 
 __all__ = [
     'ConvBlock1D',
     'ResidualConvBlock1D',
-    'SeparableConv1D'
+    'SeparableConv1D',
+    'CNN1D',
+    'create_cnn1d',
+    'AttentionCNN1D',
+    'MultiScaleCNN1D',
 ]
