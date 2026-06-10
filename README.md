@@ -77,6 +77,9 @@ pip install torch torchvision torchaudio --index-url https://download.pytorch.or
 
 # Install project dependencies
 pip install -r requirements.txt
+
+# For exact reproduction of the maintainers' environment:
+# pip install -r requirements.lock.txt  (Python 3.14 / torch 2.9.1+cpu)
 ```
 
 ### Verify Installation
