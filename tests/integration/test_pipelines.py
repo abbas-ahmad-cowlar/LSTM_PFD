@@ -124,7 +124,7 @@ class TestDeploymentPipeline:
     def test_quantization_pipeline(self, simple_cnn_model, temp_checkpoint_dir):
         """Test model quantization pipeline."""
         import torch
-        from deployment.quantization import quantize_model_dynamic
+        from packages.deployment.optimization.quantization import quantize_model_dynamic
 
         model = simple_cnn_model
         model.eval()
@@ -147,7 +147,7 @@ class TestDeploymentPipeline:
         """Test inference pipeline."""
         import torch
         import numpy as np
-        from deployment.inference import TorchInferenceEngine, InferenceConfig
+        from packages.deployment.optimization.inference import TorchInferenceEngine, InferenceConfig
 
         model = simple_cnn_model
         model.eval()

@@ -1,0 +1,31 @@
+# Canonical test workflow — the trust command (Convergence Plan P1.7).
+# `pytest -q` must pass for any merge to main. pytest.ini handles marker
+# exclusions (dashboard tests are frozen until Phase D) and coverage flags.
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -r requirements.txt -r requirements-test.txt
+
+      - name: Run test suite
+        run: pytest -q

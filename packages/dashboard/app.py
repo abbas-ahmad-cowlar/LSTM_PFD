@@ -9,6 +9,7 @@ from flask import Flask
 
 from dashboard_config import APP_HOST, APP_PORT, DEBUG
 from utils.logger import setup_logger
+from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE, REFRESH_INTERVAL_MS
 from database.connection import init_database
 
 # Initialize logger
@@ -93,7 +94,6 @@ app.layout = html.Div([
 
 # Register all callbacks
 from callbacks import register_all_callbacks
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, SAMPLING_RATE, REFRESH_INTERVAL_MS
 register_all_callbacks(app)
 
 if __name__ == '__main__':

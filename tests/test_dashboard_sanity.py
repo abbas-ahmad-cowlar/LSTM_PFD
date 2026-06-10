@@ -4,6 +4,11 @@ import sys
 import os
 from pathlib import Path
 
+import pytest
+
+# Dashboard is frozen until Convergence Plan Phase D; excluded from default runs
+pytestmark = pytest.mark.dashboard
+
 # Add project root and dashboard directory to path to simulate app environment
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DASHBOARD_DIR = PROJECT_ROOT / 'packages' / 'dashboard'

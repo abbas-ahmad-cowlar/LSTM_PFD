@@ -78,17 +78,17 @@ class MultitaskPINN(BaseModel):
         self.shared_feature_dim = shared_feature_dim
 
         # ===== SHARED ENCODER =====
-        # Remove final classification layer to get features
+        # Features come from the backbone's extract_features() contract
+        # (penultimate representation), never from its classification head.
         if backbone == 'resnet18':
             self.encoder = ResNet1D(
                 num_classes=num_fault_classes,
                 input_channels=1,
                 layers=[2, 2, 2, 2],
                 dropout=dropout,
-                input_length=input_length
+                input_length=input_length,
+                include_head=False  # feature extractor only
             )
-            # Remove final FC layer
-            self.encoder.fc = nn.Identity()
 
         elif backbone == 'resnet34':
             self.encoder = ResNet1D(
@@ -96,22 +96,26 @@ class MultitaskPINN(BaseModel):
                 input_channels=1,
                 layers=[3, 4, 6, 3],
                 dropout=dropout,
-                input_length=input_length
+                input_length=input_length,
+                include_head=False
             )
-            self.encoder.fc = nn.Identity()
 
         elif backbone == 'cnn1d':
             self.encoder = CNN1D(
                 num_classes=num_fault_classes,
                 input_channels=1,
-                dropout=dropout
+                dropout=dropout,
+                include_head=False
             )
-            # Assuming CNN1D has fc layer
-            if hasattr(self.encoder, 'fc'):
-                self.encoder.fc = nn.Identity()
 
         else:
             raise ValueError(f"Unknown backbone: {backbone}")
+
+        if not hasattr(self.encoder, 'extract_features'):
+            raise TypeError(
+                f"Backbone '{backbone}' ({type(self.encoder).__name__}) does not "
+                "implement extract_features(); MultitaskPINN requires it."
+            )
 
         # ===== TASK-SPECIFIC HEADS =====
 
@@ -182,7 +186,7 @@ class MultitaskPINN(BaseModel):
                 Dictionary with all task outputs
         """
         # Shared feature extraction
-        shared_features = self.encoder(signal)  # [B, 512]
+        shared_features = self.encoder.extract_features(signal)  # [B, 512]
 
         if return_all_tasks:
             # Compute all task outputs

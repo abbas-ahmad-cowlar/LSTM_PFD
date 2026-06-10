@@ -312,10 +312,12 @@ class TestCrossValidationIntegration:
     
     def test_cv_imports(self):
         """Test cross-validation script imports correctly."""
-        from scripts.utilities.cross_validation import (
+        from packages.core.evaluation.cross_validation import (
             CrossValidationTrainer,
-            compute_confidence_interval,
             print_results
+        )
+        from packages.core.evaluation.statistical_analysis import (
+            compute_confidence_interval
         )
         
         # Test confidence interval computation
@@ -335,7 +337,7 @@ class TestLeakageCheckIntegration:
     
     def test_leakage_check_imports(self, mock_hdf5_dataset):
         """Test leakage check functionality."""
-        from scripts.utilities.check_data_leakage import (
+        from packages.core.evaluation.check_data_leakage import (
             LeakageChecker,
             compute_signal_hash,
             compute_full_signal_hash
@@ -362,7 +364,7 @@ class TestStatisticalAnalysisIntegration:
     
     def test_statistical_utilities(self):
         """Test statistical analysis utilities."""
-        from scripts.utilities.statistical_analysis import (
+        from packages.core.evaluation.statistical_analysis import (
             compute_confidence_interval,
             paired_ttest,
             wilcoxon_test

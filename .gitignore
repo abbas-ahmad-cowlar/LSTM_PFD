@@ -94,7 +94,15 @@ data/raw/
 .dvc/cache/
 checkpoints/
 logs/
-results/
+# results/: large artifacts stay out of git, but the small evidence files
+# (metrics JSONs, summary tables, figures) ARE tracked — they are the
+# project's proof of work (Convergence Plan Part IV rule 1).
+results/*
+!results/**/
+!results/**/*.json
+!results/**/*.md
+!results/**/*.png
+!results/**/*.csv
 outputs/
 mlruns/
 wandb/
