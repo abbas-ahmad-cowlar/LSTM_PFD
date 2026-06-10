@@ -28,7 +28,7 @@
 | 0 Ratify & safety net | ✅ done | 2026-06-11 | 2026-06-11 | tag pushed; grep clean; lock committed |
 | 1 Stabilize the spine | ✅ done | 2026-06-11 | 2026-06-11 | 328 passed/0 failed; PINN sanity pass; results/ populated; dashboard boots |
 | 2 The great pruning | ✅ done | 2026-06-11 | 2026-06-11 | core LOC −32%; registry 81→11; suite 206 green; retrain proofs pass |
-| 3 Physics & data hardening | ☐ not started | | | |
+| 3 Physics & data hardening | 🔄 in progress | 2026-06-11 | | PHYSICS.md + DATASET_V2.md drafted (owner sign-off pending); v2 machinery built |
 | 4 Benchmark matrix | ☐ not started | | | |
 | 5 Physics experiments | ☐ not started | | | |
 | 6 Docs convergence | ☐ not started | | | |
