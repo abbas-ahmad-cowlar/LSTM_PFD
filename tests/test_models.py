@@ -54,15 +54,14 @@ class TestCNN1D:
 
         model = CNN1D(num_classes=NUM_CLASSES)
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.pt') as f:
-            torch.save(model.state_dict(), f.name)
+        # TemporaryDirectory instead of NamedTemporaryFile: Windows keeps the
+        # NamedTemporaryFile handle locked, so reopening it raises PermissionError.
+        with tempfile.TemporaryDirectory() as tmpdir:
+            ckpt_path = Path(tmpdir) / 'model.pt'
+            torch.save(model.state_dict(), ckpt_path)
 
-            # Load model
             model2 = CNN1D(num_classes=NUM_CLASSES)
-            model2.load_state_dict(torch.load(f.name))
-
-            # Clean up
-            Path(f.name).unlink()
+            model2.load_state_dict(torch.load(ckpt_path, weights_only=True))
 
 
 class TestResNet1D:
@@ -119,26 +118,37 @@ class TestHybridPINN:
     """Test HybridPINN model."""
 
     def test_forward_pass_with_physics(self):
-        """Test forward pass with physics features."""
+        """Test forward pass with operating-condition metadata."""
         from packages.core.models import HybridPINN
 
-        model = HybridPINN(num_classes=NUM_CLASSES, physics_dim=32)
+        model = HybridPINN(
+            num_classes=NUM_CLASSES, backbone='cnn1d', physics_feature_dim=32
+        )
+        model.eval()
 
         x = torch.randn(4, 1, 5000)
-        physics_features = torch.randn(4, 32)
+        metadata = {
+            'rpm': torch.full((4,), 3600.0),
+            'load': torch.full((4,), 500.0),
+            'viscosity': torch.full((4,), 0.03),
+        }
 
-        output = model(x, physics_features)
+        output = model(x, metadata)
 
         assert output.shape == (4, 11), f"Expected shape (4, 11), got {output.shape}"
 
     def test_forward_pass_without_physics(self):
-        """Test forward pass without physics features."""
+        """Test forward pass without metadata (falls back to defaults)."""
         from packages.core.models import HybridPINN
 
-        model = HybridPINN(num_classes=NUM_CLASSES, physics_dim=32)
+        model = HybridPINN(
+            num_classes=NUM_CLASSES, backbone='cnn1d', physics_feature_dim=32
+        )
+        model.eval()
         x = torch.randn(4, 1, 5000)
 
-        output = model(x)  # No physics features
+        with pytest.warns(UserWarning, match="default operating conditions"):
+            output = model(x)  # No metadata provided
 
         assert output.shape == (4, 11), f"Expected shape (4, 11), got {output.shape}"
 

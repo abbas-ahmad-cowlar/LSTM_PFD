@@ -82,11 +82,12 @@ class HybridPINN(BaseModel):
         # Use CNN or ResNet as feature extractor
         if backbone == 'resnet18':
             self.data_branch = ResNet1D(
-                num_classes=num_classes,  # Will not use final FC layer
+                num_classes=num_classes,
                 input_channels=1,
                 layers=[2, 2, 2, 2],  # ResNet-18
                 dropout=dropout,
-                input_length=input_length
+                input_length=input_length,
+                include_head=False  # feature extractor only
             )
             self.data_feature_dim = 512
 
@@ -96,7 +97,8 @@ class HybridPINN(BaseModel):
                 input_channels=1,
                 layers=[3, 4, 6, 3],  # ResNet-34
                 dropout=dropout,
-                input_length=input_length
+                input_length=input_length,
+                include_head=False
             )
             self.data_feature_dim = 512
 
@@ -104,16 +106,22 @@ class HybridPINN(BaseModel):
             self.data_branch = CNN1D(
                 num_classes=num_classes,
                 input_channels=1,
-                dropout=dropout
+                dropout=dropout,
+                include_head=False
             )
-            self.data_feature_dim = 512  # Assuming CNN1D has 512 features
+            self.data_feature_dim = 512  # CNN1D.extract_features() returns [B, 512]
 
         else:
             raise ValueError(f"Unknown backbone: {backbone}")
 
-        # Remove final classification layer from backbone (we'll replace it)
-        if hasattr(self.data_branch, 'fc'):
-            self.data_branch.fc = nn.Identity()
+        # The backbone must expose the feature-extraction contract; fail loudly
+        # here rather than with a shape error deep inside forward().
+        if not hasattr(self.data_branch, 'extract_features'):
+            raise TypeError(
+                f"Backbone '{backbone}' ({type(self.data_branch).__name__}) does not "
+                "implement extract_features(); HybridPINN requires it to obtain "
+                "penultimate features instead of class logits."
+            )
 
         # ===== PHYSICS BRANCH =====
         # Input: 10 physics features
@@ -295,8 +303,8 @@ class HybridPINN(BaseModel):
             }
 
         # ===== DATA BRANCH =====
-        # Extract learned features from signal
-        data_features = self.data_branch(signal)  # [B, 512]
+        # Extract learned features from signal (penultimate, not logits)
+        data_features = self.data_branch.extract_features(signal)  # [B, 512]
 
         # ===== PHYSICS BRANCH =====
         # Extract physics-based features
@@ -338,7 +346,7 @@ class HybridPINN(BaseModel):
             }
 
         # Extract features
-        data_features = self.data_branch(signal)
+        data_features = self.data_branch.extract_features(signal)
         physics_features_raw = self.extract_physics_features(metadata)
         physics_features = self.physics_branch(physics_features_raw)
 
