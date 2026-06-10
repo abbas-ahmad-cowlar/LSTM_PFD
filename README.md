@@ -90,9 +90,15 @@ python -c "import torch; print(f'PyTorch {torch.__version__} | CUDA: {torch.cuda
 
 ### Run the Dashboard
 
+> ⚠️ **Dashboard status: experimental, frozen.** It boots and renders, but many
+> pages are unfinished and it is excluded from CI until its rehabilitation phase
+> (Convergence Plan Phase D). The core training/evaluation pipeline does not
+> depend on it. It has its own dependencies: `packages/dashboard/requirements.txt`.
+
 ```bash
 cp .env.example .env
-# Edit .env: set DATABASE_URL, SECRET_KEY, JWT_SECRET_KEY
+# Edit .env: set DATABASE_URL, SECRET_KEY, JWT_SECRET_KEY (random hex, no
+# placeholder-looking strings — the config validator rejects them)
 cd packages/dashboard
 python app.py
 # Open http://localhost:8050

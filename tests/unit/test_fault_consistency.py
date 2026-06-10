@@ -82,6 +82,7 @@ class TestFaultTypeConsistency:
         assert FAULT_CLASSES == expected_order, \
             f"FAULT_CLASSES order mismatch. Got: {FAULT_CLASSES}"
 
+    @pytest.mark.dashboard
     def test_dashboard_config_mappings_are_bidirectional(self):
         """Test that dashboard config mappings are bidirectionally consistent."""
         try:

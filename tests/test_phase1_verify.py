@@ -4,6 +4,11 @@ Test all Phase 1 layouts to verify they can be imported.
 import os
 import sys
 
+import pytest
+
+# Dashboard is frozen until Convergence Plan Phase D
+pytestmark = pytest.mark.dashboard
+
 # Set required environment variables
 os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
 os.environ['SECRET_KEY'] = 'test_secret_key_12345'
