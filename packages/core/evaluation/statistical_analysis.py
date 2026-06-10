@@ -138,33 +138,17 @@ class MultiSeedExperiment:
         num_classes: int
     ) -> Dict[str, float]:
         """Train model with a specific seed and return test metrics."""
-        from models.cnn.cnn_1d import CNN1D
-        from models.cnn.attention_cnn import AttentionCNN1D, LightweightAttentionCNN
-        from models.cnn.multi_scale_cnn import MultiScaleCNN1D
-        from training.cnn_trainer import CNNTrainer
-        from training.cnn_optimizer import create_optimizer
-        from training.cnn_losses import create_criterion
-        from training.cnn_schedulers import create_cosine_scheduler
+        from packages.core.models.model_factory import create_model
+        from packages.core.training.cnn_trainer import CNNTrainer
+        from packages.core.training.cnn_optimizer import create_optimizer
+        from packages.core.training.losses.classification import create_criterion
+        from packages.core.training.schedulers import create_cosine_scheduler
         from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
-        
+
         set_seed(seed)
-        
-        model_registry = {
-            'cnn1d': CNN1D,
-            'attention': AttentionCNN1D,
-            'attention-lite': LightweightAttentionCNN,
-            'multiscale': MultiScaleCNN1D
-        }
-        
-        model_cls = model_registry.get(self.model_class)
-        if model_cls is None:
-            raise ValueError(f"Unknown model: {self.model_class}")
-        
-        # Create model
-        if self.model_class == 'cnn1d':
-            model = model_cls(num_classes=num_classes, input_channels=1, dropout=0.3)
-        else:
-            model = model_cls(num_classes=num_classes, input_length=102400, in_channels=1)
+
+        # Any key from the curated MODEL_REGISTRY works here
+        model = create_model(self.model_class, num_classes=num_classes)
         
         # Training setup
         optimizer = create_optimizer('adamw', model.parameters(), lr=0.001)
@@ -228,9 +212,8 @@ class MultiSeedExperiment:
     def run_experiments(self, hdf5_path: str) -> Dict[str, Any]:
         """Run experiments across all seeds."""
         import h5py
-        from data.cnn_dataset import RawSignalDataset
-        from data.cnn_transforms import get_train_transforms, get_test_transforms
-        from data.cnn_dataloader import create_cnn_dataloaders
+        from data.dataset import BearingFaultDataset
+        from data.dataloader import create_cnn_dataloaders
         
         logger.info(f"Running {self.num_seeds}-seed experiment for {self.model_class}")
         
@@ -244,10 +227,10 @@ class MultiSeedExperiment:
             test_labels = f['test']['labels'][:]
             num_classes = f.attrs.get('num_classes', 11)
         
-        # Create datasets
-        train_ds = RawSignalDataset(train_signals, train_labels, get_train_transforms(True))
-        val_ds = RawSignalDataset(val_signals, val_labels, get_test_transforms())
-        test_ds = RawSignalDataset(test_signals, test_labels, get_test_transforms())
+        # Create datasets (raw signals; augmentation policy is set in P4 protocol)
+        train_ds = BearingFaultDataset(train_signals, train_labels)
+        val_ds = BearingFaultDataset(val_signals, val_labels)
+        test_ds = BearingFaultDataset(test_signals, test_labels)
         
         loaders = create_cnn_dataloaders(train_ds, val_ds, test_ds, self.batch_size, num_workers=4)
         

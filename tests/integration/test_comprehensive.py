@@ -265,15 +265,14 @@ class TestCheckpointSaveLoad:
 
 
 @pytest.mark.integration
-class TestStreamingDataloaderIntegration:
-    """Test streaming dataloader with training pipeline."""
-    
-    def test_streaming_training(self, mock_hdf5_dataset, simple_model):
-        """Test training with streaming dataloader."""
-        from data.streaming_hdf5_dataset import StreamingHDF5Dataset
-        
-        # Create streaming dataset
-        dataset = StreamingHDF5Dataset(mock_hdf5_dataset, split='train')
+class TestHDF5DataloaderIntegration:
+    """Test the HDF5 dataset with a training pipeline."""
+
+    def test_hdf5_training(self, mock_hdf5_dataset, simple_model):
+        """Test training from an HDF5-backed dataset."""
+        from data.dataset import BearingFaultDataset
+
+        dataset = BearingFaultDataset.from_hdf5(mock_hdf5_dataset, split='train')
         loader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=0)
         
         model = simple_model
@@ -285,6 +284,8 @@ class TestStreamingDataloaderIntegration:
         losses = []
         
         for batch_idx, (signals, labels) in enumerate(loader):
+            if signals.dim() == 2:
+                signals = signals.unsqueeze(1)  # [B, L] -> [B, 1, L]
             optimizer.zero_grad()
             outputs = model(signals)
             loss = criterion(outputs, labels)
