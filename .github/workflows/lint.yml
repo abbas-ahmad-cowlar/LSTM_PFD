@@ -1,0 +1,29 @@
+# Lint workflow (Convergence Plan P2.6) — style gate for core code.
+# Dashboard is excluded while frozen (Phase D).
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install linters
+        run: pip install flake8
+
+      - name: Flake8 (errors only)
+        run: >
+          flake8 packages/core data utils scripts tests
+          --count --select=E9,F63,F7,F82 --show-source --statistics
+          --exclude=__pycache__
