@@ -70,7 +70,7 @@ def load_data():
     if not cache_path.exists():
         logger.warning(f"Cache file not found: {cache_path}")
         logger.info("Generating synthetic data for ablation study...")
-        from data.signal_generator import SignalGenerator
+        from data.signal_generation import SignalGenerator
         from config.data_config import DataConfig
         
         config = DataConfig(num_signals_per_fault=50)

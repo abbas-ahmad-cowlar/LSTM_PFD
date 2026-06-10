@@ -25,7 +25,7 @@ def generate_dataset(config: dict) -> dict:
     avoiding the need to hold all signals in memory at once.
     """
     try:
-        from data.signal_generator import SignalGenerator
+        from data.signal_generation import SignalGenerator
         from config.data_config import DataConfig, SignalConfig, FaultConfig, \
             SeverityConfig, NoiseConfig, OperatingConfig, PhysicsConfig, \
             TransientConfig, AugmentationConfig

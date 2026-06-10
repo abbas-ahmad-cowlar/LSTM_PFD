@@ -21,7 +21,7 @@ import pickle
 from collections import Counter
 
 from utils.logging import get_logger
-from data.signal_generator import SignalGenerator
+from data.signal_generation import SignalGenerator
 try:
     from data.augmentation import SignalAugmenter, random_augment
 except ImportError:

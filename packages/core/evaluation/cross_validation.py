@@ -130,29 +130,27 @@ class CrossValidationTrainer:
         val_labels: np.ndarray
     ) -> Dict[str, Any]:
         """Train and evaluate a single fold."""
-        from data.cnn_dataset import RawSignalDataset
-        from data.cnn_transforms import get_train_transforms, get_test_transforms
-        from data.cnn_dataloader import create_cnn_dataloaders
-        from training.cnn_trainer import CNNTrainer
-        from training.cnn_optimizer import create_optimizer
-        from training.cnn_losses import create_criterion
-        from training.cnn_schedulers import create_cosine_scheduler
+        from data.dataset import BearingFaultDataset
+        from data.dataloader import create_cnn_dataloaders
+        from packages.core.training.cnn_trainer import CNNTrainer
+        from packages.core.training.cnn_optimizer import create_optimizer
+        from packages.core.training.losses.classification import create_criterion
+        from packages.core.training.schedulers import create_cosine_scheduler
         
         logger.info(f"\n{'='*60}")
         logger.info(f"FOLD {fold_idx + 1}/{self.k_folds}")
         logger.info(f"{'='*60}")
         logger.info(f"  Train: {len(train_signals)} | Val: {len(val_signals)}")
         
-        # Create datasets
-        train_dataset = RawSignalDataset(
+        # Create datasets (raw signals, no transforms — matches the proven
+        # train_overnight.py pipeline; augmentation policy is set in P4 protocol)
+        train_dataset = BearingFaultDataset(
             signals=train_signals,
             labels=train_labels,
-            transform=get_train_transforms(augment=True)
         )
-        val_dataset = RawSignalDataset(
+        val_dataset = BearingFaultDataset(
             signals=val_signals,
             labels=val_labels,
-            transform=get_test_transforms()
         )
         
         # Create dataloaders
