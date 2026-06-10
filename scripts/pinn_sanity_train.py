@@ -29,12 +29,14 @@ from utils.reproducibility import set_seed  # noqa: E402
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--data', default='data/generated/dataset.h5')
+    parser.add_argument('--model', default='hybrid_pinn',
+                        help='Any key from the curated MODEL_REGISTRY')
     parser.add_argument('--subset', type=int, default=256)
     parser.add_argument('--epochs', type=int, default=2)
     parser.add_argument('--batch-size', type=int, default=16)
     args = parser.parse_args()
 
-    log_path = PROJECT_ROOT / 'logs' / 'pinn_sanity.log'
+    log_path = PROJECT_ROOT / 'logs' / f'{args.model}_sanity.log'
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s [%(levelname)s] %(message)s',
@@ -54,9 +56,10 @@ def main() -> None:
     )
     log.info("Subset: %d samples, batch_size=%d", len(indices), args.batch_size)
 
-    model = create_model('hybrid_pinn', num_classes=11, backbone='cnn1d').to(device)
+    extra = {'backbone': 'cnn1d'} if args.model == 'hybrid_pinn' else {}
+    model = create_model(args.model, num_classes=11, **extra).to(device)
     n_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    log.info("HybridPINN (cnn1d backbone): %s params", f"{n_params:,}")
+    log.info("%s: %s params", args.model, f"{n_params:,}")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
     criterion = torch.nn.CrossEntropyLoss()
@@ -69,14 +72,21 @@ def main() -> None:
         for signals, labels in loader:
             signals, labels = signals.to(device), labels.to(device)
             batch = signals.shape[0]
-            metadata = {
-                'rpm': torch.full((batch,), 3600.0),
-                'load': torch.full((batch,), 500.0),
-                'viscosity': torch.full((batch,), 0.03),
-            }
 
             optimizer.zero_grad()
-            logits = model(signals, metadata)
+            if args.model == 'hybrid_pinn':
+                metadata = {
+                    'rpm': torch.full((batch,), 3600.0),
+                    'load': torch.full((batch,), 500.0),
+                    'viscosity': torch.full((batch,), 0.03),
+                }
+                logits = model(signals, metadata)
+            else:
+                logits = model(signals)
+            if isinstance(logits, (tuple, list)):
+                logits = logits[0]
+            elif isinstance(logits, dict):
+                logits = next(iter(logits.values()))
             loss = criterion(logits, labels)
             if not torch.isfinite(loss):
                 log.error("NON-FINITE LOSS at epoch %d — SANITY FAIL", epoch)
