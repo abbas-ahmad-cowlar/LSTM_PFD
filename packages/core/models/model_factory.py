@@ -7,12 +7,10 @@ Provides a centralized interface for:
 - Model registration
 - Configuration-based creation
 
-Supports all model architectures:
-- CNN1D
-- ResNet1D
-- Transformer
-- HybridPINN
-- Ensemble models
+The registry holds exactly the curated zoo (Convergence Plan Part I §4):
+Tier 1 benchmark models + Tier 2 extension models. One honest key per
+architecture — no aliases. Pruned architectures are recoverable from tag
+`pre-convergence-2026-06`.
 """
 
 import torch
@@ -22,125 +20,29 @@ from pathlib import Path
 
 from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .base_model import BaseModel
-from .cnn_1d import CNN1D, create_cnn1d
-from .resnet_1d import ResNet1D, create_resnet18_1d, create_resnet34_1d
-from .transformer import SignalTransformer, create_transformer
-from .hybrid_pinn import HybridPINN, create_hybrid_pinn
-from .legacy_ensemble import (
-    EnsembleModel,
-    VotingEnsemble,
-    StackedEnsemble,
-    create_voting_ensemble,
-    create_stacked_ensemble
-)
 
-# Phase 4: Advanced Transformer Variants
-from .transformer.vision_transformer_1d import (
-    VisionTransformer1D,
-    create_vit_1d,
-    vit_tiny_1d,
-    vit_small_1d,
-    vit_base_1d
-)
-from .hybrid.cnn_transformer import (
-    CNNTransformerHybrid,
-    create_cnn_transformer_hybrid,
-    cnn_transformer_small,
-    cnn_transformer_base,
-    cnn_transformer_large
-)
-
-# PatchTST and TSMixer
+# Tier 1
+from .cnn.cnn_1d import CNN1D, create_cnn1d
+from .cnn.attention_cnn import AttentionCNN1D
+from .hybrid.cnn_lstm import CNNLSTM, create_cnn_lstm
+from .resnet.resnet_1d import ResNet1D, create_resnet18_1d
 from .transformer.patchtst import PatchTST
-from .transformer.tsmixer import TSMixer
-
-# EfficientNet 1D
-from .efficientnet import (
-    EfficientNet1D,
-    create_efficientnet_b0,
-    create_efficientnet_b1,
-    create_efficientnet_b2,
-    create_efficientnet_b3,
-    create_efficientnet_b4,
-    create_efficientnet_b5,
-    create_efficientnet_b6,
-    create_efficientnet_b7,
-)
-
-# Spectrogram CNN (2D models)
-from .spectrogram_cnn import (
-    ResNet2DSpectrogram,
-    resnet18_2d,
-    resnet34_2d,
-    resnet50_2d,
-    EfficientNet2DSpectrogram,
-    efficientnet_b0 as efficientnet_2d_b0,
-    efficientnet_b1 as efficientnet_2d_b1,
-    efficientnet_b3 as efficientnet_2d_b3,
-)
-
-# Dual-Stream CNN
-from .spectrogram_cnn.dual_stream_cnn import DualStreamCNN
-
-# Fusion models
-from .fusion import (
-    EarlyFusion,
-    create_early_fusion,
-    LateFusion,
-    create_late_fusion,
-)
-
-# PINN variants
+from .pinn.hybrid_pinn import HybridPINN, create_hybrid_pinn
 from .pinn.physics_constrained_cnn import (
     PhysicsConstrainedCNN,
-    AdaptivePhysicsConstrainedCNN,
     create_physics_constrained_cnn,
 )
-from .pinn.multitask_pinn import (
-    MultitaskPINN,
-    AdaptiveMultitaskPINN,
-    create_multitask_pinn,
-)
-from .pinn.knowledge_graph_pinn import KnowledgeGraphPINN
+from .pinn.multitask_pinn import MultitaskPINN, create_multitask_pinn
+from .ensemble.voting_ensemble import VotingEnsemble, create_voting_ensemble
 
-# Contrastive models
-from .contrastive.signal_encoder import SignalEncoder
-from .contrastive.classifier import ContrastiveClassifier
-
-# CNN Attention and Multi-Scale models
-from .cnn.attention_cnn import AttentionCNN1D, LightweightAttentionCNN
-from .cnn.multi_scale_cnn import MultiScaleCNN1D, DilatedMultiScaleCNN
-
-# Hybrid models (CNN-LSTM, CNN-TCN, MultiScaleCNN)
-from .hybrid.cnn_lstm import CNNLSTM
-from .hybrid.cnn_tcn import CNNTCN, create_cnn_tcn
-from .hybrid.multiscale_cnn import MultiScaleCNN
-
-# ResNet variants (WideResNet, SE-ResNet)
-from .resnet.wide_resnet import (
-    WideResNet1D,
-    create_wide_resnet16_8,
-    create_wide_resnet16_10,
-    create_wide_resnet22_8,
-    create_wide_resnet28_10,
-)
-from .resnet.se_resnet import (
-    SEResNet1D,
-    create_se_resnet18_1d,
-    create_se_resnet34_1d,
-    create_se_resnet50_1d,
-)
-from .resnet.resnet_1d import create_resnet50_1d
-
-# Ensemble models (new ensemble types)
-from .ensemble.voting_ensemble import VotingEnsemble as VotingEnsembleV2
-from .ensemble.stacking_ensemble import StackingEnsemble
-from .ensemble.mixture_of_experts import MixtureOfExperts
-from .ensemble.boosting_ensemble import BoostingEnsemble
+# Tier 2 (extension — smoke-tested, benchmark-optional)
+from .cnn.multi_scale_cnn import MultiScaleCNN1D
+from .resnet.se_resnet import SEResNet1D, create_se_resnet18_1d
+from .transformer.signal_transformer import SignalTransformer, create_transformer
 
 
 # ---------------------------------------------------------------------------
-# Factory wrapper functions for models that lack them
+# Factory wrapper functions for models that lack them in their modules
 # ---------------------------------------------------------------------------
 
 def create_patchtst(num_classes: int = NUM_CLASSES, **kwargs) -> PatchTST:
@@ -148,49 +50,9 @@ def create_patchtst(num_classes: int = NUM_CLASSES, **kwargs) -> PatchTST:
     return PatchTST(num_classes=num_classes, **kwargs)
 
 
-def create_tsmixer(num_classes: int = NUM_CLASSES, **kwargs) -> TSMixer:
-    """Create a TSMixer model (Chen et al., 2023)."""
-    return TSMixer(num_classes=num_classes, **kwargs)
-
-
-def create_dual_stream_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> DualStreamCNN:
-    """Create a DualStreamCNN model (time + frequency branches)."""
-    return DualStreamCNN(num_classes=num_classes, **kwargs)
-
-
-def _create_multitask_pinn(num_classes: int = NUM_CLASSES, **kwargs) -> MultitaskPINN:
-    """Adapter for create_multitask_pinn (uses num_fault_classes internally)."""
-    return create_multitask_pinn(num_fault_classes=num_classes, **kwargs)
-
-
-def _create_adaptive_multitask_pinn(num_classes: int = NUM_CLASSES, **kwargs):
-    """Create AdaptiveMultitaskPINN via adapter."""
-    return create_multitask_pinn(num_fault_classes=num_classes, adaptive=True, **kwargs)
-
-
-def create_knowledge_graph_pinn(num_classes: int = NUM_CLASSES, **kwargs) -> KnowledgeGraphPINN:
-    """Create a KnowledgeGraphPINN model."""
-    return KnowledgeGraphPINN(num_classes=num_classes, **kwargs)
-
-
-def create_signal_encoder(num_classes: int = NUM_CLASSES, **kwargs) -> SignalEncoder:
-    """Create a SignalEncoder for contrastive learning."""
-    return SignalEncoder(num_classes=num_classes, **kwargs)
-
-
-def create_contrastive_classifier(num_classes: int = NUM_CLASSES, **kwargs) -> ContrastiveClassifier:
-    """Create a ContrastiveClassifier with default encoder."""
-    return ContrastiveClassifier(num_classes=num_classes, **kwargs)
-
-
 def create_attention_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> AttentionCNN1D:
     """Create an AttentionCNN1D model."""
     return AttentionCNN1D(num_classes=num_classes, **kwargs)
-
-
-def create_lightweight_attention_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> LightweightAttentionCNN:
-    """Create a LightweightAttentionCNN model."""
-    return LightweightAttentionCNN(num_classes=num_classes, **kwargs)
 
 
 def create_multi_scale_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> MultiScaleCNN1D:
@@ -198,135 +60,27 @@ def create_multi_scale_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> MultiSca
     return MultiScaleCNN1D(num_classes=num_classes, **kwargs)
 
 
-def create_dilated_multi_scale_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> DilatedMultiScaleCNN:
-    """Create a DilatedMultiScaleCNN model."""
-    return DilatedMultiScaleCNN(num_classes=num_classes, **kwargs)
+def _create_multitask_pinn(num_classes: int = NUM_CLASSES, **kwargs) -> MultitaskPINN:
+    """Adapter for create_multitask_pinn (uses num_fault_classes internally)."""
+    return create_multitask_pinn(num_fault_classes=num_classes, **kwargs)
 
 
-def create_cnn_lstm(num_classes: int = NUM_CLASSES, **kwargs) -> CNNLSTM:
-    """Create a CNN-LSTM hybrid model."""
-    return CNNLSTM(num_classes=num_classes, **kwargs)
-
-
-def create_multiscale_cnn(num_classes: int = NUM_CLASSES, **kwargs) -> MultiScaleCNN:
-    """Create a multi-scale CNN hybrid model."""
-    return MultiScaleCNN(num_classes=num_classes, **kwargs)
-
-
-# Model registry: Maps model names to creation functions
+# Model registry: one honest key per curated architecture.
 MODEL_REGISTRY = {
-    # CNN models
+    # Tier 1 — core benchmark zoo
     'cnn1d': create_cnn1d,
-    'cnn_1d': create_cnn1d,
-
-    # ResNet models
-    'resnet18': create_resnet18_1d,
-    'resnet18_1d': create_resnet18_1d,
-    'resnet34': create_resnet34_1d,
-    'resnet34_1d': create_resnet34_1d,
-
-    # Transformer
-    'transformer': create_transformer,
-    'signal_transformer': create_transformer,
-
-    # Vision Transformer 1D
-    'vit_1d': create_vit_1d,
-    'vision_transformer_1d': create_vit_1d,
-    'vit_tiny_1d': vit_tiny_1d,
-    'vit_small_1d': vit_small_1d,
-    'vit_base_1d': vit_base_1d,
-
-    # PatchTST (Nie et al., 2023)
-    'patchtst': create_patchtst,
-    'patch_tst': create_patchtst,
-
-    # TSMixer (Chen et al., 2023)
-    'tsmixer': create_tsmixer,
-    'ts_mixer': create_tsmixer,
-
-    # CNN-Transformer Hybrid
-    'cnn_transformer': create_cnn_transformer_hybrid,
-    'cnn_transformer_hybrid': create_cnn_transformer_hybrid,
-    'cnn_transformer_small': cnn_transformer_small,
-    'cnn_transformer_base': cnn_transformer_base,
-    'cnn_transformer_large': cnn_transformer_large,
-
-    # EfficientNet 1D
-    'efficientnet_b0': create_efficientnet_b0,
-    'efficientnet_b1': create_efficientnet_b1,
-    'efficientnet_b2': create_efficientnet_b2,
-    'efficientnet_b3': create_efficientnet_b3,
-    'efficientnet_b4': create_efficientnet_b4,
-    'efficientnet_b5': create_efficientnet_b5,
-    'efficientnet_b6': create_efficientnet_b6,
-    'efficientnet_b7': create_efficientnet_b7,
-
-    # Spectrogram CNN (2D models — input shape: [B, C, H, W])
-    'resnet18_2d': resnet18_2d,
-    'resnet34_2d': resnet34_2d,
-    'resnet50_2d': resnet50_2d,
-    'efficientnet_2d_b0': efficientnet_2d_b0,
-    'efficientnet_2d_b1': efficientnet_2d_b1,
-    'efficientnet_2d_b3': efficientnet_2d_b3,
-
-    # Dual-Stream CNN (time + frequency branches)
-    'dual_stream': create_dual_stream_cnn,
-    'dual_stream_cnn': create_dual_stream_cnn,
-
-    # Fusion models (require multi-input pipelines)
-    'early_fusion': create_early_fusion,
-    'late_fusion': create_late_fusion,
-
-    # Physics-informed
-    'pinn': create_hybrid_pinn,
-    'hybrid_pinn': create_hybrid_pinn,
-    'physics_informed': create_hybrid_pinn,
-
-    # Physics-Constrained CNN
-    'physics_cnn': create_physics_constrained_cnn,
-    'physics_constrained_cnn': create_physics_constrained_cnn,
-    'adaptive_physics_cnn': lambda **kw: create_physics_constrained_cnn(adaptive=True, **kw),
-
-    # Multi-task PINN
-    'multitask_pinn': _create_multitask_pinn,
-    'adaptive_multitask_pinn': _create_adaptive_multitask_pinn,
-
-    # Knowledge Graph PINN
-    'knowledge_graph_pinn': create_knowledge_graph_pinn,
-    'kg_pinn': create_knowledge_graph_pinn,
-
-    # Contrastive learning models
-    'signal_encoder': create_signal_encoder,
-    'contrastive_classifier': create_contrastive_classifier,
-
-    # Attention CNN models
     'attention_cnn': create_attention_cnn,
-    'attention_cnn_1d': create_attention_cnn,
-    'lightweight_attention_cnn': create_lightweight_attention_cnn,
-
-    # Multi-Scale CNN models
-    'multi_scale_cnn': create_multi_scale_cnn,
-    'multi_scale_cnn_1d': create_multi_scale_cnn,
-    'dilated_multi_scale_cnn': create_dilated_multi_scale_cnn,
-
-    # Hybrid models
     'cnn_lstm': create_cnn_lstm,
-    'cnn_tcn': create_cnn_tcn,
-    'multiscale_cnn': create_multiscale_cnn,
+    'resnet18': create_resnet18_1d,
+    'patchtst': create_patchtst,
+    'hybrid_pinn': create_hybrid_pinn,
+    'physics_constrained_cnn': create_physics_constrained_cnn,
+    'multitask_pinn': _create_multitask_pinn,
 
-    # ResNet variants
-    'resnet50': create_resnet50_1d,
-    'resnet50_1d': create_resnet50_1d,
-    'wide_resnet16_8': create_wide_resnet16_8,
-    'wide_resnet16_10': create_wide_resnet16_10,
-    'wide_resnet22_8': create_wide_resnet22_8,
-    'wide_resnet28_10': create_wide_resnet28_10,
+    # Tier 2 — extension zoo
+    'multi_scale_cnn': create_multi_scale_cnn,
     'se_resnet18': create_se_resnet18_1d,
-    'se_resnet18_1d': create_se_resnet18_1d,
-    'se_resnet34': create_se_resnet34_1d,
-    'se_resnet34_1d': create_se_resnet34_1d,
-    'se_resnet50': create_se_resnet50_1d,
-    'se_resnet50_1d': create_se_resnet50_1d,
+    'signal_transformer': create_transformer,
 }
 
 
@@ -547,32 +301,32 @@ def save_checkpoint(
 def create_ensemble(
     model_names: List[str],
     checkpoint_paths: Optional[List[str]] = None,
-    ensemble_type: str = 'voting',
     weights: Optional[List[float]] = None,
     num_classes: int = NUM_CLASSES,
     device: str = 'cpu',
     **kwargs
-) -> EnsembleModel:
+) -> VotingEnsemble:
     """
-    Create an ensemble of models.
+    Create a soft-voting ensemble of models.
+
+    (Stacking/boosting/MoE ensembles were pruned in the 2026-06 convergence;
+    soft voting is the single kept ensemble strategy.)
 
     Args:
         model_names: List of model names to ensemble
         checkpoint_paths: Optional list of checkpoint paths (must match model_names)
-        ensemble_type: Type of ensemble ('voting' or 'stacking')
-        weights: Optional weights for voting ensemble
+        weights: Optional weights for voting
         num_classes: Number of output classes
         device: Device to load models to
         **kwargs: Additional arguments for model creation
 
     Returns:
-        EnsembleModel instance
+        VotingEnsemble instance
 
     Example:
         >>> ensemble = create_ensemble(
-        ...     model_names=['cnn1d', 'resnet18', 'transformer'],
-        ...     checkpoint_paths=['cnn.pt', 'resnet.pt', 'transformer.pt'],
-        ...     ensemble_type='voting',
+        ...     model_names=['cnn1d', 'resnet18', 'patchtst'],
+        ...     checkpoint_paths=['cnn.pt', 'resnet.pt', 'patchtst.pt'],
         ...     weights=[0.3, 0.4, 0.3],
         ...     num_classes=NUM_CLASSES
         ... )
@@ -596,21 +350,12 @@ def create_ensemble(
 
         models.append(model)
 
-    # Create ensemble
-    if ensemble_type == 'voting':
-        ensemble = create_voting_ensemble(
-            models=models,
-            weights=weights,
-            voting_type='soft',
-            num_classes=num_classes
-        )
-    elif ensemble_type == 'stacking':
-        ensemble = create_stacked_ensemble(
-            base_models=models,
-            num_classes=num_classes
-        )
-    else:
-        raise ValueError(f"Unknown ensemble type: {ensemble_type}")
+    ensemble = create_voting_ensemble(
+        models=models,
+        weights=weights,
+        voting_type='soft',
+        num_classes=num_classes
+    )
 
     ensemble.to(device)
     return ensemble

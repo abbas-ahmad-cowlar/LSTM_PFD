@@ -1,14 +1,10 @@
 """
 ResNet architectures for 1D signal processing.
 
-This package provides various ResNet implementations adapted for time-series
-bearing fault diagnosis:
-- ResNet-18/34/50: Standard ResNet architectures
-- SE-ResNet: ResNet with Squeeze-and-Excitation blocks
-- Wide-ResNet: Wider but shallower networks
+- ResNet-18/34/50 (1D): standard residual networks (T1: resnet18)
+- SE-ResNet: ResNet with Squeeze-and-Excitation blocks (T2: se_resnet18)
 """
 
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH
 from .residual_blocks import (
     BasicBlock1D,
     Bottleneck1D,
@@ -31,14 +27,6 @@ from .se_resnet import (
     create_se_resnet50_1d
 )
 
-from .wide_resnet import (
-    WideResNet1D,
-    create_wide_resnet16_8,
-    create_wide_resnet16_10,
-    create_wide_resnet22_8,
-    create_wide_resnet28_10
-)
-
 __all__ = [
     # Basic blocks
     'BasicBlock1D',
@@ -56,10 +44,4 @@ __all__ = [
     'create_se_resnet18_1d',
     'create_se_resnet34_1d',
     'create_se_resnet50_1d',
-    # Wide ResNet
-    'WideResNet1D',
-    'create_wide_resnet16_8',
-    'create_wide_resnet16_10',
-    'create_wide_resnet22_8',
-    'create_wide_resnet28_10',
 ]

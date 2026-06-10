@@ -1,16 +1,13 @@
 """
-Hybrid Models combining CNN and Transformer architectures
+Hybrid models.
 
-Provides hybrid models that combine the strengths of CNNs (local pattern extraction)
-with Transformers (long-range dependency modeling).
+- CNNLSTM: CNN feature extractor + LSTM temporal modeling (Tier 1 —
+  the recurrent family member of the benchmark zoo).
 """
 
-from .cnn_transformer import (
-    CNNTransformerHybrid,
-    create_cnn_transformer_hybrid
-)
+from .cnn_lstm import CNNLSTM, create_cnn_lstm
 
 __all__ = [
-    'CNNTransformerHybrid',
-    'create_cnn_transformer_hybrid',
+    'CNNLSTM',
+    'create_cnn_lstm',
 ]
