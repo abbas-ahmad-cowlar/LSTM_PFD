@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """
-Batch 2: ResNet Models (10 models)
+Batch 1: Deep baselines (Tier 1 data-driven models).
 
-Models: ResNet18/34/50, WideResNet 16-8/16-10/22-8/28-10,
-        SE-ResNet 18/34/50
-
-Est. time on T4: ~40 min
+Models: CNN1D, AttentionCNN1D, CNN-LSTM, ResNet18-1D, PatchTST
 
 Usage:
-    !python scripts/colab/04_train_batch2_resnet.py
+    !python scripts/colab/03_train_batch1_baselines.py
+    !python scripts/colab/03_train_batch1_baselines.py --epochs 50
 """
 
 import sys
@@ -19,16 +17,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from scripts.colab._train_utils import train_model_batch
 
 MODELS = [
+    "cnn1d",
+    "attention_cnn",
+    "cnn_lstm",
     "resnet18",
-    "resnet34",
-    "resnet50",
-    "wide_resnet16_8",
-    "wide_resnet16_10",
-    "wide_resnet22_8",
-    "wide_resnet28_10",
-    "se_resnet18",
-    "se_resnet34",
-    "se_resnet50",
+    "patchtst",
 ]
 
 if __name__ == "__main__":
@@ -39,7 +32,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     train_model_batch(
-        batch_name="ResNet Models",
+        batch_name="Deep Baselines (Tier 1)",
         model_keys=MODELS,
         epochs=args.epochs,
         batch_size=args.batch_size,
