@@ -25,7 +25,7 @@
 
 | Phase | Status | Started | Done | Gate evidence |
 |---|---|---|---|---|
-| 0 Ratify & safety net | 🔄 in progress | 2026-06-11 | | |
+| 0 Ratify & safety net | ✅ done | 2026-06-11 | 2026-06-11 | tag pushed; grep clean; lock committed |
 | 1 Stabilize the spine | ☐ not started | | | |
 | 2 The great pruning | ☐ not started | | | |
 | 3 Physics & data hardening | ☐ not started | | | |
@@ -215,22 +215,25 @@ Time estimates assume part-time work.
 - [x] **0.1 Ratify tiers** — *Owner: you.* Read Part I §4–5; amend tier tables directly in
       this file (move names between tiers; respect T2 cap of 3).
       **DoD**: your sign-off note here: `Ratified by Syed Abbas Ahmad on 2026-06-11, amendments: none ("I sign off, please go ahead.")`.
-- [ ] **0.2 Safety tag** — *Owner: Claude.* `git tag pre-convergence-2026-06 main && git push origin pre-convergence-2026-06`.
-      **DoD**: tag visible on GitHub.
-- [ ] **0.3 BACKLOG.md** — *Owner: Claude.* One-liner per cut-but-plausible future direction
+- [x] **0.2 Safety tag** — *Owner: Claude.* `git tag pre-convergence-2026-06 main && git push origin pre-convergence-2026-06`.
+      **DoD**: tag visible on GitHub. *(evidence: tag pushed to origin 2026-06-11)*
+- [x] **0.3 BACKLOG.md** — *Owner: Claude.* One-liner per cut-but-plausible future direction
       (TFR/2D input, contrastive pretraining, distillation-for-edge, KG-PINN, real-data
       sim-to-real study, SaaS/K8s, mkdocs site, NAS).
       **DoD**: file exists; every T3 group with future potential has exactly one line.
-- [ ] **0.4 Honesty hotfixes** — *Owner: Claude.*
+      *(evidence: BACKLOG.md, 12 entries)*
+- [x] **0.4 Honesty hotfixes** — *Owner: Claude.*
       (a) Delete fake results table `reproducibility/README.md:62-67` → replace with
       "Results: see `results/` — populated by Phase 4".
       (b) Prepend `% ⚠️ UNVALIDATED DRAFT — contains invented results; do not cite or submit`
       to `config/docs/paper/main.tex`.
       (c) Rename `config/docs/reports/Final_Report.pdf` → `Final_Report_UNVALIDATED.pdf`.
       **DoD**: `grep -r "98.1" --include="*.md" .` returns no results-claims outside archive/audit files.
-- [ ] **0.5 Pin environment** — *Owner: Claude.* `pip freeze > requirements.lock.txt` from the
+      *(evidence: grep clean — hits only in audit report, plan DoD text, and warning-headed quarantined tex)*
+- [x] **0.5 Pin environment** — *Owner: Claude.* `pip freeze > requirements.lock.txt` from the
       working venv (Python 3.14.0 / torch 2.9.1+cpu); note GPU/Colab envs get their own locks in P4.1.
       **DoD**: file committed; README quick-start mentions it.
+      *(evidence: requirements.lock.txt, 171 packages; README note added)*
 
 **Exit gate 0**: tag pushed · zero invented numbers outside quarantine · tiers ratified.
 *Merge `p0/ratify` → `main`.*

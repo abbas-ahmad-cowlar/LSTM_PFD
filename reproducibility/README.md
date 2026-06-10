@@ -61,10 +61,8 @@ python scripts/run_phase0.py
 
 ## Key Results
 
-| Model        | Accuracy  | F1-Score  |
-| ------------ | --------- | --------- |
-| CNN Baseline | 94.2%     | 0.941     |
-| PINN (ours)  | **98.1%** | **0.980** |
+Results are produced by the benchmark pipeline (Convergence Plan Phase 4) and live in
+`results/`. No numbers are quoted here until they exist there.
 
 ## Citation
 
