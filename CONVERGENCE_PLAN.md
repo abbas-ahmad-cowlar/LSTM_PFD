@@ -417,7 +417,7 @@ worst kind); grow scope of v2 beyond what P4/P5 protocols need.
       coupling, which coefficients are empirical (and a defense of each). Sources:
       `data/PHYSICS_MODEL_GUIDE.md`, `utils/physics_constants.py`, `fault_modeler.py`.
       **DoD**: every one of the 11 classes has all five subsections; you sign off on the physics.
-- [ ] **3.2 Spectral-signature validation tests** ⭐ scientific heart of C1 — *Owner: agent
+- [x] **3.2 Spectral-signature validation tests** ⭐ scientific heart of C1 — *Owner: agent
       builds from Claude's spec table, Claude verifies.* Per fault, automated assertions on
       generated signals: misalignment → 2×/3× harmonics dominate; imbalance → 1× scaling with
       speed²; oil whirl → 0.42–0.48× sub-synchronous peak; cavitation → HF burst energy band;
@@ -425,6 +425,9 @@ worst kind); grow scope of v2 beyond what P4/P5 protocols need.
       superposition of constituents. Each test docstring cites its PHYSICS.md section.
       **DoD**: `pytest tests/test_physics_signatures.py -q` green (11 classes × ≥2 assertions);
       added to default suite → generator can never silently drift again.
+      *(evidence: 34 tests, deterministic 3x, 2s runtime; agent-built from spec, Claude-verified.
+      Bonus finding: refuted draft PHYSICS.md §4.5 kurtosis claim — doc corrected to measured
+      sine-like statistics, regression test pins it)*
 - [ ] **3.3 Dataset v2 design note** — *Owner: Claude proposes, you ratify.* One page in
       `experiments/DATASET_V2.md` deciding:
       (a) **Windowing**: 5 s signals → 1 s windows (20,480 samples), **group-aware splits**
