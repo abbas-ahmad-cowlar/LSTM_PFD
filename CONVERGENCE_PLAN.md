@@ -1,422 +1,612 @@
-# LSTM-PFD Convergence Plan — Physics-First Rebuild
+# LSTM-PFD Convergence Plan v2 — Physics-First Rebuild
 
 > **Goal**: Converge this project from a sprawling, partially-fabricated "everything platform"
 > into a **lean, honest, physics-informed fault-diagnosis research project** that produces
-> real, publishable results — using only the compute we actually have (CPU laptop overnight,
-> office PC with basic GPU for multi-day runs, Colab occasionally).
+> real, publishable results — using the compute we actually have (CPU laptop overnight,
+> office PC with basic GPU for multi-day runs, Colab bursts).
 >
-> **Supersedes**: `implementation_plan.md` (the old master plan — to be archived in Phase 6).
-> **Evidence base**: `audit_reports/PROJECT_AUDIT_2026-06-11.md`. Every claim there was
-> verified by execution; this plan inherits its rule: **only execution evidence counts.**
-> A feature "works" when a command ran and produced an artifact we can open.
+> **v2 changes** (after owner review): tier system for the model zoo (resolves keep/cut
+> indecision); reinstated low-effort/high-impact items (CNN-LSTM, AttentionCNN1D, MC-dropout
+> uncertainty, dashboard boot keep-alive, deployment appendix); full execution model (who does
+> what: owner / Claude / sub-agents / machines); per-step Definition of Done (DoD); per-phase
+> Do's & Don'ts and exit gates.
 >
-> **Dashboard policy (decided)**: The dashboard is **frozen, not deleted**. It stays in
-> `packages/dashboard/`, gets decoupled from core (Phase 2), and is rehabilitated later as a
-> separate effort (Phase D, after the science is done). No UI work before then.
+> **Supersedes**: `implementation_plan.md` (archived in Phase 6).
+> **Evidence base**: `audit_reports/PROJECT_AUDIT_2026-06-11.md`.
+> **Prime rule**: *only execution evidence counts* — a step is done when its DoD command ran
+> and its artifact exists, never because code "looks right".
+>
+> **Dashboard policy**: frozen after a 30-minute boot keep-alive fix (P1.9). Rehabilitated in
+> Phase D, after the science. No other UI work before then — no exceptions.
 
 ---
 
-## Part I — Strategy: What This Project Is Now
+## Progress Tracker (update every working session)
 
-### 1. The reframe: physics project, not data-science zoo
+| Phase | Status | Started | Done | Gate evidence |
+|---|---|---|---|---|
+| 0 Ratify & safety net | 🔄 in progress | 2026-06-11 | | |
+| 1 Stabilize the spine | ☐ not started | | | |
+| 2 The great pruning | ☐ not started | | | |
+| 3 Physics & data hardening | ☐ not started | | | |
+| 4 Benchmark matrix | ☐ not started | | | |
+| 5 Physics experiments | ☐ not started | | | |
+| 6 Docs convergence | ☐ not started | | | |
+| 7 Paper & repro package | ☐ not started | | | |
+| D Dashboard rehab (deferred) | ☐ frozen | | | |
 
-The project's genuinely rare asset is **not** the 34 models — every grad student has a model
-zoo. It is the **physics-based synthetic vibration generator for journal/hydrodynamic
-bearings** (Sommerfeld-scaled lubrication behavior, oil whirl, cavitation, 11-class taxonomy
-including mixed faults). Nearly all public bearing-fault research uses rolling-element data
-(CWRU, Paderborn); journal-bearing fault data is scarce. That scarcity is our opening.
+Conventions: mark steps `[x]` only with an evidence note: `(evidence: <command> → <artifact>)`.
+Use `[/]` for in-progress, `[!]` for blocked (with reason). Never delete a step — strike it
+with a reason if descoped.
 
-**The publishable story** (one paper, coherent, achievable on our compute):
+---
+
+# Part I — Strategy
+
+## 1. The reframe: physics project, not data-science zoo
+
+The project's rare asset is the **physics-based synthetic vibration generator for
+journal/hydrodynamic bearings** (Sommerfeld-scaled lubrication, oil whirl, cavitation,
+11-class taxonomy with mixed faults). Public bearing-fault research is dominated by
+rolling-element datasets (CWRU, Paderborn); journal-bearing data is scarce. That scarcity
+is our opening. The 34 models are commodity; the simulator is not.
+
+**The paper** (one coherent story, achievable on our compute):
 
 > *A physics-based simulation framework for journal-bearing fault diagnosis, with a
-> benchmark showing that physics-informed learning beats purely data-driven models
-> where it matters: less data, unseen severities, noisy signals — and produces
-> explanations consistent with known fault physics.*
+> benchmark showing where physics-informed learning beats purely data-driven models:
+> less data, unseen severities, noisy signals — with explanations consistent with known
+> fault physics.*
 
-Four concrete contributions, each mapped to work we can actually do:
-
-| # | Contribution | Why it's credible for us | Phase |
+| # | Contribution | Why credible | Phase |
 |---|---|---|---|
-| C1 | **Open synthetic dataset + generator** for journal-bearing faults (validated spectral signatures, severity/operating-condition sweeps, dataset card, DVC) | Generator already works; needs validation tests + a v2 dataset designed for experiments | 3 |
-| C2 | **Honest benchmark** of classical ML vs CNN/ResNet/Transformer vs PINN (multi-seed, statistical tests) | All infrastructure exists; just was never run | 4 |
-| C3 | **Physics-informed advantage analysis**: data-efficiency curves, severity-shift OOD, noise robustness — PINN vs matched vanilla baseline | This is where PINNs actually shine in the literature; experiments are cheap (subsets, shifted test sets) | 5 |
-| C4 | **Physics-consistent XAI**: do saliency/SHAP attributions concentrate at fault-characteristic frequencies? Quantified alignment metric | XAI code exists; envelope/spectral ground truth is known *because the data is synthetic* — a unique advantage of simulation | 5 |
+| C1 | **Open synthetic dataset + generator**, spectral signatures validated by automated tests, severity/operating-condition sweeps, dataset card, DVC | Generator already works; needs validation tests + experiment-designed v2 dataset | 3 |
+| C2 | **Honest benchmark**: classical ML vs 5 DL families vs 3 PINN variants, multi-seed, statistical tests | All infrastructure exists; it was simply never run | 4 |
+| C3 | **Physics-informed advantage analysis**: data-efficiency curves, severity-shift OOD, noise robustness | The regimes where PINNs actually shine; experiments are cheap (subsets + shifted test sets) | 5 |
+| C4 | **Physics-consistent XAI**: attention maps + SHAP/IG attribution alignment with known fault frequencies, quantified | Synthetic data means we *know* ground-truth physics — an advantage real-data papers can't have | 5 |
+| C5 *(appendix)* | **Deployment readiness**: ONNX export, INT8 dynamic quantization, CPU latency table, live FastAPI demo | Code already real; one afternoon of running it; industrially persuasive | 4 |
 
-**Honesty constraint to carry into the paper**: results are synthetic-only. We say so
-prominently, position the work as "simulation framework + benchmark," and list sim-to-real
-transfer as future work. Realistic venues: *Mechanical Systems and Signal Processing*,
-*Measurement*, *IEEE Sensors / IEEE Access*, *Sensors (MDPI)* — not IEEE TII with fabricated
-"domain expert validation." The old paper draft is quarantined (Phase 6).
+**Honesty constraint**: results are synthetic-only; we state it prominently and position as
+"framework + benchmark". Venues: *MSSP*, *Measurement*, *IEEE Sensors/Access*, *Sensors*.
+The old fabricated TII draft is quarantined (P0.4, archived P6).
 
-### 2. The triage framework (how every keep/cut decision is made)
+## 2. Triage framework (how every keep/cut decision is made)
 
-Classify every feature/module by **evidence level**, then apply the rules. This is the tool
-to use whenever something new is found that this plan doesn't list.
+Evidence levels: **WIRED** (ran end-to-end, artifact exists) · **PARTIAL ≥50%** (substantive
+backend, fixable failures) · **FACADE** (surface only / placeholder outputs) ·
+**ASPIRATIONAL** (docs only).
 
-**Evidence levels:**
-- **WIRED** — ran end-to-end, artifact exists (e.g., signal generator, CNN training).
-- **PARTIAL (≥50%)** — substantive backend exists, fails for identifiable, fixable reasons
-  (e.g., HybridPINN forward bug, stale data-gen tests).
-- **FACADE** — surface exists (UI/API/script), backend missing or returns placeholders
-  (e.g., feature-engineering tab, `industrial_validation.py` hardcoded accuracies).
-- **ASPIRATIONAL** — exists only in docs/plans (SaaS multi-tenancy, K8s production).
-
-**Rules:**
+Rules:
 1. WIRED → keep, protect with a test.
-2. PARTIAL → fix **only if** it serves contributions C1–C4 or the core pipeline; otherwise freeze.
-3. FACADE → remove the deceptive surface (the lying part), regardless of effort already spent.
-4. ASPIRATIONAL → strike from docs; a one-line entry in `BACKLOG.md` at most.
-5. **Out-of-scope overrides quality**: well-written code that serves the wrong goal
-   (2FA, webhooks, billing hooks) is still cut. Good code in the wrong project is a liability.
-6. **Nothing is destroyed**: tag `pre-convergence-2026-06` before any deletion; git history
-   keeps everything recoverable. Deleting from the working tree is reversible; carrying dead
-   weight is what's expensive.
+2. PARTIAL → fix **only if** it serves C1–C5 or the core pipeline; else freeze.
+3. FACADE → remove the deceptive surface regardless of effort already spent.
+4. ASPIRATIONAL → strike from docs; one line in `BACKLOG.md` at most.
+5. Out-of-scope overrides quality (good code for the wrong goal is still cut).
+6. Nothing destroyed: tag `pre-convergence-2026-06` first; git history keeps everything.
 
-### 3. The keep/cut verdict (the decisions you asked me to make)
+## 3. The tier system (v2 — the answer to "my heart doesn't want to let go")
 
-#### Models — keep 10, cut 24
+The v1 binary keep/cut forced painful choices. v2 uses three tiers. **Tier 2 is the pressure
+valve**: impressive things stay alive at a strictly capped cost (one smoke test each), without
+bloating the benchmark or the maintenance surface.
 
-**KEEP (the curated zoo — every kept model earns a row in the paper's results table):**
+| Tier | Meaning | Cost ceiling | Contents |
+|---|---|---|---|
+| **T1 — Core** | In the paper's main benchmark; fully maintained; CI-tested | Full | 12 models + kept pipeline (below) |
+| **T2 — Extension** | Stays in repo; must pass a 2-epoch smoke test in CI; benchmarked **only** if Phase 4 finishes with GPU time to spare; max **3** members, ever | One smoke test each | MultiScaleCNN1D, SE-ResNet1D, SignalTransformer |
+| **T3 — Cut** | Deleted from working tree after tagging; recoverable from tag; one-liner in BACKLOG.md if it's a plausible future direction | Zero | Everything else |
 
-| Tier | Models | Role in paper |
+Anti-regrowth rule: promoting anything *into* T1/T2 requires demoting something *out* —
+the tiers are fixed-size. This is what keeps the zoo from regrowing.
+
+## 4. Model zoo verdict (v2)
+
+### Tier 1 — the benchmark table (12 rows)
+
+| Group | Models | Role | v2 change |
+|---|---|---|---|
+| Classical | RandomForest, SVM, GradientBoosting (36 hand-crafted features) | Shallow-ML reference; minutes on CPU | — |
+| Deep | **CNN1D** (proven), **AttentionCNN1D**, **CNN-LSTM**, **ResNet18-1D**, **PatchTST** | Conv / attention / **recurrent** / residual / transformer — five distinct families | **+AttentionCNN1D** (free attention-map XAI figures for C4), **+CNN-LSTM** (the project is *named* LSTM-PFD — a benchmark without an LSTM is indefensible; also covers the recurrent family) |
+| Physics | **HybridPINN** (fix in P1), **PhysicsConstrainedCNN**, **MultitaskPINN** | The paper's core tier; 3 variants → ablation table | — |
+| Aggregate | **VotingEnsemble** (soft, top-3) | One ensemble row, ~free | — |
+
+GPU budget check: 8 trainable nets × 3 seeds = 24 runs; with 1 s windows on a basic GPU
+(~0.5–2 h/run) → ~12–48 GPU-h. Fits "office PC running for days". Classical = CPU minutes.
+
+### Tier 2 — extension (max 3, smoke-tested, benchmark-optional)
+
+MultiScaleCNN1D (physics-flavored multi-band reasoning), SE-ResNet1D (cheap attention-in-resnet
+row), SignalTransformer (in-house transformer with exposed attention — backup for PatchTST and
+extra C4 material). Run in Phase 4 only if the T1 matrix completes early.
+
+### Tier 3 — cut (unchanged from v1, reaffirmed after reconsideration)
+
+EfficientNet-1D B0–B7 (8) · WideResNet-1D (4) · ViT-1D (3) · TSMixer · CNN-TCN ·
+CNNTransformerHybrid (3) · DualStreamCNN · entire spectrogram/TFR 2D subsystem (models,
+datasets, trainer, evaluator, transforms) · contrastive stack (encoder, classifier,
+`training/contrastive/`, `contrast_learning_tfr.py`) · KnowledgeGraphPINN ·
+knowledge_distillation · progressive_resizing · Early/Late fusion · Stacking/Boosting/MoE
+ensembles · classical NeuralNetwork + StackedEnsemble wrappers · all legacy shims and ~47
+registry aliases (registry → ~15 honest entries: 12 T1 + 3 T2).
+
+**Why these stay cut even on reconsideration**: each is either (a) redundant with a kept
+family member (EfficientNet/WideResNet/ViT vs ResNet18/PatchTST), (b) a separate research
+program pretending to be a feature (contrastive, distillation, TFR/2D), or (c) speculative
+complexity with no story (KG-PINN, MoE). None produces a paper figure the kept set can't.
+"Low-hanging" must mean *low effort AND a real figure/table in the paper* — these fail the
+second half.
+
+## 5. Non-model verdicts (v2 deltas marked)
+
+| Area | Keep (T1) | Cut (T3) | v2 change |
+|---|---|---|---|
+| Data | `BearingFaultDataset`, `transforms.py`, `dataloader.py`, `signal_augmentation.py`, `signal_validation.py`, `signal_generation/` package | `cnn_dataset.py` (2 classes), `streaming_hdf5_dataset.py` (2), TFR datasets (3), `data_validator.py`, `cnn_dataloader.py` shim | — |
+| Evaluation | evaluator, cnn_evaluator, pinn_evaluator, statistical_analysis, cross_validation, check_data_leakage, robustness_tester, confusion_analyzer, roc_analyzer, error_analysis, benchmark, **dataset_comparison** | spectrogram_evaluator, ensemble_evaluator, temporal_cv | **+dataset_comparison** (needed for v1-vs-v2 dataset report in P3) |
+| XAI | shap_explainer, integrated_gradients, attention/saliency viz, **uncertainty_quantification** | anchors, CAVs, counterfactuals, partial_dependence, lime | **uncertainty promoted** from optional to planned (P5.6): MC-dropout on frozen checkpoints is CPU-cheap and yields a calibration figure industrial reviewers love |
+| Research scripts | ood_testing, pinn_ablation, pinn_comparison, xai_metrics (all repaired), train_overnight, compare_results, colab/ (trimmed) | failure_analysis (np.random results), industrial_validation (hardcoded accuracies), ablation_study (toy model), `experiments/` (broken), `integration/` stubs | — |
+| Infra | minimal docker-compose (api + model), FastAPI server, ONNX export + dynamic INT8, 2 lean CI workflows | Helm, K8s, nginx/ssl blocks, deploy.yml, HANDOVER_PACKAGE (regenerate in P7), ONNX static-quant stub, stale `site/`, mkdocs (until post-paper) | **C5 deployment appendix made explicit** (P4.7) |
+| Dashboard | frozen in-tree, decoupled, own requirements; **boot keep-alive fix** | nothing deleted now (its triage is Phase D) | **P1.9: 30-min timeboxed boot fix** so the dashboard stays demo-able; hard stop after that |
+
+---
+
+# Part II — Execution Model (who does what)
+
+## Actors
+
+| Actor | Strengths | Assigned work |
 |---|---|---|
-| Classical baselines | RandomForest, SVM, GradientBoosting (on 36 hand-crafted features) | "Feature engineering + shallow ML" reference tier; trains in minutes on CPU |
-| Deep baselines | **CNN1D** (proven), **ResNet18-1D**, **one transformer: PatchTST** | "Pure data-driven" tier across 3 architecture families |
-| Physics-informed | **HybridPINN** (fix first), **PhysicsConstrainedCNN**, **MultitaskPINN** | The paper's core tier; 3 variants enable a physics-ablation table |
-| Aggregate | **VotingEnsemble** (soft, top-3) | One ensemble row, nearly free once others are trained |
+| **You (owner)** | Decisions; access to office GPU PC and Colab; domain judgment | Veto/ratify at gates; run documented commands on office PC; Colab sessions; overnight laptop runs (queued before sleep); review paper claims |
+| **Claude (main session, this laptop)** | Judgment-heavy, cross-cutting, risky work | PINN debugging; all pruning (shared-file coupling makes it unsafe to parallelize); protocol & experiment design; gate verification; plan upkeep; commits/merges (only on your go); paper drafting |
+| **Sub-agents (parallel, scoped)** | Well-specified, low-coupling, mechanical work | See task split below. Every agent deliverable is verified by Claude running the DoD command before acceptance — *agent reports are never trusted on their word* (audit §9 lesson) |
+| **Machines** | Unattended compute | Laptop CPU: overnight training/eval/XAI. Office GPU: multi-day benchmark queue. Colab: burst lane / fallback |
 
-**CUT (delete after tagging; rationale per group):**
-- **EfficientNet-1D B0–B7** (8 variants) — ImageNet-scaling ported to 1D adds nothing at our
-  dataset size; 8 rows of noise in any results table.
-- **WideResNet-1D (4 variants), SE-ResNet** — redundant with ResNet18 for our story.
-- **ViT-1D (3 sizes), TSMixer, SignalTransformer** — one transformer (PatchTST) is enough;
-  transformer-architecture comparison is not our contribution.
-- **CNN-LSTM, CNN-TCN, CNNTransformerHybrid (3 variants), MultiScaleCNN/Dilated, AttentionCNN
-  variants, DualStreamCNN** — hybrid-architecture exploration is a different paper.
-- **Spectrogram 2D family (ResNet2D/EfficientNet2D + 6 presets) + the entire TFR pipeline**
-  (tfr_dataset.py ×3 classes, spectrogram trainer/evaluator/transforms) — heaviest orphaned
-  subsystem; time-frequency input is a fine *future* extension, not core.
-- **Contrastive stack** (SignalEncoder, ContrastiveClassifier, `training/contrastive/`,
-  `contrast_learning_tfr.py`) — SimCLR pretraining is a separate research program.
-- **KnowledgeGraphPINN** — speculative; three PINN variants is already a full ablation.
-- **Stacking/Boosting/MoE ensembles, Early/Late Fusion** — one ensemble suffices.
-- **Classical NeuralNetwork + StackedEnsemble wrappers** — redundant with the DL tier.
-- **Trainer complexity serving cut models**: `knowledge_distillation.py`,
-  `progressive_resizing.py`, spectrogram trainer, legacy shims (`cnn_1d.py`, `resnet_1d.py`,
-  `hybrid_pinn.py` root shims, `legacy_ensemble.py`, re-export shim files) and the ~47
-  registry aliases (registry shrinks to ~12 honest entries).
+## Agent task policy
 
-#### Data layer — keep 1 dataset class
+**Agent-suitable** (clear spec, isolated files, verifiable DoD):
+- Rewriting stale test files against a documented API (P1.4)
+- Writing spectral-validation tests from a per-fault spec table (P3.2)
+- Docs migration/move + link fixing (P6.1–6.2)
+- Boilerplate: smoke-test suite for T2 models (P2.2), results-aggregation script polish (P4.4)
 
-**KEEP**: `BearingFaultDataset` (+ `transforms.py`, `dataloader.py`, `signal_augmentation.py`,
-`signal_validation.py`, the whole `signal_generation/` package).
-**CUT**: `cnn_dataset.py` (RawSignalDataset, CachedRawSignalDataset),
-`streaming_hdf5_dataset.py` (datasets fit in RAM), all TFR datasets,
-`data_validator.py` (orphaned MATLAB comparison), `cnn_dataloader.py` shim.
+**Agent-forbidden** (judgment, coupling, or trust-critical):
+- HybridPINN debugging (iterative, architectural judgment)
+- Pruning the model factory / `__init__.py` graph (one wrong deletion breaks everything)
+- Anything that decides keep/cut; anything that writes claims into docs/paper
+- Final verification of any phase gate
 
-#### Evaluation / XAI — keep what C2–C4 need
+**Verification protocol** (after every agent task): Claude runs `pytest -q` + the task's DoD
+command; on failure the task returns to the agent or is redone inline. Two failed round-trips
+→ Claude takes it over.
 
-**KEEP**: evaluator, cnn_evaluator, pinn_evaluator, statistical_analysis, cross_validation,
-check_data_leakage, robustness_tester, confusion_analyzer, roc_analyzer, error_analysis,
-benchmark. **XAI**: shap_explainer, integrated_gradients, attention/saliency visualization,
-uncertainty_quantification (optional, P2 — nice paper figure).
-**CUT**: spectrogram_evaluator, ensemble_evaluator (voting needs no special evaluator),
-temporal_cv (no temporal split in our design), anchors, concept_activation_vectors,
-counterfactual_explanations, partial_dependence (tabular-oriented), lime (SHAP+IG suffice).
+## Session workflow (each working session)
 
-#### Research / benchmark scripts
+1. Open plan → check Progress Tracker → pick the next unblocked step.
+2. Work it to DoD; record evidence string on the checkbox.
+3. Before session end: queue any overnight run (laptop) or hand you the office-PC/Colab
+   command block; update tracker; commit only when you've approved (and never on `main`).
 
-**KEEP & REPAIR**: `ood_testing.py` (real training loop — core of C3), `pinn_ablation.py` +
-`pinn_comparison.py` (repair against fixed HybridPINN — core of C3), `xai_metrics.py` (C4),
-`scripts/train_overnight.py` (proven), `scripts/colab/` (trim to curated zoo),
-`scripts/compare_results.py`.
-**CUT**: `failure_analysis.py` (np.random fake results), `industrial_validation.py`
-(hardcoded placeholder accuracies), `ablation_study.py` (self-contained toy model — superseded
-by pinn_ablation on real models), `experiments/cnn_experiment.py` (broken imports),
-`integration/unified_pipeline.py` + friends (phase-orchestration stubs), `benchmarks/`
-resource/scalability scripts unless trivially working.
+## Git workflow
 
-#### Infrastructure
-
-**KEEP**: one minimal `docker-compose.yml` (FastAPI inference + model volume — fix paths),
-the FastAPI server (it's real), ONNX dynamic-quantization path, 2 lean CI workflows
-(lint + tests on push; no docs build, no deploy).
-**CUT**: Helm charts, K8s manifests, nginx/ssl service blocks, deploy.yml workflow,
-`deliverables/HANDOVER_PACKAGE/` (regenerate honestly at the end), ONNX *static* quantization
-stub, `site/` (stale built docs), mkdocs (until docs stabilize — a good README + docs/ folder
-beats a broken docs site).
-
-#### Dashboard (frozen — Phase D, later)
-
-Stays in-tree, decoupled, excluded from core CI. Its own triage (login missing, XAI/NAS/
-testing/feature-eng tabs are facade, services partially real) is **deferred wholesale** —
-including the trivial `REFRESH_INTERVAL_MS` boot fix, which lands in Phase D.1 as its first
-step. We do not spend UI hours before the science exists. (Rationale: you confirmed it ran
-before March; the boot bug is recent and one-line — it will keep.)
+- One branch per phase: `p0/ratify`, `p1/stabilize`, `p2/prune`, ... merged to `main` at the
+  exit gate after the gate checklist passes. Tag `pre-convergence-2026-06` before P2.
+- Office PC pulls the current phase branch; its result artifacts come back via git
+  (small JSONs/PNGs committed to `results/`) or file copy for checkpoints (checkpoints stay
+  out of git; DVC or manual copy).
+- Optional but recommended: install Claude Code on the office PC too — then the benchmark
+  queue can be supervised there ("run, watch, requeue on failure") instead of fire-and-forget.
 
 ---
 
-## Part II — The Phases
+# Part III — The Phases
 
-Branch discipline: one branch per phase (`p1/stabilize`, `p2/prune`, ...), merged to `main`
-at each exit gate. Tag `pre-convergence-2026-06` on `main` before P2 deletions.
-`CONVERGENCE_PLAN.md` is the single source of progress: mark items `[x]` as they complete,
-with a one-line note of the *evidence* (command + artifact).
+Every step lists **Owner → Actions → DoD** (definition of done = command(s) + artifact).
+Time estimates assume part-time work.
 
 ---
 
-### Phase 0 — Ratify & safety net (half a day, laptop)
+## Phase 0 — Ratify & safety net (half a day · laptop · branch `p0/ratify`)
 
-- [ ] **0.1** Review Part I keep/cut lists; strike or add items (owner decision). Anything not
-      explicitly kept is cut by default.
-- [ ] **0.2** Tag current `main` as `pre-convergence-2026-06`; push tag.
-- [ ] **0.3** Create `BACKLOG.md` (one-liners for everything aspirational we're cutting:
-      SaaS, K8s, NAS, contrastive, TFR/2D models, distillation, real-data validation).
-- [ ] **0.4** Immediate honesty hotfixes (tiny, do now, on `main`):
-      delete fake results table in `reproducibility/README.md:62-67`;
-      add "⚠️ contains unvalidated placeholder results — do not cite" header to
-      `config/docs/paper/main.tex` and rename `config/docs/reports/Final_Report.pdf` →
-      `Final_Report_UNVALIDATED.pdf`.
-- [ ] **0.5** Pin environment: commit `requirements.lock.txt` from the working venv
-      (Python 3.14.0 / torch 2.9.1). Office-GPU and Colab get their own lock files in P4.
+**Objective**: lock decisions, make deletion safe, kill the worst lies immediately.
+**Prerequisites**: you have read Part I and either ratified or amended the tier tables.
 
-**Exit gate**: tag exists; no doc in the repo presents invented numbers as results.
+**Do**: keep edits surgical; touch only what the steps name.
+**Don't**: start fixing code; start pruning; touch the dashboard.
 
----
+- [x] **0.1 Ratify tiers** — *Owner: you.* Read Part I §4–5; amend tier tables directly in
+      this file (move names between tiers; respect T2 cap of 3).
+      **DoD**: your sign-off note here: `Ratified by Syed Abbas Ahmad on 2026-06-11, amendments: none ("I sign off, please go ahead.")`.
+- [ ] **0.2 Safety tag** — *Owner: Claude.* `git tag pre-convergence-2026-06 main && git push origin pre-convergence-2026-06`.
+      **DoD**: tag visible on GitHub.
+- [ ] **0.3 BACKLOG.md** — *Owner: Claude.* One-liner per cut-but-plausible future direction
+      (TFR/2D input, contrastive pretraining, distillation-for-edge, KG-PINN, real-data
+      sim-to-real study, SaaS/K8s, mkdocs site, NAS).
+      **DoD**: file exists; every T3 group with future potential has exactly one line.
+- [ ] **0.4 Honesty hotfixes** — *Owner: Claude.*
+      (a) Delete fake results table `reproducibility/README.md:62-67` → replace with
+      "Results: see `results/` — populated by Phase 4".
+      (b) Prepend `% ⚠️ UNVALIDATED DRAFT — contains invented results; do not cite or submit`
+      to `config/docs/paper/main.tex`.
+      (c) Rename `config/docs/reports/Final_Report.pdf` → `Final_Report_UNVALIDATED.pdf`.
+      **DoD**: `grep -r "98.1" --include="*.md" .` returns no results-claims outside archive/audit files.
+- [ ] **0.5 Pin environment** — *Owner: Claude.* `pip freeze > requirements.lock.txt` from the
+      working venv (Python 3.14.0 / torch 2.9.1+cpu); note GPU/Colab envs get their own locks in P4.1.
+      **DoD**: file committed; README quick-start mentions it.
 
-### Phase 1 — Stabilize the spine (3–5 days, laptop, CPU)
-
-Fix everything PARTIAL that the kept set depends on. No new features.
-
-- [ ] **1.1** **Fix HybridPINN forward pass** (P0). Diagnose shape mismatch
-      (`mat1 4x75 vs 576x256`): the physics-feature branch produces 75-dim input where the
-      fusion layer expects 576. Likely a feature-extractor/config drift during the March
-      refactor. Fix → all 9 `tests/test_pinn.py` + 2 `tests/test_models.py` PINN tests green.
-      *This is the single most important code fix in the project — C3 depends on it.*
-- [ ] **1.2** Verify PhysicsConstrainedCNN + MultitaskPINN forward/backward with a smoke test
-      (they share physics components with HybridPINN; assume broken until proven).
-- [ ] **1.3** Fix pytest collection: rewrite `tests/utilities/test_training_imports.py` as a
-      proper test (no module-level `sys.exit`).
-- [ ] **1.4** Rewrite `tests/test_data_generation.py` against the current
-      `signal_generation/` API (~20 stale tests). While there: convert them into *physics
-      validation tests* where cheap (see 3.2) instead of API-echo tests.
-- [ ] **1.5** Fix remaining real failures in kept scope: integration test imports
-      (`test_comprehensive.py` ×3), Windows `PermissionError` in `test_models.py`
-      serialization, ONNX export TypeError (`test_deployment.py`) — or mark ONNX tests
-      `skipif(no onnxruntime)` and install onnxruntime in the venv.
-- [ ] **1.6** Mark dashboard tests with `@pytest.mark.dashboard`, excluded by default
-      (`pytest.ini` addopts `-m "not dashboard"`).
-- [ ] **1.7** Establish the *trust command*:
-      `pytest -q` → **0 failures** (skips allowed only with reasons).
-- [ ] **1.8** Train-resume sanity: load `checkpoints/cnn/best_model.pth`, evaluate on the test
-      split of `data/generated/dataset.h5`, write `results/cnn1d_baseline_eval.json` +
-      confusion matrix PNG. *First-ever artifact in `results/` — proves the evaluation
-      pipeline end-to-end and gives the first real number for the project.*
-
-**Exit gate**: `pytest -q` green; HybridPINN trains 2 epochs on CPU without error
-(`scripts/train_overnight.py --model pinn --epochs 2` or equivalent); `results/` non-empty.
+**Exit gate 0**: tag pushed · zero invented numbers outside quarantine · tiers ratified.
+*Merge `p0/ratify` → `main`.*
 
 ---
 
-### Phase 2 — The great pruning (2–3 days, laptop)
+## Phase 1 — Stabilize the spine (3–5 days · laptop CPU · branch `p1/stabilize`)
 
-Execute the Part I cut lists. Order matters: prune → fix imports → tests stay green.
+**Objective**: everything T1 imports, runs, and tests green; first real artifact in `results/`.
+**Prerequisites**: Phase 0 merged.
 
-- [ ] **2.1** Delete cut models + their factory entries/aliases; registry shrinks to ~12
-      entries. Update `tests/test_all_models.py` / `test_factory_wiring.py` accordingly.
-- [ ] **2.2** Delete cut trainers (distillation, progressive resizing, spectrogram),
-      contrastive package, fusion/ensemble extras, TFR/data-layer extras, shims.
-- [ ] **2.3** Delete cut evaluation/XAI modules; delete fake-output scripts
-      (`failure_analysis.py`, `industrial_validation.py`, `ablation_study.py`,
-      `experiments/`, `integration/` orchestration stubs).
-- [ ] **2.4** Infrastructure cut: remove helm/, kubernetes/, deploy.yml, nginx/ssl blocks
-      from docker-compose; fix compose to the minimal real stack (api + model volume,
-      correct `checkpoints/cnn/best_model.pth` path, correct Dockerfile context).
-      `docker compose config` validates; `docker compose up api` serves `/health`
-      (verify locally once; CPU image).
-- [ ] **2.5** Decouple dashboard: core must import nothing from `packages/dashboard`;
-      dashboard gets `packages/dashboard/requirements.txt`; CI ignores it; README states
-      "dashboard: experimental, frozen — see Phase D".
-- [ ] **2.6** Slim CI: two workflows — `lint.yml` (black/isort/flake8 on changed code),
-      `test.yml` (pytest, current action versions, no docs build, no benchmark step).
-      Both must pass on the PR for this phase.
-- [ ] **2.7** Repo hygiene: delete `tmp_gitlog.txt`, `.coverage`, stale `site/`; prune the
-      15+ dead remote branches (`git push origin --delete ...` after confirming merged).
-- [ ] **2.8** Re-run `pytest -q` + retrain CNN1D for 2 epochs → confirm nothing kept broke.
+**Do**: fix root causes, not symptoms; add a regression test for every bug fixed; keep a
+running `FIXLOG.md` note per fix (1 line: bug → cause → fix → test).
+**Don't**: refactor for style; add features; touch T3 code except to keep imports working
+(pruning is P2); exceed the dashboard timebox (1.9).
 
-**Exit gate**: LOC drops by roughly a third or more; `pytest -q` green; minimal compose
-stack runs; zero imports from core → dashboard.
+- [ ] **1.1 Diagnose & fix HybridPINN forward pass** ⭐ most important fix in the project —
+      *Owner: Claude.* Symptom: `mat1 4x75 vs 576x256` — physics-feature branch emits 75-dim
+      vector where fusion expects 576. Diagnose drift between feature extractor output and
+      fusion-layer config (March refactor suspect). Fix architecture/config, not the test.
+      **DoD**: `pytest tests/test_pinn.py tests/test_models.py -q` → 0 failures; plus a 2-epoch
+      CPU sanity train run completes: loss decreases, no NaN (`logs/pinn_sanity.log`).
+- [ ] **1.2 Smoke-verify PhysicsConstrainedCNN & MultitaskPINN** — *Owner: Claude.* They share
+      physics components; assume broken until proven. Write one parametrized forward/backward
+      smoke test covering all T1+T2 models (this becomes the permanent zoo gate).
+      **DoD**: `pytest tests/test_zoo_smoke.py -q` green for all 15 T1+T2 architectures.
+- [ ] **1.3 Fix pytest collection** — *Owner: agent, Claude verifies.* Rewrite
+      `tests/utilities/test_training_imports.py` as real tests (no module-level `sys.exit`).
+      **DoD**: `pytest --co -q tests/` collects with zero INTERNALERROR.
+- [ ] **1.4 Rewrite stale data-generation tests** — *Owner: agent (spec: current
+      `signal_generation/` API), Claude verifies.* ~20 tests in `tests/test_data_generation.py`
+      target the pre-refactor API. Rewrite against current API; where a test was API-echo,
+      replace with a behavior assertion (right shape, right class count, determinism by seed).
+      **DoD**: `pytest tests/test_data_generation.py -q` → 0 failures, ≥ same coverage of public API.
+- [ ] **1.5 Fix remaining kept-scope failures** — *Owner: Claude.*
+      (a) `tests/integration/test_comprehensive.py` import errors (3);
+      (b) Windows `PermissionError` in `test_models.py::test_serialization` (tempfile pattern);
+      (c) ONNX tests: `pip install onnxruntime` into venv + fix the export TypeError, or
+      `skipif` with reason if onnxruntime is unavailable on Py3.14.
+      **DoD**: `pytest -q -m "not dashboard"` → **0 failures** (skips allowed only with reason strings).
+- [ ] **1.6 Dashboard test markers** — *Owner: Claude.* Mark dashboard tests
+      `@pytest.mark.dashboard`; `pytest.ini`: `addopts = -m "not dashboard"`, register marker.
+      **DoD**: default `pytest -q` collects zero dashboard tests; `pytest -m dashboard` still finds them.
+- [ ] **1.7 Trust command in CI** — *Owner: Claude.* Make `pytest -q` the single trust command
+      locally and in `test.yml`.
+      **DoD**: CI run green on the phase branch.
+- [ ] **1.8 First real artifact** — *Owner: Claude + laptop overnight.* Load
+      `checkpoints/cnn/best_model.pth`, evaluate on test split of `data/generated/dataset.h5`,
+      emit `results/cnn1d_v1_baseline/metrics.json` + confusion-matrix PNG via the kept
+      evaluator stack (exercises evaluation end-to-end for the first time ever).
+      **DoD**: both files exist; accuracy within ±2 pts of the checkpoint's 88.8% val acc
+      (else investigate split/leakage before proceeding).
+- [ ] **1.9 Dashboard boot keep-alive** ⏱ 30-minute hard timebox — *Owner: Claude.* Fix the
+      `REFRESH_INTERVAL_MS` use-before-import in `packages/dashboard/app.py:69/96` (+ the
+      root-vs-dashboard `utils` shadowing if it bites). Boot with SQLite/dev env, click nothing.
+      **DoD**: `python app.py` serves on :8050 and renders the home layout; screenshot saved to
+      `audit_reports/dashboard_alive_2026-06.png`; **then stop** — further dashboard work is Phase D.
 
----
-
-### Phase 3 — Physics & data hardening (4–6 days, laptop + overnight CPU runs)
-
-Turn the generator from "plausible" to "defensible" — this is contribution C1.
-
-- [ ] **3.1** **Document the physics**: one `docs/PHYSICS.md` consolidating the fault model
-      equations (per fault: signal model, characteristic frequencies, severity scaling,
-      operating-condition coupling, which coefficients are empirical and why). Source
-      material exists in `data/PHYSICS_MODEL_GUIDE.md` + `utils/physics_constants.py`.
-- [ ] **3.2** **Spectral-signature validation tests** (the scientific heart of C1): for each
-      fault class, an automated test asserting the expected spectral content — misalignment
-      → 2×/3× harmonics; imbalance → 1× with speed dependence; oil whirl → 0.42–0.48×
-      sub-synchronous peak; cavitation → high-frequency burst energy; lubrication →
-      Sommerfeld-dependent stick-slip signature; mixed faults → superposition of components.
-      These become permanent CI tests — *the generator can never silently drift again.*
-- [ ] **3.3** **Design dataset v2 for the experiments we'll run** (this design decision
-      shapes Phases 4–5):
-      - **Window decision**: segment 5 s signals into 1 s windows (20,480 samples) with
-        group-aware splits (all windows of one signal stay in one split — leakage-checked
-        via `check_data_leakage.py`). Effect: ~5× more samples, ~5× cheaper per-sample
-        training — decisive for CPU/weak-GPU feasibility.
-      - Stratified severity levels per fault (e.g., 3 levels × labeled) → enables
-        severity-shift OOD (train on mild/moderate, test on severe).
-      - Operating-condition sweep (speed/load grid, stored in metadata) → enables
-        condition-shift OOD.
-      - Multiple SNR variants of the test set → noise-robustness curves without retraining.
-      - Fixed seeds; full metadata; dataset card updated.
-- [ ] **3.4** Generate v2 overnight on the laptop (v1 took ~100 s for 2,860 signals — v2 at
-      ~3–5× size is still < 1 h; HDF5 writing dominates). Validate with 3.2 suite + class
-      balance + leakage check. Track with DVC.
-- [ ] **3.5** Re-baseline CNN1D on v2 (overnight CPU run, windowed input) → confirms the
-      windowing pipeline and gives the v2 reference number.
-
-**Exit gate**: physics tests green in CI; `data/generated/dataset_v2.h5` + dataset card +
-DVC; CNN1D v2 baseline result in `results/`.
+**Exit gate 1**: `pytest -q` → 0 failures · zoo smoke test green (15 archs) · HybridPINN
+2-epoch sanity log exists · `results/` non-empty · dashboard boots (screenshot).
+*Merge `p1/stabilize` → `main`.*
 
 ---
 
-### Phase 4 — The benchmark matrix (1–2 weeks wall-clock; office GPU + Colab; mostly machine time)
+## Phase 2 — The great pruning (2–3 days · laptop · branch `p2/prune`)
 
-Contribution C2. Protocol first, then let machines work.
+**Objective**: delete T3; repo shrinks ~⅓; everything kept still green.
+**Prerequisites**: Gate 1 passed; tag from 0.2 exists (verify before first deletion).
 
-- [ ] **4.1** Freeze the protocol in `experiments/PROTOCOL.md`: fixed splits, 3 seeds
-      (extend to 5 only if GPU time allows), same early-stopping budget (e.g., max 60 epochs,
-      patience 10), same optimizer policy per family, all configs committed. No
-      per-model hand-tuning beyond one documented LR sweep — this is a fairness benchmark,
-      not a leaderboard chase.
-- [ ] **4.2** Compute assignment:
-      - **Laptop (CPU, overnight)**: classical baselines (minutes), evaluation jobs, XAI.
-      - **Office PC (GPU, days)**: CNN1D, ResNet18, PatchTST, 3 PINN variants × 3 seeds
-        ≈ 21 runs; with 1 s windows expect roughly 0.5–2 h/run on a basic GPU → fits in a
-        few days of unattended running. `scripts/train_overnight.py` extended into
-        `scripts/run_benchmark.py` (sequential queue, resume-safe, writes per-run JSON).
-      - **Colab**: spillover/parallel lane using the existing (trimmed) `scripts/colab/`
-        batches; also the fallback if the office GPU disappoints.
-- [ ] **4.3** Run the matrix. Every run produces: checkpoint, history JSON, test metrics
-      JSON, confusion matrix. `results/` becomes the project's proof.
-- [ ] **4.4** Aggregate: `scripts/compare_results.py` → mean±std table, per-class F1,
-      paired statistical tests (Wilcoxon over seeds), one significance-annotated figure.
-- [ ] **4.5** Latency benchmark (CPU inference, batch=1) for the honest "deployability" row.
-- [ ] **4.6** **Replace every `[PENDING]` in README/CHANGELOG with measured numbers.**
+**Do**: prune in the order below (leaves → roots); run `pytest -q` after **every** numbered
+step; commit per step (small, revertable commits).
+**Don't**: parallelize pruning across agents (import-graph coupling — Claude does all of P2.1–2.5
+inline); "improve" code while deleting; touch dashboard internals; delete anything T2.
 
-**Exit gate**: ≥ 10 model rows × 3 seeds of real results in `results/`; README table filled;
-best model identified.
+- [ ] **2.1 Prune models** — *Owner: Claude.* Delete T3 model files; shrink
+      `model_factory.py` registry to ~15 entries (12 T1 + 3 T2); update
+      `models/__init__.py`, `tests/test_all_models.py`, `test_factory_wiring.py`.
+      **DoD**: `pytest -q` green; `python -c "from packages.core.models.model_factory import MODEL_REGISTRY; print(len(MODEL_REGISTRY))"` ≤ 16.
+- [ ] **2.2 Prune training & data layers** — *Owner: Claude (smoke-suite boilerplate may go to
+      an agent).* Delete: distillation, progressive_resizing, spectrogram trainer,
+      `training/contrastive/`, TFR datasets, `cnn_dataset.py`, streaming datasets,
+      `data_validator.py`, all shims (root `cnn_1d.py`, `resnet_1d.py`, `hybrid_pinn.py`,
+      `legacy_ensemble.py`, `cnn_dataloader.py`, scheduler shims, `losses.py` shim).
+      **DoD**: `pytest -q` green; `grep -rn "import.*\(distillation\|progressive_resizing\|tfr_dataset\|contrastive\)" packages/ data/ scripts/ --include="*.py"` → no live references.
+- [ ] **2.3 Prune evaluation/XAI/scripts** — *Owner: Claude.* Delete T3 evaluators/XAI modules,
+      fake-output scripts (`failure_analysis.py`, `industrial_validation.py`,
+      `ablation_study.py`), `experiments/cnn_experiment.py`, `integration/` orchestration stubs.
+      **DoD**: `pytest -q` green; `grep -rn "np.random" scripts/research/ benchmarks/` shows no
+      metric-fabrication patterns remaining.
+- [ ] **2.4 Infra prune & compose fix** — *Owner: Claude.* Delete helm/, kubernetes/,
+      deploy.yml, nginx/ssl service blocks; fix compose: api service only + model volume,
+      correct `MODEL_PATH=/app/checkpoints/cnn/best_model.pth`, correct build context.
+      **DoD**: `docker compose config` validates; `docker compose up api` →
+      `curl localhost:8000/health` returns 200 with model loaded (run once locally, CPU image).
+- [ ] **2.5 Decouple dashboard** — *Owner: Claude.* Zero core→dashboard imports (verify);
+      `packages/dashboard/requirements.txt` split out; README marks dashboard
+      "experimental — frozen until Phase D".
+      **DoD**: `grep -rn "packages.dashboard" packages/core/ data/ scripts/ utils/ --include="*.py"` → empty.
+- [ ] **2.6 Slim CI** — *Owner: agent, Claude verifies.* Two workflows only: `lint.yml`
+      (black/isort/flake8), `test.yml` (`pytest -q`, modern action versions). Delete the rest.
+      **DoD**: both workflows green on the phase branch PR.
+- [ ] **2.7 Repo hygiene** — *Owner: Claude.* Delete `tmp_gitlog.txt`, stale `.coverage`,
+      stale `site/`; after confirming merged: delete the ~15 dead remote branches
+      (list first, you approve the list).
+      **DoD**: `git branch -r` shows only main + active phase branches; root has no tmp files.
+- [ ] **2.8 Post-prune retrain proof** — *Owner: laptop overnight.* CNN1D 2-epoch run +
+      HybridPINN 2-epoch run on the pruned tree.
+      **DoD**: both logs show decreasing loss; `pytest -q` green next morning.
 
----### Phase 5 — Physics-informed experiments (1–2 weeks; the paper's heart — C3 + C4)
-
-- [ ] **5.1** **Data efficiency** (GPU): train PINN-best and CNN/ResNet-best on 10/25/50/100%
-      of training data × 3 seeds → accuracy-vs-data curves. *The classic PINN win; cheap
-      because subsets train faster.*
-- [ ] **5.2** **Severity-shift OOD** (GPU, uses v2 design): train on mild+moderate, test on
-      severe (and reverse). Repair & use `scripts/research/ood_testing.py`.
-- [ ] **5.3** **Noise robustness** (laptop): evaluate frozen Phase-4 checkpoints across the
-      SNR-variant test sets → robustness curves. No retraining needed.
-- [ ] **5.4** **Physics ablation** (GPU): HybridPINN with each physics-loss component
-      on/off + physics-weight sweep (repair `pinn_ablation.py`). McNemar's/Wilcoxon tests.
-- [ ] **5.5** **Physics-consistent XAI** (laptop): SHAP + Integrated Gradients on the
-      best PINN and best vanilla model; compute attribution energy at fault-characteristic
-      frequency bands vs elsewhere (we *know* ground truth — synthetic); report an
-      alignment score per class + 2–3 qualitative figures. (`xai_metrics.py`, repaired.)
-- [ ] **5.6** (Optional, P2) Uncertainty: MC-dropout calibration curve of best PINN —
-      one figure if time permits.
-
-**Exit gate**: four results sub-directories (data-efficiency, OOD, ablation, XAI) with JSONs
-+ publication-quality figures; the central claim (where physics helps, quantified) is
-supported or honestly refuted — *either outcome is publishable as long as it's real.*
-
----
-
-### Phase 6 — Documentation convergence & archive (2–3 days, laptop)
-
-- [ ] **6.1** Create `archive/` at repo root: move IDB reports (`config/docs/idb_reports/`,
-      ~30 files), old audits (`CONFIG_DATA_AUDIT.md`, `REPO_STRUCTURE_AUDIT.md`),
-      `implementation_plan.md`, fabricated `paper/` + `Final_Report_UNVALIDATED.pdf`, with a
-      one-page `archive/README.md` explaining why each group was archived.
-- [ ] **6.2** Create real `docs/` root (the location README already links to): move keepers —
-      ARCHITECTURE.md, GETTING_STARTED.md, PHYSICS.md (from 3.1), PROTOCOL.md, training/
-      evaluation/XAI guides from `packages/`, DEPLOYMENT (trimmed to compose-only),
-      DOCUMENTATION_STANDARDS.md. Target: **≤ 20 living documents** total.
-- [ ] **6.3** Rewrite README around reality: physics-first pitch, real results table,
-      honest quick-start (verified by running it on a clean clone), dashboard marked frozen.
-- [ ] **6.4** Delete or fix every broken doc link; drop mkdocs (or fix `docs_dir` if we
-      decide to keep a site — default: drop until after the paper).
-- [ ] **6.5** Doc-honesty CI guard: a simple grep test failing on "accuracy ≥ N%" claims in
-      docs unless the number exists in `results/` (crude but effective tripwire).
-
-**Exit gate**: ≤ 20 living docs; zero fabricated claims outside `archive/`; clean-clone
-quick-start verified by execution.
+**Exit gate 2**: LOC reduced ≥ 30% (`find ... | xargs wc -l` before/after recorded here) ·
+`pytest -q` green · compose serves /health · zoo smoke green (15) · retrain proof logs.
+*Merge `p2/prune` → `main`.*
 
 ---
 
-### Phase 7 — Paper & reproducibility package (1–2 weeks, writing-dominant)
+## Phase 3 — Physics & data hardening (4–6 days · laptop + overnight · branch `p3/physics`)
 
-- [ ] **7.1** Write the paper from scratch against `results/` only (the old tex is archived;
-      its references.bib may be salvaged). Structure mirrors C1–C4. Limitations section
-      states synthetic-only scope plainly.
-- [ ] **7.2** Figures/tables generated by committed scripts from `results/` (no hand-edited
-      numbers anywhere — `generate_tables.py` exists in `reproducibility/`, repair it).
-- [ ] **7.3** Reproducibility package: pinned env, seeds, DVC data, one
-      `reproducibility/run_all.py` that regenerates every table/figure; verified on a clean
-      machine (office PC counts).
-- [ ] **7.4** Venue decision (MSSP / Measurement / IEEE Access / Sensors) once we see effect
-      sizes; Zenodo deposit for dataset+code at submission time.
+**Objective**: generator goes from "plausible" to "defensible" (C1); dataset v2 designed
+*for* the Phase 4–5 experiments.
+**Prerequisites**: Gate 2. **This phase's design decisions shape everything after — slow down here.**
 
-**Exit gate**: submitted manuscript whose every number traces to a committed artifact.
+**Do**: write the physics down before testing it; make every signature test cite its equation
+in `docs/PHYSICS.md`; involve you (owner) on the windowing + severity-grid decisions.
+**Don't**: tune generator coefficients to make models score better (that's leakage of the
+worst kind); grow scope of v2 beyond what P4/P5 protocols need.
+
+- [ ] **3.1 docs/PHYSICS.md** — *Owner: Claude (draft) + you (review).* Consolidate per-fault:
+      signal model equation, characteristic frequencies, severity scaling, operating-condition
+      coupling, which coefficients are empirical (and a defense of each). Sources:
+      `data/PHYSICS_MODEL_GUIDE.md`, `utils/physics_constants.py`, `fault_modeler.py`.
+      **DoD**: every one of the 11 classes has all five subsections; you sign off on the physics.
+- [ ] **3.2 Spectral-signature validation tests** ⭐ scientific heart of C1 — *Owner: agent
+      builds from Claude's spec table, Claude verifies.* Per fault, automated assertions on
+      generated signals: misalignment → 2×/3× harmonics dominate; imbalance → 1× scaling with
+      speed²; oil whirl → 0.42–0.48× sub-synchronous peak; cavitation → HF burst energy band;
+      lubrication → Sommerfeld-dependent stick-slip; wear → broadband floor rise; mixed →
+      superposition of constituents. Each test docstring cites its PHYSICS.md section.
+      **DoD**: `pytest tests/test_physics_signatures.py -q` green (11 classes × ≥2 assertions);
+      added to default suite → generator can never silently drift again.
+- [ ] **3.3 Dataset v2 design note** — *Owner: Claude proposes, you ratify.* One page in
+      `experiments/DATASET_V2.md` deciding:
+      (a) **Windowing**: 5 s signals → 1 s windows (20,480 samples), **group-aware splits**
+      (all windows of a signal share a split) — ~5× samples, ~5× cheaper per-sample training;
+      (b) severity grid: 3 labeled levels/fault → enables severity-shift OOD;
+      (c) operating-condition sweep (speed/load grid in metadata) → condition-shift OOD;
+      (d) SNR-variant test sets (e.g., clean/20/10/5 dB) → noise curves without retraining;
+      (e) sizes, seeds, naming.
+      **DoD**: doc ratified by you; every P4/P5 experiment maps to a v2 design feature.
+- [ ] **3.4 Generate & validate v2** — *Owner: laptop overnight.* Generate per 3.3; validate:
+      signature tests on samples, class balance, `check_data_leakage.py` on group-aware splits,
+      `dataset_comparison.py` v1-vs-v2 report; update `dataset_card.yaml`; `dvc add`.
+      **DoD**: `data/generated/dataset_v2.h5` + validation report in `results/dataset_v2_validation/`
+      + dataset card + DVC file, all committed.
+- [ ] **3.5 Re-baseline CNN1D on v2** — *Owner: laptop overnight.* Full training, windowed
+      input, to early-stopping.
+      **DoD**: `results/cnn1d_v2_baseline/` (metrics.json, history, confusion matrix);
+      this number becomes the reference for all of Phase 4.
+
+**Exit gate 3**: physics tests in CI · v2 + card + DVC + leakage-check report · v1-vs-v2
+comparison report · CNN1D v2 baseline in `results/`. *Merge `p3/physics` → `main`.*
 
 ---
 
-### Phase D — Dashboard rehabilitation (deferred; after Phase 5, parallel to 6–7 if desired)
+## Phase 4 — Benchmark matrix (1–2 weeks wall-clock · office GPU + Colab + laptop · branch `p4/benchmark`)
 
-Scoped now so it doesn't creep earlier:
+**Objective**: C2 + C5. Real multi-seed results for all 12 T1 rows; README `[PENDING]` dies.
+**Prerequisites**: Gate 3. Office PC ready (repo cloned, GPU torch installed, lock file).
 
-- [ ] **D.1** Fix boot (`REFRESH_INTERVAL_MS` order bug + utils name-shadowing).
-- [ ] **D.2** Triage pages with the Part-I framework. Likely keeps (≥50% + wired to real
-      backend): experiment browser, training monitor, data-generation page, experiment
-      comparison. Likely cuts: NAS, testing dashboard, feature-engineering tab, XAI tab
-      (until wired to Phase-5 outputs), webhooks/2FA/API-keys surface (no login exists).
-- [ ] **D.3** Wire kept pages to the *real* Phase-4/5 artifacts (results/ JSONs, checkpoints).
-- [ ] **D.4** Either add the missing login or remove auth-dependent surface; decide then.
-- [ ] **D.5** Re-include dashboard tests in CI once green.
+**Do**: freeze the protocol *before* the first run; treat every run as an artifact
+(config + seed + git SHA recorded inside the JSON); queue runs so machines never idle overnight.
+**Don't**: hand-tune per model beyond the documented LR sweep (fairness benchmark, not a
+leaderboard); peek at test sets before protocol freeze; let T2 runs start before T1 finishes.
+
+- [ ] **4.1 Freeze protocol** — *Owner: Claude drafts, you ratify.* `experiments/PROTOCOL.md`:
+      fixed v2 splits; 3 seeds (extend to 5 only if GPU spare); identical budget
+      (max 60 epochs, patience 10); per-family optimizer policy; one documented LR sweep
+      (3 values, val-only); all configs committed before first run. Also: GPU env lock file
+      (`requirements.lock.gpu.txt`), Colab env cell pinned.
+      **DoD**: protocol committed + ratified; any later deviation requires a dated amendment note.
+- [ ] **4.2 Benchmark runner** — *Owner: Claude.* Extend `train_overnight.py` →
+      `scripts/run_benchmark.py`: sequential queue, resume-safe (skips completed run-dirs),
+      per-run JSON (config, seed, git SHA, host, wall-time), checkpoint + history + test
+      metrics + confusion matrix per run.
+      **DoD**: 2-run mini-queue (CNN1D seed 0/1, 2 epochs) completes on laptop; re-invoking
+      skips completed runs.
+- [ ] **4.3 Classical baselines** — *Owner: laptop (CPU, < 1 h).* 36-feature extraction on v2
+      + RF/SVM/GB × 3 seeds.
+      **DoD**: 9 result dirs under `results/benchmark/classical/`.
+- [ ] **4.4 T1 deep matrix** — *Owner: you operate office GPU; Claude prepares the command
+      block; Colab = spillover lane via trimmed `scripts/colab/`.* 8 nets × 3 seeds = 24 runs,
+      queued. Daily: you `git pull`, restart queue if dead, push result JSONs back (checkpoints
+      stay local/DVC).
+      **DoD**: 24 complete run-dirs in `results/benchmark/deep/`; zero missing seeds.
+- [ ] **4.5 Ensemble row** — *Owner: laptop.* Soft-voting of top-3 (by val acc) checkpoints.
+      **DoD**: `results/benchmark/ensemble/` populated.
+- [ ] **4.6 Aggregate & test significance** — *Owner: Claude (agent may polish plots).*
+      `compare_results.py` → mean±std table, per-class F1, Wilcoxon paired tests vs best
+      baseline, one significance-annotated bar figure + per-model confusion matrices.
+      **DoD**: `results/benchmark/summary.{json,md,png}`; numbers quoted nowhere else yet.
+- [ ] **4.7 Deployment appendix (C5)** — *Owner: Claude + laptop.* Best model → ONNX → dynamic
+      INT8 → CPU latency table (batch 1/8/32, p50/p95) → FastAPI smoke (compose from 2.4 with
+      new checkpoint).
+      **DoD**: `results/deployment/latency.json` + appendix table; `/predict` returns correct
+      class for a known test signal.
+- [ ] **4.8 README truth update** — *Owner: Claude.* Replace every `[PENDING]` with measured
+      numbers + link to `results/benchmark/summary.md`; CHANGELOG entry.
+      **DoD**: `grep -rn "PENDING" README.md CHANGELOG.md` → empty.
+- [ ] **4.9 (conditional) T2 extension runs** — only if office GPU is idle before 4.6 closes.
+      **DoD**: same artifact standard; summary regenerated with T2 rows marked "extension".
+
+**Exit gate 4**: ≥ 12 rows × 3 seeds complete · summary with statistical tests · deployment
+appendix · README truthful. *Merge `p4/benchmark` → `main`.*
 
 ---
 
-## Part III — Operating Rules (how we avoid relapse)
+## Phase 5 — Physics experiments (1–2 weeks · office GPU + laptop · branch `p5/physics-exp`)
 
-1. **Execution evidence or it didn't happen.** No checkbox without a command + artifact noted.
-2. **No new docs describing future work** outside `BACKLOG.md` and this plan.
-3. **No new model/feature additions until Phase 5 is done.** Additions are how this repo got sick.
-4. **Tests green before every merge to `main`** (`pytest -q`, dashboard excluded until Phase D).
-5. **Weekly cadence suggestion**: laptop runs queued before sleep; office GPU loaded Friday →
-   Monday; review artifacts, not logs.
-6. **When unsure whether to cut something**: apply Part I §2; if still unsure, cut — the tag
-   keeps it recoverable, and the default must favor lean.
+**Objective**: C3 + C4 — the paper's heart. Does physics-informed learning earn its name?
+**Prerequisites**: Gate 4 (needs best-PINN and best-vanilla checkpoints + v2 design features).
+
+**Do**: pre-register each experiment (one paragraph in `experiments/PROTOCOL.md` §5 *before*
+running: hypothesis, metric, decision rule); report negative results as results.
+**Don't**: re-run with new seeds until something is significant (p-hacking); modify the
+generator mid-phase (invalidates everything — if a generator bug is found, fix, bump dataset
+to v2.1, and rerun affected experiments only, documented).
+
+- [ ] **5.1 Data efficiency** — *Owner: office GPU.* Best PINN + best vanilla × {10,25,50,100}%
+      train fraction × 3 seeds (group-aware subsampling).
+      **DoD**: `results/data_efficiency/` + accuracy-vs-fraction curve with CIs.
+- [ ] **5.2 Severity-shift OOD** — *Owner: office GPU; script: repaired `ood_testing.py`.*
+      Train mild+moderate → test severe (and reverse), PINN vs vanilla × 3 seeds.
+      **DoD**: `results/ood_severity/` + table + pre-registered decision noted.
+- [ ] **5.3 Noise robustness** — *Owner: laptop (no retraining).* All frozen Phase-4
+      checkpoints across SNR-variant test sets.
+      **DoD**: `results/noise_robustness/` + degradation curves (one line per model family).
+- [ ] **5.4 Physics ablation** — *Owner: office GPU; script: repaired `pinn_ablation.py`.*
+      HybridPINN: each physics-loss term on/off + weight sweep {0, 0.1, 0.3, 1.0} × 3 seeds;
+      McNemar's per pair.
+      **DoD**: `results/pinn_ablation/` + ablation table with significance marks.
+- [ ] **5.5 Physics-consistent XAI** — *Owner: laptop; script: repaired `xai_metrics.py`.*
+      SHAP + IG on best PINN & best vanilla; attention maps from AttentionCNN1D &
+      (if T2 ran) SignalTransformer. Metric: fraction of attribution energy inside
+      fault-characteristic bands (ground truth known — synthetic advantage) vs elsewhere;
+      per-class alignment score + 2–3 qualitative figures.
+      **DoD**: `results/xai_alignment/` + alignment table + figures.
+- [ ] **5.6 Uncertainty & calibration** *(promoted in v2)* — *Owner: laptop.* MC-dropout on
+      best PINN + best vanilla: ECE, reliability diagram, accuracy-vs-confidence-threshold
+      ("reject option" curve — industrially persuasive).
+      **DoD**: `results/uncertainty/` + calibration figure.
+- [ ] **5.7 Findings memo** — *Owner: Claude drafts, you review.* `results/FINDINGS.md`:
+      what held, what didn't, effect sizes, which claims the paper can make. Honest either way —
+      *a well-measured "physics helps only in low-data/OOD regimes" is still a publishable,
+      true result.*
+      **DoD**: memo agreed; paper claims list frozen.
+
+**Exit gate 5**: five results sub-dirs with JSONs + publication-grade figures · pre-registration
+notes for each · FINDINGS.md ratified. *Merge `p5/physics-exp` → `main`.*
+
+---
+
+## Phase 6 — Docs convergence & archive (2–3 days · laptop · branch `p6/docs`)
+
+**Objective**: ≤ 20 living docs, all true; everything else archived with provenance.
+**Prerequisites**: Gate 5 (docs must cite final numbers, so docs come after results).
+
+**Do**: archive (don't delete) anything with historical/knowledge value; keep a provenance
+line per archived group.
+**Don't**: rewrite history (archived docs keep their content; the archive README explains
+their status); let any "will be added later" sentence into a living doc.
+
+- [ ] **6.1 Create archive/** — *Owner: agent moves, Claude verifies.* Move: all
+      `config/docs/idb_reports/` (~30 files), CONFIG_DATA_AUDIT, REPO_STRUCTURE_AUDIT,
+      `implementation_plan.md`, quarantined paper + `Final_Report_UNVALIDATED.pdf`, superseded
+      data guides. Write `archive/README.md` (why each group is here; what replaced it).
+      **DoD**: `config/docs/` contains no IDB/process debris; archive README complete.
+- [ ] **6.2 Create real docs/** — *Owner: agent moves + fixes links, Claude verifies.* Move
+      keepers to root `docs/` (the path README always claimed): ARCHITECTURE, GETTING_STARTED,
+      PHYSICS, PROTOCOL (link), guides (training/evaluation/XAI/deployment-trimmed),
+      DOCUMENTATION_STANDARDS, DATASET_V2 note.
+      **DoD**: ≤ 20 files in docs/; zero broken relative links
+      (`python -m scripts.check_doc_links` or grep-based check passes).
+- [ ] **6.3 README rewrite** — *Owner: Claude, you review.* Physics-first pitch, real results
+      table (from 4.8), honest quick-start, dashboard-frozen note, accurate structure map.
+      **DoD**: quick-start executed successfully on a clean clone (office PC counts).
+- [ ] **6.4 Drop mkdocs** — *Owner: Claude.* Remove mkdocs.yml + CI references (BACKLOG line:
+      "docs site post-paper").
+      **DoD**: no CI step references docs builds; `site/` gone (done in 2.7).
+- [ ] **6.5 Doc-honesty tripwire** — *Owner: Claude.* CI grep test: any `\d+(\.\d+)?%`
+      accuracy-like claim in README/docs must have a `results/` citation on the same line.
+      **DoD**: tripwire test in default suite; current docs pass.
+
+**Exit gate 6**: ≤ 20 living docs · clean-clone quick-start verified · tripwire active ·
+archive complete with provenance. *Merge `p6/docs` → `main`.*
+
+---
+
+## Phase 7 — Paper & reproducibility package (1–2 weeks, writing-dominant · branch `p7/paper`)
+
+**Objective**: a submitted manuscript where every number traces to a committed artifact.
+**Prerequisites**: Gate 6; FINDINGS.md claim list.
+
+**Do**: generate every table/figure by committed script from `results/`; write limitations
+first (forces honesty); have you (owner) own the narrative voice.
+**Don't**: reuse a single sentence of the archived fabricated draft (references.bib may be
+salvaged after checking each entry); state any claim absent from FINDINGS.md.
+
+- [ ] **7.1 Skeleton & figures pipeline** — *Owner: Claude.* `paper/` (fresh): outline mapped
+      to C1–C5; repair `reproducibility/generate_tables.py` → all tables/figures from
+      `results/` only.
+      **DoD**: `python reproducibility/generate_tables.py` regenerates every table/figure
+      byte-identically.
+- [ ] **7.2 Full draft** — *Owner: Claude drafts section-by-section, you review each.* Includes
+      a Limitations section stating synthetic-only scope plainly.
+      **DoD**: draft complete; every number annotated with its results-path in a comment.
+- [ ] **7.3 Reproducibility package** — *Owner: Claude + you verify on office PC.* Pinned envs,
+      seeds, DVC data, `reproducibility/run_all.py` regenerating the full pipeline
+      (or, documented, the eval-only fast path).
+      **DoD**: clean-machine regeneration of all tables/figures succeeds (office PC).
+- [ ] **7.4 Venue & submit** — *Owner: you decide; Claude formats.* Choose by observed effect
+      sizes (strong C3 → MSSP/Measurement; moderate → IEEE Access/Sensors). Zenodo deposit
+      (code + v2 dataset + card) at submission; DOI into README.
+      **DoD**: submission confirmation; Zenodo DOI live.
+
+**Exit gate 7**: submitted · repro package verified on a second machine · DOI minted.
+
+---
+
+## Phase D — Dashboard rehabilitation (deferred; earliest start: after Gate 5)
+
+Scoped now to prevent earlier creep. Branch `pd/dashboard`.
+
+- [ ] **D.1** Re-include `pytest -m dashboard`; fix what 1.9's boot fix didn't cover
+      (utils shadowing, callback registration errors).
+- [ ] **D.2** Page triage with Part I framework (likely keep: experiment browser, training
+      monitor, data-generation, comparison; likely cut: NAS, testing tab, feature-eng tab,
+      auth-dependent surface until a login exists).
+- [ ] **D.3** Wire kept pages to real artifacts (`results/benchmark/`, Phase-5 outputs,
+      checkpoints) — the dashboard becomes the *viewer of real results*, its first honest job.
+- [ ] **D.4** Login decision: implement minimal auth or strip auth-dependent features.
+- [ ] **D.5** Dashboard tests green in CI; unfreeze note in README.
+
+---
+
+# Part IV — Operating Rules & Anti-Relapse
+
+1. **Execution evidence or it didn't happen** — no `[x]` without an evidence string.
+2. **No new docs about future work** outside `BACKLOG.md` and this plan.
+3. **Fixed-size tiers** — promoting in requires demoting out. The zoo cannot regrow silently.
+4. **No additions of any kind until Gate 5** — additions are how this repo got sick.
+5. **Tests green before every merge to `main`**; phase branches only; tag before deletions.
+6. **Agent output is never trusted unverified** — Claude runs the DoD before acceptance
+   (audit §9: static reading over-estimates health; three of five audit agents were wrong
+   about something material).
+7. **Protocol freezes before runs; pre-registration before experiments** — deviations are
+   dated amendments, never silent edits.
+8. **Generator is sacred after Gate 3** — mid-experiment changes invalidate results; bug-fix
+   protocol: fix → version bump (v2.1) → rerun affected only → document.
+9. **Weekly rhythm**: queue laptop overnight before sleep; load office GPU before weekends;
+   review artifacts, not logs; update Progress Tracker every session.
+10. **When unsure whether to cut**: apply Part I §2; still unsure → cut (the tag remembers).
 
 ## Effort & compute summary
 
-| Phase | Calendar | Human effort | Machine time | Where |
+| Phase | Calendar | Human effort | Machine time | Primary actor |
 |---|---|---|---|---|
-| 0 Ratify | 0.5 d | 0.5 d | — | laptop |
-| 1 Stabilize | 3–5 d | 3–4 d | overnight smoke runs | laptop |
-| 2 Prune | 2–3 d | 2–3 d | — | laptop |
-| 3 Physics/data | 4–6 d | 3–4 d | 1–2 overnights | laptop |
-| 4 Benchmark | 1–2 wk | 2–3 d | ~30–60 GPU-h | office GPU + Colab |
-| 5 Physics exps | 1–2 wk | 3–4 d | ~30–50 GPU-h + CPU eval | office GPU + laptop |
-| 6 Docs | 2–3 d | 2–3 d | — | laptop |
-| 7 Paper | 1–2 wk | writing | — | — |
-| **Total** | **~7–9 weeks** | | | |
+| 0 Ratify | 0.5 d | 0.5 d | — | you + Claude |
+| 1 Stabilize | 3–5 d | 3–4 d | 2 overnights | Claude (+2 agent tasks) |
+| 2 Prune | 2–3 d | 2–3 d | 1 overnight | Claude only (coupling) |
+| 3 Physics/data | 4–6 d | 3–4 d | 2 overnights | Claude + agent + you (ratify) |
+| 4 Benchmark | 1–2 wk | 2–3 d | 12–48 GPU-h + CPU | you (GPU ops) + Claude |
+| 5 Physics exps | 1–2 wk | 3–4 d | 20–50 GPU-h + CPU | you (GPU ops) + Claude |
+| 6 Docs | 2–3 d | 2–3 d | — | agents + Claude verify |
+| 7 Paper | 1–2 wk | writing | — | Claude drafts, you own |
+| **Total** | **~7–10 wk** | | | |
 
 ---
 
-*Plan authored 2026-06-11 on branch `audit/project-state-2026-06`, based on
-`audit_reports/PROJECT_AUDIT_2026-06-11.md`. Mark progress in this file only.*
+*Plan v2 authored 2026-06-11 (branch `audit/project-state-2026-06`), based on
+`audit_reports/PROJECT_AUDIT_2026-06-11.md`. This file is the single source of progress.*
