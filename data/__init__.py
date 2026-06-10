@@ -17,6 +17,7 @@ from .dataset import (
     BearingFaultDataset,
     AugmentedBearingDataset,
     CachedBearingDataset,
+    WindowedView,
     train_val_test_split,
     collate_fn_with_metadata
 )
@@ -70,6 +71,7 @@ __all__ = [
     'BearingFaultDataset',
     'AugmentedBearingDataset',
     'CachedBearingDataset',
+    'WindowedView',
     'train_val_test_split',
     'collate_fn_with_metadata',
     # DataLoaders
