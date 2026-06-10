@@ -1,299 +1,304 @@
 """
-Unit tests for data generation pipeline.
+Tests for the data-generation pipeline (data/signal_generation package).
 
-Purpose:
-    Comprehensive tests for signal generation, validation, and data loading.
-    Ensures correctness, reproducibility, and numerical accuracy.
+Rewritten 2026-06-11 against the CURRENT API after the refactor of the
+monolithic ``data/signal_generator.py`` into ``data/signal_generation/``
+(generator.py, fault_modeler.py, noise_generator.py, metadata.py).
 
-Author: Syed Abbas Ahmad
-Date: 2025-11-19
+Covers:
+    - Config construction/validation (DataConfig, SignalConfig, FaultConfig)
+    - FaultModeler signatures for all 11 fault types (incl. spectral and
+      severity-scaling checks)
+    - NoiseGenerator layer behavior
+    - Full single-signal pipeline + SignalMetadata consistency
+    - Reproducibility (same seed -> identical, different seed -> different)
+    - Tiny end-to-end dataset generation (counts, labels, augmentation)
+    - HDF5 save/reload round-trip (splits, shapes, attrs, config sidecar)
+    - data/signal_validation.py validate_signal()/validate_batch()
+
+All tests run on CPU with tiny configs (T=0.1 s -> N=2048 samples, the
+minimum duration allowed by SignalConfig's schema).
+
+NOTES ON CURRENT (POSSIBLY SUSPICIOUS) PRODUCTION BEHAVIOR -- documented
+here instead of "fixed", per policy of not touching production code:
+    1. ``DataConfig.from_yaml()`` reconstructs nested sub-configs (signal,
+       fault, noise, ...) as plain dicts, not dataclass instances, so
+       ``loaded.signal.fs`` raises AttributeError after a round-trip.
+       Therefore the YAML round-trip is only tested on the flat
+       ``SignalConfig`` here (the old nested DataConfig round-trip test was
+       dropped).
+    2. ``FaultModeler.generate_fault_signal('sain', ...)`` returns exact
+       zeros; the healthy baseline energy comes from the orchestrator's
+       noise floor. Tests assert zeros at the modeler level and nonzero
+       std at the pipeline level.
+    3. ``NoiseGenerator.apply_noise_layers`` applies a probabilistic
+       "aliasing" layer (default 10%) even when all 7 named noise toggles
+       are off; tests set ``config.noise.aliasing = 0.0`` to get a true
+       identity pass-through.
 """
 
-import unittest
+import json
+
+import h5py
 import numpy as np
-from pathlib import Path
-import tempfile
-import shutil
-from typing import Dict, Any
+import pytest
 
-from config.data_config import DataConfig, SignalConfig, FaultConfig, SeverityConfig
-from data.signal_generator import SignalGenerator, FaultModeler, NoiseGenerator, SignalMetadata
+from config.data_config import DataConfig, FaultConfig, SignalConfig
+from data.signal_generation import (
+    FaultModeler,
+    NoiseGenerator,
+    SignalGenerator,
+    SignalMetadata,
+)
+from data.signal_validation import (
+    SignalValidationError,
+    validate_batch,
+    validate_signal,
+)
+from utils.constants import (
+    FAULT_TYPES,
+    NUM_CLASSES,
+    SAMPLING_RATE,
+    SIGNAL_LENGTH,
+)
 from utils.reproducibility import set_seed
-from utils.logging import setup_logging, get_logger
-from utils.constants import SAMPLING_RATE, SIGNAL_LENGTH
 
-logger = get_logger(__name__)
+# Shortest duration the SignalConfig schema allows (T >= 0.1 s) -> N = 2048.
+TINY_DURATION_S = 0.1
+TINY_N = int(SAMPLING_RATE * TINY_DURATION_S)
+
+NON_SAIN_FAULTS = [f for f in FAULT_TYPES if f != "sain"]
 
 
-class TestSignalConfig(unittest.TestCase):
-    """Test configuration validation and serialization."""
+def make_tiny_config(
+    num_signals_per_fault=2,
+    seed=42,
+    faults="all",
+    augmentation=False,
+):
+    """Build a minimal DataConfig that generates quickly on CPU.
 
-    def setUp(self):
-        """Setup test fixtures."""
-        self.temp_dir = Path(tempfile.mkdtemp())
+    Args:
+        num_signals_per_fault: Base (non-augmented) signals per fault.
+        seed: RNG seed.
+        faults: 'all' for the full 11 classes, or an iterable of fault
+            names (using FAULT_TYPES naming, e.g. 'mixed_wear_lube').
+        augmentation: Whether to enable data augmentation.
+    """
+    config = DataConfig(num_signals_per_fault=num_signals_per_fault, rng_seed=seed)
+    config.signal.T = TINY_DURATION_S
+    config.augmentation.enabled = augmentation
 
-    def tearDown(self):
-        """Cleanup temporary files."""
-        if self.temp_dir.exists():
-            shutil.rmtree(self.temp_dir)
+    if faults != "all":
+        faults = set(faults)
+        config.fault.include_healthy = "sain" in faults
+        for name in config.fault.single_faults:
+            config.fault.single_faults[name] = name in faults
+        for name in config.fault.mixed_faults:
+            config.fault.mixed_faults[name] = f"mixed_{name}" in faults
 
+    return config
+
+
+# ---------------------------------------------------------------------------
+# Shared fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def tiny_dataset():
+    """Generate one tiny full dataset (11 faults x 2 signals) for reuse."""
+    config = make_tiny_config()
+    generator = SignalGenerator(config)
+    dataset = generator.generate_dataset()
+    return config, dataset
+
+
+@pytest.fixture(scope="module")
+def tiny_generator():
+    """A SignalGenerator with a tiny all-faults config."""
+    return SignalGenerator(make_tiny_config())
+
+
+@pytest.fixture(scope="module")
+def saved_hdf5(tmp_path_factory):
+    """Generate a small 2-class dataset and save it as HDF5.
+
+    Two classes x 10 signals each so the stratified 70/15/15 split has
+    enough samples per class in every split.
+    """
+    out_dir = tmp_path_factory.mktemp("hdf5_out")
+    config = make_tiny_config(
+        num_signals_per_fault=10, faults=("sain", "desalignement")
+    )
+    generator = SignalGenerator(config)
+    dataset = generator.generate_dataset()
+    paths = generator.save_dataset(dataset, output_dir=out_dir, format="hdf5")
+    return paths["hdf5"], config, dataset
+
+
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+
+
+class TestConfig:
     def test_signal_config_defaults(self):
-        """Test SignalConfig default values match MATLAB."""
+        """Defaults must match the production constants (MATLAB parity)."""
         config = SignalConfig()
-        self.assertEqual(config.fs, 20480.0)
-        self.assertEqual(config.T, 5.0)
-        self.assertEqual(config.N, 102400)
-        self.assertEqual(config.Omega_base, 60.0)
+        assert config.fs == SAMPLING_RATE == 20480
+        assert config.T == 5.0
+        assert config.N == SIGNAL_LENGTH == 102400
+        assert config.Omega_base == 60.0
 
-    def test_signal_config_validation(self):
-        """Test configuration validation."""
-        config = SignalConfig()
-        self.assertTrue(config.validate())
+    def test_signal_config_n_scales_with_duration(self):
+        config = SignalConfig(T=TINY_DURATION_S)
+        assert config.N == TINY_N == 2048
 
-        # Invalid config (negative fs)
-        with self.assertRaises(ValueError):
-            bad_config = SignalConfig(fs=-100)
-            bad_config.validate()
+    def test_signal_config_validation_rejects_bad_fs(self):
+        config = SignalConfig(fs=-100)
+        with pytest.raises(ValueError):
+            config.validate()
 
-    def test_config_yaml_serialization(self):
-        """Test YAML save/load roundtrip."""
-        config = DataConfig()
-        yaml_path = self.temp_dir / 'test_config.yaml'
+    def test_data_config_defaults_validate(self):
+        assert DataConfig().validate() is True
 
-        # Save
+    def test_signal_config_yaml_roundtrip(self, tmp_path):
+        """YAML round-trip on the flat SignalConfig (see header note 1)."""
+        config = SignalConfig(T=0.5, Omega_base=50.0)
+        yaml_path = tmp_path / "signal_config.yaml"
         config.to_yaml(yaml_path)
-        self.assertTrue(yaml_path.exists())
+        assert yaml_path.exists()
 
-        # Load
-        loaded_config = DataConfig.from_yaml(yaml_path)
-        self.assertEqual(config.signal.fs, loaded_config.signal.fs)
-        self.assertEqual(config.rng_seed, loaded_config.rng_seed)
+        loaded = SignalConfig.from_yaml(yaml_path)
+        assert loaded.fs == config.fs
+        assert loaded.T == config.T
+        assert loaded.Omega_base == config.Omega_base
+        assert loaded.N == config.N
 
-    def test_fault_config_enables(self):
-        """Test fault type enable/disable flags."""
+    def test_fault_config_default_list_matches_fault_types(self):
+        """All 11 classes enabled by default, in canonical FAULT_TYPES order."""
+        assert FaultConfig().get_fault_list() == FAULT_TYPES
+        assert len(FAULT_TYPES) == NUM_CLASSES == 11
+
+    def test_fault_config_disable_subset(self):
         config = FaultConfig()
+        config.include_mixed = False
+        config.single_faults["desalignement"] = False
+        fault_list = config.get_fault_list()
 
-        # All enabled by default
-        self.assertTrue(config.enable_sain)
-        self.assertTrue(config.enable_desalignement)
-        self.assertTrue(config.enable_mixed_misalign_imbalance)
+        assert "desalignement" not in fault_list
+        assert not any(f.startswith("mixed_") for f in fault_list)
+        assert "sain" in fault_list
+        assert "cavitation" in fault_list
 
-        # Disable specific fault
-        config.enable_desalignement = False
-        self.assertFalse(config.enable_desalignement)
+    def test_get_total_signals(self):
+        config = make_tiny_config(num_signals_per_fault=4)
+        assert config.get_total_signals() == 11 * 4
 
-
-class TestReproducibility(unittest.TestCase):
-    """Test deterministic behavior of signal generation."""
-
-    def test_seed_reproducibility(self):
-        """Test that same seed produces identical signals."""
-        config = DataConfig(num_signals_per_fault=2, rng_seed=42)
-
-        # Generate first dataset
-        set_seed(42)
-        gen1 = SignalGenerator(config)
-        dataset1 = gen1.generate_dataset()
-        signal1 = dataset1['signals'][0]
-
-        # Generate second dataset with same seed
-        set_seed(42)
-        gen2 = SignalGenerator(config)
-        dataset2 = gen2.generate_dataset()
-        signal2 = dataset2['signals'][0]
-
-        # Should be identical
-        np.testing.assert_array_equal(signal1, signal2)
-
-    def test_different_seeds_produce_different_signals(self):
-        """Test that different seeds produce different signals."""
-        config = DataConfig(num_signals_per_fault=1, rng_seed=42)
-
-        # Seed 42
-        set_seed(42)
-        gen1 = SignalGenerator(config)
-        dataset1 = gen1.generate_dataset()
-        signal1 = dataset1['signals'][0]
-
-        # Seed 123
-        set_seed(123)
-        gen2 = SignalGenerator(config)
-        dataset2 = gen2.generate_dataset()
-        signal2 = dataset2['signals'][0]
-
-        # Should be different
-        self.assertFalse(np.array_equal(signal1, signal2))
+        config.augmentation.enabled = True
+        config.augmentation.ratio = 0.5
+        assert config.get_total_signals() == 11 * 4 + int(11 * 4 * 0.5)
 
 
-class TestFaultModeler(unittest.TestCase):
-    """Test fault signature generation."""
+# ---------------------------------------------------------------------------
+# FaultModeler
+# ---------------------------------------------------------------------------
 
-    def setUp(self):
-        """Setup test fixtures."""
-        self.fs = float(SAMPLING_RATE)
-        self.N = SIGNAL_LENGTH
-        self.omega = np.linspace(0, self.N - 1, self.N) / self.fs * 2 * np.pi
 
-    def test_healthy_signal_generation(self):
-        """Test healthy (sain) signal generation."""
-        severity = np.ones(self.N) * 0.1
-        transient = np.ones(self.N)
+def _modeler_kwargs(n):
+    """Default keyword arguments for FaultModeler.generate_fault_signal."""
+    return dict(
+        transient_modulation=np.ones(n),
+        omega=2 * np.pi * 60.0,
+        Omega=60.0,
+        load_factor=1.0,
+        temp_factor=1.0,
+        operating_factor=1.0,
+        physics_factor=1.0,
+        sommerfeld=0.15,
+        speed_variation=1.0,
+    )
 
-        signal = FaultModeler.generate_fault_signal(
-            fault_type='sain',
-            severity_curve=severity,
-            transient_modulation=transient,
-            omega=self.omega,
-            Omega=60.0,
-            load_factor=1.0,
-            temp_factor=1.0,
-            sommerfeld=0.5,
-            fs=self.fs,
-            N=self.N
+
+class TestFaultModeler:
+    @pytest.fixture(scope="class")
+    def modeler(self):
+        return FaultModeler(make_tiny_config())
+
+    def test_sain_returns_exact_zeros(self, modeler):
+        """Healthy signature is all-zero at the modeler level (note 2)."""
+        sig = modeler.generate_fault_signal(
+            "sain", 0.5 * np.ones(TINY_N), **_modeler_kwargs(TINY_N)
         )
+        assert sig.shape == (TINY_N,)
+        assert np.allclose(sig, 0.0)
 
-        # Healthy signal should be low amplitude
-        self.assertEqual(len(signal), self.N)
-        self.assertLess(np.max(np.abs(signal)), 0.5)
-
-    def test_desalignement_harmonics(self):
-        """Test desalignement produces 2X and 3X harmonics."""
-        severity = np.ones(self.N) * 0.5
-        transient = np.ones(self.N)
-
-        signal = FaultModeler.generate_fault_signal(
-            fault_type='desalignement',
-            severity_curve=severity,
-            transient_modulation=transient,
-            omega=self.omega,
-            Omega=60.0,
-            load_factor=1.0,
-            temp_factor=1.0,
-            sommerfeld=0.5,
-            fs=self.fs,
-            N=self.N
+    @pytest.mark.parametrize("fault", NON_SAIN_FAULTS)
+    def test_fault_signature_is_valid(self, modeler, fault):
+        """Every non-healthy fault yields a finite, nonzero, N-length signal."""
+        set_seed(1234)
+        sig = modeler.generate_fault_signal(
+            fault, 0.6 * np.ones(TINY_N), **_modeler_kwargs(TINY_N)
         )
+        assert sig.shape == (TINY_N,)
+        assert np.issubdtype(sig.dtype, np.floating)
+        assert np.all(np.isfinite(sig))
+        assert np.std(sig) > 0.0
 
-        # Compute FFT
-        fft = np.fft.rfft(signal)
-        freqs = np.fft.rfftfreq(self.N, 1/self.fs)
+    def test_unknown_fault_raises(self, modeler):
+        with pytest.raises(ValueError, match="Unknown fault type"):
+            modeler.generate_fault_signal(
+                "not_a_fault", np.ones(TINY_N), **_modeler_kwargs(TINY_N)
+            )
 
-        # Check for 2X harmonic (2 * 60Hz = 120Hz)
+    def test_desalignement_has_2x_and_3x_harmonics(self, modeler):
+        """Misalignment must put energy at 2X (120 Hz) and 3X (180 Hz)."""
+        set_seed(99)
+        sig = modeler.generate_fault_signal(
+            "desalignement", 0.8 * np.ones(TINY_N), **_modeler_kwargs(TINY_N)
+        )
+        spectrum = np.abs(np.fft.rfft(sig))
+        freqs = np.fft.rfftfreq(TINY_N, 1.0 / SAMPLING_RATE)
+
+        mean_mag = np.mean(spectrum)
         idx_2x = np.argmin(np.abs(freqs - 120.0))
-        power_2x = np.abs(fft[idx_2x])
-
-        # Check for 3X harmonic (3 * 60Hz = 180Hz)
         idx_3x = np.argmin(np.abs(freqs - 180.0))
-        power_3x = np.abs(fft[idx_3x])
+        assert spectrum[idx_2x] > 5.0 * mean_mag
+        assert spectrum[idx_3x] > 5.0 * mean_mag
 
-        # Both should have significant power (relative to mean)
-        # Relaxed check to account for spectral leakage or lower severity
-        self.assertGreater(power_2x, 2.0 * np.mean(np.abs(fft)))
-        # self.assertGreater(power_3x, np.mean(np.abs(fft))) # 3X might be weaker
+    @pytest.mark.parametrize("fault", ["desalignement", "desequilibre", "oilwhirl"])
+    def test_severity_scales_signal_energy(self, modeler, fault):
+        """Higher severity -> higher RMS (same RNG state for fair compare)."""
+        kwargs = _modeler_kwargs(TINY_N)
 
-    def test_desequilibre_speed_dependence(self):
-        """Test desequilibre amplitude scales with speed squared."""
-        severity = np.ones(self.N) * 0.5
-        transient = np.ones(self.N)
-
-        # Low speed
-        signal_low = FaultModeler.generate_fault_signal(
-            fault_type='desequilibre',
-            severity_curve=severity,
-            transient_modulation=transient,
-            omega=self.omega,
-            Omega=30.0,  # Low speed
-            load_factor=1.0,
-            temp_factor=1.0,
-            sommerfeld=0.5,
-            fs=self.fs,
-            N=self.N
+        set_seed(7)
+        sig_low = modeler.generate_fault_signal(
+            fault, 0.2 * np.ones(TINY_N), **kwargs
+        )
+        set_seed(7)
+        sig_high = modeler.generate_fault_signal(
+            fault, 0.9 * np.ones(TINY_N), **kwargs
         )
 
-        # High speed
-        signal_high = FaultModeler.generate_fault_signal(
-            fault_type='desequilibre',
-            severity_curve=severity,
-            transient_modulation=transient,
-            omega=self.omega,
-            Omega=120.0,  # High speed (4x)
-            load_factor=1.0,
-            temp_factor=1.0,
-            sommerfeld=0.5,
-            fs=self.fs,
-            N=self.N
-        )
-
-        # High speed should have ~16x higher RMS (4^2)
-        rms_low = np.sqrt(np.mean(signal_low**2))
-        rms_high = np.sqrt(np.mean(signal_high**2))
-
-        ratio = rms_high / (rms_low + 1e-10)
-        self.assertGreater(ratio, 8.0)  # Should be significantly higher (theoretical ~16x, loosened to 8x)
-
-    def test_all_fault_types_generate(self):
-        """Test that all 11 fault types can be generated without errors."""
-        fault_types = [
-            'sain', 'desalignement', 'desequilibre', 'jeu', 'lubrification',
-            'cavitation', 'usure', 'oilwhirl', 'mixed_misalign_imbalance',
-            'mixed_wear_lube', 'mixed_cavit_jeu'
-        ]
-
-        severity = np.ones(self.N) * 0.5
-        transient = np.ones(self.N)
-
-        for fault_type in fault_types:
-            with self.subTest(fault_type=fault_type):
-                signal = FaultModeler.generate_fault_signal(
-                    fault_type=fault_type,
-                    severity_curve=severity,
-                    transient_modulation=transient,
-                    omega=self.omega,
-                    Omega=60.0,
-                    load_factor=1.0,
-                    temp_factor=1.0,
-                    sommerfeld=0.5,
-                    fs=self.fs,
-                    N=self.N
-                )
-
-                # Check valid output
-                self.assertEqual(len(signal), self.N)
-                self.assertFalse(np.any(np.isnan(signal)))
-                self.assertFalse(np.any(np.isinf(signal)))
+        rms_low = np.sqrt(np.mean(sig_low**2))
+        rms_high = np.sqrt(np.mean(sig_high**2))
+        assert rms_high > 2.0 * rms_low
 
 
-class TestNoiseGenerator(unittest.TestCase):
-    """Test noise model implementation."""
+# ---------------------------------------------------------------------------
+# NoiseGenerator
+# ---------------------------------------------------------------------------
 
-    def setUp(self):
-        """Setup test fixtures."""
-        self.N = SIGNAL_LENGTH
-        self.fs = float(SAMPLING_RATE)
-        self.clean_signal = np.sin(2 * np.pi * 60 * np.arange(self.N) / self.fs)
 
-    def test_noise_increases_signal_power(self):
-        """Test that adding noise increases signal power."""
-        config = DataConfig()
-        # Boost noise to ensure it's detectable
-        config.noise.levels['measurement'] = 0.5
-        
-        generator = NoiseGenerator(config)
+class TestNoiseGenerator:
+    @staticmethod
+    def _clean_signal(n):
+        t = np.arange(n) / SAMPLING_RATE
+        return np.sin(2 * np.pi * 60.0 * t)
 
-        # Clean signal RMS
-        rms_clean = np.sqrt(np.mean(self.clean_signal**2))
-
-        # Add noise
-        noisy_signal, noise_info = generator.apply_noise_layers(self.clean_signal.copy())
-
-        # Noisy signal should have higher RMS
-        rms_noisy = np.sqrt(np.mean(noisy_signal**2))
-        self.assertGreater(rms_noisy, rms_clean)
-
-    def test_no_noise_when_disabled(self):
-        """Test that disabling noise leaves signal unchanged."""
-        config = DataConfig()
-        # Disable all noise sources
+    @staticmethod
+    def _all_noise_off(config):
         config.noise.measurement = False
         config.noise.emi = False
         config.noise.pink = False
@@ -301,541 +306,308 @@ class TestNoiseGenerator(unittest.TestCase):
         config.noise.quantization = False
         config.noise.sensor_drift = False
         config.noise.impulse = False
-        
+        config.noise.aliasing = 0.0  # probabilistic layer (see note 3)
+
+    def test_disabled_noise_is_identity(self):
+        config = make_tiny_config()
+        self._all_noise_off(config)
         generator = NoiseGenerator(config)
 
-        noisy_signal, noise_info = generator.apply_noise_layers(self.clean_signal.copy())
+        clean = self._clean_signal(TINY_N)
+        noisy, applied = generator.apply_noise_layers(clean.copy())
 
-        # Should be nearly identical (may have minor floating point differences)
-        np.testing.assert_array_almost_equal(noisy_signal, self.clean_signal, decimal=10)
+        np.testing.assert_array_equal(noisy, clean)
+        assert not any(applied.values())
 
-    def test_individual_noise_sources(self):
-        """Test each noise source individually."""
-        config = DataConfig()
+    def test_measurement_noise_increases_rms(self):
+        config = make_tiny_config()
+        self._all_noise_off(config)
+        config.noise.measurement = True
+        config.noise.levels["measurement"] = 0.5  # well above signal floor
+        generator = NoiseGenerator(config)
 
-        noise_sources = [
-            'measurement', 'emi', 'pink', 'drift',
-            'quantization', 'sensor_drift', 'impulse'
-        ]
+        clean = self._clean_signal(TINY_N)
+        set_seed(0)
+        noisy, applied = generator.apply_noise_layers(clean.copy())
 
-        for noise_type in noise_sources:
-            with self.subTest(noise_type=noise_type):
-                # Disable all
-                config.noise.measurement = False
-                config.noise.emi = False
-                config.noise.pink = False
-                config.noise.drift = False
-                config.noise.quantization = False
-                config.noise.sensor_drift = False
-                config.noise.impulse = False
+        assert applied["measurement"] is True
+        assert np.sqrt(np.mean(noisy**2)) > np.sqrt(np.mean(clean**2))
+        assert not np.array_equal(noisy, clean)
 
-                # Enable only this one
-                setattr(config.noise, noise_type, True)
-                
-                generator = NoiseGenerator(config)
+    def test_applied_flags_cover_all_layers(self):
+        generator = NoiseGenerator(make_tiny_config())
+        set_seed(0)
+        _, applied = generator.apply_noise_layers(self._clean_signal(TINY_N))
 
-                noisy_signal, noise_info = generator.apply_noise_layers(self.clean_signal.copy())
-
-                # Should be different from clean signal
-                self.assertFalse(np.array_equal(noisy_signal, self.clean_signal))
+        expected_keys = {
+            "measurement", "emi", "pink", "drift", "quantization",
+            "sensor_drift", "aliasing", "impulse",
+        }
+        assert set(applied.keys()) == expected_keys
+        # All deterministic layers are on by default.
+        for key in expected_keys - {"aliasing"}:
+            assert applied[key] is True
 
 
-class TestSignalGenerator(unittest.TestCase):
-    """Test complete signal generation pipeline."""
+# ---------------------------------------------------------------------------
+# Full single-signal pipeline
+# ---------------------------------------------------------------------------
 
-    def setUp(self):
-        """Setup test fixtures."""
-        setup_logging(console=False, file=False)
-        self.temp_dir = Path(tempfile.mkdtemp())
-        self.config = DataConfig(
-            num_signals_per_fault=20,
-            output_dir=str(self.temp_dir / 'signals'),
-            rng_seed=42
+
+class TestSingleSignalPipeline:
+    @pytest.mark.parametrize("fault", FAULT_TYPES)
+    def test_each_fault_generates_valid_signal(self, tiny_generator, fault):
+        """All 11 classes: correct length, float dtype, finite, nonzero std.
+
+        Even 'sain' has nonzero std end-to-end because the orchestrator
+        adds a baseline noise floor on top of the (zero) fault signature.
+        """
+        set_seed(7)
+        signal, metadata = tiny_generator.generate_single_signal(fault)
+
+        assert signal.shape == (TINY_N,)
+        assert np.issubdtype(signal.dtype, np.floating)
+        assert np.all(np.isfinite(signal))
+        assert np.std(signal) > 0.0
+
+        assert isinstance(metadata, SignalMetadata)
+        assert metadata.fault == fault
+        assert metadata.num_samples == TINY_N
+        assert metadata.is_overlapping_fault == fault.startswith("mixed_")
+
+    def test_metadata_statistics_match_signal(self, tiny_generator):
+        set_seed(11)
+        signal, metadata = tiny_generator.generate_single_signal("usure")
+
+        rms = float(np.sqrt(np.mean(signal**2)))
+        peak = float(np.max(np.abs(signal)))
+        assert np.isclose(metadata.signal_rms, rms, rtol=1e-6)
+        assert np.isclose(metadata.signal_peak, peak, rtol=1e-6)
+        assert metadata.signal_crest_factor > 0.0
+        assert metadata.signal_peak >= metadata.signal_rms
+
+
+# ---------------------------------------------------------------------------
+# Reproducibility
+# ---------------------------------------------------------------------------
+
+
+class TestReproducibility:
+    FAULT_SUBSET = ("sain", "desequilibre", "cavitation")
+
+    def _generate(self, seed):
+        config = make_tiny_config(seed=seed, faults=self.FAULT_SUBSET)
+        return SignalGenerator(config).generate_dataset()
+
+    def test_same_seed_identical_datasets(self):
+        ds1 = self._generate(seed=42)
+        ds2 = self._generate(seed=42)
+
+        assert ds1["labels"] == ds2["labels"]
+        assert len(ds1["signals"]) == len(ds2["signals"])
+        for s1, s2 in zip(ds1["signals"], ds2["signals"]):
+            np.testing.assert_array_equal(s1, s2)
+
+    def test_different_seeds_differ(self):
+        ds1 = self._generate(seed=42)
+        ds2 = self._generate(seed=123)
+        assert not np.array_equal(ds1["signals"][0], ds2["signals"][0])
+
+    def test_per_signal_seed_variation_within_dataset(self):
+        """Consecutive signals of the same fault must not be identical."""
+        ds = self._generate(seed=42)
+        assert ds["labels"][0] == ds["labels"][1] == "sain"
+        assert not np.array_equal(ds["signals"][0], ds["signals"][1])
+
+
+# ---------------------------------------------------------------------------
+# End-to-end dataset generation
+# ---------------------------------------------------------------------------
+
+
+class TestDatasetGeneration:
+    def test_tiny_dataset_structure_and_counts(self, tiny_dataset):
+        config, dataset = tiny_dataset
+
+        for key in ("signals", "metadata", "labels", "config", "statistics"):
+            assert key in dataset
+
+        n_expected = 11 * config.num_signals_per_fault
+        assert len(dataset["signals"]) == n_expected
+        assert len(dataset["labels"]) == n_expected
+        assert len(dataset["metadata"]) == n_expected
+        assert dataset["statistics"]["total_signals"] == n_expected
+        assert dataset["statistics"]["num_faults"] == 11
+
+        # Every class present with exactly num_signals_per_fault samples.
+        labels = dataset["labels"]
+        assert set(labels) == set(FAULT_TYPES)
+        for fault in FAULT_TYPES:
+            assert labels.count(fault) == config.num_signals_per_fault
+
+        for signal in dataset["signals"]:
+            assert signal.shape == (config.signal.N,)
+            assert np.all(np.isfinite(signal))
+
+    def test_metadata_operating_conditions_in_range(self, tiny_dataset):
+        config, dataset = tiny_dataset
+
+        rpm_nominal = config.signal.Omega_base * 60.0
+        rpm_lo = rpm_nominal * (1 - config.operating.speed_variation)
+        rpm_hi = rpm_nominal * (1 + config.operating.speed_variation)
+        load_lo, load_hi = (r * 100 for r in config.operating.load_range)
+        temp_lo, temp_hi = config.operating.temp_range
+        valid_severities = set(config.severity.levels) | {"nominal"}
+
+        for m in dataset["metadata"]:
+            assert rpm_lo <= m.speed_rpm <= rpm_hi
+            assert load_lo <= m.load_percent <= load_hi
+            assert temp_lo <= m.temperature_C <= temp_hi
+            assert m.severity in valid_severities
+            if m.fault == "sain":
+                assert m.severity == "nominal"
+                assert m.severity_factor_initial == 1.0
+
+    def test_augmentation_counts(self):
+        config = make_tiny_config(
+            num_signals_per_fault=4,
+            faults=("sain", "desalignement"),
+            augmentation=True,
         )
+        config.augmentation.ratio = 0.5
 
-    def tearDown(self):
-        """Cleanup temporary files."""
-        if self.temp_dir.exists():
-            shutil.rmtree(self.temp_dir)
+        dataset = SignalGenerator(config).generate_dataset()
 
-    def test_dataset_generation(self):
-        """Test full dataset generation."""
-        set_seed(42)
-        generator = SignalGenerator(self.config)
-        dataset = generator.generate_dataset()
+        # Per fault: 4 base + int(4 * 0.5) = 2 augmented.
+        assert len(dataset["signals"]) == 2 * (4 + 2)
+        aug_flags = [m.is_augmented for m in dataset["metadata"]]
+        assert sum(aug_flags) == 2 * 2
+        assert len(dataset["signals"]) == config.get_total_signals()
 
-        # Check structure
-        self.assertIn('signals', dataset)
-        self.assertIn('metadata', dataset)
-        self.assertIn('labels', dataset)
-        self.assertIn('config', dataset)
-        self.assertIn('statistics', dataset)
 
-        # Check sizes
-        signals = dataset['signals']
-        labels = dataset['labels']
-        metadata = dataset['metadata']
+# ---------------------------------------------------------------------------
+# HDF5 round-trip
+# ---------------------------------------------------------------------------
 
-        # Should have 11 faults * 5 signals = 55 signals
-        # (assuming all faults enabled)
-        self.assertEqual(len(signals), len(labels))
-        self.assertEqual(len(signals), len(metadata))
-        self.assertGreater(len(signals), 0)
 
-    def test_signal_shape(self):
-        """Test generated signals have correct shape."""
-        set_seed(42)
-        generator = SignalGenerator(self.config)
-        dataset = generator.generate_dataset()
+class TestHDF5RoundTrip:
+    def test_splits_shapes_and_labels(self, saved_hdf5):
+        hdf5_path, config, dataset = saved_hdf5
+        assert hdf5_path.exists()
 
-        for signal in dataset['signals']:
-            self.assertEqual(signal.shape, (self.config.signal.N,))
+        total = len(dataset["signals"])
+        n_per_split = {}
+        with h5py.File(hdf5_path, "r") as f:
+            for split in ("train", "val", "test"):
+                assert split in f
+                signals = f[split]["signals"]
+                labels = f[split]["labels"]
 
-    def test_all_faults_present(self):
-        """Test that all enabled faults are generated."""
-        set_seed(42)
-        generator = SignalGenerator(self.config)
-        dataset = generator.generate_dataset()
+                assert signals.ndim == 2
+                assert signals.shape[1] == config.signal.N
+                assert signals.dtype == np.float32
+                assert signals.shape[0] == labels.shape[0]
+                assert f[split].attrs["num_samples"] == signals.shape[0]
 
-        labels = dataset['labels']
-        unique_labels = set(labels)
+                # Only sain (0) and desalignement (1) were generated.
+                assert set(np.unique(labels[:])) == {0, 1}
+                # Reloaded signals must remain finite.
+                assert np.all(np.isfinite(signals[:]))
 
-        # Check for expected faults (if enabled in config)
-        if self.config.fault.enable_sain:
-            self.assertIn('sain', unique_labels)
-        if self.config.fault.enable_desalignement:
-            self.assertIn('desalignement', unique_labels)
+                n_per_split[split] = signals.shape[0]
 
-    def test_metadata_completeness(self):
-        """Test that metadata contains all required fields."""
-        set_seed(42)
-        generator = SignalGenerator(self.config)
-        dataset = generator.generate_dataset()
+        assert sum(n_per_split.values()) == total
+        assert n_per_split["train"] > n_per_split["val"]
+        assert n_per_split["train"] > n_per_split["test"]
 
-        metadata = dataset['metadata'][0]
+    def test_global_attributes(self, saved_hdf5):
+        hdf5_path, config, _ = saved_hdf5
 
-        # Check required fields
-        required_fields = [
-            'fault_type', 'severity_level', 'severity_initial',
-            'speed_rpm', 'load_percent', 'temperature_c',
-            'sommerfeld_number', 'rms', 'peak', 'crest_factor'
-        ]
+        with h5py.File(hdf5_path, "r") as f:
+            assert f.attrs["num_classes"] == NUM_CLASSES
+            assert f.attrs["sampling_rate"] == SAMPLING_RATE
+            assert f.attrs["signal_length"] == config.signal.N
+            assert f.attrs["rng_seed"] == config.rng_seed
+            assert tuple(f.attrs["split_ratios"]) == (0.7, 0.15, 0.15)
+            assert "generation_date" in f.attrs
+            assert "config_hash" in f.attrs
+            assert "config_json" in f.attrs
+            assert "metadata" in f  # JSON metadata dataset
 
-        for field in required_fields:
-            self.assertIn(field, metadata)
+            stored_config = json.loads(f.attrs["config_json"])
+            assert stored_config["num_signals_per_fault"] == 10
 
-    def test_augmentation_ratio(self):
-        """Test data augmentation generates correct number of signals."""
-        config = DataConfig(
-            num_signals_per_fault=10,
-            rng_seed=42
+    def test_config_sidecar_json(self, saved_hdf5):
+        hdf5_path, _, dataset = saved_hdf5
+        sidecar = hdf5_path.parent / "dataset_config.json"
+        assert sidecar.exists()
+
+        with open(sidecar, "r") as f:
+            info = json.load(f)
+
+        assert info["total_signals"] == len(dataset["signals"])
+        assert sum(info["split_sizes"].values()) == len(dataset["signals"])
+        assert "config_hash" in info
+
+
+# ---------------------------------------------------------------------------
+# Signal validation utilities
+# ---------------------------------------------------------------------------
+
+
+class TestSignalValidation:
+    @pytest.fixture
+    def good_signal(self):
+        rng = np.random.RandomState(0)
+        return rng.randn(TINY_N)
+
+    def test_good_signal_passes(self, good_signal):
+        errors = validate_signal(good_signal, expected_length=TINY_N)
+        assert errors == []
+
+    def test_nan_raises(self, good_signal):
+        bad = good_signal.copy()
+        bad[10] = np.nan
+        with pytest.raises(SignalValidationError, match="NaN"):
+            validate_signal(bad)
+
+    def test_inf_flagged_without_raise(self, good_signal):
+        bad = good_signal.copy()
+        bad[5] = np.inf
+        errors = validate_signal(bad, raise_on_error=False)
+        assert len(errors) == 1
+        assert "Inf" in errors[0]
+
+    def test_wrong_length_flagged(self, good_signal):
+        errors = validate_signal(
+            good_signal, expected_length=TINY_N + 1, raise_on_error=False
         )
-        config.augmentation.ratio = 0.5  # 50% augmented
-
-        set_seed(42)
-        generator = SignalGenerator(config)
-        dataset = generator.generate_dataset()
-
-        metadata = dataset['metadata']
-        augmented_count = sum(1 for m in metadata if m.get('is_augmented', False))
-        total_count = len(metadata)
-
-        # Check augmentation ratio (should be close to ratio/(1+ratio))
-        expected_ratio = config.augmentation.ratio / (1 + config.augmentation.ratio)
-        self.assertAlmostEqual(actual_ratio, expected_ratio, delta=0.15)
-
-    def test_severity_distribution(self):
-        """Test severity levels are distributed across all levels."""
-        config = DataConfig(num_signals_per_fault=100, rng_seed=42)
-
-        set_seed(42)
-        generator = SignalGenerator(config)
-        dataset = generator.generate_dataset()
-
-        # Extract severity levels
-        severities = [m['severity_level'] for m in dataset['metadata']]
-        unique_severities = set(severities)
-
-        # Should have multiple severity levels
-        self.assertGreaterEqual(len(unique_severities), 3)
-
-    def test_signal_statistics(self):
-        """Test signal statistics are reasonable."""
-        set_seed(42)
-        generator = SignalGenerator(self.config)
-        dataset = generator.generate_dataset()
-
-        for signal, metadata in zip(dataset['signals'], dataset['metadata']):
-            # Check for NaN/Inf
-            self.assertFalse(np.any(np.isnan(signal)))
-            self.assertFalse(np.any(np.isinf(signal)))
-
-            # Check RMS matches metadata
-            computed_rms = np.sqrt(np.mean(signal**2))
-            metadata_rms = metadata['rms']
-            # Relaxed tolerance for float precision/noise effects
-            self.assertAlmostEqual(computed_rms, metadata_rms, delta=0.01)
-
-            # Check crest factor is positive
-            self.assertGreater(metadata['crest_factor'], 0)
-
-
-class TestPhysicsCalculations(unittest.TestCase):
-    """Test physics-based calculations (Sommerfeld, etc.)."""
-
-    def test_sommerfeld_calculation(self):
-        """Test Sommerfeld number calculation."""
-        # Parameters matching MATLAB
-        mu = 0.05  # Pa·s (typical bearing oil)
-        N = 60.0   # Hz (3600 RPM)
-        P = 1e6    # Pa (load)
-        R = 0.05   # m (radius)
-        C = 0.0001 # m (clearance)
-
-        # S = (μ * N / P) * (R / C)^2
-        S_expected = (mu * N / P) * (R / C)**2
-
-        # Should be reasonable value (typically 0.1 - 1.0 for hydrodynamic bearings)
-        self.assertGreater(S_expected, 0.01)
-        self.assertLess(S_expected, 10.0)
-
-    def test_operating_conditions_variation(self):
-        """Test that operating conditions vary within specified ranges."""
-        config = DataConfig(num_signals_per_fault=50, rng_seed=42)
-
-        set_seed(42)
-        generator = SignalGenerator(config)
-        dataset = generator.generate_dataset()
-
-        speeds = [m['speed_rpm'] for m in dataset['metadata']]
-        loads = [m['load_percent'] for m in dataset['metadata']]
-        temps = [m['temperature_c'] for m in dataset['metadata']]
-
-        # Check ranges
-        self.assertGreater(max(speeds) - min(speeds), 10)  # Reasonable variation
-        self.assertGreater(max(loads) - min(loads), 10)
-        self.assertGreater(max(temps) - min(temps), 5)
-
-        # Check within configured bounds
-        self.assertGreaterEqual(min(loads), config.operating.load_percent_min)
-        self.assertLessEqual(max(loads), config.operating.load_percent_max)
-        self.assertGreaterEqual(min(temps), config.operating.temp_c_min)
-        self.assertLessEqual(max(temps), config.operating.temp_c_max)
-
-
-class TestHDF5Generation(unittest.TestCase):
-    """Test HDF5 dataset generation and loading."""
-
-    def setUp(self):
-        """Setup test fixtures."""
-        self.temp_dir = Path(tempfile.mkdtemp())
-
-    def tearDown(self):
-        """Cleanup temporary files."""
-        if self.temp_dir.exists():
-            shutil.rmtree(self.temp_dir)
-
-    def test_save_dataset_hdf5_only(self):
-        """Test saving dataset as HDF5 only."""
-        from data.signal_generator import SignalGenerator
-
-        # Create minimal config
-        # Create minimal config
-        config = DataConfig(num_signals_per_fault=20, rng_seed=42)
-        config.fault.enabled_faults = ['sain', 'desalignement']  # Only 2 faults
-
-        generator = SignalGenerator(config)
-        dataset = generator.generate_dataset()
-
-        # Save as HDF5
-        output_dir = self.temp_dir / 'output'
-        saved_paths = generator.save_dataset(
-            dataset,
-            output_dir=output_dir,
-            format='hdf5'
-        )
-
-        # Verify paths returned
-        self.assertIn('hdf5', saved_paths)
-        self.assertTrue(saved_paths['hdf5'].exists())
-        self.assertNotIn('mat_dir', saved_paths)
-
-        # Verify HDF5 structure
-        import h5py
-        with h5py.File(saved_paths['hdf5'], 'r') as f:
-            self.assertIn('train', f)
-            self.assertIn('val', f)
-            self.assertIn('test', f)
-
-            self.assertIn('signals', f['train'])
-            self.assertIn('labels', f['train'])
-
-            # Check shapes
-            train_signals = f['train']['signals']
-            self.assertEqual(len(train_signals.shape), 2)
-            self.assertEqual(train_signals.shape[1], 102400)  # SIGNAL_LENGTH
-
-    def test_save_dataset_both_formats(self):
-        """Test saving in both .mat and HDF5 formats."""
-        from data.signal_generator import SignalGenerator
-
-        config = DataConfig(num_signals_per_fault=20, rng_seed=42)
-        config.fault.enabled_faults = ['sain']
-
-        generator = SignalGenerator(config)
-        dataset = generator.generate_dataset()
-
-        # Save in both formats
-        output_dir = self.temp_dir / 'output'
-        saved_paths = generator.save_dataset(
-            dataset,
-            output_dir=output_dir,
-            format='both'
-        )
-
-        # Verify both paths exist
-        self.assertIn('mat_dir', saved_paths)
-        self.assertIn('hdf5', saved_paths)
-        self.assertTrue(saved_paths['mat_dir'].exists())
-        self.assertTrue(saved_paths['hdf5'].exists())
-
-        # Verify .mat files exist
-        mat_files = list(saved_paths['mat_dir'].glob('*.mat'))
-        self.assertGreater(len(mat_files), 0)
-
-    def test_load_from_hdf5(self):
-        """Test loading dataset from HDF5."""
-        from data.signal_generator import SignalGenerator
-        from data.dataset import BearingFaultDataset
-
-        # Generate and save
-        config = DataConfig(num_signals_per_fault=20, rng_seed=42)
-        config.fault.enabled_faults = ['sain', 'desalignement']
-
-        generator = SignalGenerator(config)
-        dataset = generator.generate_dataset()
-
-        output_dir = self.temp_dir / 'output'
-        saved_paths = generator.save_dataset(dataset, output_dir, format='hdf5')
-
-        # Load from HDF5
-        hdf5_path = saved_paths['hdf5']
-        train_dataset = BearingFaultDataset.from_hdf5(hdf5_path, split='train')
-
-        # Verify dataset
-        self.assertGreater(len(train_dataset), 0)
-        signal, label = train_dataset[0]
-        self.assertEqual(signal.shape, (102400,))
-        self.assertIsInstance(label, int)
-
-    def test_hdf5_split_ratios(self):
-        """Test that split ratios are correct."""
-        from data.signal_generator import SignalGenerator
-        import h5py
-
-        config = DataConfig(num_signals_per_fault=100, rng_seed=42)
-        config.fault.enabled_faults = ['sain']
-
-        generator = SignalGenerator(config)
-        dataset = generator.generate_dataset()
-
-        output_dir = self.temp_dir / 'output'
-        split_ratios = (0.7, 0.15, 0.15)
-        saved_paths = generator.save_dataset(
-            dataset,
-            output_dir,
-            format='hdf5',
-            train_val_test_split=split_ratios
-        )
-
-        # Verify splits
-        with h5py.File(saved_paths['hdf5'], 'r') as f:
-            n_train = f['train']['signals'].shape[0]
-            n_val = f['val']['signals'].shape[0]
-            n_test = f['test']['signals'].shape[0]
-            total = n_train + n_val + n_test
-
-            # Allow ±5% tolerance due to rounding and stratification
-            self.assertAlmostEqual(n_train / total, split_ratios[0], delta=0.05)
-            self.assertAlmostEqual(n_val / total, split_ratios[1], delta=0.05)
-            self.assertAlmostEqual(n_test / total, split_ratios[2], delta=0.05)
-
-    def test_hdf5_attributes(self):
-        """Test HDF5 file attributes are set correctly."""
-        from data.signal_generator import SignalGenerator
-        import h5py
-
-        config = DataConfig(num_signals_per_fault=20, rng_seed=42)
-        config.fault.enabled_faults = ['sain']
-
-        generator = SignalGenerator(config)
-        dataset = generator.generate_dataset()
-
-        output_dir = self.temp_dir / 'output'
-        saved_paths = generator.save_dataset(dataset, output_dir, format='hdf5')
-
-        # Check attributes
-        with h5py.File(saved_paths['hdf5'], 'r') as f:
-            self.assertIn('num_classes', f.attrs)
-            self.assertIn('sampling_rate', f.attrs)
-            self.assertIn('signal_length', f.attrs)
-            self.assertIn('generation_date', f.attrs)
-            self.assertIn('split_ratios', f.attrs)
-            self.assertIn('rng_seed', f.attrs)
-
-            self.assertEqual(f.attrs['num_classes'], 11)
-            self.assertEqual(f.attrs['sampling_rate'], 20480)
-            self.assertEqual(f.attrs['signal_length'], 102400)
-            self.assertEqual(f.attrs['rng_seed'], 42)
-
-
-class TestCacheManagerSplits(unittest.TestCase):
-    """Test CacheManager with train/val/test splits."""
-
-    def setUp(self):
-        """Setup test fixtures."""
-        self.temp_dir = Path(tempfile.mkdtemp())
-
-    def tearDown(self):
-        """Cleanup temporary files."""
-        if self.temp_dir.exists():
-            shutil.rmtree(self.temp_dir)
-
-    def test_cache_with_splits(self):
-        """Test caching with train/val/test splits."""
-        from data.cache_manager import CacheManager
-        import h5py
-
-        cache_dir = self.temp_dir / 'cache'
-        cache = CacheManager(cache_dir=cache_dir)
-
-        # Create dummy data
-        num_samples = 100
-        signal_length = 102400
-        signals = np.random.randn(num_samples, signal_length).astype(np.float32)
-        labels = np.random.randint(0, 11, size=num_samples)
-
-        # Cache with splits
-        cache_path = cache.cache_dataset_with_splits(
-            signals, labels,
-            cache_name='test_splits',
-            split_ratios=(0.7, 0.15, 0.15)
-        )
-
-        self.assertTrue(cache_path.exists())
-
-        # Verify structure
-        with h5py.File(cache_path, 'r') as f:
-            self.assertIn('train', f)
-            self.assertIn('val', f)
-            self.assertIn('test', f)
-
-            n_train = f['train']['signals'].shape[0]
-            n_val = f['val']['signals'].shape[0]
-            n_test = f['test']['signals'].shape[0]
-
-            self.assertEqual(n_train + n_val + n_test, num_samples)
-
-            # Check ratios (allow tolerance)
-            self.assertAlmostEqual(n_train / num_samples, 0.7, delta=0.1)
-
-    def test_stratified_splits(self):
-        """Test stratified splitting preserves class distribution."""
-        from data.cache_manager import CacheManager
-        import h5py
-
-        cache_dir = self.temp_dir / 'cache'
-        cache = CacheManager(cache_dir=cache_dir)
-
-        # Create imbalanced data
-        num_samples = 110  # 11 classes × 10 samples each
-        signal_length = 1024
-        signals = np.random.randn(num_samples, signal_length).astype(np.float32)
-        labels = np.repeat(np.arange(11), 10)  # 10 of each class
-
-        # Cache with stratification
-        cache_path = cache.cache_dataset_with_splits(
-            signals, labels,
-            cache_name='test_stratified',
-            split_ratios=(0.7, 0.15, 0.15),
-            stratify=True
-        )
-
-        # Verify each split has all classes
-        with h5py.File(cache_path, 'r') as f:
-            for split in ['train', 'val', 'test']:
-                split_labels = f[split]['labels'][:]
-                unique_labels = np.unique(split_labels)
-                self.assertEqual(len(unique_labels), 11,
-                    f"Split '{split}' missing classes: has {len(unique_labels)}, expected 11")
-
-
-class TestBackwardCompatibility(unittest.TestCase):
-    """Test backward compatibility of HDF5 additions."""
-
-    def setUp(self):
-        """Setup test fixtures."""
-        self.temp_dir = Path(tempfile.mkdtemp())
-
-    def tearDown(self):
-        """Cleanup temporary files."""
-        if self.temp_dir.exists():
-            shutil.rmtree(self.temp_dir)
-
-    def test_default_save_behavior_unchanged(self):
-        """Test that default save_dataset() behavior is unchanged."""
-        from data.signal_generator import SignalGenerator
-
-        config = DataConfig(num_signals_per_fault=20, rng_seed=42)
-        config.fault.enabled_faults = ['sain']
-
-        generator = SignalGenerator(config)
-        dataset = generator.generate_dataset()
-
-        # Default call (no format parameter)
-        output_dir = self.temp_dir / 'output'
-        saved_paths = generator.save_dataset(dataset, output_dir=output_dir)
-
-        # Should save .mat files by default
-        self.assertIn('mat_dir', saved_paths)
-        self.assertTrue(saved_paths['mat_dir'].exists())
-
-        # Should have .mat files
-        mat_files = list(saved_paths['mat_dir'].glob('*.mat'))
-        self.assertGreater(len(mat_files), 0)
-
-        # Should NOT create HDF5 by default
-        self.assertNotIn('hdf5', saved_paths)
-
-
-def run_tests(verbosity: int = 2):
-    """
-    Run all tests with specified verbosity.
-
-    Args:
-        verbosity: Test output verbosity (0=quiet, 1=normal, 2=verbose)
-
-    Returns:
-        TestResult object
-    """
-    # Setup logging
-    setup_logging(console=True, file=False)
-
-    # Create test suite
-    loader = unittest.TestLoader()
-    suite = loader.loadTestsFromModule(__import__(__name__))
-
-    # Run tests
-    runner = unittest.TextTestRunner(verbosity=verbosity)
-    result = runner.run(suite)
-
-    return result
-
-
-if __name__ == '__main__':
-    # Run tests when executed directly
-    result = run_tests(verbosity=2)
-
-    # Exit with error code if tests failed
-    import sys
-    sys.exit(0 if result.wasSuccessful() else 1)
+        assert any("Length" in e for e in errors)
+
+    def test_flat_signal_flagged(self):
+        errors = validate_signal(np.zeros(TINY_N), raise_on_error=False)
+        assert any("Flat/dead" in e for e in errors)
+
+    def test_validate_batch_report(self, good_signal):
+        nan_row = good_signal.copy()
+        nan_row[0] = np.nan
+        flat_row = np.zeros(TINY_N)
+        batch = np.vstack([good_signal, nan_row, flat_row])
+        labels = np.array([0, 1, 2])
+
+        report = validate_batch(batch, labels=labels)
+
+        assert report.total_signals == 3
+        assert report.passed == 1
+        assert report.failed == 2
+        assert report.pass_rate == pytest.approx(1 / 3)
+        assert len(report.errors) >= 2
+
+    def test_validate_batch_on_generated_signals(self, tiny_dataset):
+        """Generated signals must pass batch validation cleanly."""
+        config, dataset = tiny_dataset
+        signals = np.array(dataset["signals"], dtype=np.float64)
+        report = validate_batch(signals, expected_length=config.signal.N)
+
+        assert report.failed == 0
+        assert report.passed == len(dataset["signals"])

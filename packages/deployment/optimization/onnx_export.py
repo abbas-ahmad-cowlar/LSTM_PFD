@@ -82,6 +82,10 @@ def export_to_onnx(
     logger.info(f"Input shape: {dummy_input.shape}")
 
     try:
+        # dynamo=False: the torch>=2.9 dynamo exporter depends on onnxscript,
+        # which fails on Python 3.14 ("Expecting a type not typing.Union")
+        # before the model is even traced. The legacy TorchScript exporter
+        # handles all our (static-graph) models correctly.
         torch.onnx.export(
             model,
             dummy_input,
@@ -93,6 +97,7 @@ def export_to_onnx(
             dynamic_axes=config.dynamic_axes,
             export_params=config.export_params,
             verbose=config.verbose,
+            dynamo=False,
             **kwargs
         )
 

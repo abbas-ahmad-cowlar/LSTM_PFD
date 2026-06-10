@@ -44,6 +44,9 @@ class ResNet1D(BaseModel):
         layers: Number of blocks in each layer (default: [2, 2, 2, 2] for ResNet-18)
         dropout: Dropout probability (default: 0.1)
         input_length: Expected input signal length (default: 102400)
+        include_head: Create the FC classification head (default: True).
+            Composite models (e.g. HybridPINN) set False to use this network
+            purely as a feature extractor; forward() then returns features.
     """
     def __init__(
         self,
@@ -52,7 +55,8 @@ class ResNet1D(BaseModel):
         block: Type[Union[BasicBlock1D, Bottleneck1D]] = BasicBlock1D,
         layers: List[int] = None,
         dropout: float = 0.1,
-        input_length: int = SIGNAL_LENGTH
+        input_length: int = SIGNAL_LENGTH,
+        include_head: bool = True
     ):
         super().__init__()
 
@@ -65,6 +69,7 @@ class ResNet1D(BaseModel):
         self.dropout = dropout
         self.input_length = input_length
         self.block = block
+        self.include_head = include_head
 
         # Initial convolution - adapted for long signals
         # Kernel size 64 to capture low-frequency bearing signatures
@@ -88,9 +93,10 @@ class ResNet1D(BaseModel):
         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
 
-        # Global pooling and classifier
+        # Global pooling and classifier (head omitted for feature-extractor use)
         self.avgpool = nn.AdaptiveAvgPool1d(1)
-        self.fc = nn.Linear(512 * block.expansion, num_classes)
+        if include_head:
+            self.fc = nn.Linear(512 * block.expansion, num_classes)
 
         # Initialize weights
         self._initialize_weights()
@@ -170,15 +176,18 @@ class ResNet1D(BaseModel):
                 if m.bias is not None:
                     nn.init.constant_(m.bias, 0)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def extract_features(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass.
+        Extract pooled residual features (penultimate representation).
+
+        Feature-extraction contract used by composite models (e.g. HybridPINN):
+        returns the representation before the classification head.
 
         Args:
             x: Input tensor of shape [B, C, T] or [B, T]
 
         Returns:
-            logits: Output tensor of shape [B, num_classes]
+            Features [B, 512 * expansion]
         """
         # Ensure input is 3D [B, C, T]
         if x.dim() == 2:
@@ -199,6 +208,24 @@ class ResNet1D(BaseModel):
         # Global pooling
         x = self.avgpool(x)  # [B, 512 * expansion, 1]
         x = torch.flatten(x, 1)  # [B, 512 * expansion]
+
+        return x
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass.
+
+        Args:
+            x: Input tensor of shape [B, C, T] or [B, T]
+
+        Returns:
+            logits: Output tensor of shape [B, num_classes],
+                or features [B, 512 * expansion] when include_head=False
+        """
+        x = self.extract_features(x)  # [B, 512 * expansion]
+
+        if not self.include_head:
+            return x
 
         # Classification
         logits = self.fc(x)
@@ -285,7 +312,8 @@ class ResNet1D(BaseModel):
             'input_channels': self.input_channels,
             'input_length': self.input_length,
             'num_parameters': self.get_num_params(),
-            'dropout': self.dropout
+            'dropout': self.dropout,
+            'include_head': self.include_head
         }
 
 

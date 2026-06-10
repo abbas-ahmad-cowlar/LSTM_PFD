@@ -16,8 +16,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 # Import API modules
 try:
     from fastapi.testclient import TestClient
-    from api.main import app
-    from api.schemas import (
+    from packages.deployment.api.main import app
+    from packages.deployment.api.schemas import (
         PredictionRequest,
         PredictionResponse,
         ModelInfo,
@@ -35,15 +35,22 @@ class TestAPISchemas:
     """Test API schema validation."""
 
     def test_prediction_request_valid(self):
-        """Test valid prediction request."""
+        """Test valid prediction request (schema enforces full signal length)."""
+        from utils.constants import SIGNAL_LENGTH
+
         request = PredictionRequest(
-            signal=[0.1, 0.2, 0.3] * 100,
+            signal=[0.1] * SIGNAL_LENGTH,
             return_probabilities=True
         )
 
         assert request.signal is not None
-        assert len(request.signal) == 300
+        assert len(request.signal) == SIGNAL_LENGTH
         assert request.return_probabilities is True
+
+    def test_prediction_request_wrong_length_rejected(self):
+        """Signals that are not exactly SIGNAL_LENGTH samples are rejected."""
+        with pytest.raises(ValueError):
+            PredictionRequest(signal=[0.1] * 300)
 
     def test_prediction_request_empty_signal(self):
         """Test prediction request with empty signal."""
@@ -121,8 +128,10 @@ class TestAPIEndpoints:
 
     def test_predict_endpoint_structure(self, client):
         """Test predict endpoint structure (may fail without model)."""
+        from utils.constants import SIGNAL_LENGTH
+
         request_data = {
-            "signal": [0.1] * 1024,
+            "signal": [0.1] * SIGNAL_LENGTH,
             "return_probabilities": True
         }
 
@@ -152,10 +161,12 @@ class TestAPIEndpoints:
 
     def test_batch_predict_endpoint_structure(self, client):
         """Test batch predict endpoint structure."""
+        from utils.constants import SIGNAL_LENGTH
+
         request_data = {
             "signals": [
-                [0.1] * 1024,
-                [0.2] * 1024
+                [0.1] * SIGNAL_LENGTH,
+                [0.2] * SIGNAL_LENGTH
             ],
             "return_probabilities": False
         }
@@ -179,7 +190,7 @@ class TestAPIConfig:
 
     def test_config_defaults(self):
         """Test default configuration values."""
-        from api.config import Settings
+        from packages.deployment.api.config import Settings
 
         settings = Settings()
 

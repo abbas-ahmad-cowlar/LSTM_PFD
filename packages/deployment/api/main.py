@@ -35,7 +35,7 @@ from .schemas import (
     ErrorResponse,
     FAULT_CLASS_NAMES
 )
-from ..inference import OptimizedInferenceEngine, InferenceConfig
+from ..optimization.inference import OptimizedInferenceEngine, InferenceConfig
 
 # Configure logging
 logging.basicConfig(
@@ -340,12 +340,14 @@ async def predict_batch(
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request, exc):
     """Handle HTTP exceptions."""
+    # mode="json" so datetime fields serialize to ISO strings; a plain
+    # .dict()/.model_dump() leaves datetime objects json.dumps cannot handle.
     return JSONResponse(
         status_code=exc.status_code,
         content=ErrorResponse(
             error=exc.detail,
             detail=str(exc)
-        ).dict()
+        ).model_dump(mode="json")
     )
 
 
@@ -358,7 +360,7 @@ async def general_exception_handler(request, exc):
         content=ErrorResponse(
             error="Internal server error",
             detail=str(exc)
-        ).dict()
+        ).model_dump(mode="json")
     )
 
 

@@ -43,6 +43,9 @@ class CNN1D(BaseModel):
         input_channels: Number of input channels (default: 1 for mono signal)
         dropout: Dropout probability in FC layers (default: 0.5)
         use_batch_norm: Apply batch normalization (default: True)
+        include_head: Create the FC classification head (default: True).
+            Composite models (e.g. HybridPINN) set False to use this network
+            purely as a feature extractor; forward() then returns [B, 512].
 
     Example:
         >>> model = CNN1D(num_classes=NUM_CLASSES)
@@ -56,7 +59,8 @@ class CNN1D(BaseModel):
         num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
         dropout: float = 0.5,
-        use_batch_norm: bool = True
+        use_batch_norm: bool = True,
+        include_head: bool = True
     ):
         super(CNN1D, self).__init__()
 
@@ -64,6 +68,7 @@ class CNN1D(BaseModel):
         self.input_channels = input_channels
         self.dropout = dropout
         self.use_batch_norm = use_batch_norm
+        self.include_head = include_head
 
         # Convolutional feature extractor
         # Progressive downsampling: SIGNAL_LENGTH → 25600 → 12800 → 6400 → 3200 → 1600
@@ -115,12 +120,13 @@ class CNN1D(BaseModel):
         # Global average pooling (replaces flatten, reduces overfitting)
         self.global_pool = nn.AdaptiveAvgPool1d(1)
 
-        # Fully connected classifier
-        self.fc1 = nn.Linear(512, 256)
-        self.fc1_activation = nn.ReLU(inplace=True)
-        self.fc1_dropout = nn.Dropout(p=dropout)
+        # Fully connected classifier (omitted when used as a feature extractor)
+        if include_head:
+            self.fc1 = nn.Linear(512, 256)
+            self.fc1_activation = nn.ReLU(inplace=True)
+            self.fc1_dropout = nn.Dropout(p=dropout)
 
-        self.fc2 = nn.Linear(256, num_classes)
+            self.fc2 = nn.Linear(256, num_classes)
 
         # Initialize weights
         self._initialize_weights()
@@ -139,15 +145,18 @@ class CNN1D(BaseModel):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def extract_features(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass.
+        Extract pooled convolutional features (penultimate representation).
+
+        Feature-extraction contract used by composite models (e.g. HybridPINN):
+        returns the representation before the classification head.
 
         Args:
             x: Input tensor [B, 1, SIGNAL_LENGTH] or [B, SIGNAL_LENGTH]
 
         Returns:
-            Logits [B, num_classes]
+            Features [B, 512]
         """
         # Handle 2D input (B, T) by adding channel dimension
         if x.dim() == 2:
@@ -163,6 +172,23 @@ class CNN1D(BaseModel):
         # Global pooling
         x = self.global_pool(x)  # [B, 512, 1600] → [B, 512, 1]
         x = x.squeeze(-1)  # [B, 512, 1] → [B, 512]
+
+        return x
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass.
+
+        Args:
+            x: Input tensor [B, 1, SIGNAL_LENGTH] or [B, SIGNAL_LENGTH]
+
+        Returns:
+            Logits [B, num_classes], or features [B, 512] when include_head=False
+        """
+        x = self.extract_features(x)  # [B, 512]
+
+        if not self.include_head:
+            return x
 
         # Fully connected classifier
         x = self.fc1(x)  # [B, 512] → [B, 256]
@@ -241,6 +267,7 @@ class CNN1D(BaseModel):
             'input_channels': self.input_channels,
             'dropout': self.dropout,
             'use_batch_norm': self.use_batch_norm,
+            'include_head': self.include_head,
             'architecture': '5-layer CNN with global pooling'
         }
 
