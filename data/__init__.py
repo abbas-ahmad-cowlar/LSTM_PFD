@@ -1,13 +1,18 @@
-"""Data generation and management module for LSTM_PFD pipeline."""
+"""Data generation and management module for the LSTM_PFD pipeline.
 
-from .signal_generator import SignalGenerator, FaultModeler, NoiseGenerator, SignalMetadata
+Kept surface (Convergence Plan Part I §5): the physics-based signal
+generator, BearingFaultDataset (+HDF5), dataloaders, transforms,
+signal validation, augmentation, and caching. CNN/TFR/streaming dataset
+variants were pruned 2026-06 (tag `pre-convergence-2026-06`).
+"""
+
+from .signal_generation import (
+    SignalGenerator,
+    FaultModeler,
+    NoiseGenerator,
+    SignalMetadata,
+)
 from .matlab_importer import MatlabImporter, MatlabSignalData, load_matlab_reference
-from .data_validator import SignalValidator, ValidationResult, validate_against_matlab
-try:
-    from .augmentation import SignalAugmenter, random_augment
-except ImportError:
-    SignalAugmenter = None
-    random_augment = None
 from .dataset import (
     BearingFaultDataset,
     AugmentedBearingDataset,
@@ -50,29 +55,6 @@ from .cache_manager import (
     cache_dataset_simple,
     load_cached_dataset_simple
 )
-# CNN-specific datasets and transforms
-from .cnn_dataset import RawSignalDataset, CachedRawSignalDataset
-from .cnn_transforms import (
-    ToTensor1D,
-    Normalize1D,
-    RandomCrop1D,
-    RandomAmplitudeScale,
-    AddGaussianNoise,
-    get_train_transforms,
-    get_test_transforms,
-)
-# Streaming and TFR datasets
-from .streaming_hdf5_dataset import (
-    StreamingHDF5Dataset,
-    ChunkedStreamingDataset,
-    create_streaming_dataloaders,
-)
-from .tfr_dataset import (
-    SpectrogramDataset,
-    OnTheFlyTFRDataset,
-    MultiTFRDataset,
-    create_tfr_dataloaders,
-)
 
 __all__ = [
     # Generation
@@ -80,34 +62,16 @@ __all__ = [
     'FaultModeler',
     'NoiseGenerator',
     'SignalMetadata',
-    # MATLAB import/validation
+    # MATLAB import
     'MatlabImporter',
     'MatlabSignalData',
     'load_matlab_reference',
-    'SignalValidator',
-    'ValidationResult',
-    'validate_against_matlab',
-    # Augmentation
-    'SignalAugmenter',
-    'random_augment',
     # Datasets
     'BearingFaultDataset',
     'AugmentedBearingDataset',
     'CachedBearingDataset',
     'train_val_test_split',
     'collate_fn_with_metadata',
-    # CNN Datasets
-    'RawSignalDataset',
-    'CachedRawSignalDataset',
-    # Streaming Datasets
-    'StreamingHDF5Dataset',
-    'ChunkedStreamingDataset',
-    'create_streaming_dataloaders',
-    # TFR Datasets
-    'SpectrogramDataset',
-    'OnTheFlyTFRDataset',
-    'MultiTFRDataset',
-    'create_tfr_dataloaders',
     # DataLoaders
     'create_dataloader',
     'create_cnn_dataloader',
@@ -135,14 +99,6 @@ __all__ = [
     'Unsqueeze',
     'Detrend',
     'get_default_transform',
-    # CNN Transforms
-    'ToTensor1D',
-    'Normalize1D',
-    'RandomCrop1D',
-    'RandomAmplitudeScale',
-    'AddGaussianNoise',
-    'get_train_transforms',
-    'get_test_transforms',
     # Caching
     'CacheManager',
     'cache_dataset_simple',

@@ -65,7 +65,7 @@ class Phase0Adapter:
             if project_root not in sys.path:
                 sys.path.insert(0, project_root)
 
-            from data.signal_generator import SignalGenerator
+            from data.signal_generation import SignalGenerator
             from config.data_config import DataConfig
 
             logger.info("Phase0Adapter: starting dataset generation")
