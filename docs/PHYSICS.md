@@ -122,8 +122,14 @@ inversely proportional to Sommerfeld number (low S = thin film = boundary
 contact), plus 1–4 random decaying friction impacts (length ~1 ms, exponential
 decay). Captures the boundary-lubrication regime: low-frequency friction-driven
 oscillation intensifying as the film thins.
+**Statistical note** (verified numerically, P3.2): the stick-slip sine dominates
+the fourth moment — Pearson kurtosis ≈ 1.5 (sine-like) regardless of severity or
+S; the 1–4 impacts (~20 samples each of 102,400) are fourth-moment-negligible.
+The discriminative content is the low-frequency band and its Sommerfeld
+coupling, *not* impulsiveness. (An earlier draft claimed kurtosis > 3 — refuted
+by measurement and corrected; the test suite pins the true sine-like behavior.)
 **Test signature (§T5)**: low-frequency band (1–6 Hz) energy elevated; RMS
-decreases as S increases (two-point check); impact spikes → kurtosis > 3.
+decreases as S increases (two-point check); kurtosis sine-like (≈1.5, < 3).
 
 ### 4.6 `cavitation`
 2–7 short bursts (8 ms Hann-windowed, exp(−100t) decay) of a **1.5–2.5 kHz**
