@@ -29,7 +29,7 @@
 | 1 Stabilize the spine | ✅ done | 2026-06-11 | 2026-06-11 | 328 passed/0 failed; PINN sanity pass; results/ populated; dashboard boots |
 | 2 The great pruning | ✅ done | 2026-06-11 | 2026-06-11 | core LOC −32%; registry 81→11; suite 206 green; retrain proofs pass |
 | 3 Physics & data hardening | ✅ done | 2026-06-11 | 2026-06-12 | physics CI battery; v2 validated+DVC; CNN1D baseline 90.53% test |
-| 4 Benchmark matrix | ☐ not started | | | |
+| 4 Benchmark matrix | 🔄 in progress | 2026-06-12 | | 4.2 runner verified; 4.1 protocol awaiting ratification |
 | 5 Physics experiments | ☐ not started | | | |
 | 6 Docs convergence | ☐ not started | | | |
 | 7 Paper & repro package | ☐ not started | | | |
@@ -486,12 +486,15 @@ leaderboard); peek at test sets before protocol freeze; let T2 runs start before
       (3 values, val-only); all configs committed before first run. Also: GPU env lock file
       (`requirements.lock.gpu.txt`), Colab env cell pinned.
       **DoD**: protocol committed + ratified; any later deviation requires a dated amendment note.
-- [ ] **4.2 Benchmark runner** — *Owner: Claude.* Extend `train_overnight.py` →
+- [x] **4.2 Benchmark runner** — *Owner: Claude.* Extend `train_overnight.py` →
       `scripts/run_benchmark.py`: sequential queue, resume-safe (skips completed run-dirs),
       per-run JSON (config, seed, git SHA, host, wall-time), checkpoint + history + test
       metrics + confusion matrix per run.
       **DoD**: 2-run mini-queue (CNN1D seed 0/1, 2 epochs) completes on laptop; re-invoking
       skips completed runs.
+      *(evidence: scripts/run_benchmark.py — smoke queue cnn1d+hybrid_pinn seed0 completed,
+      2nd invocation skipped both; per-run checkpoint resume; per-run failure isolation;
+      detached-launch + keep-awake documented in experiments/OFFICE_PC_RUNBOOK.md)*
 - [ ] **4.3 Classical baselines** — *Owner: laptop (CPU, < 1 h).* 36-feature extraction on v2
       + RF/SVM/GB × 3 seeds.
       **DoD**: 9 result dirs under `results/benchmark/classical/`.
