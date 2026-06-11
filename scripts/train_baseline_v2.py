@@ -98,6 +98,7 @@ def main() -> None:
     ckpt_path = PROJECT_ROOT / args.checkpoint
     ckpt_path.parent.mkdir(parents=True, exist_ok=True)
 
+    (PROJECT_ROOT / 'logs').mkdir(exist_ok=True)  # logs/ is gitignored; absent on fresh clones
     logging.basicConfig(
         level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s',
         handlers=[logging.FileHandler(PROJECT_ROOT / 'logs' / 'train_baseline_v2.log'),
