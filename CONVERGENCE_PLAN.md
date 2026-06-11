@@ -28,7 +28,7 @@
 | 0 Ratify & safety net | ✅ done | 2026-06-11 | 2026-06-11 | tag pushed; grep clean; lock committed |
 | 1 Stabilize the spine | ✅ done | 2026-06-11 | 2026-06-11 | 328 passed/0 failed; PINN sanity pass; results/ populated; dashboard boots |
 | 2 The great pruning | ✅ done | 2026-06-11 | 2026-06-11 | core LOC −32%; registry 81→11; suite 206 green; retrain proofs pass |
-| 3 Physics & data hardening | 🔄 in progress | 2026-06-11 | | 3.1–3.4 done (approved, v2 generated+validated); 3.5 baseline training overnight |
+| 3 Physics & data hardening | ✅ done | 2026-06-11 | 2026-06-12 | physics CI battery; v2 validated+DVC; CNN1D baseline 90.53% test |
 | 4 Benchmark matrix | ☐ not started | | | |
 | 5 Physics experiments | ☐ not started | | | |
 | 6 Docs convergence | ☐ not started | | | |
@@ -449,13 +449,24 @@ worst kind); grow scope of v2 beyond what P4/P5 protocols need.
       *(evidence: dataset_v2.h5 — 3520 records, 1.9GB, 177s; exact class/severity balance;
       leakage check clean; SNR-20/10/5 test variants; validation_report.json;
       dataset_card.yaml rewritten with measured numbers; DVC tracked)*
-- [/] **3.5 Re-baseline CNN1D on v2** — *Owner: laptop overnight.* Full training, windowed
+- [x] **3.5 Re-baseline CNN1D on v2** — *Owner: laptop overnight.* Full training, windowed
       input, to early-stopping.
       **DoD**: `results/cnn1d_v2_baseline/` (metrics.json, history, confusion matrix);
       this number becomes the reference for all of Phase 4.
+      *(evidence: results/cnn1d_v2_baseline — TEST 90.53% acc / 0.9013 macro-F1 on 2,640
+      windows; early stop epoch 34, best val 91.44% @ 24; 4.8h CPU incl. one mid-run
+      process death (session restart killed child; fixed via --resume + detached launch).
+      Note: Healthy class weakest (27.5%) — 1s healthy windows confuse with incipient-
+      severity faults; flagged for Phase 5 severity analysis)*
 
 **Exit gate 3**: physics tests in CI · v2 + card + DVC + leakage-check report · v1-vs-v2
 comparison report · CNN1D v2 baseline in `results/`. *Merge `p3/physics` → `main`.*
+
+> ✅ **GATE 3 PASSED 2026-06-12** — physics battery (34 tests) in CI; dataset_v2.h5 (3,520
+> records, exact class×severity balance, leakage-clean, SNR variants, per-split metadata,
+> DVC); dataset card rewritten with measured numbers; validation_report.json with v1-vs-v2
+> stats; CNN1D v2 baseline **90.53% test / 0.9013 F1** (vs v1's 86.48% on 6× fewer test
+> samples — the windowing decision validated). Suite: 240 passed, 0 failed.
 
 ---
 
