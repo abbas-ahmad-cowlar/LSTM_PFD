@@ -87,6 +87,6 @@ physical claim; `metadata.severity` is authoritative.
 
 ---
 
-*Owner ratification (P3.3 DoD): pending. Ratifying this note authorizes the
-generator change (severity stratification flag + SNR test variants), v2
-generation (P3.4, ~1 h laptop), and the CNN1D v2 re-baseline (P3.5, overnight).*
+*Owner ratification (P3.3 DoD): **Approved by Syed Abbas Ahmad, 2026-06-11**
+("Approved, proceed."). Authorizes v2 generation (P3.4) and the CNN1D v2
+re-baseline (P3.5).*

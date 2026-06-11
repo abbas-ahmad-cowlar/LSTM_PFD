@@ -412,11 +412,13 @@ in `docs/PHYSICS.md`; involve you (owner) on the windowing + severity-grid decis
 **Don't**: tune generator coefficients to make models score better (that's leakage of the
 worst kind); grow scope of v2 beyond what P4/P5 protocols need.
 
-- [ ] **3.1 docs/PHYSICS.md** — *Owner: Claude (draft) + you (review).* Consolidate per-fault:
+- [x] **3.1 docs/PHYSICS.md** — *Owner: Claude (draft) + you (review).* Consolidate per-fault:
       signal model equation, characteristic frequencies, severity scaling, operating-condition
       coupling, which coefficients are empirical (and a defense of each). Sources:
       `data/PHYSICS_MODEL_GUIDE.md`, `utils/physics_constants.py`, `fault_modeler.py`.
       **DoD**: every one of the 11 classes has all five subsections; you sign off on the physics.
+      *(evidence: docs/PHYSICS.md — owner approved 2026-06-11; includes the P3.2-measured
+      kurtosis correction for lubrification)*
 - [x] **3.2 Spectral-signature validation tests** ⭐ scientific heart of C1 — *Owner: agent
       builds from Claude's spec table, Claude verifies.* Per fault, automated assertions on
       generated signals: misalignment → 2×/3× harmonics dominate; imbalance → 1× scaling with
@@ -428,7 +430,7 @@ worst kind); grow scope of v2 beyond what P4/P5 protocols need.
       *(evidence: 34 tests, deterministic 3x, 2s runtime; agent-built from spec, Claude-verified.
       Bonus finding: refuted draft PHYSICS.md §4.5 kurtosis claim — doc corrected to measured
       sine-like statistics, regression test pins it)*
-- [ ] **3.3 Dataset v2 design note** — *Owner: Claude proposes, you ratify.* One page in
+- [x] **3.3 Dataset v2 design note** — *Owner: Claude proposes, you ratify.* One page in
       `experiments/DATASET_V2.md` deciding:
       (a) **Windowing**: 5 s signals → 1 s windows (20,480 samples), **group-aware splits**
       (all windows of a signal share a split) — ~5× samples, ~5× cheaper per-sample training;
@@ -437,6 +439,8 @@ worst kind); grow scope of v2 beyond what P4/P5 protocols need.
       (d) SNR-variant test sets (e.g., clean/20/10/5 dB) → noise curves without retraining;
       (e) sizes, seeds, naming.
       **DoD**: doc ratified by you; every P4/P5 experiment maps to a v2 design feature.
+      *(evidence: experiments/DATASET_V2.md — owner approved 2026-06-11: 1s windows,
+      80/class/severity stratification, SNR test variants, no gen-time augmentation)*
 - [ ] **3.4 Generate & validate v2** — *Owner: laptop overnight.* Generate per 3.3; validate:
       signature tests on samples, class balance, `check_data_leakage.py` on group-aware splits,
       `dataset_comparison.py` v1-vs-v2 report; update `dataset_card.yaml`; `dvc add`.
