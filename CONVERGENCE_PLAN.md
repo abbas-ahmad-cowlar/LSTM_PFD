@@ -28,7 +28,7 @@
 | 0 Ratify & safety net | ✅ done | 2026-06-11 | 2026-06-11 | tag pushed; grep clean; lock committed |
 | 1 Stabilize the spine | ✅ done | 2026-06-11 | 2026-06-11 | 328 passed/0 failed; PINN sanity pass; results/ populated; dashboard boots |
 | 2 The great pruning | ✅ done | 2026-06-11 | 2026-06-11 | core LOC −32%; registry 81→11; suite 206 green; retrain proofs pass |
-| 3 Physics & data hardening | 🔄 in progress | 2026-06-11 | | PHYSICS.md + DATASET_V2.md drafted (owner sign-off pending); v2 machinery built |
+| 3 Physics & data hardening | 🔄 in progress | 2026-06-11 | | 3.1–3.4 done (approved, v2 generated+validated); 3.5 baseline training overnight |
 | 4 Benchmark matrix | ☐ not started | | | |
 | 5 Physics experiments | ☐ not started | | | |
 | 6 Docs convergence | ☐ not started | | | |
@@ -441,12 +441,15 @@ worst kind); grow scope of v2 beyond what P4/P5 protocols need.
       **DoD**: doc ratified by you; every P4/P5 experiment maps to a v2 design feature.
       *(evidence: experiments/DATASET_V2.md — owner approved 2026-06-11: 1s windows,
       80/class/severity stratification, SNR test variants, no gen-time augmentation)*
-- [ ] **3.4 Generate & validate v2** — *Owner: laptop overnight.* Generate per 3.3; validate:
+- [x] **3.4 Generate & validate v2** — *Owner: laptop overnight.* Generate per 3.3; validate:
       signature tests on samples, class balance, `check_data_leakage.py` on group-aware splits,
       `dataset_comparison.py` v1-vs-v2 report; update `dataset_card.yaml`; `dvc add`.
       **DoD**: `data/generated/dataset_v2.h5` + validation report in `results/dataset_v2_validation/`
       + dataset card + DVC file, all committed.
-- [ ] **3.5 Re-baseline CNN1D on v2** — *Owner: laptop overnight.* Full training, windowed
+      *(evidence: dataset_v2.h5 — 3520 records, 1.9GB, 177s; exact class/severity balance;
+      leakage check clean; SNR-20/10/5 test variants; validation_report.json;
+      dataset_card.yaml rewritten with measured numbers; DVC tracked)*
+- [/] **3.5 Re-baseline CNN1D on v2** — *Owner: laptop overnight.* Full training, windowed
       input, to early-stopping.
       **DoD**: `results/cnn1d_v2_baseline/` (metrics.json, history, confusion matrix);
       this number becomes the reference for all of Phase 4.
