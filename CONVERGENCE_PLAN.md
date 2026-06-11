@@ -497,9 +497,12 @@ leaderboard); peek at test sets before protocol freeze; let T2 runs start before
       *(evidence: scripts/run_benchmark.py — smoke queue cnn1d+hybrid_pinn seed0 completed,
       2nd invocation skipped both; per-run checkpoint resume; per-run failure isolation;
       detached-launch + keep-awake documented in experiments/OFFICE_PC_RUNBOOK.md)*
-- [ ] **4.3 Classical baselines** — *Owner: laptop (CPU, < 1 h).* 36-feature extraction on v2
+- [x] **4.3 Classical baselines** — *Owner: laptop (CPU, < 1 h).* 36-feature extraction on v2
       + RF/SVM/GB × 3 seeds.
       **DoD**: 9 result dirs under `results/benchmark/classical/`.
+      *(evidence: RF 94.61%±0.05, SVM 94.05% (deterministic), GB 94.05%±0.03 — all BEAT
+      the CNN1D raw-signal baseline (90.53%) by ~4pts. 36 expert features are strong on
+      this data; raises the bar for the deep matrix and sharpens the PINN hypothesis)*
 - [ ] **4.4 T1 deep matrix** — *Owner: you operate office GPU; Claude prepares the command
       block; Colab = spillover lane via trimmed `scripts/colab/`.* 8 nets × 3 seeds = 24 runs,
       queued. Daily: you `git pull`, restart queue if dead, push result JSONs back (checkpoints
