@@ -480,12 +480,14 @@ comparison report · CNN1D v2 baseline in `results/`. *Merge `p3/physics` → `m
 **Don't**: hand-tune per model beyond the documented LR sweep (fairness benchmark, not a
 leaderboard); peek at test sets before protocol freeze; let T2 runs start before T1 finishes.
 
-- [ ] **4.1 Freeze protocol** — *Owner: Claude drafts, you ratify.* `experiments/PROTOCOL.md`:
+- [x] **4.1 Freeze protocol** — *Owner: Claude drafts, you ratify.* `experiments/PROTOCOL.md`:
       fixed v2 splits; 3 seeds (extend to 5 only if GPU spare); identical budget
       (max 60 epochs, patience 10); per-family optimizer policy; one documented LR sweep
       (3 values, val-only); all configs committed before first run. Also: GPU env lock file
       (`requirements.lock.gpu.txt`), Colab env cell pinned.
       **DoD**: protocol committed + ratified; any later deviation requires a dated amendment note.
+      *(evidence: experiments/PROTOCOL.md ratified 2026-06-12 — FROZEN; GPU env lock to be
+      committed from office PC per runbook §1)*
 - [x] **4.2 Benchmark runner** — *Owner: Claude.* Extend `train_overnight.py` →
       `scripts/run_benchmark.py`: sequential queue, resume-safe (skips completed run-dirs),
       per-run JSON (config, seed, git SHA, host, wall-time), checkpoint + history + test

@@ -76,4 +76,4 @@
 
 ---
 
-*Owner ratification (P4.1 DoD): pending.*
+*Owner ratification (P4.1 DoD): **Approved by Syed Abbas Ahmad, 2026-06-12** ("I ratify the Protocol."). PROTOCOL FROZEN.*
