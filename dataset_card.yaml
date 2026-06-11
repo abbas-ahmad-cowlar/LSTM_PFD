@@ -1,96 +1,106 @@
-# LSTM-PFD Bearing Fault Dataset Card
-# Per MASTER_ROADMAP_FINAL.md Chapter 3.5 - Dataset Contribution
-# Format follows ML dataset card best practices
+# LSTM-PFD Journal-Bearing Fault Dataset Card
+# Every number on this card is measured from the generated file
+# (data/generated/dataset_v2.h5), not aspirational.
 
-name: LSTM-PFD Bearing Fault Dataset
-version: 1.0.0
+name: LSTM-PFD Journal-Bearing Fault Dataset
+version: 2.0.0
+design_doc: experiments/DATASET_V2.md
+physics_doc: docs/PHYSICS.md
 license: CC-BY-4.0
-doi: 10.5281/zenodo.XXXXXXX # TODO: Update after Zenodo upload
+doi: null # assigned at Zenodo deposit (Convergence Plan P7.4)
 
-# Dataset Overview
 description: |
-  Physics-informed synthetic hydrodynamic journal bearing vibration signals
-  for fault diagnosis research. Generated using the LSTM-PFD signal generator
-  with 11 fault classes, 7-layer independent noise model, Sommerfeld-scaled
-  physics, and multi-severity progression.
+  Physics-based synthetic vibration signals for hydrodynamic journal-bearing
+  fault diagnosis. 11 fault classes (8 single + 3 mixed) with correct
+  characteristic frequencies (2X/3X misalignment harmonics, speed-squared 1X
+  imbalance, 0.40-0.50x sub-synchronous clearance and oil whirl with 1/sqrt(S)
+  scaling, Sommerfeld-coupled stick-slip, 1.4-2.6 kHz cavitation bursts),
+  7-layer noise model, and 4 stratified severity levels. Spectral signatures
+  are enforced by an automated CI test battery
+  (tests/test_physics_signatures.py, 34 tests).
 
-# Size and Format
-size: 2.3 GB
-format:
-  - HDF5 (primary)
-  - CSV (metadata)
-samples: 50000
+  HONESTY NOTE: synthetic-only. Amplitude coefficients are engineering-
+  plausible values, not Reynolds-equation solutions; fidelity against real
+  test-rig data has not been validated (see docs/PHYSICS.md section 6).
+
+# Measured size and composition (v2, generated 2026-06-11, seed 42)
+file: data/generated/dataset_v2.h5
+size: 1.9 GB
+records: 3520            # 5 s records; 320 per class
+records_per_class: 320
+records_per_class_per_severity: 80
+training_windows: 17600  # 1 s non-overlapping windows (5 per record), via data.dataset.WindowedView
 classes: 11
 
-# Class Distribution
 class_names:
-  - sain                        # Normal / Healthy
+  - sain                        # Healthy (noise floor only)
   - desalignement               # Misalignment (2X + 3X harmonics)
-  - desequilibre                # Imbalance (1X dominant, speed² scaling)
-  - jeu                         # Bearing Clearance (sub-synchronous + 1X + 2X)
-  - lubrification               # Lubrication (stick-slip + metal contact)
-  - cavitation                  # Cavitation (high-freq bursts, Hann-windowed)
+  - desequilibre                # Imbalance (1X, speed-squared scaling)
+  - jeu                         # Clearance (sub-synchronous + 1X + 2X)
+  - lubrification               # Lubrication (Sommerfeld-coupled stick-slip)
+  - cavitation                  # Cavitation (1.4-2.6 kHz bursts)
   - usure                       # Wear (broadband + asperity harmonics)
-  - oilwhirl                    # Oil Whirl (sub-sync ~0.42-0.48× speed)
-  - mixed_misalign_imbalance    # Mixed: Misalignment + Imbalance
-  - mixed_wear_lube             # Mixed: Wear + Lubrication
-  - mixed_cavit_jeu             # Mixed: Cavitation + Clearance
+  - oilwhirl                    # Oil whirl (0.42-0.48x speed, 1/sqrt(S))
+  - mixed_misalign_imbalance    # Mixed: misalignment + imbalance
+  - mixed_wear_lube             # Mixed: wear + lubrication
+  - mixed_cavit_jeu             # Mixed: cavitation + clearance
 
-# Technical Specifications
 sampling_rate: 20480 # Hz
-signal_length: 102400 # samples (5 seconds)
-severity_levels:
-  - incipient (20-45%)
-  - mild (45-70%)
-  - moderate (70-90%)
-  - severe (90-100%)
+signal_length: 102400 # samples (5 s records)
+window_length: 20480  # samples (1 s training windows)
 
-# Physics Model
+severity_levels: # stratified, 80 records/class/level
+  - incipient (factor 0.20-0.45)
+  - mild (0.45-0.70)
+  - moderate (0.70-0.90)
+  - severe (0.90-1.00)
+# 'sain' carries severity slot labels for balanced stratification;
+# its physical severity is 'nominal' (metadata is authoritative).
+
+operating_conditions: # sampled per record, stored in per-split metadata
+  speed: 3600 RPM nominal, +/-10%
+  load: 30-100% rated
+  temperature: 40-80 C
+  sommerfeld: 0.05-0.50 (computed)
+
+splits: # record-level, stratified by (class x severity); leakage-checked
+  train: 2464 # records (12320 windows)
+  val: 528    # records (2640 windows)
+  test: 528   # records (2640 windows)
+  test_snr20: 528 # test + AWGN at 20 dB SNR (noise-robustness, P5.3)
+  test_snr10: 528 # 10 dB
+  test_snr5: 528  # 5 dB
+
 physics_basis: |
-  Signals generated using Sommerfeld-scaled hydrodynamic bearing dynamics:
-  - Sommerfeld number: S = S_base × viscosity × speed / load (clamped 0.05–0.5)
-  - Oil whirl frequency: f_whirl ≈ 0.42–0.48 × rotational speed
-  - Physics factor: sqrt(S / S_base) for amplitude scaling
-  - Reynolds number: 500–5000 (laminar regime)
-  - Clearance ratio: 0.001–0.003
-  See data/PHYSICS_MODEL_GUIDE.md for detailed equations.
+  See docs/PHYSICS.md (normative; enforced by tests/test_physics_signatures.py).
+  Sommerfeld number S = S_base * (mu/mu_ref) * (Omega/Omega_0) / load_factor,
+  clipped [0.05, 0.50]; viscosity mu(T) = mu_ref * exp(-0.03*(T-60)).
 
-# Data Quality
-quality_comparison:
-  metric: value
-  mean_rms: 0.42
-  peak_frequency_hz: 118
-  kurtosis: 3.8
-  crest_factor: 4.2
+validation_gates: # all enforced at generation; file rejected on failure
+  - exact class balance (320/class) and severity balance (80/class/level)
+  - record-hash uniqueness across all splits (no duplicates/leakage)
+  - per-signal NaN/Inf/length/std validation
+  - spectral-signature CI battery (34 tests) on the fault modeler
 
-# Splits
-train_split: 0.70
-validation_split: 0.15
-test_split: 0.15
+provenance:
+  generator: data/signal_generation/ (Python_v2.0)
+  script: scripts/generate_dataset_v2.py
+  seed: 42 (global), per-record seed = 42 + record_index
+  generated: 2026-06-11
+  generation_time: 177 s
 
-# Versioning
 dvc_tracked: true
-git_tag: data-v1.0
 
-# Citation
 citation: |
-  @dataset{lstm_pfd_2026,
-    author = {Ahmad, Abbas and Contributors},
-    title = {LSTM-PFD Bearing Fault Dataset: Physics-Informed Synthetic Vibration Signals},
+  @dataset{lstm_pfd_dataset_2026,
+    author = {Ahmad, Syed Abbas},
+    title = {LSTM-PFD Journal-Bearing Fault Dataset v2:
+             Physics-Based Synthetic Vibration Signals},
     year = {2026},
-    publisher = {Zenodo},
-    doi = {10.5281/zenodo.XXXXXXX},
     url = {https://github.com/abbas-ahmad-cowlar/LSTM_PFD}
   }
 
-# Usage
 usage_example: |
-  import h5py
-
-  with h5py.File('bearing_dataset.h5', 'r') as f:
-      X_train = f['train/signals'][:]
-      y_train = f['train/labels'][:]
-
-# Contact
-maintainer: Abbas Ahmad
-repository: https://github.com/abbas-ahmad-cowlar/LSTM_PFD
+  from data.dataset import BearingFaultDataset, WindowedView
+  train = BearingFaultDataset.from_hdf5('data/generated/dataset_v2.h5', split='train')
+  train_windows = WindowedView(train, window_length=20480)  # 1 s windows

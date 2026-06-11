@@ -192,4 +192,4 @@ toggling them mid-study would invalidate comparisons.
 
 ---
 
-*Owner sign-off (P3.1 DoD): pending.*
+*Owner sign-off (P3.1 DoD): **Approved by Syed Abbas Ahmad, 2026-06-11** ("Approved, proceed.").*
