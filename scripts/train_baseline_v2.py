@@ -89,6 +89,8 @@ def main() -> None:
                         help='Limit train windows (smoke runs)')
     parser.add_argument('--output', default='results/cnn1d_v2_baseline')
     parser.add_argument('--checkpoint', default='checkpoints/cnn_v2/best_model.pth')
+    parser.add_argument('--resume', action='store_true',
+                        help='Resume from the checkpoint if it exists')
     args = parser.parse_args()
 
     out_dir = PROJECT_ROOT / args.output
@@ -117,10 +119,25 @@ def main() -> None:
     criterion = torch.nn.CrossEntropyLoss()
 
     best_val_acc, best_epoch, bad_epochs = 0.0, 0, 0
+    start_epoch = 1
     history = {'train_loss': [], 'train_acc': [], 'val_loss': [], 'val_acc': []}
     t0 = time.time()
 
-    for epoch in range(1, args.epochs + 1):
+    if args.resume and ckpt_path.exists():
+        ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+        model.load_state_dict(ckpt['model_state_dict'])
+        if 'optimizer_state_dict' in ckpt:
+            optimizer.load_state_dict(ckpt['optimizer_state_dict'])
+        else:
+            log.warning("Checkpoint has no optimizer state (pre-resume format); "
+                        "resuming weights with a fresh Adam — expect a small blip")
+        best_val_acc = ckpt.get('best_val_acc', 0.0)
+        best_epoch = ckpt.get('epoch', 0)
+        start_epoch = best_epoch + 1
+        history = ckpt.get('history', history)
+        log.info("RESUMED from epoch %d (best val_acc %.2f%%)", best_epoch, best_val_acc)
+
+    for epoch in range(start_epoch, args.epochs + 1):
         te = time.time()
         tr_loss, tr_acc = run_epoch(model, train_loader, criterion, device, optimizer)
         va_loss, va_acc = run_epoch(model, val_loader, criterion, device)
@@ -134,7 +151,9 @@ def main() -> None:
             torch.save({
                 'version': 3, 'epoch': epoch, 'best_val_acc': best_val_acc,
                 'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
                 'model_config': model.get_config(),
+                'history': history,
                 'window_length': WINDOW_LENGTH,
                 'data': str(args.data), 'git_sha': git_sha(),
             }, ckpt_path)
