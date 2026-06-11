@@ -1,0 +1,172 @@
+{
+  "dataset": "data/generated/dataset_v2.h5",
+  "design_doc": "experiments/DATASET_V2.md",
+  "attrs": {
+    "dataset_version": "v2",
+    "design_doc": "experiments/DATASET_V2.md",
+    "generation_date": "2026-06-11T11:02:30",
+    "num_classes": 11,
+    "records_per_class": 320,
+    "records_per_class_per_severity": 80,
+    "rng_seed": 42,
+    "sampling_rate": 20480,
+    "severity_levels": [
+      "incipient",
+      "mild",
+      "moderate",
+      "severe"
+    ],
+    "signal_length": 102400,
+    "snr_variants_db": [
+      20,
+      10,
+      5
+    ],
+    "split_ratios": [
+      0.7,
+      0.15,
+      0.15
+    ]
+  },
+  "balance": {
+    "train": {
+      "records": 2464,
+      "per_class": [
+        224
+      ],
+      "per_severity": {
+        "incipient": 616,
+        "mild": 616,
+        "moderate": 616,
+        "severe": 616
+      }
+    },
+    "val": {
+      "records": 528,
+      "per_class": [
+        48
+      ],
+      "per_severity": {
+        "incipient": 132,
+        "mild": 132,
+        "moderate": 132,
+        "severe": 132
+      }
+    },
+    "test": {
+      "records": 528,
+      "per_class": [
+        48
+      ],
+      "per_severity": {
+        "incipient": 132,
+        "mild": 132,
+        "moderate": 132,
+        "severe": 132
+      }
+    }
+  },
+  "generation_gates": "all passed (exact balance, unique record hashes, signal validation) \u2014 see scripts/generate_dataset_v2.py output 2026-06-11",
+  "leakage_check": {
+    "tool": "packages.core.evaluation.check_data_leakage",
+    "result": "No critical leakage detected",
+    "warnings": [
+      "'No random_state metadata' \u2014 benign: checker expects attr 'random_state', v2 stores 'rng_seed'=42"
+    ]
+  },
+  "physics_battery": "tests/test_physics_signatures.py \u2014 34 tests green in CI (modeler-level)",
+  "v1_vs_v2_class_stats_8sample": {
+    "v1_train": {
+      "sain": {
+        "mean_rms": 0.0487467460334301,
+        "mean_kurtosis": 2.947615385055542
+      },
+      "desalignement": {
+        "mean_rms": 0.2072315663099289,
+        "mean_kurtosis": 2.2058053016662598
+      },
+      "desequilibre": {
+        "mean_rms": 0.1732863485813141,
+        "mean_kurtosis": 1.8829140663146973
+      },
+      "jeu": {
+        "mean_rms": 0.14299841225147247,
+        "mean_kurtosis": 2.5425426959991455
+      },
+      "lubrification": {
+        "mean_rms": 0.2031281292438507,
+        "mean_kurtosis": 1.891598105430603
+      },
+      "cavitation": {
+        "mean_rms": 0.05347612872719765,
+        "mean_kurtosis": 4.015913009643555
+      },
+      "usure": {
+        "mean_rms": 0.1726594865322113,
+        "mean_kurtosis": 3.3933820724487305
+      },
+      "oilwhirl": {
+        "mean_rms": 0.4683670401573181,
+        "mean_kurtosis": 1.6717233657836914
+      },
+      "mixed_misalign_imbalance": {
+        "mean_rms": 0.17505650222301483,
+        "mean_kurtosis": 2.3085970878601074
+      },
+      "mixed_wear_lube": {
+        "mean_rms": 0.15841136872768402,
+        "mean_kurtosis": 2.6168534755706787
+      },
+      "mixed_cavit_jeu": {
+        "mean_rms": 0.11581061780452728,
+        "mean_kurtosis": 2.5801844596862793
+      }
+    },
+    "v2_train": {
+      "sain": {
+        "mean_rms": 0.04403971880674362,
+        "mean_kurtosis": 2.916562557220459
+      },
+      "desalignement": {
+        "mean_rms": 0.11184892058372498,
+        "mean_kurtosis": 2.4697251319885254
+      },
+      "desequilibre": {
+        "mean_rms": 0.10293491184711456,
+        "mean_kurtosis": 2.050882339477539
+      },
+      "jeu": {
+        "mean_rms": 0.10142244398593903,
+        "mean_kurtosis": 2.7106151580810547
+      },
+      "lubrification": {
+        "mean_rms": 0.1289960741996765,
+        "mean_kurtosis": 2.044374942779541
+      },
+      "cavitation": {
+        "mean_rms": 0.053243666887283325,
+        "mean_kurtosis": 3.048267364501953
+      },
+      "usure": {
+        "mean_rms": 0.11617941409349442,
+        "mean_kurtosis": 3.477447986602783
+      },
+      "oilwhirl": {
+        "mean_rms": 0.2993403971195221,
+        "mean_kurtosis": 1.7597260475158691
+      },
+      "mixed_misalign_imbalance": {
+        "mean_rms": 0.07143961638212204,
+        "mean_kurtosis": 2.7033848762512207
+      },
+      "mixed_wear_lube": {
+        "mean_rms": 0.06917300820350647,
+        "mean_kurtosis": 2.8286828994750977
+      },
+      "mixed_cavit_jeu": {
+        "mean_rms": 0.052123427391052246,
+        "mean_kurtosis": 2.9590299129486084
+      }
+    }
+  }
+}
