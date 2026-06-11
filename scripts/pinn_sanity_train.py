@@ -37,6 +37,7 @@ def main() -> None:
     args = parser.parse_args()
 
     log_path = PROJECT_ROOT / 'logs' / f'{args.model}_sanity.log'
+    (PROJECT_ROOT / 'logs').mkdir(exist_ok=True)  # logs/ is gitignored; absent on fresh clones
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s [%(levelname)s] %(message)s',
