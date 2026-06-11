@@ -38,12 +38,26 @@ from .schemas import (
 from ..optimization.inference import OptimizedInferenceEngine, InferenceConfig
 
 # Configure logging
+def _file_log_handler() -> logging.Handler:
+    """FileHandler for settings.log_file, creating its directory if needed.
+
+    logs/ is gitignored, so a fresh clone has no logs directory — a bare
+    FileHandler at import time would crash every import of this module
+    (found via pytest collection on a clean Colab clone).
+    """
+    if not settings.log_file:
+        return logging.NullHandler()
+    log_path = Path(settings.log_file)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    return logging.FileHandler(log_path)
+
+
 logging.basicConfig(
     level=getattr(logging, settings.log_level),
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler(settings.log_file) if settings.log_file else logging.NullHandler()
+        _file_log_handler()
     ]
 )
 logger = logging.getLogger(__name__)

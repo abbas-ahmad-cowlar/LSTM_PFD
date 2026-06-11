@@ -221,6 +221,7 @@ def main() -> None:
                         help='2 epochs, 200-window subset — pipeline sanity only')
     args = parser.parse_args()
 
+    (PROJECT_ROOT / 'logs').mkdir(exist_ok=True)  # logs/ is gitignored; absent on fresh clones
     logging.basicConfig(
         level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s',
         handlers=[logging.FileHandler(PROJECT_ROOT / 'logs' / 'benchmark_queue.log'),

@@ -90,3 +90,84 @@ Start-Process -FilePath "C:\work\lstm-pfd\venv\Scripts\python.exe" `
   -ArgumentList "scripts/run_benchmark.py","--models","multi_scale_cnn","se_resnet18","signal_transformer" `
   -WorkingDirectory "C:\work\lstm-pfd" -WindowStyle Hidden
 ```
+
+---
+
+## Appendix: Google Colab lane (Linux — different commands!)
+
+The main runbook is for the Windows office PC. On Colab, paths use **forward
+slashes** (`scripts/run_benchmark.py`, never `scripts\...` — bash eats
+backslashes), and sessions are **ephemeral** (~12 h max, idle disconnects),
+so results must live on Google Drive to survive. The queue's resume-safety
+makes disconnects cheap: rerun the launch cell and it continues.
+
+Paste these as notebook cells:
+
+```python
+# Cell 1 — GPU check + mount Drive (approve the popup)
+!nvidia-smi -L
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
+```bash
+# Cell 2 — clone + env (use %%bash or ! prefixes)
+%%bash
+cd /content
+git clone https://github.com/abbas-ahmad-cowlar/LSTM_PFD.git lstm-pfd
+cd lstm-pfd
+git checkout p4/benchmark          # active phase branch
+pip -q install -r requirements.txt -r requirements-test.txt   # torch+CUDA is preinstalled on Colab
+```
+
+```bash
+# Cell 3 — dataset: keep the master copy on Drive, copy to fast local disk
+%%bash
+mkdir -p /content/lstm-pfd/data/generated
+cp "/content/drive/MyDrive/lstm-pfd/dataset_v2.h5" /content/lstm-pfd/data/generated/dataset_v2.h5
+ls -lh /content/lstm-pfd/data/generated/
+```
+
+```bash
+# Cell 4 — persist results on Drive (symlink BEFORE any run)
+%%bash
+mkdir -p "/content/drive/MyDrive/lstm-pfd/results_benchmark"
+mkdir -p /content/lstm-pfd/results
+ln -sfn "/content/drive/MyDrive/lstm-pfd/results_benchmark" /content/lstm-pfd/results/benchmark
+```
+
+```bash
+# Cell 5 — sanity (suite + 2-run smoke queue, ~5 min on T4)
+%%bash
+cd /content/lstm-pfd
+pytest -q
+python scripts/run_benchmark.py --smoke --models cnn1d hybrid_pinn --seeds 0
+```
+
+```bash
+# Cell 6 — the matrix (rerun this exact cell after any disconnect; it resumes)
+%%bash
+cd /content/lstm-pfd
+python scripts/run_benchmark.py
+```
+
+```bash
+# Cell 7 — progress check (run anytime in a separate cell)
+%%bash
+tail -5 /content/lstm-pfd/logs/benchmark_queue.log
+find /content/lstm-pfd/results/benchmark/deep -name metrics.json | wc -l   # done at 24
+```
+
+**After a disconnect**: rerun Cells 2–4 and 6 (clone+env ~3 min; results and
+checkpoints are already on Drive through the symlink, so completed runs are
+skipped and the interrupted one resumes from its checkpoint).
+
+**Shipping results back**: zip the Drive folder or commit from Colab:
+```bash
+%%bash
+cd /content/lstm-pfd
+git checkout -b p4/benchmark-results
+cp -r /content/drive/MyDrive/lstm-pfd/results_benchmark/* results/benchmark/ 2>/dev/null || true
+git add results/benchmark && git commit -m "P4.4: matrix results (Colab T4)"
+# push needs a GitHub token: git push https://<TOKEN>@github.com/abbas-ahmad-cowlar/LSTM_PFD.git p4/benchmark-results
+```
