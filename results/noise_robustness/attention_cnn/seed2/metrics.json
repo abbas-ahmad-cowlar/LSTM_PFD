@@ -1,0 +1,19 @@
+{
+  "model": "attention_cnn",
+  "seed": 2,
+  "accuracy_by_snr": {
+    "clean": 82.99242424242425,
+    "snr20": 83.10606060606061,
+    "snr10": 60.303030303030305,
+    "snr5": 40.07575757575758
+  },
+  "degradation_clean_to_5db": 42.91666666666667,
+  "provenance": {
+    "preregistration": "PROTOCOL.md \u00a78.1",
+    "checkpoint": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\benchmark\\deep\\attention_cnn\\seed2\\best_model.pth",
+    "host": "DESKTOP-M7RBFOO",
+    "git_sha": "9f99a59a530fd32f13a72bd9680de39d67d0c904",
+    "wall_time_s": 131.6,
+    "finished_at": "2026-06-12T19:16:47.170293+00:00"
+  }
+}
