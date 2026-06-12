@@ -1,0 +1,66 @@
+{
+  "model": "resnet18 (benchmark best single model, seed 2)",
+  "checkpoint": "results\\benchmark\\deep\\resnet18\\seed2\\best_model.pth",
+  "window_length": 20480,
+  "onnx": {
+    "path": "checkpoints\\deploy\\resnet18_best.onnx",
+    "size_mb": 15.4,
+    "parity_max_abs_diff": 0.000152587890625
+  },
+  "int8": {
+    "path": "checkpoints\\deploy\\resnet18_best.int8.onnx",
+    "size_mb": 3.9,
+    "argmax_agreement_random_batch": 1.0
+  },
+  "latency_ms": {
+    "torch_fp32_b1": {
+      "p50_ms": 19.05,
+      "p95_ms": 22.48
+    },
+    "onnx_fp32_b1": {
+      "p50_ms": 12.92,
+      "p95_ms": 14.64
+    },
+    "onnx_int8_b1": {
+      "p50_ms": 215.18,
+      "p95_ms": 268.63
+    },
+    "torch_fp32_b8": {
+      "p50_ms": 144.64,
+      "p95_ms": 159.68
+    },
+    "onnx_fp32_b8": {
+      "p50_ms": 101.06,
+      "p95_ms": 130.58
+    },
+    "onnx_int8_b8": {
+      "p50_ms": 1564.94,
+      "p95_ms": 2000.63
+    },
+    "torch_fp32_b32": {
+      "p50_ms": 558.42,
+      "p95_ms": 698.21
+    },
+    "onnx_fp32_b32": {
+      "p50_ms": 417.96,
+      "p95_ms": 503.31
+    },
+    "onnx_int8_b32": {
+      "p50_ms": 6136.14,
+      "p95_ms": 8297.17
+    }
+  },
+  "api_smoke": {
+    "attempted": true,
+    "status_code": 200,
+    "predicted_class": 0,
+    "true_class": 0,
+    "correct": true
+  },
+  "provenance": {
+    "host": "DESKTOP-M7RBFOO",
+    "git_sha": "70b971b629bceff3f75748fc4414a941914d754d",
+    "repeats": 30,
+    "finished_at": "2026-06-12T06:19:47.154990+00:00"
+  }
+}
