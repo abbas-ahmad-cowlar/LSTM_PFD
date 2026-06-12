@@ -19,7 +19,7 @@ Metadata mapping for §8.5 / physics rpm (documented decision):
   load [N]  = 1000 * load_percent / 100        (rated load 1 kN)
   viscosity = 0.03 * exp(-0.03*(temperature_C - 60))   (PHYSICS.md §3 law)
 
-Usage (Colab T4 — see experiments/OFFICE_PC_RUNBOOK.md Phase-5 appendix):
+Usage (Colab T4 — see experiments/COLAB_PHASE5_RUNBOOK.md):
     python scripts/run_phase5_gpu.py                 # everything (~45 runs)
     python scripts/run_phase5_gpu.py --only data_efficiency
     python scripts/run_phase5_gpu.py --smoke         # 2-epoch pipeline sanity
