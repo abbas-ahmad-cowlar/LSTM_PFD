@@ -1,0 +1,185 @@
+{
+  "model": "voting_ensemble",
+  "members": [
+    {
+      "model": "cnn_lstm",
+      "seed": 0
+    },
+    {
+      "model": "physics_constrained_cnn",
+      "seed": 2
+    },
+    {
+      "model": "resnet18",
+      "seed": 2
+    }
+  ],
+  "accuracy": 96.47727272727272,
+  "f1_macro": 0.9640566426426699,
+  "per_class_accuracy": {
+    "Healthy": 100.0,
+    "Misalignment": 100.0,
+    "Imbalance": 100.0,
+    "Bearing Clearance": 100.0,
+    "Lubrication Issue": 100.0,
+    "Cavitation": 64.16666666666667,
+    "Wear": 100.0,
+    "Oil Whirl": 100.0,
+    "Misalignment + Imbalance": 100.0,
+    "Wear + Lubrication": 97.08333333333333,
+    "Cavitation + Clearance": 100.0
+  },
+  "confusion_matrix": [
+    [
+      240,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      240,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      240,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      240,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      240,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      86,
+      0,
+      0,
+      0,
+      0,
+      154,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      240,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      240,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      240,
+      0,
+      0
+    ],
+    [
+      7,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      233,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      240
+    ]
+  ],
+  "num_test_windows": 2640,
+  "provenance": {
+    "protocol": "experiments/PROTOCOL.md",
+    "data": "dataset_v2.h5",
+    "host": "DESKTOP-M7RBFOO",
+    "git_sha": "e498deb0ca74b8930c85e881ee7550e024981f98",
+    "finished_at": "2026-06-12T05:53:09.408186+00:00"
+  }
+}
