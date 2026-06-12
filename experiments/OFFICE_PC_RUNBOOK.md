@@ -95,6 +95,11 @@ Start-Process -FilePath "C:\work\lstm-pfd\venv\Scripts\python.exe" `
 
 ## Appendix: Google Colab lane (Linux — different commands!)
 
+> **HISTORICAL — Phase 4 only, already complete** (results live in
+> `results/benchmark/`). Do NOT run these cells again — Cell 2 checks out
+> the old `p4/benchmark` branch and Cell 6 reruns the finished matrix.
+> **For Phase 5 use `experiments/COLAB_PHASE5_RUNBOOK.md`.**
+
 The main runbook is for the Windows office PC. On Colab, paths use **forward
 slashes** (`scripts/run_benchmark.py`, never `scripts\...` — bash eats
 backslashes), and sessions are **ephemeral** (~12 h max, idle disconnects),
@@ -176,114 +181,6 @@ git add results/benchmark && git commit -m "P4.4: matrix results (Colab T4)"
 
 ## Appendix: Phase-5 GPU experiments on Colab (§8.2–8.5)
 
-Drive layout this appendix expects (owner's layout, confirmed 2026-06-13):
-
-```
-MyDrive/lstm-pfd/
-├── data/dataset_v2.h5    <- you uploaded this (~1.8 GB; exact name matters)
-├── results_benchmark/    <- Phase 4 results — nothing below ever writes here
-└── results_phase5/       <- created automatically by Cell 4; Phase-5 results land here
-```
-
-One-time notebook setup: colab.research.google.com → New notebook →
-Runtime → Change runtime type → select **T4 GPU** → Save.
-
-Run the cells below **in order, one at a time**. Each cell says what you
-should see. If a cell does not show the expected output, STOP — do not
-run the next cell.
-
-```python
-# Cell 1 — GPU check + Drive mount (mount FIRST, before anything touches /content/drive)
-!nvidia-smi -L
-from google.colab import drive
-drive.mount('/content/drive')
-```
-
-Expect: a line like `GPU 0: Tesla T4 ...`, then a popup asking you to
-authorize Drive, then `Mounted at /content/drive`.
-If `nvidia-smi` fails: Runtime → Change runtime type → T4 GPU, rerun the cell.
-
-```bash
-# Cell 2 — get the code (~3 min)
-%%bash
-cd /content
-git clone https://github.com/abbas-ahmad-cowlar/LSTM_PFD.git lstm-pfd
-cd lstm-pfd
-git checkout p5/physics-exp
-pip -q install -r requirements.txt -r requirements-test.txt
-```
-
-Expect: `Switched to a new branch 'p5/physics-exp'` near the top.
-pip warnings are fine; red ERROR lines are not.
-
-```bash
-# Cell 3 — copy the dataset from Drive to Colab's fast local disk (~1 min)
-%%bash
-ls -lh /content/drive/MyDrive/lstm-pfd/data/dataset_v2.h5
-mkdir -p /content/lstm-pfd/data/generated
-cp /content/drive/MyDrive/lstm-pfd/data/dataset_v2.h5 /content/lstm-pfd/data/generated/
-ls -lh /content/lstm-pfd/data/generated/dataset_v2.h5
-```
-
-Expect: TWO lines, both showing **1.8G**. If the first `ls` says
-"No such file or directory", the Drive upload hasn't finished yet —
-wait for it to complete in the Drive web UI, then rerun this cell.
-
-```bash
-# Cell 4 — connect results to Drive (MUST happen before the first run)
-%%bash
-mkdir -p /content/drive/MyDrive/lstm-pfd/results_phase5
-ln -sfn /content/drive/MyDrive/lstm-pfd/results_phase5 /content/lstm-pfd/results/phase5
-ls -la /content/lstm-pfd/results/ | grep phase5
-```
-
-Expect EXACTLY one line ending in:
-`phase5 -> /content/drive/MyDrive/lstm-pfd/results_phase5`
-If the `->` arrow is missing, STOP and report — otherwise results die
-with the session. (`results_benchmark` is a separate folder; untouched.)
-
-```bash
-# Cell 5 — smoke test: tiny 2-epoch version of every experiment (~10 min)
-%%bash
-cd /content/lstm-pfd
-python scripts/run_phase5_gpu.py --smoke --seeds 0
-```
-
-Expect final line: `Phase-5 GPU queue finished: 15/15 complete.`
-(Smoke output goes to a local throwaway folder, not to Drive.)
-
-```bash
-# Cell 6 — THE REAL QUEUE: 45 runs, ~4-6 h on T4. Start it and leave it running.
-%%bash
-cd /content/lstm-pfd
-python scripts/run_phase5_gpu.py
-```
-
-Expect: lines like `[1/45] data_efficiency/... — starting`, then per-epoch
-progress. Final line: `Phase-5 GPU queue finished: 45/45 complete.`
-
-```bash
-# Cell 7 — progress check (run anytime in a SEPARATE cell while Cell 6 works)
-%%bash
-tail -5 /content/lstm-pfd/logs/phase5_gpu.log
-echo "runs finished, out of 45:"
-find /content/drive/MyDrive/lstm-pfd/results_phase5 -name metrics.json | wc -l
-```
-
-Counting on the Drive side doubles as proof the results are being
-persisted (the count can lag a minute behind the log).
-
-**If Colab disconnects** (it eventually will): you get a fresh machine.
-Re-run Cells 1, 2, 3, 4 — then Cell 6. Already-finished runs are skipped
-and the interrupted run resumes from its checkpoint; both live on Drive
-through the Cell-4 link, so nothing is lost.
-
-Optional, if you prefer several short sessions over one long one — append
-one of these to the Cell-6 command:
-`--only data_efficiency` (21 runs) · `--only severity_ood` (12) ·
-`--only pinn_ablation` (9) · `--only true_metadata` (3).
-
-**When the count reaches 45/45**: everything is already in
-`MyDrive/lstm-pfd/results_phase5/`. Back on the laptop: download that
-folder from the Drive web UI, extract into `results/phase5/`, and Claude
-verifies provenance + aggregates.
+**Moved to its own clean, Colab-only runbook:
+`experiments/COLAB_PHASE5_RUNBOOK.md`** — that file contains nothing but
+the 7 cells for the Phase-5 session (no office-PC/Windows/DVC content).
