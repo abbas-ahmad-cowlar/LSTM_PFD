@@ -77,3 +77,70 @@
 ---
 
 *Owner ratification (P4.1 DoD): **Approved by Syed Abbas Ahmad, 2026-06-12** ("I ratify the Protocol."). PROTOCOL FROZEN.*
+
+---
+
+## 8. Phase 5 pre-registrations (written BEFORE running — Plan Part III P5)
+
+### 8.1 Noise robustness (P5.3) — pre-registered 2026-06-13
+- **Hypothesis**: physics-informed models (physics_constrained_cnn foremost)
+  degrade less than vanilla counterparts as test SNR drops (clean → 20 → 10 →
+  5 dB), because physics-consistent features are noise-robust.
+- **Procedure**: all 24 frozen Phase-4 checkpoints evaluated on the v2
+  `test_snr20/10/5` groups (no retraining; clean-test numbers from Phase 4).
+- **Metrics**: accuracy per SNR; degradation Δ = acc(clean) − acc(5 dB),
+  mean over seeds per model.
+- **Decision rule**: compare mean Δ of the physics family vs the vanilla deep
+  family; McNemar at 5 dB between best-physics and best-vanilla checkpoints.
+  Report whichever direction holds.
+
+### 8.2 Data efficiency (P5.1) — pre-registered 2026-06-13
+- **Hypothesis**: physics_constrained_cnn loses less accuracy than resnet18
+  (best vanilla) when training data shrinks to {10, 25, 50}% (record-level,
+  group-aware, stratified subsets).
+- **Procedure**: both models × {10,25,50,100}% × seeds {0,1,2}, frozen-protocol
+  budget; 100% = existing Phase-4 runs (not rerun).
+- **Metric**: test accuracy vs fraction curve; gap at 10%.
+- **Decision rule**: physics "wins" the regime if its mean accuracy exceeds
+  vanilla's at ≥2 of the 3 reduced fractions with non-overlapping ±1 std.
+
+### 8.3 Severity-shift OOD (P5.2) — pre-registered 2026-06-13
+- **Hypothesis**: physics-informed models generalize better to unseen severity:
+  train on incipient+mild+moderate → test on severe-only (direction A) and
+  train mild+moderate+severe → test incipient-only (direction B, the harder
+  near-noise case).
+- **Procedure**: physics_constrained_cnn vs resnet18 × both directions ×
+  seeds {0,1,2}; severity filters via v2 per-split `severities` arrays
+  (train/val filtered; test = the held-out severity slice of the test split;
+  'sain' retained everywhere via slot labels).
+- **Metric**: accuracy on the held-out-severity test slice.
+- **Decision rule**: same as 8.2 (≥2 of... here: both directions, mean ± std).
+
+### 8.4 PINN ablation (P5.4) — pre-registered 2026-06-13
+- **Hypothesis**: physics_constrained_cnn's physics loss terms contribute
+  measurably; weight w=0 (pure CNN of same architecture) underperforms w>0
+  under the Phase-5 stress regimes even if tied on clean data.
+- **Procedure**: physics weight sweep w ∈ {0, 0.1, 0.3, 1.0} × seeds {0,1,2},
+  clean test + 5 dB test.
+- **Decision rule**: report accuracy vs w; McNemar w=0 vs best-w at 5 dB.
+
+### 8.5 HybridPINN true-metadata (NEW) — pre-registered 2026-06-13
+- **Motivation**: Phase 4 fed hybrid_pinn constant default operating
+  conditions (protocol fairness), starving its physics branch — it scored
+  ~90%. v2 stores true per-record rpm/load/temperature.
+- **Hypothesis**: with true metadata at train+test time, hybrid_pinn improves
+  materially over its Phase-4 score (≥ +2 pts mean) — physics features carry
+  real signal when actually present.
+- **Procedure**: hybrid_pinn × seeds {0,1,2}, frozen budget, metadata read
+  from v2 per-record metadata; compared against the Phase-4 constant-metadata
+  runs (kept — both rows reported: "operating-condition-blind" vs "-aware").
+- **Decision rule**: Wilcoxon over seeds + McNemar best-vs-best.
+
+### 8.6 XAI alignment (P5.5) & MC-dropout calibration (P5.6) — pre-registered 2026-06-13
+- **8.6a**: SHAP + Integrated Gradients on best physics & best vanilla
+  checkpoints; metric = fraction of attribution energy inside each class's
+  PHYSICS.md characteristic-frequency bands vs equally-wide control bands;
+  hypothesis: physics model's attributions align more.
+- **8.6b**: MC-dropout (30 samples) on the same two checkpoints; ECE +
+  reliability diagram + accuracy-vs-confidence rejection curve; hypothesis:
+  physics model is better calibrated under noise (evaluated clean and 5 dB).
