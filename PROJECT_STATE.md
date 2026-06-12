@@ -95,8 +95,10 @@ this project:
   result folders (`results_benchmark`, `results_phase5`). Results come home by
   Drive web-UI download → extract into `results/...` on the laptop → Claude
   verifies counts + provenance before using.
-- Runbooks: `experiments/OFFICE_PC_RUNBOOK.md` — benchmark appendix (done) and
-  **Phase-5 appendix (ready, not yet executed)**.
+- Runbooks: **`experiments/COLAB_PHASE5_RUNBOOK.md`** (Phase 5, ready —
+  the only file the owner needs in the Colab session);
+  `experiments/OFFICE_PC_RUNBOOK.md` is historical (office-PC + the done
+  Phase-4 Colab lane).
 
 ### 2.3 Office PC (basic GPU, can run for days)
 - **Never actually used** — Colab proved faster and sufficient. The Windows
@@ -185,8 +187,8 @@ at fixed w=0.3; §8.4 sweeps w (its w=0 arm = Phase-4 runs, reused).
 | §8.6 | XAI alignment (SHAP/IG energy in PHYSICS.md frequency bands) + MC-dropout calibration | laptop | **scripts NOT built yet** — build after Colab results land |
 
 - Colab queue: `scripts/run_phase5_gpu.py` (~45 runs, resume-safe,
-  `--only <experiment>` subsets, `--smoke`). Runbook: Phase-5 appendix in
-  `experiments/OFFICE_PC_RUNBOOK.md`. **The owner is about to run this.**
+  `--only <experiment>` subsets, `--smoke`). Runbook:
+  `experiments/COLAB_PHASE5_RUNBOOK.md`. **The owner is about to run this.**
 - Optional in same session: Tier-2 benchmark rows
   (`python scripts/run_benchmark.py --models multi_scale_cnn se_resnet18 signal_transformer`).
   Old pre-convergence data suggests se_resnet18 is strong, multi_scale_cnn may
@@ -252,6 +254,6 @@ scratch against results/ only).
 | Protocol + amendments + §8 preregs | `experiments/PROTOCOL.md` |
 | Benchmark results / deployment | `results/benchmark/summary.{md,json,png}`, `results/deployment/appendix.md` |
 | Noise robustness (§8.1) | `results/noise_robustness/` (+ summary after completion) |
-| Phase-5 GPU queue + runbooks | `scripts/run_phase5_gpu.py`, `experiments/OFFICE_PC_RUNBOOK.md` |
+| Phase-5 GPU queue + runbooks | `scripts/run_phase5_gpu.py`, `experiments/COLAB_PHASE5_RUNBOOK.md` (historical: `OFFICE_PC_RUNBOOK.md`) |
 | Other runners | `scripts/run_benchmark.py`, `run_classical_baselines.py`, `aggregate_benchmark.py`, `run_noise_robustness.py`, `generate_dataset_v2.py`, `evaluate_checkpoint.py`, `deployment_appendix.py`, `train_baseline_v2.py`, `pinn_sanity_train.py` |
 | Deferred ideas | `BACKLOG.md` · Frozen dashboard: `packages/dashboard/` (Phase D) |
