@@ -90,8 +90,9 @@ this project:
   locally, `ln -sfn` silently creates the link INSIDE it — this burned us; a
   10-min `shutil.copytree` backup loop in a notebook cell is the fallback) →
   smoke run → main queue cell (rerun same cell after disconnect; it resumes).
-- Owner's Google Drive: `MyDrive/lstm-pfd/` holds `dataset_v2.h5` and result
-  folders (`results_benchmark`, future `results_phase5`). Results come home by
+- Owner's Google Drive: `MyDrive/lstm-pfd/` holds the dataset at
+  `data/dataset_v2.h5` (moved into the `data/` subfolder 2026-06-13) and
+  result folders (`results_benchmark`, `results_phase5`). Results come home by
   Drive web-UI download → extract into `results/...` on the laptop → Claude
   verifies counts + provenance before using.
 - Runbooks: `experiments/OFFICE_PC_RUNBOOK.md` — benchmark appendix (done) and
