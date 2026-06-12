@@ -97,7 +97,7 @@ Expect: live lines like `[1/45] data_efficiency/... — starting`, then
 per-epoch progress. Final line: `Phase-5 GPU queue finished: 45/45 complete.`
 
 ```python
-# Cell 7 — progress check (run anytime in a SEPARATE cell while Cell 6 works)
+# Cell 7 — progress check
 %%bash
 tail -5 /content/lstm-pfd/logs/phase5_gpu.log
 echo "runs finished, out of 45:"
@@ -106,6 +106,12 @@ find /content/drive/MyDrive/lstm-pfd/results_phase5 -name metrics.json | wc -l
 
 Counting on the Drive side doubles as proof the results are being
 persisted (the count can lag a minute behind the log).
+
+WHEN to use Cell 7: a notebook runs one cell at a time, so while Cell 6
+is busy this cell would just queue behind it. While Cell 6 runs, either
+read its own streaming output (the `[N/45]` and `DONE:` lines), or paste
+the three commands above into the Terminal if your plan has one. Use
+Cell 7 as a cell after a reconnect, before restarting the queue.
 
 ---
 
