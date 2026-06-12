@@ -55,7 +55,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Technical Details
 
 - 11 fault types classification
-- Accuracy: `[PENDING — run experiment to fill]`
-- Inference latency: `[PENDING — run experiment to fill]`
-- Docker and Kubernetes deployment support
-- REST API with JWT authentication
+- Accuracy: 96.48% (voting ensemble), 96.14% best single model (ResNet18-1D),
+  frozen-protocol benchmark on synthetic Dataset v2, 3 seeds —
+  see results/benchmark/summary.md (2026-06-12)
+- Inference latency: ~13 ms per 1 s window (ResNet18, ONNX FP32, CPU) —
+  see results/deployment/appendix.md
+- Docker (compose, API-only) deployment; REST API smoke-tested serving the
+  ONNX artifact

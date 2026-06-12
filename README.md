@@ -8,7 +8,10 @@
 
 The system includes a full-stack enterprise dashboard (Dash/Plotly) for no-code model training, experiment management, and explainable AI visualization, backed by a PostgreSQL database and Celery task queue.
 
-> ⚠️ **Performance benchmarks**: `[PENDING — run experiments to fill]`. All accuracy, latency, and coverage numbers in this repository are pending experimental validation on the current codebase.
+> ✅ **Performance benchmarks**: measured under a frozen protocol on synthetic
+> Dataset v2 (2026-06-12) — see [Performance](#performance) below and
+> [results/benchmark/summary.md](results/benchmark/summary.md). Synthetic-only;
+> no real-world validation yet.
 
 ## Features
 
@@ -151,15 +154,27 @@ Each module has its own `README.md` and guide — see [docs/index.md](docs/index
 
 ## Performance
 
-> ⚠️ **Results pending.** Performance metrics below will be populated after experiments are run on the current codebase.
+Measured under the frozen benchmark protocol ([experiments/PROTOCOL.md](experiments/PROTOCOL.md)):
+11-class fault diagnosis on synthetic Dataset v2 (1 s windows, 2,640 test windows,
+mean ± std over 3 seeds). Full table, statistics, and provenance:
+[results/benchmark/summary.md](results/benchmark/summary.md).
 
-| Metric         | Value       |
-| -------------- | ----------- |
-| Accuracy       | `[PENDING]` |
-| F1 Score       | `[PENDING]` |
-| Precision      | `[PENDING]` |
-| Recall         | `[PENDING]` |
-| Inference Time | `[PENDING]` |
+| Model | Test accuracy | Macro-F1 |
+| --- | --- | --- |
+| Voting ensemble (top-3) | **96.48%** | 0.964 |
+| ResNet18-1D | 96.14 ± 0.28% | 0.961 |
+| CNN-LSTM | 96.12 ± 0.16% | 0.961 |
+| PhysicsConstrainedCNN | 95.98 ± 0.36% | 0.960 |
+| RandomForest (36 features) | 94.61 ± 0.05% | 0.946 |
+| CNN1D | 91.94 ± 2.84% | 0.917 |
+
+Top-3 deep models are statistically tied (McNemar p > 0.2). Inference (ResNet18,
+CPU, 1 s window): **~13 ms** via ONNX FP32 — see
+[results/deployment/appendix.md](results/deployment/appendix.md).
+
+> ⚠️ **Scope**: all results are on physics-based *synthetic* data
+> ([docs/PHYSICS.md](docs/PHYSICS.md)); no real-world validation has been
+> performed yet.
 
 ## Contributing
 

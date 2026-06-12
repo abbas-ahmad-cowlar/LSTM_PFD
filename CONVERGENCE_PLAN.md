@@ -29,7 +29,7 @@
 | 1 Stabilize the spine | ✅ done | 2026-06-11 | 2026-06-11 | 328 passed/0 failed; PINN sanity pass; results/ populated; dashboard boots |
 | 2 The great pruning | ✅ done | 2026-06-11 | 2026-06-11 | core LOC −32%; registry 81→11; suite 206 green; retrain proofs pass |
 | 3 Physics & data hardening | ✅ done | 2026-06-11 | 2026-06-12 | physics CI battery; v2 validated+DVC; CNN1D baseline 90.53% test |
-| 4 Benchmark matrix | 🔄 in progress | 2026-06-12 | | 4.2 runner verified; 4.1 protocol awaiting ratification |
+| 4 Benchmark matrix | ✅ done | 2026-06-12 | 2026-06-12 | full matrix: ensemble 96.48; top-3 tie > RF 94.61; deployment appendix; README truthful |
 | 5 Physics experiments | ☐ not started | | | |
 | 6 Docs convergence | ☐ not started | | | |
 | 7 Paper & repro package | ☐ not started | | | |
@@ -524,19 +524,37 @@ leaderboard); peek at test sets before protocol freeze; let T2 runs start before
       classical bar RF 94.61 > cnn1d 91.94 > multitask/hybrid PINN ~90 > patchtst 89.9 ≈
       attention_cnn 89.4. Physics-as-constraint ties best vanilla; physics-as-feature
       lagged — caveat: hybrid_pinn got constant default metadata per protocol)*
-- [ ] **4.7 Deployment appendix (C5)** — *Owner: Claude + laptop.* Best model → ONNX → dynamic
+- [x] **4.7 Deployment appendix (C5)** — *Owner: Claude + laptop.* Best model → ONNX → dynamic
       INT8 → CPU latency table (batch 1/8/32, p50/p95) → FastAPI smoke (compose from 2.4 with
       new checkpoint).
       **DoD**: `results/deployment/latency.json` + appendix table; `/predict` returns correct
       class for a known test signal.
-- [ ] **4.8 README truth update** — *Owner: Claude.* Replace every `[PENDING]` with measured
+      *(evidence: resnet18-best → ONNX (parity 1.5e-4, 15.4MB) → INT8 (3.9MB). Latency b=1:
+      torch 19ms / ONNX FP32 13ms / INT8 215ms — honest finding: dynamic INT8 is 10-15×
+      SLOWER on CPU for conv nets (size−4× though); recommendation = ONNX FP32. API smoke
+      PASSED: real FastAPI served the ONNX artifact, correct class on real test record)*
+- [x] **4.8 README truth update** — *Owner: Claude.* Replace every `[PENDING]` with measured
       numbers + link to `results/benchmark/summary.md`; CHANGELOG entry.
       **DoD**: `grep -rn "PENDING" README.md CHANGELOG.md` → empty.
-- [ ] **4.9 (conditional) T2 extension runs** — only if office GPU is idle before 4.6 closes.
+      *(evidence: README Performance table = real benchmark numbers + synthetic-scope
+      warning; CHANGELOG updated; grep clean; suite 240 green)*
+- [x] ~~**4.9 (conditional) T2 extension runs**~~ — only if office GPU is idle before 4.6 closes.
       **DoD**: same artifact standard; summary regenerated with T2 rows marked "extension".
+      *(condition not met — matrix consumed the Colab session; T2 stays smoke-tested
+      only, per tier rules. Can run in any future GPU session if wanted)*
 
 **Exit gate 4**: ≥ 12 rows × 3 seeds complete · summary with statistical tests · deployment
 appendix · README truthful. *Merge `p4/benchmark` → `main`.*
+
+> ✅ **GATE 4 PASSED 2026-06-12** — 12 benchmark rows (9 classical runs + 24 deep runs +
+> ensemble), all under the frozen protocol with full provenance. Headline:
+> **ensemble 96.48 > resnet18 96.14 ≈ cnn_lstm 96.12 ≈ physics_constrained_cnn 95.98
+> (statistical tie, McNemar p>0.2) > classical RF bar 94.61**. Physics-as-constraint ties
+> best vanilla on clean data; hybrid/multitask PINN ~90 (hybrid_pinn caveat: constant
+> default metadata — Phase 5 pre-registration candidate). Deployment: ONNX FP32 13ms/window
+> CPU, INT8 4× smaller but 10-15× slower (honest negative). README/CHANGELOG truthful.
+> Suite 240 green. CNNLSTM backbone-fallback bug found+fixed (default pinned to the
+> benchmarked 'simple' architecture for reproducibility).
 
 ---
 

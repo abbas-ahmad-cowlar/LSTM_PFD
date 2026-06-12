@@ -99,7 +99,11 @@ class CNNLSTM(BaseModel):
         self,
         num_classes: int = NUM_CLASSES,
         input_channels: int = 1,
-        cnn_backbone: str = 'resnet18',
+        # 'simple' is the architecture benchmarked under the frozen protocol
+        # (2026-06-12): a stale import used to silently degrade 'resnet18' to
+        # 'simple', so 'simple' is what every recorded run actually trained.
+        # Changing this default would silently break artifact reproducibility.
+        cnn_backbone: str = 'simple',
         lstm_hidden: int = 256,
         lstm_layers: int = 2,
         dropout: float = 0.2,
@@ -162,7 +166,7 @@ class CNNLSTM(BaseModel):
         if backbone == 'resnet18':
             # Import ResNet-18 and use as feature extractor
             try:
-                from resnet.resnet_1d import create_resnet18_1d
+                from packages.core.models.resnet.resnet_1d import create_resnet18_1d
                 resnet = create_resnet18_1d(num_classes=NUM_CLASSES, input_channels=input_channels)
                 # Remove final FC layer and pooling - we'll use LSTM instead
                 backbone_layers = [
@@ -182,7 +186,7 @@ class CNNLSTM(BaseModel):
 
         elif backbone == 'resnet34':
             try:
-                from resnet.resnet_1d import create_resnet34_1d
+                from packages.core.models.resnet.resnet_1d import create_resnet34_1d
                 resnet = create_resnet34_1d(num_classes=NUM_CLASSES, input_channels=input_channels)
                 backbone_layers = [
                     resnet.conv1, resnet.bn1, resnet.relu, resnet.maxpool,
