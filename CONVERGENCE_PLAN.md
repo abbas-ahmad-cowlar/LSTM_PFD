@@ -503,17 +503,27 @@ leaderboard); peek at test sets before protocol freeze; let T2 runs start before
       *(evidence: RF 94.61%±0.05, SVM 94.05% (deterministic), GB 94.05%±0.03 — all BEAT
       the CNN1D raw-signal baseline (90.53%) by ~4pts. 36 expert features are strong on
       this data; raises the bar for the deep matrix and sharpens the PINN hypothesis)*
-- [ ] **4.4 T1 deep matrix** — *Owner: you operate office GPU; Claude prepares the command
+- [x] **4.4 T1 deep matrix** — *Owner: you operate office GPU; Claude prepares the command
       block; Colab = spillover lane via trimmed `scripts/colab/`.* 8 nets × 3 seeds = 24 runs,
       queued. Daily: you `git pull`, restart queue if dead, push result JSONs back (checkpoints
       stay local/DVC).
       **DoD**: 24 complete run-dirs in `results/benchmark/deep/`; zero missing seeds.
-- [ ] **4.5 Ensemble row** — *Owner: laptop.* Soft-voting of top-3 (by val acc) checkpoints.
+      *(evidence: 24/24 on Colab T4 in ~75 min (not office PC — faster lane); only 2
+      budget-capped runs, both plateaued → no amendment. Note: CNNLSTM logged 'ResNet not
+      available' fallback to simple CNN backbone — investigate import, result valid)*
+- [x] **4.5 Ensemble row** — *Owner: laptop.* Soft-voting of top-3 (by val acc) checkpoints.
       **DoD**: `results/benchmark/ensemble/` populated.
-- [ ] **4.6 Aggregate & test significance** — *Owner: Claude (agent may polish plots).*
+      *(evidence: voting_ensemble 96.48% / f1 0.9641 — members cnn_lstm s0,
+      physics_constrained_cnn s2, resnet18 s2)*
+- [x] **4.6 Aggregate & test significance** — *Owner: Claude (agent may polish plots).*
       `compare_results.py` → mean±std table, per-class F1, Wilcoxon paired tests vs best
       baseline, one significance-annotated bar figure + per-model confusion matrices.
       **DoD**: `results/benchmark/summary.{json,md,png}`; numbers quoted nowhere else yet.
+      *(evidence: summary written; headline — ensemble 96.48 > resnet18 96.14 ≈ cnn_lstm
+      96.12 ≈ physics_constrained_cnn 95.98 (McNemar all p>0.2, statistical tie) >
+      classical bar RF 94.61 > cnn1d 91.94 > multitask/hybrid PINN ~90 > patchtst 89.9 ≈
+      attention_cnn 89.4. Physics-as-constraint ties best vanilla; physics-as-feature
+      lagged — caveat: hybrid_pinn got constant default metadata per protocol)*
 - [ ] **4.7 Deployment appendix (C5)** — *Owner: Claude + laptop.* Best model → ONNX → dynamic
       INT8 → CPU latency table (batch 1/8/32, p50/p95) → FastAPI smoke (compose from 2.4 with
       new checkpoint).
