@@ -176,7 +176,7 @@ at fixed w=0.3; §8.4 sweeps w (its w=0 arm = Phase-4 runs, reused).
 
 | Prereg | Experiment | Compute | Status |
 |---|---|---|---|
-| §8.1 | Noise robustness: all 24 frozen checkpoints × SNR-20/10/5 | laptop | **23/24 done at session end** — queue self-finishes + auto-summary; if summary.md missing run `--summarize-only`. Early data: cnn1d loses 10–14 pts at 5 dB. One incident en route (I4 below) |
+| §8.1 | Noise robustness: all 24 frozen checkpoints × SNR-20/10/5 | laptop | **DONE 24/24, summary written** (`results/noise_robustness/summary.{md,json,png}`). Headline: family mean degradation clean→5dB: **physics 8.51 vs vanilla 15.54** (prereg rule favors physics) — BUT outlier-sensitive: attention_cnn's collapse (Δ50.6) drags the vanilla mean; excluding it vanilla≈6.8 beats physics. Most robust single model is VANILLA resnet18 (Δ1.70, still 94.4% at 5 dB); clean-data co-champion cnn_lstm is noise-fragile (Δ12.7). pc_cnn Δ4.99 (best physics). Full honest read → FINDINGS.md at Gate 5; remember pc_cnn here is physics-OFF (§8.0) — §8.4's w>0 arms at 5 dB are the real physics-noise test. One incident en route (I4) |
 | §8.2 | Data efficiency: pc_cnn(w=0.3) & resnet18 × {10,25,50,100}% × 3 seeds | Colab | script ready, NOT run |
 | §8.3 | Severity-OOD: both directions (train low→test severe; train high→test incipient) | Colab | script ready, NOT run |
 | §8.4 | Physics-weight ablation w∈{0.1,0.3,1.0} (+Phase-4 as w=0), eval clean+5 dB | Colab | script ready, NOT run |
