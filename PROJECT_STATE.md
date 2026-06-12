@@ -1,131 +1,256 @@
-# PROJECT STATE — the handoff document
+# PROJECT STATE — the session handoff document
 
-> **Purpose**: cold-start context for anyone (human or AI assistant) picking up
-> this project in a fresh session. Read this first, then `CONVERGENCE_PLAN.md`
-> for step-level detail. **Update this file at every phase gate and at the end
-> of every working session.**
+> **READ THIS FIRST.** This file is the complete working memory of the LSTM-PFD
+> convergence effort, written as a cold-start prompt for a fresh AI session
+> (or a new collaborator). It covers: who the owner is and how to work with
+> him, the compute setup and its quirks, the full history with numbers, the
+> live state of running work, and exactly what to do next.
+> Step-level detail lives in `CONVERGENCE_PLAN.md`; this is the narrative + context.
 >
-> Last updated: **2026-06-13** (after Gate 4; Phase 5 starting)
+> **Maintenance duty**: update this file at every phase gate and at the end of
+> every working session. It is linked from the README.
+>
+> Last updated: **2026-06-13, end of session 1** (Phase 5 in progress;
+> noise-robustness queue at 23/24 on the laptop; Phase-5 GPU queue built and
+> awaiting the owner's Colab session)
 
 ---
 
-## 1. The big picture
+## 0. If you are a fresh session, do this first
 
-**What this project is**: a physics-based synthetic-data research platform for
-**journal/hydrodynamic bearing fault diagnosis** (11 fault classes). Its rare
-asset is the physics-grounded vibration signal generator
-(`data/signal_generation/` — Sommerfeld-scaled lubrication, oil whirl,
-cavitation; documented in `docs/PHYSICS.md`, enforced by a 34-test CI battery).
-Public bearing research is dominated by rolling-element data; journal-bearing
-data is scarce — that's our opening.
+1. Read this file fully, then skim `CONVERGENCE_PLAN.md`'s Progress Tracker
+   and the Phase-5 section.
+2. Check live state:
+   - `git branch --show-current` (expect `p5/physics-exp`; `main` holds Gates 0–4)
+   - `find results/noise_robustness -name metrics.json | wc -l` → 24 = §8.1
+     evaluation done; if `results/noise_robustness/summary.md` is missing, run
+     `./venv/Scripts/python.exe scripts/run_noise_robustness.py --summarize-only`
+   - Ask the owner whether he ran the Phase-5 Colab session
+     (`results/phase5/...` arriving via Google Drive download, 45 runs expected).
+3. Run the trust command before changing anything: `pytest -q`
+   (expect ~240 passed, 0 failed, 6 deselected).
+4. Never mark plan checkboxes without `(evidence: command → artifact)`.
 
-**End goal**: a submitted, honest paper:
+## 1. The owner — who you're working with
+
+**Syed Abbas Ahmad** (git author; GitHub `abbas-ahmad-cowlar`; physics
+background — comfortable with physics reasoning, ratified the fault-model
+equations personally). Communication style and working agreement, learned over
+this project:
+
+- **He is the decision-maker at gates.** Phases need his explicit sign-off at
+  owner-gated steps (he ratified: the tier system, PHYSICS.md, DATASET_V2.md,
+  PROTOCOL.md). Quote his ratification in the doc when he gives it.
+- **He deeply distrusts unverified claims** — this repo burned him with
+  fabricated results before. NEVER present a number without an artifact path.
+  He explicitly mandated: verify by execution, not by reading code.
+- **He has attachment to impressive features** ("my heart doesn't want to let
+  go") — the Tier system (Part I §3 of the plan) was built to resolve exactly
+  this. If keep/cut tension reappears, use tiers, not arguments.
+- **He runs the hands-on compute** (Colab sessions, office PC) but is not a
+  shell expert: he pasted Windows backslash paths into bash (`scripts\run...`
+  fails on Linux), ran notebook cells without `!`, created a fake Drive mount
+  with `mkdir` before mounting, and hit the `ln -sfn`-into-existing-dir trap.
+  **Always give him exact copy-paste commands, platform-correct, with the
+  expected output described.** Runbooks must be cell-by-cell.
+- He works in stretches (office during day, laptop evenings; "came back from
+  office, it's the next day"). Long-running jobs must survive his absence and
+  session closures.
+- He asks good skeptical questions ("is it going okay?", "what if results are
+  boring?") — answer with data and honest scenario analysis, not reassurance.
+
+## 2. Compute setup — exact, with quirks
+
+### 2.1 Laptop (primary; where Claude Code runs)
+- Windows 11 Pro, repo at `C:\Users\COWLAR\projects\lstm-pfd`, PowerShell +
+  Git Bash available. venv: **Python 3.14.0, torch 2.9.1+cpu** — NO GPU.
+  Locked in `requirements.lock.txt`.
+- Speed: ~10 min/epoch for windowed CNN1D training (12,320 windows); ~60 s to
+  evaluate one checkpoint over 3 SNR test sets. Fine for: evaluation, XAI,
+  classical ML, aggregation; overnight-only for training.
+- **Quirks**: (a) cp1252 console — any emoji/Unicode print crashes; set
+  `PYTHONIOENCODING=utf-8` or avoid fancy chars in print/log/write_text
+  (always pass `encoding='utf-8'` to write_text); (b) `torch.onnx.export`
+  needs `dynamo=False` (onnxscript broken on py3.14); (c) `logs/` is
+  gitignored → scripts must mkdir it; (d) NamedTemporaryFile reopen fails on
+  Windows — use TemporaryDirectory.
+- **Detached-launch rule (hard lesson, 8h lost)**: session-bound
+  `run_in_background` dies with the Claude session. Long jobs:
+  `Start-Process -FilePath <venv python> -ArgumentList <script>,... -WorkingDirectory <repo> -WindowStyle Hidden -RedirectStandardOutput logs\x.log -RedirectStandardError logs\x.err`
+  All training/eval scripts are resume-safe (metrics.json marks completion;
+  checkpoints carry optimizer state).
+
+### 2.2 Google Colab (the de-facto GPU; free tier, Tesla T4 15.6 GB)
+- **75× faster than the laptop** (cnn1d: 8 s/epoch vs 600 s). The entire
+  24-run Phase-4 matrix took ~75 minutes. Phase-5's ~45 runs ≈ 4–6 h.
+- Sessions are ephemeral (~12 h cap, idle disconnects kill the VM). The
+  owner's Colab workflow (he runs it; you prepare cells): clone repo →
+  checkout phase branch → copy `dataset_v2.h5` from Drive → **symlink
+  `results/<dir>` to Drive BEFORE the first run** (if the dir already exists
+  locally, `ln -sfn` silently creates the link INSIDE it — this burned us; a
+  10-min `shutil.copytree` backup loop in a notebook cell is the fallback) →
+  smoke run → main queue cell (rerun same cell after disconnect; it resumes).
+- Owner's Google Drive: `MyDrive/lstm-pfd/` holds `dataset_v2.h5` and result
+  folders (`results_benchmark`, future `results_phase5`). Results come home by
+  Drive web-UI download → extract into `results/...` on the laptop → Claude
+  verifies counts + provenance before using.
+- Runbooks: `experiments/OFFICE_PC_RUNBOOK.md` — benchmark appendix (done) and
+  **Phase-5 appendix (ready, not yet executed)**.
+
+### 2.3 Office PC (basic GPU, can run for days)
+- **Never actually used** — Colab proved faster and sufficient. The Windows
+  runbook (main body of OFFICE_PC_RUNBOOK.md) exists if ever needed. Don't
+  assume any state on that machine.
+
+## 3. The big picture (unchanged since ratification)
+
+A physics-based synthetic-data research platform for **journal/hydrodynamic
+bearing fault diagnosis** (11 classes; French fault names: sain,
+desalignement, desequilibre, jeu, lubrification, cavitation, usure, oilwhirl
++ 3 mixed). The crown jewel is the physics-grounded signal generator
+(`data/signal_generation/`; normative doc `docs/PHYSICS.md`; enforced by the
+34-test CI battery `tests/test_physics_signatures.py` — the generator cannot
+silently drift). Journal-bearing data is scarce publicly (literature is
+rolling-element: CWRU/Paderborn) — that's the niche.
+
+**End goal — a submitted honest paper**:
 > *A physics-based simulation framework for journal-bearing fault diagnosis,
 > with a frozen-protocol benchmark showing where physics-informed learning
 > beats purely data-driven models: less data, unseen severities, noisy
 > signals — with explanations consistent with known fault physics.*
 
-Contributions: **C1** validated open dataset+generator · **C2** honest
-multi-seed benchmark · **C3** physics-advantage analysis (data-efficiency,
-severity-OOD, noise) · **C4** physics-consistent XAI · **C5** deployment
-appendix. Target venues: MSSP / Measurement / IEEE Access / Sensors.
-**Scope honesty**: synthetic-only; no real-world validation (stated in README).
+Contributions: C1 dataset+generator · C2 frozen benchmark · C3 physics
+advantage (data-efficiency / severity-OOD / noise) · C4 physics-consistent
+XAI · C5 deployment appendix. Venues: MSSP / Measurement / IEEE Access /
+Sensors. **Synthetic-only — stated everywhere; no real-world validation.**
 
-**History you must know**: in June 2026 an audit
-(`audit_reports/PROJECT_AUDIT_2026-06-11.md`) found this repo full of
-fabricated results (a paper claiming 98.1% accuracy with zero experiments),
-~130K LOC of largely unvalidated code, a broken flagship PINN, and one
-half-trained model. Everything since is a phased rebuild under one rule:
-**only execution evidence counts** — every number traces to an artifact in
-`results/` with git-SHA provenance. The pre-rebuild code is preserved at tag
-`pre-convergence-2026-06`.
+**Origin story (why everything is the way it is)**: the 2026-06-11 audit
+(`audit_reports/PROJECT_AUDIT_2026-06-11.md`) found fabricated results (a paper
+claiming 98.1% with zero experiments run), ~130K LOC mostly unvalidated, a
+broken flagship PINN, one half-trained model, 45 failing tests. The rebuild
+runs under one prime rule: **only execution evidence counts**. Old code is
+recoverable at tag `pre-convergence-2026-06`.
 
-## 2. Current status (Gates 0–4 PASSED, merged to `main`)
+## 4. Complete history (Gates 0–4 PASSED, merged to main)
 
-| Phase | Result |
-|---|---|
-| 0–1 Stabilize | Fake numbers purged; HybridPINN forward fixed (extract_features contract); suite 45 failed → 0 failed |
-| 2 Prune | ~34.5K LOC deleted; model registry 81 → 11 honest entries (tier system, Part I §3–4 of plan) |
-| 3 Physics & data | `docs/PHYSICS.md` (owner-approved); 34 spectral-signature CI tests; **dataset_v2.h5** (3,520 records, exact class×severity stratification, SNR-20/10/5 test variants, per-split metadata, DVC); CNN1D windowed baseline 90.53% |
-| 4 Benchmark | **Full frozen-protocol matrix** (`experiments/PROTOCOL.md`, ratified): see table below; deployment appendix; README carries real numbers |
+| Phase / Gate | What happened | Hard numbers |
+|---|---|---|
+| Audit (06-11) | 5 parallel agent audits + direct verification; fabrications inventoried | 45 failed/220 passed tests; results/ empty |
+| 0 Ratify | Tag `pre-convergence-2026-06`; fake-results purge (reproducibility README table, paper warning header); BACKLOG.md; env lock | — |
+| 1 Stabilize | **HybridPINN forward fixed** (silent `hasattr(backbone,'fc')` head-strip no-op → explicit `extract_features()` + `include_head=False` contract on CNN1D/ResNet1D; same fix MultitaskPINN); pytest-collection crasher rewritten; data-gen tests rewritten by agent (55); ONNX dynamo=False; API datetime-serialization bug; dashboard boot fix (timeboxed) | suite → 328 passed/0 failed; first artifact: CNN1D v1 eval 86.48% |
+| 2 Prune | Registry 81→**11 honest keys** (8 T1 + 3 T2); deleted 23 architectures, contrastive/TFR/2D stacks, fake-output scripts (np.random "results"), experiments/, integration/, helm/k8s, 6 broken workflows → 2 honest ones; dashboard decoupled (frozen) | core LOC −32% (~34.5K lines deleted); suite 206 green |
+| 3 Physics & data | `docs/PHYSICS.md` (owner-ratified; its draft kurtosis claim was REFUTED by the test battery and corrected — the honesty loop works); 34 spectral CI tests; **dataset_v2.h5**: 3,520 records, 320/class, EXACT 80/class/severity stratification, record-level splits with per-split metadata (fixes v1's split-shuffled-metadata defect), SNR-20/10/5 test variants, leakage-checked, DVC; `WindowedView` (1 s windows, group-aware) | CNN1D v2 baseline **90.53%** / F1 0.9013 (2,640 test windows) |
+| 4 Benchmark | `experiments/PROTOCOL.md` ratified+FROZEN (Adam 1e-3, batch 64, ≤60 ep, patience 10, no schedulers/aug, 3 seeds, test-touched-once); classical tier on laptop; deep 8×3 matrix on Colab T4 (~75 min); ensemble + aggregation + McNemar/Wilcoxon; deployment appendix; README/CHANGELOG carry real numbers (zero PENDINGs) | table below |
 
-**The benchmark table** (test acc, 2,640 one-second windows, 3 seeds —
-full: `results/benchmark/summary.md`):
+**The Phase-4 benchmark table** (test acc %, 2,640 windows, mean±std/3 seeds;
+`results/benchmark/summary.md`):
 
-- voting_ensemble **96.48** > resnet18 **96.14±0.28** ≈ cnn_lstm **96.12±0.16**
-  ≈ physics_constrained_cnn **95.98±0.36** (McNemar p>0.2 — statistical tie)
-- classical bar: RandomForest **94.61±0.05** (36 expert features)
-- cnn1d 91.94±2.84 · multitask_pinn 90.28 · hybrid_pinn 90.04 · patchtst 89.85
-  · attention_cnn 89.37±4.82 (one seed collapsed mid-training — recorded as-is)
-- Deployment: ResNet18 → ONNX FP32 **13 ms/window CPU**; INT8 4× smaller but
-  10–15× slower (honest negative); FastAPI smoke passed serving the ONNX.
+| Model | Acc | Note |
+|---|---|---|
+| voting_ensemble | **96.48** | cnn_lstm+pc_cnn+resnet18 members |
+| resnet18 | 96.14±0.28 | statistical tie with next two (McNemar p>0.2) |
+| cnn_lstm | 96.12±0.16 | namesake; 'simple' backbone (see incident I4) |
+| physics_constrained_cnn | 95.98±0.36 | **physics-OFF in Phase 4!** (see §8.0 discovery) |
+| RandomForest (36 feats) | 94.61±0.05 | the classical bar; SVM/GB 94.05 |
+| cnn1d | 91.94±2.84 | high seed variance |
+| multitask_pinn | 90.28±0.64 | |
+| hybrid_pinn | 90.04±0.51 | constant-metadata caveat (§8.5 experiment) |
+| patchtst | 89.85±0.19 | |
+| attention_cnn | 89.37±4.82 | 1 seed collapsed to 9.09% mid-training |
 
-**Key open scientific threads**:
-1. Physics-as-constraint ties best vanilla on clean data; the physics *win*
-   must come (if anywhere) from Phase 5's regimes.
-2. **hybrid_pinn caveat**: protocol fed it constant default metadata → its
-   physics branch was starved. v2 stores TRUE per-record operating conditions
-   → pre-registered Phase-5 experiment.
-3. Healthy class is the weakest everywhere (incipient faults ≈ noise floor in
-   1 s windows) — severity-graded analysis material.
+Deployment (C5): ResNet18→ONNX FP32 **13 ms/window CPU** (parity 1.5e-4);
+INT8 4× smaller but **10–15× slower** (honest negative — dynamic quant doesn't
+help conv nets); FastAPI smoke served the ONNX and classified a real record
+correctly. `results/deployment/appendix.md`.
 
-## 3. What's next: Phase 5 (in progress) → 6 → 7
+## 5. Phase 5 — CURRENT WORK (branch `p5/physics-exp`)
 
-**Phase 5 — physics experiments** (branch `p5/physics-exp`; pre-registrations
-in `PROTOCOL.md` §8 BEFORE each run — never run first):
-- 5.3 Noise robustness (laptop, no training): all 24 frozen checkpoints ×
-  test_snr20/10/5 groups → degradation curves. *(LAUNCHED detached 2026-06-13,
-  ~2–3 h; watch `logs/noise_robustness.log`; then
-  `python scripts/run_noise_robustness.py --summarize-only` regenerates summary)*
-- 5.1 Data efficiency (GPU): best-physics + best-vanilla × {10,25,50,100}%
-  train × 3 seeds.
-- 5.2 Severity-shift OOD (GPU): train incipient+mild+moderate → test severe
-  (and reverse) — pure metadata filters on v2.
-- 5.4 PINN ablation (GPU): physics-loss terms on/off + weight sweep.
-- 5.5 XAI alignment (laptop): SHAP/IG attribution energy at known fault
-  frequencies; attention maps.
-- 5.6 MC-dropout calibration (laptop).
-- NEW (pre-registered): hybrid_pinn with TRUE metadata vs constant-default.
+All experiments **pre-registered in `experiments/PROTOCOL.md` §8** (hypothesis,
+metric, decision rule — written BEFORE running; never reverse this order).
 
-**Phase 6**: docs consolidation (archive `config/docs/idb_reports`, fabricated
-paper to `archive/`, real `docs/` root, ≤20 living docs).
-**Phase 7**: paper written from scratch against `results/` only; repro package;
-Zenodo. **Phase D** (frozen): dashboard rehab — boots, but untouched until the
-science is done.
+**§8.0 DISCOVERY (changes interpretation of Phase 4)**: code review found
+`physics_constrained_cnn.forward()` is a plain CNN — physics enters only via
+`compute_physics_loss()`, which Phase-4 training never called. So Phase-4's
+pc_cnn rows are the **w=0 (physics-off) arm**. §8.2/8.3 run it with physics ON
+at fixed w=0.3; §8.4 sweeps w (its w=0 arm = Phase-4 runs, reused).
 
-## 4. How to operate (conventions that keep this honest)
+| Prereg | Experiment | Compute | Status |
+|---|---|---|---|
+| §8.1 | Noise robustness: all 24 frozen checkpoints × SNR-20/10/5 | laptop | **23/24 done at session end** — queue self-finishes + auto-summary; if summary.md missing run `--summarize-only`. Early data: cnn1d loses 10–14 pts at 5 dB. One incident en route (I4 below) |
+| §8.2 | Data efficiency: pc_cnn(w=0.3) & resnet18 × {10,25,50,100}% × 3 seeds | Colab | script ready, NOT run |
+| §8.3 | Severity-OOD: both directions (train low→test severe; train high→test incipient) | Colab | script ready, NOT run |
+| §8.4 | Physics-weight ablation w∈{0.1,0.3,1.0} (+Phase-4 as w=0), eval clean+5 dB | Colab | script ready, NOT run |
+| §8.5 | hybrid_pinn with TRUE per-record metadata (rpm/load/viscosity from v2; mapping documented in script header) vs Phase-4 constant-defaults | Colab | script ready, NOT run |
+| §8.6 | XAI alignment (SHAP/IG energy in PHYSICS.md frequency bands) + MC-dropout calibration | laptop | **scripts NOT built yet** — build after Colab results land |
 
-- **Plan of record**: `CONVERGENCE_PLAN.md` — checkboxes only with
-  `(evidence: command → artifact)` notes; gates close with a quoted evidence
-  block; phases live on `pN/...` branches, merged to `main` at gates.
-- **Protocol discipline**: `experiments/PROTOCOL.md` is FROZEN; changes are
-  dated amendments in §7. Pre-register Phase-5 experiments before running.
-- **Artifacts**: every run writes `metrics.json` (with git SHA, host, seed,
-  config) under `results/`; small JSONs/MD/PNGs are committed, checkpoints/h5
-  are not (DVC for data). A run is COMPLETE iff its metrics.json exists —
-  all runners skip complete runs and resume interrupted ones.
-- **Long jobs**: NEVER session-bound. Windows:
-  `Start-Process -FilePath <venv python> -ArgumentList <script> -WindowStyle Hidden`.
-  Colab: results dir symlinked/backed up to Google Drive (runbooks:
-  `experiments/OFFICE_PC_RUNBOOK.md` incl. Colab appendix).
-- **Environment quirks**: Windows py3.14 venv (`requirements.lock.txt`);
-  emoji prints crash cp1252 console → `PYTHONIOENCODING=utf-8`; ONNX export
-  needs `dynamo=False`; `logs/` is gitignored (scripts mkdir it).
-- **Trust command**: `pytest -q` (240 passed, 0 failed; dashboard tests
-  deselected while frozen).
+- Colab queue: `scripts/run_phase5_gpu.py` (~45 runs, resume-safe,
+  `--only <experiment>` subsets, `--smoke`). Runbook: Phase-5 appendix in
+  `experiments/OFFICE_PC_RUNBOOK.md`. **The owner is about to run this.**
+- Optional in same session: Tier-2 benchmark rows
+  (`python scripts/run_benchmark.py --models multi_scale_cnn se_resnet18 signal_transformer`).
+  Old pre-convergence data suggests se_resnet18 is strong, multi_scale_cnn may
+  collapse — both expectations are recorded.
 
-## 5. Key files map
+**After Colab results come home (Drive download → `results/phase5/`)**:
+verify 45 metrics.json + provenance → build aggregation/analysis per prereg
+decision rules → build & run §8.6 on laptop → FINDINGS.md (owner reviews) →
+Gate 5 → merge → Phase 6 (docs consolidation/archive) → Phase 7 (paper from
+scratch against results/ only).
+
+## 6. Incidents & lessons (do not repeat these)
+
+- **I1 — Session-bound process death**: P3.5 training died when the Claude
+  session restarted; laptop was blameless. → detached `Start-Process` +
+  `--resume` everywhere. (Cost: ~8 h wall time.)
+- **I2 — Colab `ln -sfn` trap**: symlinking onto an EXISTING dir puts the link
+  inside it; results went to ephemeral disk. → symlink BEFORE first run;
+  fallback = notebook-cell copytree loop every 10 min (that loop saved the
+  whole Phase-4 matrix).
+- **I3 — Fake Drive mount**: `mkdir -p /content/drive/...` before `drive.mount`
+  created a local impostor dir and the mount then refused. → mount first;
+  if blocked: `mv /content/drive /content/drive_fake`, mount, rescue, delete.
+- **I4 — Factory/class default desync**: fixing CNNLSTM's stale backbone
+  import made `create_cnn_lstm`'s `backbone='resnet18'` default suddenly real,
+  so fresh models stopped loading the benchmark ('simple'-backbone)
+  checkpoints — killed the noise queue at 7/24. → BOTH class and factory
+  defaults pinned to the benchmarked arch; noise runner got per-run
+  try/except. General rule: after any model-code change, verify
+  `create_model(key)` still loads the recorded checkpoints.
+- **I5 — cp1252**: emoji/Greek in prints or write_text without encoding crash
+  on this laptop (killed a leakage-check print and the appendix writer).
+- **I6 — Old-era methodology**: the owner's pre-convergence Colab run (March)
+  showed full-5s-records saturate (~100% for ResNets, se_resnet18=100%) —
+  cited as evidence FOR the 1 s windowing decision; attention_cnn NaN'd there
+  too (instability is architectural, reportable); multi_scale_cnn collapsed
+  there too.
+
+## 7. Conventions (the honesty machinery)
+
+1. Only execution evidence counts; numbers must trace to `results/` artifacts
+   with git SHA + host + seed provenance.
+2. `CONVERGENCE_PLAN.md` checkboxes need `(evidence: …)`; gates get evidence
+   blocks; tracker table updated every session.
+3. PROTOCOL is frozen — changes are dated §7 amendments; Phase-5 experiments
+   are pre-registered in §8 before running.
+4. Phase branches `pN/...` → merge to `main` at gates. Current: `p5/physics-exp`.
+5. Suite green before merge: `pytest -q` (dashboard tests deselected — frozen
+   until Phase D; the dashboard BOOTS but is otherwise untouched).
+6. Anti-regrowth: tiers are fixed-size (T1=12 rows, T2=3, cap forever);
+   promoting in requires demoting out. Cut things live at the tag + BACKLOG.md.
+7. results/: small json/md/png/csv committed; checkpoints + h5 stay out of
+   git (DVC for the dataset).
+
+## 8. Key files map
 
 | What | Where |
 |---|---|
-| Master plan + progress tracker | `CONVERGENCE_PLAN.md` |
-| This handoff | `PROJECT_STATE.md` |
-| Audit (why the rebuild) | `audit_reports/PROJECT_AUDIT_2026-06-11.md` |
-| Physics reference (normative) | `docs/PHYSICS.md` + `tests/test_physics_signatures.py` |
-| Dataset v2 design / card | `experiments/DATASET_V2.md`, `dataset_card.yaml` |
-| Frozen protocol (+amendments, pre-regs) | `experiments/PROTOCOL.md` |
-| Benchmark results | `results/benchmark/summary.{md,json,png}` + per-run dirs |
-| Deployment appendix | `results/deployment/appendix.md` |
-| Runners | `scripts/run_benchmark.py`, `run_classical_baselines.py`, `aggregate_benchmark.py`, `generate_dataset_v2.py`, `evaluate_checkpoint.py` |
-| GPU/Colab runbook | `experiments/OFFICE_PC_RUNBOOK.md` |
-| Deferred ideas | `BACKLOG.md` |
+| Step-level plan + tracker + gate evidence | `CONVERGENCE_PLAN.md` |
+| Audit (origin) | `audit_reports/PROJECT_AUDIT_2026-06-11.md` |
+| Physics (normative) + CI battery | `docs/PHYSICS.md`, `tests/test_physics_signatures.py` |
+| Dataset v2 design / card / file | `experiments/DATASET_V2.md`, `dataset_card.yaml`, `data/generated/dataset_v2.h5` (+DVC) |
+| Protocol + amendments + §8 preregs | `experiments/PROTOCOL.md` |
+| Benchmark results / deployment | `results/benchmark/summary.{md,json,png}`, `results/deployment/appendix.md` |
+| Noise robustness (§8.1) | `results/noise_robustness/` (+ summary after completion) |
+| Phase-5 GPU queue + runbooks | `scripts/run_phase5_gpu.py`, `experiments/OFFICE_PC_RUNBOOK.md` |
+| Other runners | `scripts/run_benchmark.py`, `run_classical_baselines.py`, `aggregate_benchmark.py`, `run_noise_robustness.py`, `generate_dataset_v2.py`, `evaluate_checkpoint.py`, `deployment_appendix.py`, `train_baseline_v2.py`, `pinn_sanity_train.py` |
+| Deferred ideas | `BACKLOG.md` · Frozen dashboard: `packages/dashboard/` (Phase D) |

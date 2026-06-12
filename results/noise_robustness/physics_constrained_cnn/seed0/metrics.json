@@ -1,0 +1,19 @@
+{
+  "model": "physics_constrained_cnn",
+  "seed": 0,
+  "accuracy_by_snr": {
+    "clean": 95.60606060606061,
+    "snr20": 95.56818181818181,
+    "snr10": 95.49242424242425,
+    "snr5": 93.14393939393939
+  },
+  "degradation_clean_to_5db": 2.462121212121218,
+  "provenance": {
+    "preregistration": "PROTOCOL.md \u00a78.1",
+    "checkpoint": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\benchmark\\deep\\physics_constrained_cnn\\seed0\\best_model.pth",
+    "host": "DESKTOP-M7RBFOO",
+    "git_sha": "b86833867e090efba2527e1dc68af3ed6af06bea",
+    "wall_time_s": 118.3,
+    "finished_at": "2026-06-12T19:59:31.063350+00:00"
+  }
+}
