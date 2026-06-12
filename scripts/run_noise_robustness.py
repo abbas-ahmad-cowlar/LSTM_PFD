@@ -97,18 +97,19 @@ def evaluate_all() -> None:
             print(f'[{i}/{len(jobs)}] {model_key} seed {seed} — done, skip')
             continue
         t0 = time.time()
-        model = create_model(model_key, num_classes=NUM_CLASSES)
-        ckpt = torch.load(mj.parent / 'best_model.pth', map_location='cpu',
-                          weights_only=False)
-        model.load_state_dict(ckpt['model_state_dict'])
-        model.eval()
+        try:
+            model = create_model(model_key, num_classes=NUM_CLASSES)
+            ckpt = torch.load(mj.parent / 'best_model.pth', map_location='cpu',
+                              weights_only=False)
+            model.load_state_dict(ckpt['model_state_dict'])
+            model.eval()
 
-        accs = {'clean': bench['accuracy']}  # from Phase 4, never re-evaluated
-        for split in SNR_SPLITS:
-            accs[split.replace('test_', '')] = accuracy_on(model, model_key,
-                                                           loaders[split])
-        run_out.mkdir(parents=True, exist_ok=True)
-        (run_out / 'metrics.json').write_text(json.dumps({
+            accs = {'clean': bench['accuracy']}  # from Phase 4, never re-evaluated
+            for split in SNR_SPLITS:
+                accs[split.replace('test_', '')] = accuracy_on(model, model_key,
+                                                               loaders[split])
+            run_out.mkdir(parents=True, exist_ok=True)
+            (run_out / 'metrics.json').write_text(json.dumps({
             'model': model_key, 'seed': seed, 'accuracy_by_snr': accs,
             'degradation_clean_to_5db': accs['clean'] - accs['snr5'],
             'provenance': {'preregistration': 'PROTOCOL.md §8.1',
@@ -116,10 +117,13 @@ def evaluate_all() -> None:
                            'host': platform.node(), 'git_sha': git_sha(),
                            'wall_time_s': round(time.time() - t0, 1),
                            'finished_at': datetime.now(timezone.utc).isoformat()},
-        }, indent=2))
-        print(f'[{i}/{len(jobs)}] {model_key} seed {seed}: '
-              + ' | '.join(f'{k} {v:.2f}' for k, v in accs.items())
-              + f'  ({time.time()-t0:.0f}s)')
+            }, indent=2))
+            print(f'[{i}/{len(jobs)}] {model_key} seed {seed}: '
+                  + ' | '.join(f'{k} {v:.2f}' for k, v in accs.items())
+                  + f'  ({time.time()-t0:.0f}s)')
+        except Exception as e:  # one bad checkpoint must not kill the queue
+            print(f'[{i}/{len(jobs)}] {model_key} seed {seed} FAILED: '
+                  f'{type(e).__name__}: {e}')
 
 
 def summarize() -> None:

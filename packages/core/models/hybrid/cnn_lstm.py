@@ -366,7 +366,10 @@ class CNNLSTM(BaseModel):
 
 def create_cnn_lstm(
     num_classes: int = NUM_CLASSES,
-    backbone: str = 'resnet18',
+    # 'simple' = the architecture actually benchmarked under the frozen
+    # protocol (see class default note) — keep factory and class in sync,
+    # or fresh models won't load the recorded checkpoints.
+    backbone: str = 'simple',
     **kwargs
 ) -> CNNLSTM:
     """
