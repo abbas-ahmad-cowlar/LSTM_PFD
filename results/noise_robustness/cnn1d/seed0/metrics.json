@@ -1,0 +1,19 @@
+{
+  "model": "cnn1d",
+  "seed": 0,
+  "accuracy_by_snr": {
+    "clean": 89.6969696969697,
+    "snr20": 89.62121212121212,
+    "snr10": 88.52272727272727,
+    "snr5": 80.83333333333333
+  },
+  "degradation_clean_to_5db": 8.863636363636374,
+  "provenance": {
+    "preregistration": "PROTOCOL.md \u00a78.1",
+    "checkpoint": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\benchmark\\deep\\cnn1d\\seed0\\best_model.pth",
+    "host": "DESKTOP-M7RBFOO",
+    "git_sha": "9f99a59a530fd32f13a72bd9680de39d67d0c904",
+    "wall_time_s": 67.6,
+    "finished_at": "2026-06-12T19:17:54.813936+00:00"
+  }
+}

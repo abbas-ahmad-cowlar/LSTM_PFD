@@ -171,3 +171,75 @@ cp -r /content/drive/MyDrive/lstm-pfd/results_benchmark/* results/benchmark/ 2>/
 git add results/benchmark && git commit -m "P4.4: matrix results (Colab T4)"
 # push needs a GitHub token: git push https://<TOKEN>@github.com/abbas-ahmad-cowlar/LSTM_PFD.git p4/benchmark-results
 ```
+
+---
+
+## Appendix: Phase-5 GPU experiments on Colab (§8.2–8.5)
+
+Same pattern as the benchmark appendix, with Drive persistence set up
+**before** the first run (the symlink must be created while `results/phase5`
+does not yet exist locally — that's what went wrong last time).
+
+```python
+# Cell 1 — GPU + Drive
+!nvidia-smi -L
+from google.colab import drive
+drive.mount('/content/drive')
+```
+
+```bash
+# Cell 2 — clone + env (~3 min)
+%%bash
+cd /content
+git clone https://github.com/abbas-ahmad-cowlar/LSTM_PFD.git lstm-pfd
+cd lstm-pfd
+git checkout p5/physics-exp
+pip -q install -r requirements.txt -r requirements-test.txt
+```
+
+```bash
+# Cell 3 — dataset from Drive to fast local disk
+%%bash
+mkdir -p /content/lstm-pfd/data/generated
+cp "/content/drive/MyDrive/lstm-pfd/dataset_v2.h5" /content/lstm-pfd/data/generated/
+ls -lh /content/lstm-pfd/data/generated/
+```
+
+```bash
+# Cell 4 — Drive persistence FIRST (results/phase5 must NOT exist yet)
+%%bash
+mkdir -p "/content/drive/MyDrive/lstm-pfd/results_phase5"
+mkdir -p /content/lstm-pfd/results
+ln -sfn "/content/drive/MyDrive/lstm-pfd/results_phase5" /content/lstm-pfd/results/phase5
+ls -la /content/lstm-pfd/results/   # MUST show: phase5 -> /content/drive/...
+```
+
+```bash
+# Cell 5 — smoke (2-epoch pipeline sanity, ~10 min)
+%%bash
+cd /content/lstm-pfd
+python scripts/run_phase5_gpu.py --smoke --seeds 0
+```
+
+```bash
+# Cell 6 — the full queue (~45 runs, ~4–6 h on T4).
+# Rerun this exact cell after any disconnect — it skips/resumes.
+%%bash
+cd /content/lstm-pfd
+python scripts/run_phase5_gpu.py
+```
+
+```bash
+# Cell 7 — progress (separate cell, anytime)
+%%bash
+tail -5 /content/lstm-pfd/logs/phase5_gpu.log
+find /content/lstm-pfd/results/phase5 -name metrics.json | wc -l   # done at 45
+```
+
+Optional per-experiment runs if you prefer shorter sessions:
+`--only data_efficiency` (21 runs) · `--only severity_ood` (12) ·
+`--only pinn_ablation` (9) · `--only true_metadata` (3).
+
+**Shipping home**: with the Cell-4 symlink everything is already on Drive —
+download `results_phase5` from the Drive web UI and extract into
+`results/phase5/` on the laptop (then Claude verifies + aggregates).
