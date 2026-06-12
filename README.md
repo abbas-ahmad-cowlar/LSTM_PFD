@@ -4,6 +4,10 @@
 
 ## Overview
 
+> 🧭 **Current state & roadmap**: see [PROJECT_STATE.md](PROJECT_STATE.md) — the
+> living handoff document (big picture, progress, conventions, next steps),
+> updated at every phase gate. Step-level plan: [CONVERGENCE_PLAN.md](CONVERGENCE_PLAN.md).
+
 **LSTM-PFD** is a research-grade bearing fault diagnosis system that progresses from classical machine learning to physics-informed deep learning. The project combines multiple model architectures — classical ML, CNNs, Transformers, Physics-Informed Neural Networks (PINNs), and ensembles — to classify 11 bearing fault types from vibration signals.
 
 The system includes a full-stack enterprise dashboard (Dash/Plotly) for no-code model training, experiment management, and explainable AI visualization, backed by a PostgreSQL database and Celery task queue.
