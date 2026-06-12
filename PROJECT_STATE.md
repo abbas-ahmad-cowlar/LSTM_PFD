@@ -74,7 +74,9 @@ full: `results/benchmark/summary.md`):
 **Phase 5 — physics experiments** (branch `p5/physics-exp`; pre-registrations
 in `PROTOCOL.md` §8 BEFORE each run — never run first):
 - 5.3 Noise robustness (laptop, no training): all 24 frozen checkpoints ×
-  test_snr20/10/5 groups → degradation curves. *(running/first)*
+  test_snr20/10/5 groups → degradation curves. *(LAUNCHED detached 2026-06-13,
+  ~2–3 h; watch `logs/noise_robustness.log`; then
+  `python scripts/run_noise_robustness.py --summarize-only` regenerates summary)*
 - 5.1 Data efficiency (GPU): best-physics + best-vanilla × {10,25,50,100}%
   train × 3 seeds.
 - 5.2 Severity-shift OOD (GPU): train incipient+mild+moderate → test severe
