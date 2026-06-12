@@ -82,6 +82,17 @@
 
 ## 8. Phase 5 pre-registrations (written BEFORE running — Plan Part III P5)
 
+> **§8.0 Discovery note (2026-06-13, before any §8 run executed)**: code review
+> found that `physics_constrained_cnn.forward()` is a plain CNN; its physics
+> enters ONLY via the separate `compute_physics_loss()` term, which the Phase-4
+> training loop never invoked. **Phase-4's physics_constrained_cnn rows
+> (95.98±0.36) are therefore physics-OFF (w=0)** — they stand as recorded, but
+> the row label carries this footnote. Consequences for §8 (decided now, before
+> running): experiments 8.2 and 8.3 run physics_constrained_cnn with the
+> physics loss ON at fixed pre-chosen w=0.3 (mid-sweep value, no post-hoc
+> selection); §8.4's w=0 arm reuses the Phase-4 runs; §8.4 additionally
+> evaluates every arm at 5 dB SNR.
+
 ### 8.1 Noise robustness (P5.3) — pre-registered 2026-06-13
 - **Hypothesis**: physics-informed models (physics_constrained_cnn foremost)
   degrade less than vanilla counterparts as test SNR drops (clean → 20 → 10 →
