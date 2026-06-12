@@ -113,6 +113,17 @@ read its own streaming output (the `[N/45]` and `DONE:` lines), or paste
 the three commands above into the Terminal if your plan has one. Use
 Cell 7 as a cell after a reconnect, before restarting the queue.
 
+Terminal-only self-refreshing monitor (updates every 30 s; Ctrl+C to
+exit the display — training is unaffected):
+
+```bash
+watch -n 30 'echo "== latest log =="; tail -3 /content/lstm-pfd/logs/phase5_gpu.log; echo; echo "== finished runs on Drive (of 45) =="; find /content/drive/MyDrive/lstm-pfd/results_phase5 -name metrics.json | wc -l; echo; echo "== GPU compute % =="; nvidia-smi --query-gpu=utilization.gpu,memory.used --format=csv,noheader'
+```
+
+Note: the Colab resources panel shows GPU MEMORY, not compute usage.
+~1.2/15 GB is correct for these small models at the frozen batch size
+(64); do not try to fill the GPU — that would change the protocol.
+
 ---
 
 ## Disconnects & resuming (even days later)
