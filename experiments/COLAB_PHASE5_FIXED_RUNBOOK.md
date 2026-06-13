@@ -104,3 +104,33 @@ fixed folder on Drive means finished runs skip and the interrupted one resumes.
 When it reads 9/9: download `results_phase5_fixed` from the Drive web UI,
 extract into `results/phase5_fixed/` on the laptop, and Claude builds the
 before-vs-after §8.4 table.
+
+---
+
+## §8.2 data-efficiency rerun with the fixed loss (the low-data physics test)
+
+The one principled "fair shot" for physics: low-data is the regime where
+physics priors should help most, and §8.4 only tested full data. Same fixed
+branch, a NEW Drive folder, and the data-efficiency subset. Identical to the
+cells above with **two changes** (Cells 1–3 unchanged: mount, fix-branch
+clone, dataset):
+
+```python
+# Cell 4 — NEW folder results_phase5_dataeff_fixed (must be empty -> nothing skipped)
+%%bash
+mkdir -p /content/drive/MyDrive/lstm-pfd/results_phase5_dataeff_fixed
+ln -sfn /content/drive/MyDrive/lstm-pfd/results_phase5_dataeff_fixed /content/lstm-pfd/results/phase5
+ls -la /content/lstm-pfd/results/ | grep phase5
+find /content/drive/MyDrive/lstm-pfd/results_phase5_dataeff_fixed -name metrics.json | wc -l   # expect 0
+```
+
+```python
+# Cell 6 — data-efficiency only: 21 runs (pc_cnn fixed + resnet18 x {10,25,50,100}% x 3), ~1-1.5 h
+%cd /content/lstm-pfd
+!python scripts/run_phase5_gpu.py --only data_efficiency
+```
+
+Expect `21/21 complete`. (resnet18 + pc_cnn-100% reproduce earlier numbers —
+a free cross-check; the new science is pc_cnn-fixed at 10/25/50%.) Then
+download `results_phase5_dataeff_fixed` → `results/phase5_dataeff_fixed/` and
+Claude builds the fixed data-efficiency curve vs the inert one and vs vanilla.
