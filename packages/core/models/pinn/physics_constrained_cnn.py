@@ -150,80 +150,71 @@ class PhysicsConstrainedCNN(BaseModel):
         batch_size = signal.shape[0]
         device = signal.device
 
-        # Get predicted classes
-        predicted_classes = torch.argmax(predictions, dim=1)  # [B]
+        # --------------------------------------------------------------
+        # DIFFERENTIABLE physics-consistency loss (see
+        # experiments/PHYSICS_LOSS_DIAGNOSIS.md §8.0-bis).
+        #
+        # The old implementation selected the target class with
+        # torch.argmax(predictions) -- a non-differentiable op. Every term
+        # downstream was then a function of the (constant) input-signal FFT
+        # and a frequency-table lookup, so the loss had no gradient to the
+        # model parameters (requires_grad=False) and the physics weight was
+        # inert. We instead weight a per-CLASS frequency-mismatch penalty by
+        # the model's softmax probabilities: the gradient flows
+        #   loss -> probs -> logits -> params,
+        # penalizing probability mass on classes whose characteristic
+        # frequencies are absent from the signal's spectrum.
+        # --------------------------------------------------------------
 
-        # Extract RPM
+        # softmax class probabilities -- the ONLY parameter-dependent factor.
+        probs = F.softmax(predictions, dim=1)  # [B, C], differentiable
+
+        # Extract RPM (scalar, as in the original)
         rpm = 3600.0
         if metadata is not None and 'rpm' in metadata:
             rpm_val = metadata['rpm']
             if isinstance(rpm_val, torch.Tensor):
-                rpm = rpm_val.cpu().numpy()
-            if hasattr(rpm, 'mean'):
-                rpm = float(rpm.mean())
+                rpm_val = rpm_val.detach().cpu().numpy()
+            if hasattr(rpm_val, 'mean'):
+                rpm = float(rpm_val.mean())
             else:
-                rpm = float(rpm)
+                rpm = float(rpm_val)
 
-        # Compute FFT
+        # Observed spectral peaks per sample (constant w.r.t. params)
         if signal.dim() == 3:
             signal = signal.squeeze(1)
+        magnitude = torch.abs(torch.fft.rfft(signal, n=n_fft, dim=-1))  # [B, F]
+        freq_bins = torch.fft.rfftfreq(n_fft, d=1.0 / self.sample_rate).to(device)
+        k = min(top_k * 2, magnitude.shape[-1])
+        _, peak_indices = torch.topk(magnitude, k=k, dim=-1)  # [B, k]
+        peak_freqs = freq_bins[peak_indices]                  # [B, k]
 
-        fft = torch.fft.rfft(signal, n=n_fft, dim=-1)
-        magnitude = torch.abs(fft)
-
-        # Frequency bins
-        freq_bins = torch.fft.rfftfreq(n_fft, d=1.0/self.sample_rate).to(device)
-
-        # Compute frequency consistency loss
-        total_freq_loss = 0.0
-        num_valid_checks = 0
-
-        for i in range(batch_size):
-            pred_class = predicted_classes[i].item()
-
-            # Get expected frequencies
+        # Per-class mismatch penalty pen[B, C] (no params -> constant tensor).
+        num_classes = predictions.shape[1]
+        pen = torch.zeros(batch_size, num_classes, device=device)
+        for c in range(num_classes):
             try:
-                expected_freqs = self.signature_db.get_expected_frequencies(
-                    pred_class, rpm, top_k=top_k
-                )
-                expected_freqs = torch.tensor(expected_freqs, device=device)
+                exp = self.signature_db.get_expected_frequencies(c, rpm, top_k=top_k)
+            except Exception:
+                continue  # leave pen[:, c] = 0 if the lookup fails
+            exp = torch.as_tensor(
+                [float(f) for f in exp if f > 0], device=device, dtype=peak_freqs.dtype
+            )
+            if exp.numel() == 0:
+                continue  # e.g. healthy class: no characteristic freqs -> no penalty
+            # distance of each expected freq to the nearest observed peak, per sample
+            rel_dist = torch.abs(
+                peak_freqs.unsqueeze(1) - exp.view(1, -1, 1)
+            ) / (exp.view(1, -1, 1) + 1e-6)          # [B, E, k]
+            min_dist = rel_dist.min(dim=-1).values    # [B, E]
+            pen[:, c] = F.relu(min_dist - tolerance).mean(dim=1)  # [B]
 
-                # Get observed peaks
-                spectrum_i = magnitude[i]
-                peak_values, peak_indices = torch.topk(
-                    spectrum_i,
-                    k=min(top_k * 2, len(spectrum_i))
-                )
-                peak_freqs = freq_bins[peak_indices]
-
-                # Check consistency
-                for expected_freq in expected_freqs:
-                    if expected_freq > 0:
-                        distances = torch.abs(peak_freqs - expected_freq) / (expected_freq + 1e-6)
-                        min_distance = torch.min(distances)
-
-                        # Penalize if no peak within tolerance
-                        loss_i = F.relu(min_distance - tolerance)
-                        total_freq_loss += loss_i
-                        num_valid_checks += 1
-
-            except Exception as e:
-                # Skip if error in physics computation
-                continue
-
-        # Average frequency loss
-        if num_valid_checks > 0:
-            freq_loss = total_freq_loss / num_valid_checks
-        else:
-            freq_loss = torch.tensor(0.0, device=device)
-
-        # Additional physics checks could be added here:
-        # - Energy distribution check
-        # - Harmonic structure check
-        # etc.
+        # Differentiable: penalize probability on spectrally-inconsistent classes.
+        freq_loss = (probs * pen).sum(dim=1).mean()
 
         loss_dict = {
-            'frequency_consistency': freq_loss.item()
+            'frequency_consistency': float(freq_loss.detach()),
+            'mean_penalty': float(pen.mean()),
         }
 
         return freq_loss, loss_dict
