@@ -209,7 +209,7 @@ and the owner reviews the fix design.
 | §8.1 | Noise robustness: all 24 frozen checkpoints × SNR-20/10/5 | laptop | **DONE 24/24, summary written** (`results/noise_robustness/summary.{md,json,png}`). Headline: family mean degradation clean→5dB: **physics 8.51 vs vanilla 15.54** (prereg rule favors physics) — BUT outlier-sensitive: attention_cnn's collapse (Δ50.6) drags the vanilla mean; excluding it vanilla≈6.8 beats physics. Most robust single model is VANILLA resnet18 (Δ1.70, still 94.4% at 5 dB); clean-data co-champion cnn_lstm is noise-fragile (Δ12.7). pc_cnn Δ4.99 (best physics). Full honest read → FINDINGS.md at Gate 5; remember pc_cnn here is physics-OFF (§8.0) — §8.4's w>0 arms at 5 dB are the real physics-noise test. One incident en route (I4) |
 | §8.2 | Data efficiency: pc_cnn(w=0.3) & resnet18 × {10,25,50,100}% × 3 seeds | Colab | **DATA IN 21/21** (partial download). PRELIMINARY (reframed as ARCHITECTURE per §8.0-bis): dead even — 10%: 93.55±0.61 vs 93.60±0.96; 25%: 94.99±0.35 vs 94.71±0.52; 50%: 95.48±0.21 vs 95.37±0.15. Prereg: physics does NOT win (0/3). NB: closure bug recorded fraction=1.0 for all 12 pc_cnn (true frac in dir path; fixed in script `9e3c3b8`) |
 | §8.3 | Severity-OOD: both directions (train low→test severe; train high→test incipient) | Colab | **DATA IN 12/12** (partial download). PRELIMINARY (architecture): dir A (→severe) pc_cnn 96.87±0.46 vs resnet18 97.37±0.09 (vanilla ahead); dir B (→incipient, hard) pc_cnn 79.80±4.09 vs resnet18 73.43±4.03 (pc_cnn backbone +6.4). Split → physics-as-such not demonstrated |
-| §8.4 | Physics-weight ablation w∈{0.1,0.3,1.0} (+Phase-4 as w=0), eval clean+5 dB | Colab | **BEFORE 9/9 done, FULLY INERT CONFIRMED**: w=0.1≡w=0.3≡w=1.0 byte-identical per seed (clean 95.61/95.87/96.48). AFTER-fix rerun in progress on branch `p5/physics-loss-fix` → Drive `results_phase5_fixed/` (§7 amendment recorded) |
+| §8.4 | Physics-weight ablation w∈{0.1,0.3,1.0} (+Phase-4 as w=0), eval clean+5 dB | Colab | **BEFORE 9/9 inert** (w=0.1≡0.3≡1.0 byte-identical, clean 95.99/5dB 91.00). **AFTER-fix 6/9** (`results/phase5_fixed/`, sha e894389): degeneracy BROKEN (w=0.1≠w=0.3 per seed → fix works). Prelim means — w0.1: clean 96.11/5dB 92.54; w0.3: clean 96.12/5dB 92.21. Clean ~unchanged; 5dB up ~+1.3 but HIGH seed variance (seed0 worse, seed1/2 better). w=1.0 ×3 pending → rerunning all 9 fresh on new account into `results_phase5_fixed/`. Verdict needs w1.0 + prereg McNemar (w=0 vs best-w @5dB) |
 | §8.5 | hybrid_pinn with TRUE per-record metadata (rpm/load/viscosity from v2; mapping documented in script header) vs Phase-4 constant-defaults | Colab | **DONE 3/3 — HONEST NEGATIVE**: true-metadata 89.76 mean (89.96/90.11/89.20) vs Phase-4 blind 90.04 → no improvement (prereg expected ≥+2). FINAL (unaffected by the loss fix; uses forward-path metadata) |
 | §8.6 | XAI alignment (SHAP/IG energy in PHYSICS.md frequency bands) + MC-dropout calibration | laptop | **scripts NOT built yet** — build after Colab results land |
 
@@ -221,12 +221,13 @@ and the owner reviews the fix design.
   Old pre-convergence data suggests se_resnet18 is strong, multi_scale_cnn may
   collapse — both expectations are recorded.
 
-**Results locations (canonical, 2026-06-13)**: the 45 inert "before" runs are
-committed at `results/phase5/` (metrics.json only); the full archive WITH
-checkpoints is at `D:\Libraries\results_phase5-20260613T100807Z-3-001`. The
-fixed "after" §8.4 runs go to `results/phase5_fixed/` (from Drive
-`results_phase5_fixed/`). Raw timestamped Drive-download folders are deleted
-once consolidated.
+**Results locations (canonical, 2026-06-13)**: inert "before" 45 runs committed
+at `results/phase5/`; fixed "after" §8.4 at `results/phase5_fixed/` (6/9 so far,
+will be 9/9 after the new-account rerun). Both are metrics.json only. Full
+archives WITH checkpoints in `D:\Libraries\` (before: `...T100807Z...` 45+45pth;
+after: `...fixed-...T170732Z...` 6+7pth; the `...T073028Z...` 39-partial there is
+redundant). Raw timestamped Drive-download folders are moved to `D:\Libraries`
+once consolidated, never left in `results/`.
 
 **After Colab results come home (Drive download → `results/phase5/`)**:
 verify 45 metrics.json + provenance → build aggregation/analysis per prereg
