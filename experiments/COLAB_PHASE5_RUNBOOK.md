@@ -143,6 +143,37 @@ one of these to the Cell-6 command:
 `--only data_efficiency` (21 runs) · `--only severity_ood` (12) ·
 `--only pinn_ablation` (9) · `--only true_metadata` (3).
 
+### Resuming on a NEW account/Drive (from a downloaded results folder)
+
+The skip-logic only sees runs whose `metrics.json` sits at the exact path
+Cell 4 symlinks to: `MyDrive/lstm-pfd/results_phase5/<experiment>/...`. If you
+upload a Drive **download** of prior results, its folder is named like
+`results_phase5-<timestamp>-NNN` and contains a nested `results_phase5/`
+inside — so the runs are NOT where the symlink looks, and the queue restarts
+from `[1/45]`. After Cells 1–4 (which create an empty `results_phase5`),
+relocate the runs into it BEFORE Cell 6:
+
+```bash
+%%bash
+# point SRC at the inner results_phase5 of your uploaded download folder
+SRC="/content/drive/MyDrive/lstm-pfd/results_phase5-<TIMESTAMP>/results_phase5"
+DST="/content/drive/MyDrive/lstm-pfd/results_phase5"
+n=$(find "$SRC" -name metrics.json 2>/dev/null | wc -l)
+echo "found $n metrics.json under SRC"
+if [ "$n" -lt 1 ]; then
+  echo "SRC path wrong -- dirs under the upload:"
+  find "$(dirname "$SRC")" -maxdepth 2 -type d
+else
+  cp -r "$SRC"/* "$DST"/
+  echo "results_phase5 now has $(find "$DST" -name metrics.json | wc -l) metrics.json"
+fi
+```
+
+Verify the count matches what you finished (e.g. 39), THEN run Cell 6 — it will
+log `complete, skip` for each and only train the remainder. (Simpler next time:
+use the small `logs/phase5_resume_bundle.zip` Claude can build — extract it so
+its `results_phase5/` lands directly at `MyDrive/lstm-pfd/results_phase5/`.)
+
 ## When the count reaches 45/45
 
 Everything is already in `MyDrive/lstm-pfd/results_phase5/`. Back on the
