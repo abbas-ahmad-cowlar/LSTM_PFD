@@ -360,11 +360,16 @@ def main() -> None:
                 for seed in args.seeds:
                     rd = out_root / 'data_efficiency' / f'{model_key}_w{w}' / f'frac{int(frac*100)}' / f'seed{seed}'
                     idx = stratified_fraction_idx(tr_lab, tr_sev, frac, seed)
-                    queue.append((rd, lambda rd=rd, mk=model_key, sd=seed, ix=idx, ww=w: train_run(
+                    # fr=frac MUST be bound here: without it the lambda closes
+                    # over the loop variable and every run records the last
+                    # fraction (1.0). The dir name is correct (rd is bound), so
+                    # the 39-run download's true fraction is recoverable from
+                    # the path; this fixes the recorded tag for future runs.
+                    queue.append((rd, lambda rd=rd, mk=model_key, sd=seed, ix=idx, ww=w, fr=frac: train_run(
                         rd, mk, sd, std_loaders(ix), ww, False, max_epochs, patience,
                         {'test': test_loader},
                         {'experiment': 'data_efficiency', 'prereg': '§8.2',
-                         'fraction': frac})))
+                         'fraction': fr})))
 
     # §8.3 severity OOD
     if args.only in (None, 'severity_ood'):
