@@ -10,9 +10,11 @@
 > **Maintenance duty**: update this file at every phase gate and at the end of
 > every working session. It is linked from the README.
 >
-> Last updated: **2026-06-13, end of session 1** (Phase 5 in progress;
-> noise-robustness queue at 23/24 on the laptop; Phase-5 GPU queue built and
-> awaiting the owner's Colab session)
+> Last updated: **2026-06-13, session 2** (Phase 5 in progress; §8.1
+> noise-robustness DONE 24/24; Phase-5 Colab queue 39/45 (6 pending: pinn
+> w=1.0 ×3, true_metadata ×3 — owner resuming); KEY FINDING §8.0-bis: pc_cnn
+> physics loss is non-differentiable/inert — agreed plan = finish honest →
+> investigate → fix → rerun → before/after paper narrative)
 
 ---
 
@@ -177,13 +179,38 @@ metric, decision rule — written BEFORE running; never reverse this order).
 pc_cnn rows are the **w=0 (physics-off) arm**. §8.2/8.3 run it with physics ON
 at fixed w=0.3; §8.4 sweeps w (its w=0 arm = Phase-4 runs, reused).
 
+**§8.0-bis DISCOVERY — session 2, 2026-06-13 (the physics loss is INERT)**:
+the 39/45 partial Colab download proved `compute_physics_loss` is
+**non-differentiable** — it routes through `torch.argmax(predictions)`
+([physics_constrained_cnn.py:154](packages/core/models/pinn/physics_constrained_cnn.py))
+and the penalty otherwise depends only on the (constant) input-signal FFT and
+a frequency-DB lookup, so it has `requires_grad=False`/`grad_fn=None` and
+`.backward()` raises. Evidence: §8.4 `w=0.1` and `w=0.3` runs are
+**byte-identical per seed** (same acc/best_epoch/best_val to 4 dp). So the
+physics weight has **zero training effect** — §8.0 round 2: Phase 4 never
+*called* the loss; Phase 5 calls it but it carries no gradient. Consequences:
+**§8.4 is void as a physics test** (all w identical; pending w=1.0 will match);
+**§8.2/§8.3 are valid ARCHITECTURE comparisons** (pc_cnn backbone vs resnet18),
+NOT "physics helps" evidence; **§8.5 (hybrid_pinn) is the one live physics
+mechanism** — metadata enters via the differentiable forward path (verified:
+different metadata → logits differ ~1.08). Memory:
+`phase5-pccnn-physics-loss-inert`.
+
+**AGREED PLAN (owner ratified, session 2)**: (1) finish the 6 pending runs as-is
+and stay honest about the inert-loss result; (2) investigate the root cause;
+(3) apply a differentiable fix if one exists (soft softmax-probability-weighted
+frequency penalty instead of argmax — needs a §7 PROTOCOL amendment, owner-gated);
+(4) rerun §8.4 (± §8.2/8.3) with REAL physics; (5) report **before-fix vs
+after-fix** as a paper narrative. Fix code is NOT to be touched until the 6 land
+and the owner reviews the fix design.
+
 | Prereg | Experiment | Compute | Status |
 |---|---|---|---|
 | §8.1 | Noise robustness: all 24 frozen checkpoints × SNR-20/10/5 | laptop | **DONE 24/24, summary written** (`results/noise_robustness/summary.{md,json,png}`). Headline: family mean degradation clean→5dB: **physics 8.51 vs vanilla 15.54** (prereg rule favors physics) — BUT outlier-sensitive: attention_cnn's collapse (Δ50.6) drags the vanilla mean; excluding it vanilla≈6.8 beats physics. Most robust single model is VANILLA resnet18 (Δ1.70, still 94.4% at 5 dB); clean-data co-champion cnn_lstm is noise-fragile (Δ12.7). pc_cnn Δ4.99 (best physics). Full honest read → FINDINGS.md at Gate 5; remember pc_cnn here is physics-OFF (§8.0) — §8.4's w>0 arms at 5 dB are the real physics-noise test. One incident en route (I4) |
-| §8.2 | Data efficiency: pc_cnn(w=0.3) & resnet18 × {10,25,50,100}% × 3 seeds | Colab | script ready, NOT run |
-| §8.3 | Severity-OOD: both directions (train low→test severe; train high→test incipient) | Colab | script ready, NOT run |
-| §8.4 | Physics-weight ablation w∈{0.1,0.3,1.0} (+Phase-4 as w=0), eval clean+5 dB | Colab | script ready, NOT run |
-| §8.5 | hybrid_pinn with TRUE per-record metadata (rpm/load/viscosity from v2; mapping documented in script header) vs Phase-4 constant-defaults | Colab | script ready, NOT run |
+| §8.2 | Data efficiency: pc_cnn(w=0.3) & resnet18 × {10,25,50,100}% × 3 seeds | Colab | **DATA IN 21/21** (partial download). PRELIMINARY (reframed as ARCHITECTURE per §8.0-bis): dead even — 10%: 93.55±0.61 vs 93.60±0.96; 25%: 94.99±0.35 vs 94.71±0.52; 50%: 95.48±0.21 vs 95.37±0.15. Prereg: physics does NOT win (0/3). NB: closure bug recorded fraction=1.0 for all 12 pc_cnn (true frac in dir path; fixed in script `9e3c3b8`) |
+| §8.3 | Severity-OOD: both directions (train low→test severe; train high→test incipient) | Colab | **DATA IN 12/12** (partial download). PRELIMINARY (architecture): dir A (→severe) pc_cnn 96.87±0.46 vs resnet18 97.37±0.09 (vanilla ahead); dir B (→incipient, hard) pc_cnn 79.80±4.09 vs resnet18 73.43±4.03 (pc_cnn backbone +6.4). Split → physics-as-such not demonstrated |
+| §8.4 | Physics-weight ablation w∈{0.1,0.3,1.0} (+Phase-4 as w=0), eval clean+5 dB | Colab | **6/9 in; VOID as physics test** (§8.0-bis: w=0.1≡w=0.3 byte-identical → loss inert). w=1.0 ×3 pending (will also match). Re-do after differentiable fix per AGREED PLAN |
+| §8.5 | hybrid_pinn with TRUE per-record metadata (rpm/load/viscosity from v2; mapping documented in script header) vs Phase-4 constant-defaults | Colab | **0/3 PENDING** — the one live physics test (metadata via forward path, verified differentiable). Finish on resume |
 | §8.6 | XAI alignment (SHAP/IG energy in PHYSICS.md frequency bands) + MC-dropout calibration | laptop | **scripts NOT built yet** — build after Colab results land |
 
 - Colab queue: `scripts/run_phase5_gpu.py` (~45 runs, resume-safe,
