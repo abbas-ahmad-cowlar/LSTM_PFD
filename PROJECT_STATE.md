@@ -10,14 +10,18 @@
 > **Maintenance duty:** update this file at every phase gate and at the end of
 > every session. Keep it truthful and current; it is the single source of truth.
 >
-> **Last updated: 2026-06-14, session 5.** Status in one line: Phase 5 finished
+> **Last updated: 2026-06-14, session 6.** Status in one line: Phase 5 finished
 > and merged to `main` (Gate 5), **but** an internal audit then an independent
 > external audit found the project's *physics-informed-model* evidence is
 > invalid (wrong-bearing-type physics, an inert loss, window-level statistics,
 > mislabeled rows). We are mid-**remediation** on branch `p6/docs`. The
 > dataset/benchmark survive *as a synthetic classification benchmark*; the
-> physics-model claims do not. **Current step: Step 2 of the 5-step remediation
-> (recompute all statistics at record level).**
+> physics-model claims do not. **Steps 1-3 of the 5-step remediation are DONE
+> (reconcile docs incl. README; record-level statistics; quarantine/relabel);
+> current step: Step 4 — implement + gradient-test the ratified band-energy loss
+> (OWNER-GATED).** Step 2 result: at the 528-record level the benchmark is
+> near-ceiling and no row shows a physics advantage
+> (`results/benchmark/summary_record_level.md`). Suite 254 passed, 6 deselected.
 
 ---
 
@@ -243,22 +247,32 @@ HybridPINN, record-level stats) **has not been run.** Do not call it "decisive."
 
 ### 5.3 Remediation sequence (external-auditor-endorsed) — DO IN ORDER
 1. **Reconcile docs** to the corrected blast radius + guardrails — **DONE**
-   (FINDINGS §0, this file, PROTOCOL §7, PHYSICS_LOSS_AUDIT §6).
-2. **Recompute ALL statistics at record level** — **NEXT.** Re-eval the
-   benchmark checkpoints (in `results/benchmark/deep/*/seed*/best_model.pth`, no
-   retraining) to get per-window predictions → aggregate per 5-s record
-   (majority vote / mean logits) → McNemar/Wilcoxon + cluster-bootstrap CIs at
-   528 records → correct `results/benchmark/summary.*` + FINDINGS.
-3. **Quarantine/relabel invalid rows:** pc_cnn (CE-only) → architecture label;
-   multitask_pinn → single-task label; HybridPINN rolling-element physics →
-   rebuild on journal-bearing features or remove from physics claims; mark
-   `PhysicalConstraintLoss`/`PINNTrainer` physics path non-authoritative; archive
-   stale scripts (`scripts/research/pinn_ablation.py` references args that don't
-   exist).
-4. **Implement + gradient-test the band-energy loss** (ratified): use
-   `get_expected_bands`, per-sample rpm, handle empty-tonal classes; tests assert
-   `requires_grad`, nonzero param grads, and per-class (tonal/broadband/mixed)
-   behavior.
+   (FINDINGS §0, this file, PROTOCOL §7, PHYSICS_LOSS_AUDIT §6, **README**).
+2. **Recompute ALL statistics at record level** — **DONE 2026-06-14.** Re-eval
+   the benchmark checkpoints (in `results/benchmark/deep/*/seed*/best_model.pth`,
+   no retraining; classical refit from the cached features) → soft-vote per 5-s
+   record → cluster-bootstrap CIs + exact McNemar at 528 records, with a sanity
+   gate (argmax of cached scores reproduces each recorded window accuracy).
+   `scripts/aggregate_benchmark_record_level.py` →
+   `results/benchmark/summary_record_level.{json,md}` (+ FINDINGS §0). Result:
+   near-ceiling (RF 98.74%, top deep ~99%, CE-only pc_cnn 98.99%); **no row shows
+   a physics advantage** — best vanilla (cnn_lstm) and CE-only pc_cnn tie to the
+   record (gap +0.00 pts, McNemar p=1). Window-level `summary.*` superseded.
+3. **Quarantine/relabel invalid rows — DONE 2026-06-14.** Window-level
+   `summary.{md,json}` regenerated: `(physics)` flags replaced by honest Note
+   column (pc_cnn = CE-only/architecture, multitask = single-task, hybrid =
+   rolling-element + constant metadata), banner marks all significance superseded
+   (UTF-8 fixed). Quarantine docstrings added to `PhysicalConstraintLoss`,
+   `FrequencyConsistencyLoss`, `PINNTrainer`, `PINNEvaluator`, HybridPINN physics
+   branch, and `BearingDynamics` defaults. `scripts/research/pinn_ablation.py`
+   blocked (`run_ablation_study` raises) + run_all.py call site flagged.
+   `tests/test_physics_quarantine.py` (3 tests) pins the inert loss + the stale
+   script guard. Suite **254 passed, 6 deselected**.
+4. **Implement + gradient-test the band-energy loss — NEXT (owner-gated).**
+   Ratified formulation (PROTOCOL §7): use `get_expected_bands`, per-sample rpm,
+   handle empty-tonal classes; tests assert `requires_grad`, nonzero param grads,
+   and per-class (tonal/broadband/mixed) behavior. **Replace the Step-3 quarantine
+   guard test with its opposite when this lands.**
 5. **Only then rerun** physics-forward experiments (§8.4, §8.2 pc_cnn, §8.5 with
    corrected HybridPINN if retained, §8.6a recompute) from a frozen manifest.
    Then **rewrite + re-ratify FINDINGS**.
