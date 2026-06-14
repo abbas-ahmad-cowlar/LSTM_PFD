@@ -18,7 +18,9 @@ Signatures are expressed relative to shaft frequency Ω = rpm/60 (tonal) or as
 absolute Hz bands (broadband/impulsive faults).
 """
 
-from typing import Dict, List, Tuple, Union
+import json
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -125,6 +127,35 @@ class FaultSignatureDatabase:
         if broadband:
             spec += 0.1 * amplitude
         return spec
+
+
+# --- frozen healthy-class reference (P6 Step 4) ---------------------------------
+_HEALTHY_REFERENCE_PATH = Path(__file__).with_name('healthy_reference.json')
+_healthy_reference_cache: Optional[dict] = None
+
+
+def load_healthy_reference(path: Optional[str] = None) -> Optional[dict]:
+    """Frozen healthy-class band-energy reference (owner-ratified 2026-06-14).
+
+    Returns ``{class_name: {'tonal': [H_ref, ...], 'bands_hz': [H_ref, ...]}}`` —
+    the mean fraction of total energy HEALTHY training windows carry in each
+    class's expected bands — or ``None`` if the artifact is absent. The
+    band-energy physics loss and the DB↔data CI test both judge "signature
+    present" as energy ABOVE these values (not above a flat spectrum), so
+    healthy-shared energy (EMI, low-frequency pink noise) cannot masquerade as a
+    fault. Regenerate with ``scripts/compute_healthy_reference.py``. Cached.
+    """
+    global _healthy_reference_cache
+    if path is None and _healthy_reference_cache is not None:
+        return _healthy_reference_cache
+    p = Path(path) if path else _HEALTHY_REFERENCE_PATH
+    if not p.exists():
+        return None
+    data = json.loads(p.read_text(encoding='utf-8'))
+    ref = data.get('per_class', data)
+    if path is None:
+        _healthy_reference_cache = ref
+    return ref
 
 
 # --- module-level convenience API (kept stable for package __init__ + callers) ---

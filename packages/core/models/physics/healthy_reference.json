@@ -1,0 +1,232 @@
+{
+  "_doc": "Frozen healthy-class spectral reference (P6 Step 4). Per fault class, the mean fraction of total 1-s-window energy that HEALTHY training signals carry in each of that class's expected bands (tonal bands rpm-matched per record). The band-energy physics loss penalizes a class whose bands are NOT elevated above these values; the DB-consistency CI test asserts faults exceed them. Aligns loss + CI to the same baseline.",
+  "_provenance": {
+    "generated_at": "2026-06-14T17:05:44.532358+00:00",
+    "git_sha": "f2e2f8e6133229bc9fd9bf1613aad8ce63aea7c5",
+    "dataset": "dataset_v2.h5",
+    "split": "train",
+    "healthy_class": "sain",
+    "n_healthy_windows": 1120,
+    "fs": 20480,
+    "window": 20480,
+    "n_fft": 20480,
+    "freq_resolution_hz": 1.0,
+    "source": "scripts/compute_healthy_reference.py"
+  },
+  "band_layout": {
+    "sain": {
+      "tonal": [],
+      "bands_hz": []
+    },
+    "desalignement": {
+      "tonal": [
+        [
+          2.0,
+          0.06
+        ],
+        [
+          3.0,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "desequilibre": {
+      "tonal": [
+        [
+          1.0,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "jeu": {
+      "tonal": [
+        [
+          0.45,
+          0.12
+        ],
+        [
+          1.0,
+          0.06
+        ],
+        [
+          2.0,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "lubrification": {
+      "tonal": [],
+      "bands_hz": [
+        [
+          1.0,
+          6.0
+        ]
+      ]
+    },
+    "cavitation": {
+      "tonal": [],
+      "bands_hz": [
+        [
+          1400.0,
+          2600.0
+        ]
+      ]
+    },
+    "usure": {
+      "tonal": [
+        [
+          1.0,
+          0.06
+        ],
+        [
+          2.0,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "oilwhirl": {
+      "tonal": [
+        [
+          0.45,
+          0.12
+        ]
+      ],
+      "bands_hz": []
+    },
+    "mixed_misalign_imbalance": {
+      "tonal": [
+        [
+          1.0,
+          0.06
+        ],
+        [
+          2.0,
+          0.06
+        ],
+        [
+          3.0,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "mixed_wear_lube": {
+      "tonal": [
+        [
+          1.0,
+          0.06
+        ],
+        [
+          2.0,
+          0.06
+        ]
+      ],
+      "bands_hz": [
+        [
+          1.0,
+          6.0
+        ]
+      ]
+    },
+    "mixed_cavit_jeu": {
+      "tonal": [
+        [
+          0.45,
+          0.12
+        ],
+        [
+          1.0,
+          0.06
+        ]
+      ],
+      "bands_hz": [
+        [
+          1400.0,
+          2600.0
+        ]
+      ]
+    }
+  },
+  "per_class": {
+    "sain": {
+      "tonal": [],
+      "bands_hz": []
+    },
+    "desalignement": {
+      "tonal": [
+        0.0006520887639778396,
+        0.0009387837854839225
+      ],
+      "bands_hz": []
+    },
+    "desequilibre": {
+      "tonal": [
+        0.012487198312529861
+      ],
+      "bands_hz": []
+    },
+    "jeu": {
+      "tonal": [
+        0.0006430011710335748,
+        0.012487198312529861,
+        0.0006520887639778396
+      ],
+      "bands_hz": []
+    },
+    "lubrification": {
+      "tonal": [],
+      "bands_hz": [
+        0.08300745508167892
+      ]
+    },
+    "cavitation": {
+      "tonal": [],
+      "bands_hz": [
+        0.05031721588831195
+      ]
+    },
+    "usure": {
+      "tonal": [
+        0.012487198312529861,
+        0.0006520887639778396
+      ],
+      "bands_hz": []
+    },
+    "oilwhirl": {
+      "tonal": [
+        0.0006430011710335748
+      ],
+      "bands_hz": []
+    },
+    "mixed_misalign_imbalance": {
+      "tonal": [
+        0.012487198312529861,
+        0.0006520887639778396,
+        0.0009387837854839225
+      ],
+      "bands_hz": []
+    },
+    "mixed_wear_lube": {
+      "tonal": [
+        0.012487198312529861,
+        0.0006520887639778396
+      ],
+      "bands_hz": [
+        0.08300745508167892
+      ]
+    },
+    "mixed_cavit_jeu": {
+      "tonal": [
+        0.0006430011710335748,
+        0.012487198312529861
+      ],
+      "bands_hz": [
+        0.05031721588831195
+      ]
+    }
+  }
+}

@@ -31,7 +31,10 @@ from packages.core.models.base_model import BaseModel
 from packages.core.models.resnet.resnet_1d import ResNet1D
 from packages.core.models.cnn.cnn_1d import CNN1D
 from packages.core.models.physics.bearing_dynamics import BearingDynamics
-from packages.core.models.physics.fault_signatures import FaultSignatureDatabase
+from packages.core.models.physics.fault_signatures import (
+    FaultSignatureDatabase,
+    load_healthy_reference,
+)
 
 
 class PhysicsConstrainedCNN(BaseModel):
@@ -78,6 +81,10 @@ class PhysicsConstrainedCNN(BaseModel):
         # Initialize physics models (for loss computation)
         self.bearing_dynamics = BearingDynamics(bearing_params)
         self.signature_db = FaultSignatureDatabase()
+        # Frozen healthy-class band-energy reference (P6 Step 4). None if the
+        # artifact is absent; compute_physics_loss raises a clear error then.
+        # Tests may override this attribute with a synthetic reference.
+        self.healthy_reference = load_healthy_reference()
 
         # ===== CNN BACKBONE =====
         if backbone == 'resnet18':
@@ -125,50 +132,59 @@ class PhysicsConstrainedCNN(BaseModel):
         signal: torch.Tensor,
         predictions: torch.Tensor,
         metadata: Optional[Dict[str, torch.Tensor]] = None,
-        n_fft: int = 2048,
+        n_fft: Optional[int] = None,
         eps: float = 1e-8,
         **_legacy,
     ) -> Tuple[torch.Tensor, Dict[str, float]]:
         """
-        Band-energy physics-consistency loss (ratified PROTOCOL §7, 2026-06-14).
+        Band-energy physics-consistency loss vs the FROZEN HEALTHY REFERENCE
+        (ratified PROTOCOL §7 + §8.0-quinquies, owner 2026-06-14).
 
         Penalizes softmax probability on a class whose corrected expected spectral
         bands (`FaultSignatureDatabase`, journal-bearing physics — tonal harmonics
-        AND absolute broadband bands) are NOT elevated above what a flat/"healthy"
-        spectrum would carry, i.e. the class's characteristic energy is ABSENT.
-        This supersedes the earlier tonal-only peak-distance loss, which left the
-        broadband (cavitation / lubrication / wear) and mixed classes unconstrained
-        (audit Findings 6; PHYSICS_LOSS_AUDIT §3).
+        AND absolute broadband bands) carry LESS energy than a HEALTHY bearing does
+        in those same bands, i.e. the fault's characteristic energy is not present
+        ABOVE the healthy baseline. The baseline is the frozen healthy-class
+        reference `H_ref` (`scripts/compute_healthy_reference.py`), NOT a flat /
+        uniform spectrum — so healthy-shared energy (60 Hz EMI, low-frequency pink
+        noise) cannot masquerade as a fault signature (e.g. the 1-6 Hz lubrication
+        band carries ~8% of healthy energy; the 1X band ~1.3%). The same reference
+        backs `tests/test_signature_db_consistency.py`, so loss and CI agree.
 
-        Per class c, with band-bin mask M_c (tonal harmonics built from PER-SAMPLE
-        rpm, plus the class's absolute Hz bands):
+        Per class c, per band b (tonal harmonics placed at PER-SAMPLE rpm; absolute
+        Hz bands fixed):
 
-            concentration_c = (E_c / E_total) * (F_bins / n_bins_c)
-
-        — the band set's share of total spectral energy relative to its share of
-        bandwidth. concentration_c > 1 means the class's characteristic bands carry
-        MORE energy than a flat (healthy) spectrum would (signature present);
-        pen_c = relu(1 - concentration_c) rises toward 1 as the signature is absent.
-        Healthy ('sain') has no expected bands -> pen = 0.
+            frac_b = E(signal in b) / E_total
+            pen_b  = relu(1 - frac_b / H_ref[c][b])        # 0 if at/above healthy
+            pen_c  = mean_b pen_b                            # 0 if class has no bands
 
         Differentiability: pen[B, C] is constant w.r.t. model parameters (a function
-        of the input spectrum and per-sample rpm only); the loss
+        of the input spectrum, per-sample rpm, and the frozen reference); the loss
         `(probs * pen).sum(1).mean()` carries gradient through the softmax
         probabilities only —  loss -> probs -> logits -> params. No tunable knob
-        (the consistency threshold is concentration = 1, the flat-spectrum level).
+        (the threshold is the healthy reference itself).
 
         Args:
             signal: Input signal [B, 1, T] or [B, T]
             predictions: Predicted class logits [B, num_classes]
             metadata: Optional dict with PER-SAMPLE 'rpm' [B] (default 3600);
                       tonal band centers scale with shaft speed = rpm/60.
-            n_fft: FFT size
+            n_fft: FFT size; defaults to the full window length (1 Hz resolution at
+                   20480 Hz — required to resolve the 1-6 Hz lubrication band).
             eps: numerical floor
 
         Returns:
             physics_loss: scalar band-energy consistency loss
             loss_dict: components (band_energy_consistency, mean_penalty)
         """
+        ref = self.healthy_reference
+        if ref is None:
+            raise RuntimeError(
+                "band-energy physics loss requires the frozen healthy reference; "
+                "run scripts/compute_healthy_reference.py to generate "
+                "packages/core/models/physics/healthy_reference.json (or set "
+                "model.healthy_reference in tests).")
+
         if signal.dim() == 3:
             signal = signal.squeeze(1)
         device = signal.device
@@ -187,35 +203,40 @@ class PhysicsConstrainedCNN(BaseModel):
             rpm = r.expand(B).clone() if r.numel() == 1 else r[:B]
         omega = (rpm / 60.0).clamp(min=1e-3)  # [B]
 
+        n = n_fft or signal.shape[-1]  # full window -> resolve low-frequency bands
         # Band-energy penalty pen[B, C] -- constant w.r.t. params (no grad needed).
         with torch.no_grad():
             x = signal.detach().float()
-            psd = torch.abs(torch.fft.rfft(x, n=n_fft, dim=-1)) ** 2  # [B, F]
-            freqs = torch.fft.rfftfreq(n_fft, d=1.0 / self.sample_rate).to(device)  # [F]
-            F_bins = freqs.shape[0]
-            e_total = psd.sum(dim=-1) + eps          # [B]
-            f_row = freqs.unsqueeze(0)               # [1, F]
+            psd = torch.abs(torch.fft.rfft(x, n=n, dim=-1)) ** 2  # [B, F]
+            freqs = torch.fft.rfftfreq(n, d=1.0 / self.sample_rate).to(device)  # [F]
+            e_total = psd.sum(dim=-1) + eps   # [B]
+            f_row = freqs.unsqueeze(0)        # [1, F]
 
             pen = torch.zeros(B, C, device=device)
             for c in range(C):
                 try:
-                    sig = self.signature_db.get_signature(c)
+                    name = self.signature_db._name(c)
+                    sig = self.signature_db.signatures[name]
                 except Exception:
                     continue
-                mask = torch.zeros(B, F_bins, device=device, dtype=torch.bool)
-                for m, hw in sig.tonal:  # harmonics scale with PER-SAMPLE rpm
+                rc = ref.get(name)
+                if rc is None:
+                    continue
+                terms = []
+                # tonal harmonics (rpm-matched), each vs its frozen healthy ref
+                for (m, hw), href in zip(sig.tonal, rc.get('tonal', [])):
                     lo = (m * omega * (1.0 - hw)).unsqueeze(1)   # [B,1]
                     hi = (m * omega * (1.0 + hw)).unsqueeze(1)
-                    mask |= (f_row >= lo) & (f_row <= hi)
-                for lo_hz, hi_hz in sig.bands_hz:  # absolute broadband bands
-                    mask |= (f_row >= lo_hz) & (f_row <= hi_hz)
-                n_bins = mask.sum(dim=-1)            # [B]
-                if int(n_bins.max()) == 0:
-                    continue  # e.g. healthy: no expected bands -> no constraint
-                e_band = (psd * mask.float()).sum(dim=-1)  # [B]
-                concentration = (e_band * F_bins) / (e_total * n_bins.clamp(min=1).float())
-                penc = F.relu(1.0 - concentration)  # 0 if signature present, ->1 if absent
-                pen[:, c] = torch.where(n_bins > 0, penc, torch.zeros_like(penc))
+                    mask = (f_row >= lo) & (f_row <= hi)
+                    frac = (psd * mask.float()).sum(dim=-1) / e_total  # [B]
+                    terms.append(F.relu(1.0 - frac / (href + eps)))
+                # absolute broadband bands
+                for (lo_hz, hi_hz), href in zip(sig.bands_hz, rc.get('bands_hz', [])):
+                    mask = (f_row >= lo_hz) & (f_row <= hi_hz)
+                    frac = (psd * mask.float()).sum(dim=-1) / e_total
+                    terms.append(F.relu(1.0 - frac / (href + eps)))
+                if terms:
+                    pen[:, c] = torch.stack(terms, dim=0).mean(dim=0)  # mean over bands
 
         # Differentiable: penalize probability on spectrally-inconsistent classes.
         pen = pen.to(probs.dtype)
