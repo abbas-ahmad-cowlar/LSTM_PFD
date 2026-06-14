@@ -101,7 +101,39 @@ ResNet18→ONNX FP32 **13 ms/window CPU** (parity 1.5e-4); INT8 4× smaller but
 - Any real-world / real-bearing performance claim (study is synthetic-only).
 - A strong/statistically-robust C4 claim *as-is* — see open items below.
 
+## 4b. Validity of the negative — physics self-consistency check (2026-06-14)
+
+Added after ratification (does not change the §3–4 claims — it *bounds* them).
+Run `scripts/verify_physics_consistency.py`: it compares the frequencies the
+physics loss expects (`FaultSignatureDatabase`, same source the loss uses)
+against the actual mean spectra of `dataset_v2` signals per class.
+
+- **Tonal faults** (imbalance 1X, misalignment 2X/3X, clearance, oil whirl
+  sub-sync ~0.45X): the expected characteristic frequencies ARE present as
+  dominant peaks in the data. The generator physics is **self-consistent** here
+  — the signatures a physics model could exploit genuinely exist.
+- **Broadband/impulsive faults** (cavitation, wear, lubrication): energy is
+  broadband/impulsive *by design* (e.g. cavitation kurtosis ≈ 6.8), so the
+  signature DB's **narrow expected-frequency list is a poor encoding** of these
+  signatures — the physics loss is looking for narrow peaks that physically
+  aren't narrow.
+- **Mixed faults** (3 classes): `get_expected_frequencies` has **no entry** and
+  the lookup fails → the physics loss contributed **zero** constraint for them.
+
+**Implication (honest bound on C3):** the generator is sound, but our physics-
+*loss* encoding is partial — good for tonal faults, crude for broadband, absent
+for mixed. So the loss-based negative is partly attributable to an incomplete
+encoding, NOT proof that *no* physics prior could ever help. The paper must
+state C3 as *"the physics-informed mechanisms we implemented, as formulated, do
+not improve accuracy"* — not a universal claim. Why the verdict is still robust:
+(a) the data-driven models already reach ~96% (little headroom); (b) physics
+actively HURT at 10% data (§8.2); (c) a second, independent mechanism
+(hybrid_pinn metadata, §8.5) was also null. A better physics encoding
+(broadband + mixed) is honest future work.
+
 ## 5. Open items before paper-ready (carry into Phase 6/7)
+- Improve/disclose the physics-loss frequency encoding (broadband + mixed-fault
+  signatures) — see §4b; either fix-and-retest or report as a stated limitation.
 - Seed-average the §8.6 calibration ECE (currently single checkpoint each).
 - §8.6a: control-band sensitivity check (absolute fractions depend on it).
 - Generate figures from the JSONs: data-efficiency curve, reliability diagram,
