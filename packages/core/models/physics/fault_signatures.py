@@ -1,446 +1,144 @@
 """
-Fault Signatures Database
+Fault Signatures Database — journal / hydrodynamic bearings.
 
-This module contains expected frequency signatures for each bearing fault type.
-These signatures are used to compute physics-based loss functions that constrain
-PINN models to make physically plausible predictions.
+Expected spectral signatures per fault class, used by physics-informed losses
+to check whether a predicted class is consistent with a signal's spectrum.
 
-Each fault type has characteristic frequencies in the vibration spectrum that
-can be predicted from bearing geometry and operating conditions.
+**Authoritative source: `docs/PHYSICS.md` §4** (the same physics the generator
+implements, enforced by `tests/test_physics_signatures.py`). A separate CI test
+(`tests/test_signature_db_consistency.py`) asserts this DB stays consistent with
+the actual generated data, so the physics the *models* assume can never silently
+diverge from the physics the *data* contains.
+
+NOTE (2026-06-14 rebuild): this module previously encoded ROLLING-ELEMENT
+signatures (BPFO/BPFI/BSF/FTF, outer_race/inner_race/ball) that are physically
+wrong for journal bearings, and lacked the 3 mixed classes (KeyError). See
+`audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md`. Rebuilt from PHYSICS.md §4.
+Signatures are expressed relative to shaft frequency Ω = rpm/60 (tonal) or as
+absolute Hz bands (broadband/impulsive faults).
 """
 
-from utils.constants import NUM_CLASSES, SIGNAL_LENGTH, FAULT_LABELS
+from typing import Dict, List, Tuple, Union
+
 import numpy as np
-import torch
-from typing import Dict, List, Union, Tuple
-from scipy.signal import find_peaks
-from .bearing_dynamics import BearingDynamics
+
+from utils.constants import FAULT_TYPES
 
 
 class FaultSignature:
-    """
-    Represents the expected frequency signature of a bearing fault.
+    """Spectral signature of one fault class (journal bearing).
 
-    Attributes:
-        fault_type: Name of the fault (e.g., 'misalignment', 'imbalance')
-        primary_frequencies: List of frequency components (as functions of shaft freq)
-        harmonics: Number of harmonics typically present
-        frequency_bands: Typical frequency ranges (low/medium/high)
-        amplitude_profile: Expected relative amplitudes
+    tonal: list of (multiplier_of_Omega, relative_halfwidth) — narrow peaks at
+           multiplier*Omega (e.g. (2.0, 0.06) = 2X ±6%); sub-sync uses wider hw.
+    bands_hz: list of (low_hz, high_hz) absolute bands (broadband/impulsive).
+    broadband: True if the fault elevates the broadband floor (wear).
     """
 
-    def __init__(
-        self,
-        fault_type: str,
-        primary_frequencies: List[str],
-        harmonics: int = 3,
-        frequency_bands: List[str] = None,
-        amplitude_profile: str = "exponential_decay"
-    ):
+    def __init__(self, fault_type: str,
+                 tonal: List[Tuple[float, float]] = None,
+                 bands_hz: List[Tuple[float, float]] = None,
+                 broadband: bool = False):
         self.fault_type = fault_type
-        self.primary_frequencies = primary_frequencies
-        self.harmonics = harmonics
-        self.frequency_bands = frequency_bands or ["low", "medium"]
-        self.amplitude_profile = amplitude_profile
+        self.tonal = tonal or []
+        self.bands_hz = bands_hz or []
+        self.broadband = broadband
+
+    @property
+    def primary_frequencies(self) -> List[str]:
+        """Legacy label list (for any older reader)."""
+        return [f"{m:g}X" for m, _ in self.tonal] + \
+               [f"{lo:g}-{hi:g}Hz" for lo, hi in self.bands_hz] + \
+               (["broadband"] if self.broadband else [])
 
 
 class FaultSignatureDatabase:
-    """
-    Database of expected fault signatures for physics-informed constraints.
-
-    This class maps each of the 11 fault types to their characteristic
-    frequency signatures based on bearing physics and vibration analysis theory.
-    """
-
-    # Fault type mappings (use centralized definition from constants)
-    FAULT_TYPES = FAULT_LABELS
+    """Expected journal-bearing fault signatures, keyed by FAULT_TYPES."""
 
     def __init__(self):
-        """Initialize fault signature database."""
-        self.bearing_dynamics = BearingDynamics()
-        self._build_signature_database()
+        self._build()
 
-    def _build_signature_database(self):
-        """Build the fault signature database with physics-based expectations."""
-
-        self.signatures = {
-            'healthy': FaultSignature(
-                fault_type='healthy',
-                primary_frequencies=['broadband_noise'],  # Low amplitude, broadband
-                harmonics=0,
-                frequency_bands=['low', 'medium', 'high'],
-                amplitude_profile='uniform_low'
-            ),
-
-            'misalignment': FaultSignature(
-                fault_type='misalignment',
-                primary_frequencies=['1X', '2X', '3X'],  # 1X, 2X, 3X shaft speed
-                harmonics=3,
-                frequency_bands=['low'],  # < 500 Hz typically
-                amplitude_profile='harmonic_decay'  # 2X often strongest
-            ),
-
-            'imbalance': FaultSignature(
-                fault_type='imbalance',
-                primary_frequencies=['1X'],  # Strong 1X component
-                harmonics=1,
-                frequency_bands=['low'],  # At shaft frequency
-                amplitude_profile='single_peak'  # Dominant 1X
-            ),
-
-            'outer_race': FaultSignature(
-                fault_type='outer_race',
-                primary_frequencies=['BPFO'],  # Ball Pass Frequency Outer race
-                harmonics=5,  # Outer race defects show many harmonics
-                frequency_bands=['medium'],  # 100-2000 Hz
-                amplitude_profile='exponential_decay'
-            ),
-
-            'inner_race': FaultSignature(
-                fault_type='inner_race',
-                primary_frequencies=['BPFI'],  # Ball Pass Frequency Inner race
-                harmonics=5,
-                frequency_bands=['medium'],  # 100-2000 Hz
-                amplitude_profile='modulated'  # Amplitude modulated by shaft speed
-            ),
-
-            'ball': FaultSignature(
-                fault_type='ball',
-                primary_frequencies=['BSF', '2*BSF'],  # Ball Spin Frequency
-                harmonics=3,
-                frequency_bands=['medium', 'high'],  # 500-3000 Hz
-                amplitude_profile='exponential_decay'
-            ),
-
-            'looseness': FaultSignature(
-                fault_type='looseness',
-                primary_frequencies=['1X', '2X', '3X', 'subsync'],  # Multiple harmonics + subsynchronous
-                harmonics=5,
-                frequency_bands=['low', 'medium'],
-                amplitude_profile='chaotic'  # Non-linear behavior
-            ),
-
-            'oil_whirl': FaultSignature(
-                fault_type='oil_whirl',
-                primary_frequencies=['0.42X', '0.43X', '0.48X'],  # Sub-synchronous (40-48% of shaft speed)
-                harmonics=2,
-                frequency_bands=['low'],  # Below shaft frequency
-                amplitude_profile='subsynchronous'
-            ),
-
-            'cavitation': FaultSignature(
-                fault_type='cavitation',
-                primary_frequencies=['high_freq_bursts'],  # 1000-5000 Hz bursts
-                harmonics=0,  # Non-periodic, burst-like
-                frequency_bands=['high'],  # High frequency
-                amplitude_profile='burst'  # Random bursts
-            ),
-
-            'wear': FaultSignature(
-                fault_type='wear',
-                primary_frequencies=['BPFO', 'BPFI', 'FTF'],  # Mix of bearing frequencies
-                harmonics=3,
-                frequency_bands=['medium', 'high'],
-                amplitude_profile='broadband_elevated'  # Elevated across spectrum
-            ),
-
-            'lubrication': FaultSignature(
-                fault_type='lubrication',
-                primary_frequencies=['high_freq_random'],  # High frequency random noise
-                harmonics=0,
-                frequency_bands=['high'],  # > 2000 Hz
-                amplitude_profile='random_high_freq'
-            )
+    def _build(self):
+        H = 0.06   # harmonic half-width (±6%)
+        S = 0.12   # sub-synchronous half-width (the 0.40–0.50·Ω band)
+        LOW = (1.0, 6.0)         # stick-slip / low-frequency band (PHYSICS.md §4.5)
+        HF = (1400.0, 2600.0)    # cavitation HF burst band (§4.6)
+        self.signatures: Dict[str, FaultSignature] = {
+            'sain': FaultSignature('sain'),  # §4.1 — no fault tones
+            'desalignement': FaultSignature(  # §4.2 — 2X dominant, 3X
+                'desalignement', tonal=[(2.0, H), (3.0, H)]),
+            'desequilibre': FaultSignature(  # §4.3 — pure 1X
+                'desequilibre', tonal=[(1.0, H)]),
+            'jeu': FaultSignature(  # §4.4 — sub-sync 0.43–0.48Ω + 1X + 2X
+                'jeu', tonal=[(0.45, S), (1.0, H), (2.0, H)]),
+            'lubrification': FaultSignature(  # §4.5 — stick-slip 2–5 Hz (1–6 band)
+                'lubrification', bands_hz=[LOW]),
+            'cavitation': FaultSignature(  # §4.6 — 1.5–2.5 kHz bursts
+                'cavitation', bands_hz=[HF]),
+            'usure': FaultSignature(  # §4.7 — broadband floor + 1X/2X asperity
+                'usure', tonal=[(1.0, H), (2.0, H)], broadband=True),
+            'oilwhirl': FaultSignature(  # §4.8 — sub-sync 0.42–0.48Ω
+                'oilwhirl', tonal=[(0.45, S)]),
+            'mixed_misalign_imbalance': FaultSignature(  # §4.9 — 1X+2X+3X
+                'mixed_misalign_imbalance', tonal=[(1.0, H), (2.0, H), (3.0, H)]),
+            'mixed_wear_lube': FaultSignature(  # §4.10 — broadband + asperity + stick-slip
+                'mixed_wear_lube', tonal=[(1.0, H), (2.0, H)], bands_hz=[LOW], broadband=True),
+            'mixed_cavit_jeu': FaultSignature(  # §4.11 — HF bursts + sub-sync + 1X
+                'mixed_cavit_jeu', tonal=[(0.45, S), (1.0, H)], bands_hz=[HF]),
         }
 
+    def _name(self, fault_type: Union[int, str]) -> str:
+        return FAULT_TYPES[fault_type] if isinstance(fault_type, (int, np.integer)) else fault_type
+
     def get_signature(self, fault_type: Union[int, str]) -> FaultSignature:
-        """
-        Get fault signature for a given fault type.
+        return self.signatures[self._name(fault_type)]
 
-        Args:
-            fault_type: Either fault index (0-10) or fault name
+    def get_expected_frequencies(self, fault_type: Union[int, str], rpm: float,
+                                 top_k: int = 5) -> np.ndarray:
+        """Tonal expected frequencies (Hz) at this rpm. Empty for purely
+        broadband faults (lubrification, cavitation) — they have no tones."""
+        omega = rpm / 60.0
+        sig = self.get_signature(fault_type)
+        freqs = [m * omega for m, _ in sig.tonal]
+        return np.array(freqs[:top_k], dtype=float)
 
-        Returns:
-            FaultSignature object
-        """
-        if isinstance(fault_type, int):
-            fault_name = self.FAULT_TYPES[fault_type]
-        else:
-            fault_name = fault_type
+    def get_expected_bands(self, fault_type: Union[int, str], rpm: float
+                           ) -> Tuple[List[Tuple[float, float]], bool]:
+        """Absolute (low_hz, high_hz) bands for this fault at this rpm:
+        tonal peaks expanded to narrow bands + the absolute broadband bands.
+        Returns (bands, is_broadband). Empty bands for 'sain'."""
+        omega = rpm / 60.0
+        sig = self.get_signature(fault_type)
+        bands = [(m * omega * (1 - hw), m * omega * (1 + hw)) for m, hw in sig.tonal]
+        bands += [(lo, hi) for lo, hi in sig.bands_hz]
+        return bands, sig.broadband
 
-        return self.signatures[fault_name]
-
-    def get_expected_frequencies(
-        self,
-        fault_type: Union[int, str],
-        rpm: float,
-        top_k: int = 5
-    ) -> np.ndarray:
-        """
-        Get expected dominant frequencies for a fault type at given RPM.
-
-        Args:
-            fault_type: Fault index or name
-            rpm: Shaft speed in RPM
-            top_k: Number of top frequencies to return
-
-        Returns:
-            Array of expected frequencies in Hz
-        """
-        signature = self.get_signature(fault_type)
-
-        # Calculate characteristic frequencies
-        freqs_dict = self.bearing_dynamics.characteristic_frequencies(rpm)
-        shaft_freq = freqs_dict['shaft_freq']
-
-        expected_freqs = []
-
-        for freq_spec in signature.primary_frequencies:
-            if freq_spec == '1X':
-                expected_freqs.append(shaft_freq)
-            elif freq_spec == '2X':
-                expected_freqs.append(2 * shaft_freq)
-            elif freq_spec == '3X':
-                expected_freqs.append(3 * shaft_freq)
-            elif freq_spec == 'BPFO':
-                expected_freqs.extend([
-                    freqs_dict['BPFO'] * (i + 1)
-                    for i in range(signature.harmonics)
-                ])
-            elif freq_spec == 'BPFI':
-                expected_freqs.extend([
-                    freqs_dict['BPFI'] * (i + 1)
-                    for i in range(signature.harmonics)
-                ])
-            elif freq_spec == 'BSF':
-                expected_freqs.extend([
-                    freqs_dict['BSF'] * (i + 1)
-                    for i in range(signature.harmonics)
-                ])
-            elif freq_spec == '2*BSF':
-                expected_freqs.append(2 * freqs_dict['BSF'])
-            elif freq_spec == 'FTF':
-                expected_freqs.append(freqs_dict['FTF'])
-            elif freq_spec == '0.42X':
-                expected_freqs.append(0.42 * shaft_freq)
-            elif freq_spec == '0.43X':
-                expected_freqs.append(0.43 * shaft_freq)
-            elif freq_spec == '0.48X':
-                expected_freqs.append(0.48 * shaft_freq)
-            elif freq_spec == 'subsync':
-                # Add sub-synchronous components
-                expected_freqs.extend([0.3 * shaft_freq, 0.5 * shaft_freq])
-            elif freq_spec in ['broadband_noise', 'high_freq_bursts',
-                              'high_freq_random', 'broadband_elevated']:
-                # For broadband/random, return typical frequency range centers
-                if 'high' in freq_spec:
-                    expected_freqs.extend([2000, 3000, 4000])
-                else:
-                    expected_freqs.extend([500, 1000, 1500])
-
-        # Convert to numpy array and return top_k
-        expected_freqs = np.array(expected_freqs)
-        if len(expected_freqs) > top_k:
-            expected_freqs = expected_freqs[:top_k]
-
-        return expected_freqs
-
-    def compute_expected_spectrum(
-        self,
-        fault_type: Union[int, str],
-        rpm: float,
-        freq_bins: np.ndarray,
-        amplitude: float = 1.0
-    ) -> np.ndarray:
-        """
-        Generate expected frequency spectrum for a fault type.
-
-        This creates an idealized spectrum with peaks at expected frequencies,
-        useful for computing frequency-domain loss functions.
-
-        Args:
-            fault_type: Fault index or name
-            rpm: Shaft speed in RPM
-            freq_bins: Frequency bins (Hz) for spectrum
-            amplitude: Base amplitude for peaks
-
-        Returns:
-            Expected spectrum amplitude at each frequency bin
-        """
-        signature = self.get_signature(fault_type)
-        expected_freqs = self.get_expected_frequencies(fault_type, rpm, top_k=10)
-
-        # Initialize spectrum
-        spectrum = np.zeros_like(freq_bins)
-
-        # Add Gaussian peaks at expected frequencies
-        for i, freq in enumerate(expected_freqs):
-            # Amplitude decay for harmonics
-            if signature.amplitude_profile == 'exponential_decay':
-                amp = amplitude * np.exp(-0.3 * i)
-            elif signature.amplitude_profile == 'harmonic_decay':
-                amp = amplitude / (i + 1)
-            elif signature.amplitude_profile == 'single_peak':
-                amp = amplitude if i == 0 else amplitude * 0.1
-            else:
-                amp = amplitude
-
-            # Add Gaussian peak (width proportional to frequency)
-            sigma = freq * 0.05  # 5% bandwidth
-            spectrum += amp * np.exp(-((freq_bins - freq) ** 2) / (2 * sigma ** 2))
-
-        # Add noise floor for broadband components
-        if 'broadband' in signature.amplitude_profile or signature.amplitude_profile == 'uniform_low':
-            noise_level = 0.1 * amplitude if signature.fault_type == 'healthy' else 0.3 * amplitude
-            spectrum += noise_level * np.random.randn(len(freq_bins)) * 0.1
-
-        return spectrum
-
-    def get_frequency_band_energy(
-        self,
-        spectrum: np.ndarray,
-        freq_bins: np.ndarray,
-        band: str = 'low'
-    ) -> float:
-        """
-        Calculate energy in a specific frequency band.
-
-        Args:
-            spectrum: Frequency spectrum
-            freq_bins: Frequency bins in Hz
-            band: 'low' (<500 Hz), 'medium' (500-2000 Hz), or 'high' (>2000 Hz)
-
-        Returns:
-            Total energy in the band
-        """
-        if band == 'low':
-            mask = freq_bins < 500
-        elif band == 'medium':
-            mask = (freq_bins >= 500) & (freq_bins < 2000)
-        elif band == 'high':
-            mask = freq_bins >= 2000
-        else:
-            raise ValueError(f"Unknown band: {band}")
-
-        return np.sum(spectrum[mask] ** 2)
-
-    def check_signature_consistency(
-        self,
-        predicted_class: int,
-        spectrum: np.ndarray,
-        freq_bins: np.ndarray,
-        rpm: float,
-        tolerance: float = 0.1
-    ) -> float:
-        """
-        Check if observed spectrum is consistent with expected fault signature.
-
-        This computes a consistency score between 0 (inconsistent) and 1 (perfect match).
-        Used as a physics-based validation metric.
-
-        Args:
-            predicted_class: Predicted fault type (0-10)
-            spectrum: Observed frequency spectrum
-            freq_bins: Frequency bins in Hz
-            rpm: Shaft speed in RPM
-            tolerance: Frequency tolerance as fraction of expected frequency
-
-        Returns:
-            Consistency score (0-1)
-        """
-        # Get expected frequencies
-        expected_freqs = self.get_expected_frequencies(predicted_class, rpm, top_k=5)
-
-        # Find actual peaks in spectrum
-        peaks, properties = find_peaks(spectrum, height=0.1 * np.max(spectrum))
-        peak_freqs = freq_bins[peaks]
-
-        if len(peak_freqs) == 0:
-            return 0.0
-
-        # Check how many expected frequencies are present
-        matches = 0
-        for expected_freq in expected_freqs:
-            # Check if any peak is within tolerance
-            freq_tolerance = expected_freq * tolerance
-            if np.any(np.abs(peak_freqs - expected_freq) < freq_tolerance):
-                matches += 1
-
-        # Consistency = fraction of expected frequencies found
-        consistency = matches / len(expected_freqs)
-
-        return consistency
+    def compute_expected_spectrum(self, fault_type: Union[int, str], rpm: float,
+                                  freq_bins: np.ndarray, amplitude: float = 1.0) -> np.ndarray:
+        """Idealized spectrum: Gaussian bumps over each expected band + a flat
+        elevation for broadband faults. (Legacy helper for frequency-domain losses.)"""
+        freq_bins = np.asarray(freq_bins, dtype=float)
+        spec = np.zeros_like(freq_bins)
+        bands, broadband = self.get_expected_bands(fault_type, rpm)
+        for lo, hi in bands:
+            center, width = 0.5 * (lo + hi), max((hi - lo) / 2.0, 1.0)
+            spec += amplitude * np.exp(-0.5 * ((freq_bins - center) / width) ** 2)
+        if broadband:
+            spec += 0.1 * amplitude
+        return spec
 
 
-# Create default database instance
+# --- module-level convenience API (kept stable for package __init__ + callers) ---
 default_database = FaultSignatureDatabase()
 
 
 def get_fault_signature(fault_type: Union[int, str]) -> FaultSignature:
-    """Convenience function to get fault signature."""
     return default_database.get_signature(fault_type)
 
 
 def get_expected_frequencies(fault_type: Union[int, str], rpm: float, top_k: int = 5) -> np.ndarray:
-    """Convenience function to get expected frequencies."""
     return default_database.get_expected_frequencies(fault_type, rpm, top_k)
 
 
-def compute_expected_spectrum(
-    fault_type: Union[int, str],
-    rpm: float,
-    freq_bins: np.ndarray,
-    amplitude: float = 1.0
-) -> np.ndarray:
-    """Convenience function to compute expected spectrum."""
+def compute_expected_spectrum(fault_type: Union[int, str], rpm: float,
+                              freq_bins: np.ndarray, amplitude: float = 1.0) -> np.ndarray:
     return default_database.compute_expected_spectrum(fault_type, rpm, freq_bins, amplitude)
-
-
-if __name__ == "__main__":
-    # Example usage and validation
-    print("=" * 60)
-    print("Fault Signature Database - Validation")
-    print("=" * 60)
-
-    db = FaultSignatureDatabase()
-
-    # Test with typical RPM
-    rpm = 3600.0
-
-    print(f"\nFault Type Signatures (RPM = {rpm}):\n")
-
-    for fault_id, fault_name in db.FAULT_TYPES.items():
-        signature = db.get_signature(fault_id)
-        expected_freqs = db.get_expected_frequencies(fault_id, rpm, top_k=3)
-
-        print(f"{fault_id}. {fault_name.upper()}")
-        print(f"   Primary: {signature.primary_frequencies}")
-        print(f"   Harmonics: {signature.harmonics}")
-        print(f"   Bands: {signature.frequency_bands}")
-        print(f"   Expected freqs (Hz): {expected_freqs}")
-        print()
-
-    # Test expected spectrum generation
-    print("\nGenerating Expected Spectrum for Outer Race Fault:")
-    freq_bins = np.linspace(0, 5000, 1000)
-    spectrum = db.compute_expected_spectrum('outer_race', rpm, freq_bins, amplitude=1.0)
-    print(f"   Spectrum shape: {spectrum.shape}")
-    print(f"   Max amplitude: {np.max(spectrum):.3f}")
-    print(f"   Peak frequency: {freq_bins[np.argmax(spectrum)]:.2f} Hz")
-
-    # Test consistency checking
-    print("\nTesting Signature Consistency:")
-    # Create synthetic spectrum with outer race fault
-    true_spectrum = db.compute_expected_spectrum('outer_race', rpm, freq_bins)
-
-    # Check consistency with correct prediction
-    consistency_correct = db.check_signature_consistency(3, true_spectrum, freq_bins, rpm)
-    print(f"   Outer race spectrum vs. Outer race prediction: {consistency_correct:.2f}")
-
-    # Check consistency with wrong prediction
-    consistency_wrong = db.check_signature_consistency(2, true_spectrum, freq_bins, rpm)
-    print(f"   Outer race spectrum vs. Imbalance prediction: {consistency_wrong:.2f}")
-
-    print("\n" + "=" * 60)
-    print("Validation Complete!")
-    print("=" * 60)
