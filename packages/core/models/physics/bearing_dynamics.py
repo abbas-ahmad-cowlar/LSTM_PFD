@@ -41,7 +41,12 @@ class BearingDynamics:
                 - radial_clearance: Radial clearance in μm (default: 20)
         """
         if bearing_params is None:
-            # Default parameters for SKF 6205 bearing (common in dataset)
+            # ⚠ ROLLING-ELEMENT defaults (SKF 6205 ball bearing). The Sommerfeld /
+            # Reynolds methods below are valid journal-bearing quantities, but
+            # `characteristic_frequencies` (FTF/BPFO/BPFI/BSF) are rolling-element
+            # pass-frequencies and are PHYSICALLY WRONG for this project's
+            # journal/hydrodynamic data — do not feed them as fault frequencies
+            # (audit Finding 7; HybridPINN physics branch quarantined, P6 Step 3).
             bearing_params = {
                 'n_balls': 9,
                 'ball_diameter': 7.94,  # mm

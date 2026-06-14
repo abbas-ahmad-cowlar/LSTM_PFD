@@ -46,6 +46,14 @@ class PINNTrainer(BaseTrainer):
     """
     Trainer for Physics-Informed Neural Networks.
 
+    ⚠ PHYSICS PATH INERT — QUARANTINED (P6 remediation Step 3, 2026-06-14). This
+    trainer's physics term is `PhysicalConstraintLoss`, which is non-differentiable
+    (argmax) → zero gradient (external audit Finding 5). Training through it does
+    NOT learn physics. It produced no committed result (the benchmark used pure CE;
+    Phase-5 used the model-method loss in PhysicsConstrainedCNN). Do not use the
+    physics mode until the ratified band-energy loss (Step 4) replaces
+    `PhysicalConstraintLoss`. The CE/classification training path is unaffected.
+
     Extends BaseTrainer to support physics-based loss constraints.
     Compatible with both HybridPINN and PhysicsConstrainedCNN models.
 

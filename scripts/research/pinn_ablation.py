@@ -1,19 +1,24 @@
 """
-PINN Ablation Study Script
+PINN Ablation Study Script — ⚠ STALE / NON-AUTHORITATIVE (quarantined 2026-06-14).
 
-This script runs systematic ablation experiments to validate the contribution
-of physics-informed components in bearing fault diagnosis.
+DO NOT USE. This script is broken and misleading; it is retained only for
+provenance and is blocked from running (see run_ablation_study). It was NOT the
+source of any Phase-5 §8.4 result.
 
-Usage:
-    python scripts/research/pinn_ablation.py --config configs/ablation.yaml
-    python scripts/research/pinn_ablation.py --quick  # Only 3 key configs
+Why it is quarantined (P6 remediation Step 3; external audit Finding 14):
+  * `create_pinn_model` constructs `HybridPINN(lambda_physics=..., lambda_boundary=...)`
+    (lines ~94-98) — arguments the current `HybridPINN` constructor does not
+    accept; on ImportError it silently falls back to a plain resnet18.
+  * `train_model` (lines ~107-130) trains with `CrossEntropyLoss` only — there is
+    NO physics loss, despite the file being named a "PINN ablation".
 
-Output:
-    - results/ablation/ablation_results.csv
-    - results/ablation/sensitivity_surface.png
-    - results/ablation/significance_tests.json
+The authoritative physics-weight ablation (§8.4) is run by
+`scripts/run_phase5_gpu.py --only pinn_ablation`. Per the corrected blast radius,
+even those §8.4 results are contaminated (incomplete tonal-only loss) and are
+pending the band-energy reimplementation (PROJECT_STATE.md §5.3 Steps 4-5).
 
-Reference: Master Roadmap Chapter 3.1
+Reference: audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md (Finding 14),
+audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md.
 """
 
 import argparse
@@ -245,7 +250,19 @@ def generate_sensitivity_surface(results_df: pd.DataFrame, output_path: Path):
 
 
 def run_ablation_study(configs: List[Dict], quick: bool = False) -> pd.DataFrame:
-    """Run the full ablation study."""
+    """Run the full ablation study.
+
+    QUARANTINED (P6 Step 3): raises immediately — this path constructs HybridPINN
+    with non-existent args and trains CE-only (see module docstring). Use
+    `scripts/run_phase5_gpu.py --only pinn_ablation` for the real §8.4 ablation.
+    """
+    raise RuntimeError(
+        "scripts/research/pinn_ablation.py is QUARANTINED (non-authoritative, "
+        "broken): it builds HybridPINN with arguments that don't exist and trains "
+        "cross-entropy only. It produced no committed result. The §8.4 physics "
+        "ablation is run by scripts/run_phase5_gpu.py --only pinn_ablation. See "
+        "audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md (Finding 14)."
+    )
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
     logger.info("=" * 60)
