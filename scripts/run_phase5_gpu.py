@@ -366,7 +366,7 @@ def main() -> None:
                     # the 39-run download's true fraction is recoverable from
                     # the path; this fixes the recorded tag for future runs.
                     queue.append((rd, lambda rd=rd, mk=model_key, sd=seed, ix=idx, ww=w, fr=frac: train_run(
-                        rd, mk, sd, std_loaders(ix), ww, False, max_epochs, patience,
+                        rd, mk, sd, std_loaders(ix, ops=True), ww, False, max_epochs, patience,
                         {'test': test_loader},
                         {'experiment': 'data_efficiency', 'prereg': '§8.2',
                          'fraction': fr})))
@@ -385,7 +385,7 @@ def main() -> None:
                     queue.append((rd, lambda rd=rd, mk=model_key, sd=seed,
                                   ti=tr_idx, vi=va_idx, ol=ood_loader, ww=w,
                                   dn=direction: train_run(
-                        rd, mk, sd, std_loaders(ti, vi), ww, False, max_epochs,
+                        rd, mk, sd, std_loaders(ti, vi, ops=True), ww, False, max_epochs,
                         patience, {'ood_test': ol, 'full_test': test_loader},
                         {'experiment': 'severity_ood', 'prereg': '§8.3',
                          'direction': dn})))
@@ -397,7 +397,7 @@ def main() -> None:
             for seed in args.seeds:
                 rd = out_root / 'pinn_ablation' / f'w{w}' / f'seed{seed}'
                 queue.append((rd, lambda rd=rd, sd=seed, ww=w: train_run(
-                    rd, 'physics_constrained_cnn', sd, std_loaders(full_idx),
+                    rd, 'physics_constrained_cnn', sd, std_loaders(full_idx, ops=True),
                     ww, False, max_epochs, patience,
                     {'test': test_loader, 'test_snr5': snr5_loader},
                     {'experiment': 'pinn_ablation', 'prereg': '§8.4'})))
