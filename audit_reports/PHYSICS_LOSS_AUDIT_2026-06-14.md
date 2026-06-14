@@ -111,3 +111,37 @@ Owner chose **scoped remediation**. Progress:
   Tier D quarantine are **on hold pending an independent external audit**
   (`audit_reports/INDEPENDENT_AUDIT_PROMPT.md`). Nothing further proceeds until
   that auditor reports.
+
+## 6. External audit received — EXPANDED scope (2026-06-14)
+
+`audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md` corroborated the core
+diagnosis and the pause, but found this plan's blast radius **too narrow**. Items
+this plan missed/understated:
+
+- **§8.5 HybridPINN is also contaminated.** Its physics branch uses
+  `BearingDynamics` rolling-element defaults (SKF 6205: BPFO/BPFI/BSF/FTF),
+  wrong for journal-bearing data. The earlier "§8.5 independent/sound" claim is
+  **withdrawn**. (`hybrid_pinn.py:78-80,220-239`; `bearing_dynamics.py:30-138`.)
+- **Statistics are at window level (2,640) not record level (528).** Windows
+  from one 5 s record are correlated → significance/CIs overstated. ALL stats
+  (benchmark McNemar/Wilcoxon included) must be recomputed at record level.
+- **Mislabeled rows:** `physics_constrained_cnn` benchmark = CE-only;
+  `multitask_pinn` = not trained multitask. Relabel; don't group as "physics".
+- **Generic `PhysicalConstraintLoss`/`PINNTrainer` still inert** (only the
+  model-method loss was fixed) — quarantine + add `requires_grad` tests.
+- **The §8.4/§8.2 "fixed" runs used the incomplete tonal-only loss** (band-energy
+  not yet implemented) → not yet valid.
+- Provenance spread across commits + stale scripts (`scripts/research/pinn_ablation.py`)
+  → need a frozen reproduction manifest; archive stale scripts.
+- Cavitation weakly expressed (5.0% vs 3.35% healthy) → qualify or revalidate.
+
+**Endorsed remediation sequence (external auditor):** (1) reconcile docs to this
+corrected blast radius [DONE — FINDINGS §0, PROJECT_STATE, PROTOCOL, this §6];
+(2) recompute ALL stats at record level; (3) quarantine/relabel invalid rows;
+(4) implement + gradient-test the band-energy loss; (5) only then rerun
+physics-forward experiments; then rewrite + re-ratify FINDINGS.
+
+**Wording guardrails (auditor):** never "the benchmark is sound" without "as a
+classification benchmark, pending relabel + record-level stats"; the negative is
+"stored artifacts show no physics advantage", NOT a "decisive" negative about
+correctly-implemented physics (that experiment has not been run).
