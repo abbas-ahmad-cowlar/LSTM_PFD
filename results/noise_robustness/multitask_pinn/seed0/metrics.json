@@ -1,0 +1,19 @@
+{
+  "model": "multitask_pinn",
+  "seed": 0,
+  "accuracy_by_snr": {
+    "clean": 89.46969696969697,
+    "snr20": 89.46969696969697,
+    "snr10": 89.01515151515152,
+    "snr5": 83.71212121212122
+  },
+  "degradation_clean_to_5db": 5.757575757575751,
+  "provenance": {
+    "preregistration": "PROTOCOL.md \u00a78.1",
+    "checkpoint": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\benchmark\\deep\\multitask_pinn\\seed0\\best_model.pth",
+    "host": "DESKTOP-M7RBFOO",
+    "git_sha": "b86833867e090efba2527e1dc68af3ed6af06bea",
+    "wall_time_s": 104.4,
+    "finished_at": "2026-06-12T19:53:41.230063+00:00"
+  }
+}

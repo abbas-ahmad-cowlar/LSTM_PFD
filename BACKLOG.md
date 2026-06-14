@@ -16,3 +16,4 @@
 - **SaaS productionization** (multi-tenancy, billing, GDPR): out of scope for a research project; revisit only as a separate product decision.
 - **NAS / HPO dashboards**: automated search infrastructure; needs the platform to be stable first.
 - **Dashboard advanced features** (webhooks, 2FA, API keys, notifications): blocked on Phase D login decision.
+- **Tiny-model efficiency study**: pre-convergence Colab run showed lightweight_attention_cnn (61K params, cut in P2) hit 97.2% on full 5s records in 115s of training — a 'small models for edge' study could be a follow-up paper angle.
