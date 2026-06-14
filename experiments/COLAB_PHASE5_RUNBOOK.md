@@ -1,5 +1,8 @@
 # Colab Runbook — Phase-5 GPU experiments (§8.2–8.5)
 
+> **HISTORICAL / DONE — do NOT run.** This was the original 45-run inert-loss
+> queue (complete). The current run is `experiments/COLAB_DATAEFF_RUNBOOK.md`.
+
 > The ONLY file you need for the Phase-5 Colab session. 45 training runs,
 > ~4–6 h on a T4. Everything lands on your Drive as it finishes, so
 > disconnects never lose work.
