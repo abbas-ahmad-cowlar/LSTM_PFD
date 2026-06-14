@@ -72,8 +72,86 @@
 
 | Date | Change | Reason | Affected runs |
 |---|---|---|---|
-| — | — | — | — |
+| 2026-06-13 | **§8.0-bis — differentiable physics loss.** `PhysicsConstrainedCNN.compute_physics_loss` corrected from a non-differentiable argmax-based term to a softmax-probability-weighted per-class frequency penalty (code: branch `p5/physics-loss-fix` @`167e714`; design: `experiments/PHYSICS_LOSS_DIAGNOSIS.md`). The §8.4 **pre-registration is unchanged** (same hypothesis/metric/decision rule, same w∈{0,0.1,0.3,1.0}, same seeds/budget); only the loss *implementation* is fixed, and §8.4 is **re-run** with it. Results kept side by side: inert "before" in `results_phase5/pinn_ablation`, fixed "after" in `results_phase5_fixed/pinn_ablation`; both reported as a before/after contrast. | The original loss had `requires_grad=False`/`grad_fn=None`, contributing zero gradient — proven by §8.4 `w=0.1`≡`w=0.3` byte-identical per seed. The weight was inert, so §8.4 measured nothing. The fix makes `w` affect training (verified: differing gradients). | Re-run: §8.4 `w∈{0.1,0.3,1.0}`×3. Optional: §8.2/8.3 pc_cnn arms. **Unaffected (NOT re-run):** Phase-4 benchmark, §8.1, §8.5 — none call `compute_physics_loss`. |
 
 ---
 
 *Owner ratification (P4.1 DoD): **Approved by Syed Abbas Ahmad, 2026-06-12** ("I ratify the Protocol."). PROTOCOL FROZEN.*
+
+---
+
+## 8. Phase 5 pre-registrations (written BEFORE running — Plan Part III P5)
+
+> **§8.0 Discovery note (2026-06-13, before any §8 run executed)**: code review
+> found that `physics_constrained_cnn.forward()` is a plain CNN; its physics
+> enters ONLY via the separate `compute_physics_loss()` term, which the Phase-4
+> training loop never invoked. **Phase-4's physics_constrained_cnn rows
+> (95.98±0.36) are therefore physics-OFF (w=0)** — they stand as recorded, but
+> the row label carries this footnote. Consequences for §8 (decided now, before
+> running): experiments 8.2 and 8.3 run physics_constrained_cnn with the
+> physics loss ON at fixed pre-chosen w=0.3 (mid-sweep value, no post-hoc
+> selection); §8.4's w=0 arm reuses the Phase-4 runs; §8.4 additionally
+> evaluates every arm at 5 dB SNR.
+
+### 8.1 Noise robustness (P5.3) — pre-registered 2026-06-13
+- **Hypothesis**: physics-informed models (physics_constrained_cnn foremost)
+  degrade less than vanilla counterparts as test SNR drops (clean → 20 → 10 →
+  5 dB), because physics-consistent features are noise-robust.
+- **Procedure**: all 24 frozen Phase-4 checkpoints evaluated on the v2
+  `test_snr20/10/5` groups (no retraining; clean-test numbers from Phase 4).
+- **Metrics**: accuracy per SNR; degradation Δ = acc(clean) − acc(5 dB),
+  mean over seeds per model.
+- **Decision rule**: compare mean Δ of the physics family vs the vanilla deep
+  family; McNemar at 5 dB between best-physics and best-vanilla checkpoints.
+  Report whichever direction holds.
+
+### 8.2 Data efficiency (P5.1) — pre-registered 2026-06-13
+- **Hypothesis**: physics_constrained_cnn loses less accuracy than resnet18
+  (best vanilla) when training data shrinks to {10, 25, 50}% (record-level,
+  group-aware, stratified subsets).
+- **Procedure**: both models × {10,25,50,100}% × seeds {0,1,2}, frozen-protocol
+  budget; 100% = existing Phase-4 runs (not rerun).
+- **Metric**: test accuracy vs fraction curve; gap at 10%.
+- **Decision rule**: physics "wins" the regime if its mean accuracy exceeds
+  vanilla's at ≥2 of the 3 reduced fractions with non-overlapping ±1 std.
+
+### 8.3 Severity-shift OOD (P5.2) — pre-registered 2026-06-13
+- **Hypothesis**: physics-informed models generalize better to unseen severity:
+  train on incipient+mild+moderate → test on severe-only (direction A) and
+  train mild+moderate+severe → test incipient-only (direction B, the harder
+  near-noise case).
+- **Procedure**: physics_constrained_cnn vs resnet18 × both directions ×
+  seeds {0,1,2}; severity filters via v2 per-split `severities` arrays
+  (train/val filtered; test = the held-out severity slice of the test split;
+  'sain' retained everywhere via slot labels).
+- **Metric**: accuracy on the held-out-severity test slice.
+- **Decision rule**: same as 8.2 (≥2 of... here: both directions, mean ± std).
+
+### 8.4 PINN ablation (P5.4) — pre-registered 2026-06-13
+- **Hypothesis**: physics_constrained_cnn's physics loss terms contribute
+  measurably; weight w=0 (pure CNN of same architecture) underperforms w>0
+  under the Phase-5 stress regimes even if tied on clean data.
+- **Procedure**: physics weight sweep w ∈ {0, 0.1, 0.3, 1.0} × seeds {0,1,2},
+  clean test + 5 dB test.
+- **Decision rule**: report accuracy vs w; McNemar w=0 vs best-w at 5 dB.
+
+### 8.5 HybridPINN true-metadata (NEW) — pre-registered 2026-06-13
+- **Motivation**: Phase 4 fed hybrid_pinn constant default operating
+  conditions (protocol fairness), starving its physics branch — it scored
+  ~90%. v2 stores true per-record rpm/load/temperature.
+- **Hypothesis**: with true metadata at train+test time, hybrid_pinn improves
+  materially over its Phase-4 score (≥ +2 pts mean) — physics features carry
+  real signal when actually present.
+- **Procedure**: hybrid_pinn × seeds {0,1,2}, frozen budget, metadata read
+  from v2 per-record metadata; compared against the Phase-4 constant-metadata
+  runs (kept — both rows reported: "operating-condition-blind" vs "-aware").
+- **Decision rule**: Wilcoxon over seeds + McNemar best-vs-best.
+
+### 8.6 XAI alignment (P5.5) & MC-dropout calibration (P5.6) — pre-registered 2026-06-13
+- **8.6a**: SHAP + Integrated Gradients on best physics & best vanilla
+  checkpoints; metric = fraction of attribution energy inside each class's
+  PHYSICS.md characteristic-frequency bands vs equally-wide control bands;
+  hypothesis: physics model's attributions align more.
+- **8.6b**: MC-dropout (30 samples) on the same two checkpoints; ECE +
+  reliability diagram + accuracy-vs-confidence rejection curve; hypothesis:
+  physics model is better calibrated under noise (evaluated clean and 5 dB).

@@ -1,0 +1,47 @@
+{
+  "provenance": {
+    "git_sha": "0d2e3d8b84490066e2070a870ed7e2829d4e4c69",
+    "host": "DESKTOP-M7RBFOO",
+    "device": "cpu",
+    "data": "dataset_v2.h5",
+    "finished_at": "2026-06-13T23:04:31.599315+00:00",
+    "vanilla_ckpt": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\benchmark\\deep\\resnet18\\seed0\\best_model.pth",
+    "pc_cnn_ckpt": "D:\\Libraries\\results_phase5_fixed_full-20260613T221621Z-3-001\\results_phase5_fixed_full\\pinn_ablation\\w0.3\\seed1\\best_model.pth",
+    "per_class": 20,
+    "ig_steps": 32,
+    "mc_samples": 30,
+    "smoke": false
+  },
+  "results": {
+    "resnet18_vanilla": {
+      "mean_in_band_frac": 0.13172227144241333,
+      "mean_control_frac": 0.18407116830348969,
+      "specificity_ratio": 0.7156051397323608,
+      "n_windows": 140,
+      "per_class_in_band": {
+        "1": 0.19124187529087067,
+        "2": 0.1068936213850975,
+        "3": 0.25362077355384827,
+        "4": 0.04922015592455864,
+        "5": 0.2098364382982254,
+        "6": 0.07186507433652878,
+        "7": 0.03937800973653793
+      }
+    },
+    "pc_cnn_physics": {
+      "mean_in_band_frac": 0.13583990931510925,
+      "mean_control_frac": 0.15992526710033417,
+      "specificity_ratio": 0.8493961691856384,
+      "n_windows": 140,
+      "per_class_in_band": {
+        "1": 0.15710364282131195,
+        "2": 0.17106464505195618,
+        "3": 0.2328217476606369,
+        "4": 0.10476859658956528,
+        "5": 0.18571574985980988,
+        "6": 0.06989181041717529,
+        "7": 0.029513195157051086
+      }
+    }
+  }
+}

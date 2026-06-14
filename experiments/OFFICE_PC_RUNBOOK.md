@@ -95,6 +95,11 @@ Start-Process -FilePath "C:\work\lstm-pfd\venv\Scripts\python.exe" `
 
 ## Appendix: Google Colab lane (Linux — different commands!)
 
+> **HISTORICAL — Phase 4 only, already complete** (results live in
+> `results/benchmark/`). Do NOT run these cells again — Cell 2 checks out
+> the old `p4/benchmark` branch and Cell 6 reruns the finished matrix.
+> **For Phase 5 use `experiments/COLAB_PHASE5_RUNBOOK.md`.**
+
 The main runbook is for the Windows office PC. On Colab, paths use **forward
 slashes** (`scripts/run_benchmark.py`, never `scripts\...` — bash eats
 backslashes), and sessions are **ephemeral** (~12 h max, idle disconnects),
@@ -171,3 +176,11 @@ cp -r /content/drive/MyDrive/lstm-pfd/results_benchmark/* results/benchmark/ 2>/
 git add results/benchmark && git commit -m "P4.4: matrix results (Colab T4)"
 # push needs a GitHub token: git push https://<TOKEN>@github.com/abbas-ahmad-cowlar/LSTM_PFD.git p4/benchmark-results
 ```
+
+---
+
+## Appendix: Phase-5 GPU experiments on Colab (§8.2–8.5)
+
+**Moved to its own clean, Colab-only runbook:
+`experiments/COLAB_PHASE5_RUNBOOK.md`** — that file contains nothing but
+the 7 cells for the Phase-5 session (no office-PC/Windows/DVC content).
