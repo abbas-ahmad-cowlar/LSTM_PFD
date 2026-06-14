@@ -26,6 +26,18 @@ class FrequencyConsistencyLoss(nn.Module):
     """
     Penalizes predictions that are inconsistent with expected fault frequencies.
 
+    ⚠ NON-DIFFERENTIABLE / INERT — QUARANTINED (P6 remediation Step 3, 2026-06-14).
+    `forward()` selects the target class with `torch.argmax(predictions)` (a
+    non-differentiable op); the result is `requires_grad=False, grad_fn=None`, so
+    using it as a training term contributes ZERO gradient to the model — it does
+    not train physics, it silently does nothing. Verified by execution and by the
+    external audit (Finding 5). DO NOT wire this into training. The differentiable
+    replacement is the model-method loss in
+    `packages/core/models/pinn/physics_constrained_cnn.py` (softmax-weighted), and
+    the ratified **band-energy** loss is the Step-4 reimplementation. A guard test
+    (`tests/test_physics_quarantine.py`) pins the inert behavior so it cannot be
+    relied on unnoticed.
+
     For a predicted fault class, we expect certain frequencies to be dominant
     in the vibration spectrum. This loss computes the mismatch between observed
     and expected frequency signatures.
@@ -272,6 +284,13 @@ class TemporalSmoothnessLoss(nn.Module):
 class PhysicalConstraintLoss(nn.Module):
     """
     Combined physics-based loss with multiple constraint terms.
+
+    ⚠ INERT — QUARANTINED (P6 remediation Step 3, 2026-06-14). Its frequency term
+    is `FrequencyConsistencyLoss` (non-differentiable, see above), so the combined
+    loss is `requires_grad=False, grad_fn=None` and contributes no gradient. Any
+    training through `PINNTrainer` with this loss does NOT learn physics. Not used
+    by any committed experiment (the benchmark trained pure CE; Phase-5 used the
+    model-method loss). Pinned inert by `tests/test_physics_quarantine.py`.
 
     This is the main loss function for PINN training, combining:
     1. Frequency consistency

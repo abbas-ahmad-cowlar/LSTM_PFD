@@ -179,7 +179,7 @@
     "protocol": "experiments/PROTOCOL.md",
     "data": "dataset_v2.h5",
     "host": "DESKTOP-M7RBFOO",
-    "git_sha": "e498deb0ca74b8930c85e881ee7550e024981f98",
-    "finished_at": "2026-06-12T05:53:09.408186+00:00"
+    "git_sha": "0d25d205f3362d4cd1654f48f01a46370747c188",
+    "finished_at": "2026-06-14T16:10:43.051365+00:00"
   }
 }
