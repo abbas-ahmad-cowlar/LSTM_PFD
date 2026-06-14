@@ -96,3 +96,18 @@ misleading remains": the foundation is re-confirmed, the broken layer is rebuilt
 quarantined. Estimated: ~1 day laptop+Colab (DB rebuild + CI + ~18 GPU runs +
 recompute + FINDINGS). A from-scratch protocol rebuild would cost weeks and
 re-derive identical benchmark/dataset numbers.
+
+## 5. Status (2026-06-14)
+
+Owner chose **scoped remediation**. Progress:
+- **Tier A — DONE.** 34-test physics CI battery passes → generator/dataset sound;
+  benchmark, §8.1, §8.5, deployment confirmed independent and standing.
+- **Tier B — DONE (DB + CI).** `fault_signatures.py` rebuilt from PHYSICS.md §4
+  (correct journal-bearing signatures, all 11 classes incl. mixed);
+  `tests/test_signature_db_consistency.py` locks DB↔generated-data (11/11 pass;
+  full suite 251 passed). Loss formulation **ratified**: band-energy consistency
+  (PROTOCOL §7, 2026-06-14).
+- **PAUSED.** Loss implementation, Tier C reruns (§8.4, §8.2 pc_cnn, §8.6a), and
+  Tier D quarantine are **on hold pending an independent external audit**
+  (`audit_reports/INDEPENDENT_AUDIT_PROMPT.md`). Nothing further proceeds until
+  that auditor reports.
