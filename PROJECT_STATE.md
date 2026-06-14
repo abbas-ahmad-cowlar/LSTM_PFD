@@ -18,12 +18,12 @@
 > dataset/benchmark survive *as a synthetic classification benchmark*; the
 > physics-model claims do not. **Steps 1-4 of the 5-step remediation are DONE
 > (reconcile docs incl. README; record-level statistics; quarantine/relabel;
-> band-energy loss implemented + gradient-tested + per-sample rpm wired);
+> band-energy loss vs the frozen HEALTHY reference, per-sample rpm, owner-ratified);
 > current step: Step 5 — rerun the physics-forward experiments on GPU/Colab via
 > `experiments/COLAB_PHASE5_RERUN_RUNBOOK.md`, then rewrite + re-ratify FINDINGS.**
 > Step 2 result: at the 528-record level the benchmark is near-ceiling and no row
 > shows a physics advantage (`results/benchmark/summary_record_level.md`). Suite
-> 259 passed, 6 deselected. (Owner to confirm the band-energy concentration math.)
+> 261 passed, 6 deselected.
 
 ---
 
@@ -270,19 +270,21 @@ HybridPINN, record-level stats) **has not been run.** Do not call it "decisive."
    blocked (`run_ablation_study` raises) + run_all.py call site flagged.
    `tests/test_physics_quarantine.py` (3 tests) pins the inert loss + the stale
    script guard. Suite **254 passed, 6 deselected**.
-4. **Implement + gradient-test the band-energy loss — DONE 2026-06-14.**
-   `PhysicsConstrainedCNN.compute_physics_loss` rewritten to band-energy
-   consistency: `concentration = (E_band/E_total)·(F/n_bins)` over journal-bearing
-   bands (tonal from PER-SAMPLE rpm + absolute broadband), penalty
-   `relu(1−concentration)`·softmax — differentiable, covers tonal+broadband+mixed,
-   healthy→0, no knob (PROTOCOL §7 §8.0-quater). Per-sample rpm wired into
-   §8.2/§8.3/§8.4 (`run_phase5_gpu.py` `ops=True`). Tests:
-   `tests/test_physics_band_energy_loss.py` (5 — grad-to-logits + per-class
-   tonal/broadband + per-sample rpm). Smoke: phys loss active + decreasing
-   (0.140→0.110). Suite **259 passed, 6 deselected**. (The generic
-   `FrequencyConsistencyLoss`/`PINNTrainer` stay quarantined — only the live
-   model-method loss was fixed; the Step-3 guard test still applies.) **Owner to
-   confirm the concentration-vs-flat-spectrum realization at the next gate.**
+4. **Implement + gradient-test the band-energy loss — DONE 2026-06-14
+   (owner-corrected to the healthy reference).** `PhysicsConstrainedCNN.compute_physics_loss`
+   is band-energy consistency judged vs the **frozen healthy-class reference** (NOT
+   a flat spectrum — owner directive): per band `pen_b = relu(1 − frac_b / H_ref[c][b])`,
+   averaged over the class's bands; tonal bands from PER-SAMPLE rpm; full-window
+   FFT (1 Hz res for the 1-6 Hz band); differentiable; healthy→0; no knob
+   (PROTOCOL §8.0-quinquies). Frozen reference: `scripts/compute_healthy_reference.py`
+   → committed `packages/core/models/physics/healthy_reference.json` (1,120 healthy
+   windows). `tests/test_signature_db_consistency.py` recast to the SAME reference
+   (10/10 fault classes' own penalty < healthy). Before/after: `scripts/audit_physics_penalties.py`
+   — flat let healthy masquerade as lubrification (0.000) / imbalance (0.198);
+   healthy-ref → 0.326 / 0.573. Per-sample rpm wired into §8.2/§8.3/§8.4
+   (`run_phase5_gpu.py ops=True`). `tests/test_physics_band_energy_loss.py` (6).
+   Smoke: phys loss active + decreasing. Suite **261 passed, 6 deselected**. (Generic
+   `FrequencyConsistencyLoss`/`PINNTrainer` stay quarantined.)
 5. **Rerun physics-forward experiments — NEXT (GPU/Colab).** From a frozen
    manifest: §8.4 ablation, §8.2 pc_cnn data-efficiency, §8.3 severity-OOD
    (all now with band-energy loss + per-sample rpm + record-level stats), §8.6a

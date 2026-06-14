@@ -58,22 +58,25 @@ Expect: `Switched to ... 'p6/docs'` and a recent `git log` line mentioning
 **P6 Step 4 / band-energy**. The branch name **must** be `p6/docs`.
 
 ```python
-# Cell 3 — VERIFY this runtime has the corrected loss (~20 s). Do not skip.
-%cd /content/lstm-pfd
-!PYTHONIOENCODING=utf-8 python -m pytest tests/test_physics_band_energy_loss.py tests/test_signature_db_consistency.py -q
-```
-Expect: `... passed` (no failures). This proves the band-energy loss + the
-journal-bearing signature DB are the code that's about to train. If anything
-fails, STOP and report it — do not run the experiments on wrong code.
-
-```python
-# Cell 4 — copy the dataset to fast local disk (~1 min)
+# Cell 3 — copy the dataset to fast local disk (~1 min)
 %%bash
 mkdir -p /content/lstm-pfd/data/generated
 cp /content/drive/MyDrive/lstm-pfd/data/dataset_v2.h5 /content/lstm-pfd/data/generated/
 ls -lh /content/lstm-pfd/data/generated/dataset_v2.h5
 ```
 Expect: one line showing **1.8G**.
+
+```python
+# Cell 4 — VERIFY this runtime has the corrected loss + healthy reference (~30 s). Do not skip.
+%cd /content/lstm-pfd
+!PYTHONIOENCODING=utf-8 python -m pytest tests/test_physics_band_energy_loss.py tests/test_signature_db_consistency.py -q
+```
+Expect: `... passed` (no failures). This proves the band-energy loss, the
+journal-bearing signature DB, and the **frozen healthy-class reference**
+(`packages/core/models/physics/healthy_reference.json`, committed) are the code
+about to train — the CI test checks each fault's signature against the real
+healthy baseline on the dataset you just copied. If anything fails, STOP and
+report it — do not run the experiments on wrong code.
 
 ```python
 # Cell 5 — point results at a NEW empty Drive folder (BEFORE the first run)

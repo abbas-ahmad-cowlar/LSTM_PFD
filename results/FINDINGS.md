@@ -55,9 +55,11 @@ inert `PhysicalConstraintLoss`/`PINNTrainer`/`PINNEvaluator`, rolling-element
 HybridPINN branch + `BearingDynamics`; stale `pinn_ablation.py` blocked;
 `tests/test_physics_quarantine.py` pins it]; (4) implement + gradient-test the
 ratified **band-energy** loss [**DONE 2026-06-14** — `compute_physics_loss`
-rewritten to band-energy consistency (per-sample rpm; tonal+broadband+mixed;
-differentiable, smoke-verified active); `tests/test_physics_band_energy_loss.py`;
-PROTOCOL §8.0-quater]; (5) rerun the physics-forward experiments with the
+rewritten to band-energy consistency judged vs the **frozen healthy-class
+reference** (owner-corrected from a flat baseline; per-sample rpm;
+tonal+broadband+mixed; differentiable); frozen `healthy_reference.json` + aligned
+CI test; before/after audit shows the flat baseline let healthy masquerade as
+lubrification/imbalance; PROTOCOL §8.0-quinquies]; (5) rerun the physics-forward experiments with the
 band-energy loss + record-level stats [**NEXT, GPU/Colab** —
 `experiments/COLAB_PHASE5_RERUN_RUNBOOK.md`]. Then this memo is rewritten and
 **re-ratified**.
