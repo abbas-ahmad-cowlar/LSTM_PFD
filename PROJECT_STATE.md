@@ -10,16 +10,20 @@
 > **Maintenance duty**: update this file at every phase gate and at the end of
 > every working session. It is linked from the README.
 >
-> Last updated: **2026-06-14, session 3** (Phase 5: **ALL experiments §8.1–8.6
-> DONE.** C3 physics-advantage is a complete, decisive NEGATIVE — incl. the
-> §8.4 before/after fixed-loss rerun (physics neutral-to-harmful) AND the §8.2
-> low-data fixed test (physics HURTS at 10%: 91.11 vs 93.60 vanilla, one seed
-> crashed — `results/phase5_dataeff_fixed/before_after_8_2.md`); §8.5 null;
-> §8.3 split/architecture. C4 (XAI §8.6) modest POSITIVE: physics training →
-> more physics-aligned attributions + better calibration, same backbone.
-> Thesis: physics is an interpretability lever, not an accuracy lever.
-> **NEXT: write `results/FINDINGS.md` → owner ratifies → Gate 5** (merge
-> p5/physics-loss-fix + p5/physics-exp → main). Colab work DONE.)
+> Last updated: **2026-06-14, session 4** (Phase 5 done + Gate 5 MERGED to
+> `main` @bb67026; FINDINGS ratified. THEN a physics-loss audit
+> (`audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md`) found the model-side
+> signature DB encoded **rolling-element** physics (wrong bearing type) with
+> mixed faults unmapped — so the physics-LOSS experiments (§8.2 pc_cnn fixed,
+> §8.4, §8.6a) are contaminated; the generator/dataset, benchmark, §8.1, §8.5,
+> deployment are PROVEN independent + sound. Scoped remediation on branch
+> `p6/docs`: Tier A done (34-test physics CI passes → foundation sound); Tier B
+> done (signature DB rebuilt from PHYSICS.md §4 for all 11 classes +
+> `tests/test_signature_db_consistency.py` locks DB↔data; suite 251 passed);
+> band-energy loss formulation RATIFIED (PROTOCOL §7, 2026-06-14).
+> **STOPPED: loss implementation + reruns PAUSED pending an INDEPENDENT EXTERNAL
+> AUDIT** (prompt: `audit_reports/INDEPENDENT_AUDIT_PROMPT.md`). Do NOT implement
+> the loss or rerun experiments until the external auditor reports back.)
 
 ---
 
