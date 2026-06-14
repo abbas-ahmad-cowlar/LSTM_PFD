@@ -72,7 +72,7 @@
 
 | Date | Change | Reason | Affected runs |
 |---|---|---|---|
-| — | — | — | — |
+| 2026-06-13 | **§8.0-bis — differentiable physics loss.** `PhysicsConstrainedCNN.compute_physics_loss` corrected from a non-differentiable argmax-based term to a softmax-probability-weighted per-class frequency penalty (code: branch `p5/physics-loss-fix` @`167e714`; design: `experiments/PHYSICS_LOSS_DIAGNOSIS.md`). The §8.4 **pre-registration is unchanged** (same hypothesis/metric/decision rule, same w∈{0,0.1,0.3,1.0}, same seeds/budget); only the loss *implementation* is fixed, and §8.4 is **re-run** with it. Results kept side by side: inert "before" in `results_phase5/pinn_ablation`, fixed "after" in `results_phase5_fixed/pinn_ablation`; both reported as a before/after contrast. | The original loss had `requires_grad=False`/`grad_fn=None`, contributing zero gradient — proven by §8.4 `w=0.1`≡`w=0.3` byte-identical per seed. The weight was inert, so §8.4 measured nothing. The fix makes `w` affect training (verified: differing gradients). | Re-run: §8.4 `w∈{0.1,0.3,1.0}`×3. Optional: §8.2/8.3 pc_cnn arms. **Unaffected (NOT re-run):** Phase-4 benchmark, §8.1, §8.5 — none call `compute_physics_loss`. |
 
 ---
 
