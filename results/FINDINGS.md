@@ -5,11 +5,52 @@
 > paper may and may not make. **Synthetic-only study — no real-world validation,
 > stated everywhere.**
 >
-> Status: **RATIFIED — Syed Abbas Ahmad, 2026-06-14** ("I ratify the
-> results/FINDINGS.md and we can now continue to next steps."). The claims list
-> in §3–4 is frozen; §5 open items are presentation polish for Phase 6/7.
+> Status: **SUPERSEDED / UNDER REVISION — 2026-06-14, after independent external
+> audit** (`audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md`). The prior
+> owner ratification is **on hold**. The audit found the physics-model evidence
+> more broadly contaminated than this memo assumed. **§1–§4 below overclaimed and
+> are SUSPENDED pending remediation — read §0 first; it overrides them.**
 
-## 1. One-paragraph verdict
+## 0. Post-audit correction (authoritative — overrides §1–§4)
+
+**Supportable now (tightened wording — do not loosen):**
+- Dataset v2 is sound **as a synthetic, internally consistent benchmark**:
+  balanced, group-split by record, leakage-checked, intended signatures present
+  (cavitation only weakly so — qualify any cavitation claim).
+- The benchmark accuracies are plausible **as classification results** — but
+  several labels and **all** significance claims are **not yet sound**:
+  `physics_constrained_cnn` was trained **CE-only** (relabel as architecture /
+  CE-only), `multitask_pinn` was **not** trained multitask, and statistics were
+  computed on **2,640 correlated windows** rather than **528 records** (must be
+  recomputed at record level, cluster-bootstrap).
+- The **stored artifacts show no physics accuracy advantage.** This is **NOT** a
+  definitive negative about correctly-implemented journal-bearing
+  physics-informed learning — **that experiment has not been run.** The §8.4/§8.2
+  "fixed" runs used an **incomplete tonal-only** loss (ratified band-energy not
+  yet implemented); §8.5 HybridPINN uses **rolling-element** (SKF 6205
+  BPFO/BPFI/BSF/FTF) features — wrong for journal-bearing data; §8.6/C4 (XAI
+  alignment + calibration) rests on the old broken-DB bands and incomplete-loss
+  checkpoints. All are **contaminated / not yet valid**.
+
+**May NOT claim (yet):** any physics benefit — accuracy, noise robustness,
+data-efficiency, severity-OOD, interpretability, or calibration; a "rigorous"
+or "decisive" negative; family-level noise robustness; any window-level
+significance.
+
+**Remediation sequence (endorsed by the external auditor):** (1) reconcile docs
+to this corrected blast radius [done in this revision]; (2) recompute all
+statistics at **record level**; (3) quarantine/relabel invalid rows (CE-only
+pc_cnn, non-multitask multitask_pinn, rolling-element HybridPINN, inert
+`PhysicalConstraintLoss`/`PINNTrainer`); (4) implement + gradient-test the
+ratified **band-energy** loss; (5) only then rerun physics-forward experiments.
+Then this memo is rewritten and **re-ratified**.
+
+---
+
+> ⚠️ The sections below (§1–§5) are the PRE-AUDIT draft, retained for provenance.
+> They overclaim per §0 and must not be cited until remediation completes.
+
+## 1. One-paragraph verdict (SUPERSEDED — see §0)
 
 On clean synthetic journal-bearing data, **physics-informed learning does not
 beat purely data-driven models on accuracy** — tested rigorously across noise,

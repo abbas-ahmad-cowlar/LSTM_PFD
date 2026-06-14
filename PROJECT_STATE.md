@@ -10,20 +10,27 @@
 > **Maintenance duty**: update this file at every phase gate and at the end of
 > every working session. It is linked from the README.
 >
-> Last updated: **2026-06-14, session 4** (Phase 5 done + Gate 5 MERGED to
-> `main` @bb67026; FINDINGS ratified. THEN a physics-loss audit
-> (`audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md`) found the model-side
-> signature DB encoded **rolling-element** physics (wrong bearing type) with
-> mixed faults unmapped — so the physics-LOSS experiments (§8.2 pc_cnn fixed,
-> §8.4, §8.6a) are contaminated; the generator/dataset, benchmark, §8.1, §8.5,
-> deployment are PROVEN independent + sound. Scoped remediation on branch
-> `p6/docs`: Tier A done (34-test physics CI passes → foundation sound); Tier B
-> done (signature DB rebuilt from PHYSICS.md §4 for all 11 classes +
-> `tests/test_signature_db_consistency.py` locks DB↔data; suite 251 passed);
-> band-energy loss formulation RATIFIED (PROTOCOL §7, 2026-06-14).
-> **STOPPED: loss implementation + reruns PAUSED pending an INDEPENDENT EXTERNAL
-> AUDIT** (prompt: `audit_reports/INDEPENDENT_AUDIT_PROMPT.md`). Do NOT implement
-> the loss or rerun experiments until the external auditor reports back.)
+> Last updated: **2026-06-14, session 5** (independent EXTERNAL audit COMPLETE —
+> `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md`. Verdict: **NOT
+> publishable as framed**; corroborated our core finding + the pause, but the
+> blast radius is BROADER than we'd scoped. **Corrected blast radius:** dataset
+> v2 sound *as a synthetic, internally-consistent classification benchmark*
+> (Tier A holds) — BUT benchmark labels + ALL significance are not-yet-sound
+> (pc_cnn was CE-only; multitask_pinn not trained multitask; stats were on 2,640
+> correlated windows, must be RECORD-level/528). Physics-model evidence INVALID:
+> §8.4/§8.2 "fixed" used an incomplete tonal-only loss; **§8.5 HybridPINN uses
+> ROLLING-ELEMENT features (SKF 6205) — NOT sound (my earlier "independent/sound"
+> call was WRONG)**; §8.6/C4 rests on broken-DB bands + incomplete-loss
+> checkpoints; generic `PhysicalConstraintLoss`/`PINNTrainer` still inert. The
+> stored "no physics advantage" is real but NARROW — the correct experiment
+> (band-energy loss + journal-bearing HybridPINN) HAS NOT BEEN RUN.
+> **Auditor-endorsed sequence (on branch `p6/docs`):** (1) reconcile docs ←DONE
+> this session (FINDINGS §0, PROTOCOL, this file, remediation plan); (2) recompute
+> ALL stats at record level ←NEXT; (3) quarantine/relabel invalid rows; (4)
+> implement+gradient-test the band-energy loss; (5) only then rerun physics-forward
+> experiments; then rewrite + re-ratify FINDINGS. Do NOT call the benchmark
+> "sound" without "as a classification benchmark, pending relabel + record-level
+> stats"; do NOT call the negative "decisive".)
 
 ---
 
