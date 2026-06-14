@@ -126,98 +126,105 @@ class PhysicsConstrainedCNN(BaseModel):
         predictions: torch.Tensor,
         metadata: Optional[Dict[str, torch.Tensor]] = None,
         n_fft: int = 2048,
-        top_k: int = 5,
-        tolerance: float = 0.15
+        eps: float = 1e-8,
+        **_legacy,
     ) -> Tuple[torch.Tensor, Dict[str, float]]:
         """
-        Compute physics-based loss term.
+        Band-energy physics-consistency loss (ratified PROTOCOL §7, 2026-06-14).
 
-        This function checks if the predicted fault class is consistent with
-        the dominant frequencies observed in the signal FFT.
+        Penalizes softmax probability on a class whose corrected expected spectral
+        bands (`FaultSignatureDatabase`, journal-bearing physics — tonal harmonics
+        AND absolute broadband bands) are NOT elevated above what a flat/"healthy"
+        spectrum would carry, i.e. the class's characteristic energy is ABSENT.
+        This supersedes the earlier tonal-only peak-distance loss, which left the
+        broadband (cavitation / lubrication / wear) and mixed classes unconstrained
+        (audit Findings 6; PHYSICS_LOSS_AUDIT §3).
+
+        Per class c, with band-bin mask M_c (tonal harmonics built from PER-SAMPLE
+        rpm, plus the class's absolute Hz bands):
+
+            concentration_c = (E_c / E_total) * (F_bins / n_bins_c)
+
+        — the band set's share of total spectral energy relative to its share of
+        bandwidth. concentration_c > 1 means the class's characteristic bands carry
+        MORE energy than a flat (healthy) spectrum would (signature present);
+        pen_c = relu(1 - concentration_c) rises toward 1 as the signature is absent.
+        Healthy ('sain') has no expected bands -> pen = 0.
+
+        Differentiability: pen[B, C] is constant w.r.t. model parameters (a function
+        of the input spectrum and per-sample rpm only); the loss
+        `(probs * pen).sum(1).mean()` carries gradient through the softmax
+        probabilities only —  loss -> probs -> logits -> params. No tunable knob
+        (the consistency threshold is concentration = 1, the flat-spectrum level).
 
         Args:
             signal: Input signal [B, 1, T] or [B, T]
             predictions: Predicted class logits [B, num_classes]
-            metadata: Optional dict with 'rpm' (default: 3600)
+            metadata: Optional dict with PER-SAMPLE 'rpm' [B] (default 3600);
+                      tonal band centers scale with shaft speed = rpm/60.
             n_fft: FFT size
-            top_k: Number of frequencies to check
-            tolerance: Frequency matching tolerance (fraction)
+            eps: numerical floor
 
         Returns:
-            physics_loss: Physics constraint loss (scalar)
-            loss_dict: Dictionary with loss components
+            physics_loss: scalar band-energy consistency loss
+            loss_dict: components (band_energy_consistency, mean_penalty)
         """
-        batch_size = signal.shape[0]
-        device = signal.device
-
-        # --------------------------------------------------------------
-        # DIFFERENTIABLE physics-consistency loss (see
-        # experiments/PHYSICS_LOSS_DIAGNOSIS.md §8.0-bis).
-        #
-        # The old implementation selected the target class with
-        # torch.argmax(predictions) -- a non-differentiable op. Every term
-        # downstream was then a function of the (constant) input-signal FFT
-        # and a frequency-table lookup, so the loss had no gradient to the
-        # model parameters (requires_grad=False) and the physics weight was
-        # inert. We instead weight a per-CLASS frequency-mismatch penalty by
-        # the model's softmax probabilities: the gradient flows
-        #   loss -> probs -> logits -> params,
-        # penalizing probability mass on classes whose characteristic
-        # frequencies are absent from the signal's spectrum.
-        # --------------------------------------------------------------
-
-        # softmax class probabilities -- the ONLY parameter-dependent factor.
-        probs = F.softmax(predictions, dim=1)  # [B, C], differentiable
-
-        # Extract RPM (scalar, as in the original)
-        rpm = 3600.0
-        if metadata is not None and 'rpm' in metadata:
-            rpm_val = metadata['rpm']
-            if isinstance(rpm_val, torch.Tensor):
-                rpm_val = rpm_val.detach().cpu().numpy()
-            if hasattr(rpm_val, 'mean'):
-                rpm = float(rpm_val.mean())
-            else:
-                rpm = float(rpm_val)
-
-        # Observed spectral peaks per sample (constant w.r.t. params)
         if signal.dim() == 3:
             signal = signal.squeeze(1)
-        magnitude = torch.abs(torch.fft.rfft(signal, n=n_fft, dim=-1))  # [B, F]
-        freq_bins = torch.fft.rfftfreq(n_fft, d=1.0 / self.sample_rate).to(device)
-        k = min(top_k * 2, magnitude.shape[-1])
-        _, peak_indices = torch.topk(magnitude, k=k, dim=-1)  # [B, k]
-        peak_freqs = freq_bins[peak_indices]                  # [B, k]
+        device = signal.device
+        B = signal.shape[0]
+        C = predictions.shape[1]
 
-        # Per-class mismatch penalty pen[B, C] (no params -> constant tensor).
-        num_classes = predictions.shape[1]
-        pen = torch.zeros(batch_size, num_classes, device=device)
-        for c in range(num_classes):
-            try:
-                exp = self.signature_db.get_expected_frequencies(c, rpm, top_k=top_k)
-            except Exception:
-                continue  # leave pen[:, c] = 0 if the lookup fails
-            exp = torch.as_tensor(
-                [float(f) for f in exp if f > 0], device=device, dtype=peak_freqs.dtype
-            )
-            if exp.numel() == 0:
-                continue  # e.g. healthy class: no characteristic freqs -> no penalty
-            # distance of each expected freq to the nearest observed peak, per sample
-            rel_dist = torch.abs(
-                peak_freqs.unsqueeze(1) - exp.view(1, -1, 1)
-            ) / (exp.view(1, -1, 1) + 1e-6)          # [B, E, k]
-            min_dist = rel_dist.min(dim=-1).values    # [B, E]
-            pen[:, c] = F.relu(min_dist - tolerance).mean(dim=1)  # [B]
+        # softmax probabilities -- the ONLY parameter-dependent factor.
+        probs = F.softmax(predictions, dim=1)  # [B, C], differentiable
+
+        # per-sample shaft frequency omega = rpm / 60  [B]
+        rpm = torch.full((B,), 3600.0, device=device)
+        if metadata is not None and metadata.get('rpm', None) is not None:
+            r = metadata['rpm']
+            r = r if isinstance(r, torch.Tensor) else torch.as_tensor(r)
+            r = r.to(device=device, dtype=torch.float32).reshape(-1)
+            rpm = r.expand(B).clone() if r.numel() == 1 else r[:B]
+        omega = (rpm / 60.0).clamp(min=1e-3)  # [B]
+
+        # Band-energy penalty pen[B, C] -- constant w.r.t. params (no grad needed).
+        with torch.no_grad():
+            x = signal.detach().float()
+            psd = torch.abs(torch.fft.rfft(x, n=n_fft, dim=-1)) ** 2  # [B, F]
+            freqs = torch.fft.rfftfreq(n_fft, d=1.0 / self.sample_rate).to(device)  # [F]
+            F_bins = freqs.shape[0]
+            e_total = psd.sum(dim=-1) + eps          # [B]
+            f_row = freqs.unsqueeze(0)               # [1, F]
+
+            pen = torch.zeros(B, C, device=device)
+            for c in range(C):
+                try:
+                    sig = self.signature_db.get_signature(c)
+                except Exception:
+                    continue
+                mask = torch.zeros(B, F_bins, device=device, dtype=torch.bool)
+                for m, hw in sig.tonal:  # harmonics scale with PER-SAMPLE rpm
+                    lo = (m * omega * (1.0 - hw)).unsqueeze(1)   # [B,1]
+                    hi = (m * omega * (1.0 + hw)).unsqueeze(1)
+                    mask |= (f_row >= lo) & (f_row <= hi)
+                for lo_hz, hi_hz in sig.bands_hz:  # absolute broadband bands
+                    mask |= (f_row >= lo_hz) & (f_row <= hi_hz)
+                n_bins = mask.sum(dim=-1)            # [B]
+                if int(n_bins.max()) == 0:
+                    continue  # e.g. healthy: no expected bands -> no constraint
+                e_band = (psd * mask.float()).sum(dim=-1)  # [B]
+                concentration = (e_band * F_bins) / (e_total * n_bins.clamp(min=1).float())
+                penc = F.relu(1.0 - concentration)  # 0 if signature present, ->1 if absent
+                pen[:, c] = torch.where(n_bins > 0, penc, torch.zeros_like(penc))
 
         # Differentiable: penalize probability on spectrally-inconsistent classes.
-        freq_loss = (probs * pen).sum(dim=1).mean()
-
+        pen = pen.to(probs.dtype)
+        band_loss = (probs * pen).sum(dim=1).mean()
         loss_dict = {
-            'frequency_consistency': float(freq_loss.detach()),
+            'band_energy_consistency': float(band_loss.detach()),
             'mean_penalty': float(pen.mean()),
         }
-
-        return freq_loss, loss_dict
+        return band_loss, loss_dict
 
     def forward_with_physics_loss(
         self,
