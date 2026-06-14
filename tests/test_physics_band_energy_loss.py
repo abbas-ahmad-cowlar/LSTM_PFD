@@ -1,11 +1,13 @@
-"""Gradient + per-class tests for the ratified band-energy physics loss.
+"""Gradient + per-class tests for the band-energy physics loss vs the HEALTHY
+reference (P6 remediation Step 4, owner-ratified 2026-06-14).
 
-P6 remediation Step 4 (2026-06-14). Pins the contract of
-`PhysicsConstrainedCNN.compute_physics_loss` (band-energy consistency,
-PROTOCOL §7): it is differentiable (the inert/tonal-only versions were the
-defects in Findings 5-6), it constrains tonal AND broadband classes, it uses
-per-sample rpm, and the healthy class carries no penalty. Signals are
-synthetic with known spectral content so the expected ordering is deterministic.
+Pins the contract of `PhysicsConstrainedCNN.compute_physics_loss`: differentiable
+(the inert/tonal-only versions were Findings 5-6), constrains tonal AND broadband
+classes, uses per-sample rpm, healthy carries no penalty, and judges "signature
+present" as energy ABOVE the healthy baseline. Tests inject a SYNTHETIC healthy
+reference so they are deterministic and independent of the dataset; the real
+frozen reference (`healthy_reference.json`) is exercised by the before/after
+penalty audit and `tests/test_signature_db_consistency.py`.
 """
 import math
 
@@ -16,16 +18,23 @@ from packages.core.models.pinn.physics_constrained_cnn import PhysicsConstrained
 from utils.constants import FAULT_TYPES
 
 FS = 20480          # model default sample_rate
-N = 2048            # = n_fft → no truncation; 10 Hz/bin
+N = 20480           # full 1-s window → 1 Hz/bin (resolves low-freq bands)
 NAMES = list(FAULT_TYPES)
 I_SAIN = NAMES.index('sain')
 I_IMBAL = NAMES.index('desequilibre')   # pure 1X tone
 I_CAV = NAMES.index('cavitation')       # 1.4–2.6 kHz broadband band
+H = 0.01            # synthetic healthy-reference fraction per band
 
 
 @pytest.fixture(scope="module")
 def model():
-    return PhysicsConstrainedCNN(backbone='cnn1d', sample_rate=FS)
+    m = PhysicsConstrainedCNN(backbone='cnn1d', sample_rate=FS)
+    # deterministic synthetic reference: every band's healthy level = H
+    m.healthy_reference = {
+        name: {'tonal': [H] * len(sig.tonal), 'bands_hz': [H] * len(sig.bands_hz)}
+        for name, sig in m.signature_db.signatures.items()
+    }
+    return m
 
 
 def tone(freq_hz, b=1, n=N):
@@ -42,6 +51,14 @@ def _onehot(c, b=1, num=len(NAMES)):
 def loss_for_class(model, signal, c, metadata=None):
     loss, _ = model.compute_physics_loss(signal, _onehot(c, b=signal.shape[0]), metadata)
     return float(loss)
+
+
+def test_missing_reference_raises():
+    """Without the frozen reference the loss refuses to run (no flat fallback)."""
+    m = PhysicsConstrainedCNN(backbone='cnn1d', sample_rate=FS)
+    m.healthy_reference = None
+    with pytest.raises(RuntimeError, match="healthy reference"):
+        m.compute_physics_loss(tone(60.0), _onehot(I_IMBAL))
 
 
 def test_loss_is_differentiable_with_grad_to_logits(model):
@@ -63,7 +80,7 @@ def test_healthy_class_has_no_band_penalty(model):
 def test_tonal_class_present_vs_absent(model):
     """A 1X (60 Hz) tone is consistent with imbalance, not with cavitation."""
     sig = tone(60.0)
-    l_imbal = loss_for_class(model, sig, I_IMBAL)   # 1X band lit → low
+    l_imbal = loss_for_class(model, sig, I_IMBAL)   # 1X band lit above healthy → low
     l_cav = loss_for_class(model, sig, I_CAV)       # HF band empty → high
     assert l_imbal < 0.1
     assert l_cav > 0.5
