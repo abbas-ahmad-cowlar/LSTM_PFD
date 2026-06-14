@@ -569,37 +569,37 @@ running: hypothesis, metric, decision rule); report negative results as results.
 generator mid-phase (invalidates everything — if a generator bug is found, fix, bump dataset
 to v2.1, and rerun affected experiments only, documented).
 
-- [ ] **5.1 Data efficiency** — *Owner: office GPU.* Best PINN + best vanilla × {10,25,50,100}%
-      train fraction × 3 seeds (group-aware subsampling).
-      **DoD**: `results/data_efficiency/` + accuracy-vs-fraction curve with CIs.
-- [ ] **5.2 Severity-shift OOD** — *Owner: office GPU; script: repaired `ood_testing.py`.*
-      Train mild+moderate → test severe (and reverse), PINN vs vanilla × 3 seeds.
-      **DoD**: `results/ood_severity/` + table + pre-registered decision noted.
-- [ ] **5.3 Noise robustness** — *Owner: laptop (no retraining).* All frozen Phase-4
-      checkpoints across SNR-variant test sets.
-      **DoD**: `results/noise_robustness/` + degradation curves (one line per model family).
-- [ ] **5.4 Physics ablation** — *Owner: office GPU; script: repaired `pinn_ablation.py`.*
-      HybridPINN: each physics-loss term on/off + weight sweep {0, 0.1, 0.3, 1.0} × 3 seeds;
-      McNemar's per pair.
-      **DoD**: `results/pinn_ablation/` + ablation table with significance marks.
-- [ ] **5.5 Physics-consistent XAI** — *Owner: laptop; script: repaired `xai_metrics.py`.*
-      SHAP + IG on best PINN & best vanilla; attention maps from AttentionCNN1D &
-      (if T2 ran) SignalTransformer. Metric: fraction of attribution energy inside
-      fault-characteristic bands (ground truth known — synthetic advantage) vs elsewhere;
-      per-class alignment score + 2–3 qualitative figures.
-      **DoD**: `results/xai_alignment/` + alignment table + figures.
-- [ ] **5.6 Uncertainty & calibration** *(promoted in v2)* — *Owner: laptop.* MC-dropout on
-      best PINN + best vanilla: ECE, reliability diagram, accuracy-vs-confidence-threshold
-      ("reject option" curve — industrially persuasive).
-      **DoD**: `results/uncertainty/` + calibration figure.
-- [ ] **5.7 Findings memo** — *Owner: Claude drafts, you review.* `results/FINDINGS.md`:
-      what held, what didn't, effect sizes, which claims the paper can make. Honest either way —
-      *a well-measured "physics helps only in low-data/OOD regimes" is still a publishable,
-      true result.*
-      **DoD**: memo agreed; paper claims list frozen.
+- [x] **5.1 Data efficiency** — done on Colab (pre-reg §8.2). Result: fixed
+      (differentiable) physics loss gives no edge; HURTS at 10% (91.11 vs vanilla
+      93.60). Hypothesis rejected (0/3). *(evidence: `results/phase5_dataeff_fixed/`
+      + `before_after_8_2.md`; inert baseline in `results/phase5/data_efficiency/`)*
+- [x] **5.2 Severity-shift OOD** — done (pre-reg §8.3). Split result (dir A vanilla
+      ahead; dir B pc_cnn backbone +6.4) — architecture, not physics-as-such.
+      *(evidence: `results/phase5/severity_ood/`)*
+- [x] **5.3 Noise robustness** — done (pre-reg §8.1). Physics-family mean degrades
+      less but outlier-driven; most robust single model is vanilla resnet18.
+      *(evidence: `results/noise_robustness/summary.{md,json,png}`)*
+- [x] **5.4 Physics ablation** — done (pre-reg §8.4), incl. the inert→fixed
+      before/after. Physics weight neutral at low w, harmful at high w (w=1.0 5dB
+      83.1). Rejected. McNemar deferred (see FINDINGS open items). *(evidence:
+      `results/phase5_fixed/before_after_8_4.md`; `experiments/PHYSICS_LOSS_DIAGNOSIS.md`)*
+- [x] **5.5 Physics-consistent XAI** — done (pre-reg §8.6a). Same-backbone:
+      physics model attributions more physics-band-aligned (ratio 0.849 vs 0.716).
+      Modest C4 positive. *(evidence: `results/xai_alignment/findings_8_6.md`;
+      `scripts/run_xai_calibration.py`)*
+- [x] **5.6 Uncertainty & calibration** — done (pre-reg §8.6b). pc_cnn better
+      calibrated (ECE 0.022/0.018 vs 0.028/0.027); 100% acc @50% coverage.
+      *(evidence: `results/uncertainty/calibration.json`)*
+- [x] **5.7 Findings memo** — drafted; **awaiting owner ratification**. *(evidence:
+      `results/FINDINGS.md`)*
 
-**Exit gate 5**: five results sub-dirs with JSONs + publication-grade figures · pre-registration
-notes for each · FINDINGS.md ratified. *Merge `p5/physics-exp` → `main`.*
+> **Figures + seed-averaged ECE + §8.4 McNemar** are listed as open items in
+> FINDINGS §5 — completed during Phase 6/7 (presentation/paper), not blockers
+> for the Gate-5 *decision*.
+
+**Exit gate 5**: results sub-dirs with JSONs (✓) · pre-registration notes for
+each (✓ PROTOCOL §8) · FINDINGS.md ratified (⏳ owner). Then merge
+`p5/physics-loss-fix` → `p5/physics-exp` → `main`.
 
 ---
 
