@@ -1,0 +1,251 @@
+{
+  "scope": "RECORD-LEVEL recomputation of the Phase-4 classification benchmark (P6 remediation Step 2). Statistical unit corrected from 2,640 correlated windows to 528 independent records. No retraining, no relabeling \u2014 row training reality is annotated, not a physics test.",
+  "table": {
+    "random_forest": {
+      "record_acc_mean": 98.73737373737373,
+      "record_acc_std": 0.08928115924072488,
+      "record_acc_per_seed": [
+        98.86363636363636,
+        98.67424242424242,
+        98.67424242424242
+      ],
+      "bestval_seed": 1,
+      "record_acc_bestval_seed": 98.67424242424242,
+      "window_acc_recorded": 94.60858585858585,
+      "seeds": 3,
+      "note": "",
+      "ci95_record_acc": [
+        97.79040404040403,
+        99.5580808080808
+      ]
+    },
+    "svm": {
+      "record_acc_mean": 97.72727272727273,
+      "record_acc_std": 0.0,
+      "record_acc_per_seed": [
+        97.72727272727273,
+        97.72727272727273,
+        97.72727272727273
+      ],
+      "bestval_seed": 0,
+      "record_acc_bestval_seed": 97.72727272727273,
+      "window_acc_recorded": 94.05303030303031,
+      "seeds": 3,
+      "note": "",
+      "ci95_record_acc": [
+        96.40151515151516,
+        98.86363636363636
+      ]
+    },
+    "gradient_boosting": {
+      "record_acc_mean": 97.91666666666667,
+      "record_acc_std": 0.15463950396358306,
+      "record_acc_per_seed": [
+        97.72727272727273,
+        97.91666666666666,
+        98.10606060606061
+      ],
+      "bestval_seed": 0,
+      "record_acc_bestval_seed": 97.72727272727273,
+      "window_acc_recorded": 94.05303030303031,
+      "seeds": 3,
+      "note": "",
+      "ci95_record_acc": [
+        96.6540404040404,
+        98.989898989899
+      ]
+    },
+    "cnn1d": {
+      "record_acc_mean": 93.43434343434342,
+      "record_acc_std": 4.258439887383846,
+      "record_acc_per_seed": [
+        89.96212121212122,
+        99.43181818181817,
+        90.9090909090909
+      ],
+      "bestval_seed": 1,
+      "record_acc_bestval_seed": 99.43181818181817,
+      "window_acc_recorded": 91.94444444444446,
+      "seeds": 3,
+      "note": "",
+      "ci95_record_acc": [
+        91.91919191919192,
+        94.88636363636364
+      ]
+    },
+    "attention_cnn": {
+      "record_acc_mean": 93.93939393939394,
+      "record_acc_std": 4.271522682837691,
+      "record_acc_per_seed": [
+        98.10606060606061,
+        95.64393939393939,
+        88.06818181818183
+      ],
+      "bestval_seed": 0,
+      "record_acc_bestval_seed": 98.10606060606061,
+      "window_acc_recorded": 89.36868686868688,
+      "seeds": 3,
+      "note": "",
+      "ci95_record_acc": [
+        92.36111111111111,
+        95.39141414141413
+      ]
+    },
+    "cnn_lstm": {
+      "record_acc_mean": 99.43181818181819,
+      "record_acc_std": 0.15463950396358306,
+      "record_acc_per_seed": [
+        99.62121212121212,
+        99.43181818181817,
+        99.24242424242425
+      ],
+      "bestval_seed": 0,
+      "record_acc_bestval_seed": 99.62121212121212,
+      "window_acc_recorded": 96.12373737373737,
+      "seeds": 3,
+      "note": "",
+      "ci95_record_acc": [
+        98.80050505050504,
+        99.93686868686868
+      ]
+    },
+    "resnet18": {
+      "record_acc_mean": 99.17929292929294,
+      "record_acc_std": 0.08928115924073159,
+      "record_acc_per_seed": [
+        99.0530303030303,
+        99.24242424242425,
+        99.24242424242425
+      ],
+      "bestval_seed": 2,
+      "record_acc_bestval_seed": 99.24242424242425,
+      "window_acc_recorded": 96.13636363636363,
+      "seeds": 3,
+      "note": "",
+      "ci95_record_acc": [
+        98.48484848484848,
+        99.74747474747474
+      ]
+    },
+    "patchtst": {
+      "record_acc_mean": 90.4040404040404,
+      "record_acc_std": 0.4724314882290351,
+      "record_acc_per_seed": [
+        90.9090909090909,
+        90.53030303030303,
+        89.77272727272727
+      ],
+      "bestval_seed": 2,
+      "record_acc_bestval_seed": 89.77272727272727,
+      "window_acc_recorded": 89.84848484848486,
+      "seeds": 3,
+      "note": "",
+      "ci95_record_acc": [
+        88.57323232323233,
+        92.17171717171716
+      ]
+    },
+    "hybrid_pinn": {
+      "record_acc_mean": 90.34090909090908,
+      "record_acc_std": 0.9406353804135927,
+      "record_acc_per_seed": [
+        90.9090909090909,
+        89.01515151515152,
+        91.09848484848484
+      ],
+      "bestval_seed": 2,
+      "record_acc_bestval_seed": 91.09848484848484,
+      "window_acc_recorded": 90.0378787878788,
+      "seeds": 3,
+      "note": "rolling-element branch + constant metadata",
+      "ci95_record_acc": [
+        88.13131313131314,
+        92.48737373737373
+      ]
+    },
+    "physics_constrained_cnn": {
+      "record_acc_mean": 98.989898989899,
+      "record_acc_std": 0.44640579620363113,
+      "record_acc_per_seed": [
+        98.67424242424242,
+        98.67424242424242,
+        99.62121212121212
+      ],
+      "bestval_seed": 2,
+      "record_acc_bestval_seed": 99.62121212121212,
+      "window_acc_recorded": 95.9848484848485,
+      "seeds": 3,
+      "note": "CE-only (architecture; physics loss OFF)",
+      "ci95_record_acc": [
+        98.23232323232322,
+        99.62121212121212
+      ]
+    },
+    "multitask_pinn": {
+      "record_acc_mean": 90.46717171717171,
+      "record_acc_std": 0.6249681146850794,
+      "record_acc_per_seed": [
+        89.77272727272727,
+        90.3409090909091,
+        91.28787878787878
+      ],
+      "bestval_seed": 2,
+      "record_acc_bestval_seed": 91.28787878787878,
+      "window_acc_recorded": 90.27777777777779,
+      "seeds": 3,
+      "note": "single-task (aux heads unused)",
+      "ci95_record_acc": [
+        88.51010101010101,
+        92.3611111111111
+      ]
+    }
+  },
+  "statistics": {
+    "aggregation": "soft vote (mean per-window class score over the 5 windows), argmax",
+    "independent_unit": "record (n=528)",
+    "windows_per_record": 5,
+    "best_vanilla": "cnn_lstm",
+    "best_physics_labeled": "physics_constrained_cnn",
+    "best_physics_labeled_caveat": "CE-only (architecture; physics loss OFF)",
+    "top3_deep": [
+      "cnn_lstm",
+      "resnet18",
+      "physics_constrained_cnn"
+    ],
+    "paired_test_basis": "best-validation seed per model (single model, no ensembling)",
+    "bestval_seed_acc": {
+      "cnn1d": 99.43181818181817,
+      "attention_cnn": 98.10606060606061,
+      "cnn_lstm": 99.62121212121212,
+      "resnet18": 99.24242424242425,
+      "patchtst": 89.77272727272727,
+      "hybrid_pinn": 91.09848484848484,
+      "physics_constrained_cnn": 99.62121212121212,
+      "multitask_pinn": 91.28787878787878
+    },
+    "mcnemar_record_level_exact": {
+      "cnn_lstm_vs_resnet18": 0.5,
+      "cnn_lstm_vs_physics_constrained_cnn": 1.0,
+      "resnet18_vs_physics_constrained_cnn": 0.5,
+      "physics_constrained_cnn_vs_cnn_lstm": 1.0,
+      "physics_constrained_cnn_vs_resnet18": 0.5
+    },
+    "gap_best_physlabeled_minus_best_vanilla_pts": 0.0,
+    "gap_ci95_record_bootstrap": [
+      0.0,
+      0.0
+    ],
+    "wilcoxon_seeds_p": 0.5,
+    "wilcoxon_note": "n=3 seeds; min attainable two-sided p = 0.25 \u2014 McNemar is the powered test",
+    "bootstrap": {
+      "B": 10000,
+      "seed": 42,
+      "method": "cluster bootstrap by record"
+    }
+  },
+  "classical_bar_record_acc": 98.73737373737373,
+  "generated_at": "2026-06-14T15:36:58.825505+00:00",
+  "git_sha": "0d25d205f3362d4cd1654f48f01a46370747c188",
+  "host": "DESKTOP-M7RBFOO",
+  "source": "scripts/aggregate_benchmark_record_level.py"
+}
