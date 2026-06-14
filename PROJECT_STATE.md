@@ -10,14 +10,16 @@
 > **Maintenance duty**: update this file at every phase gate and at the end of
 > every working session. It is linked from the README.
 >
-> Last updated: **2026-06-14, session 3** (Phase 5: §8.1–8.5 all DONE incl.
-> the §8.4 before/after fixed-loss rerun. KEY RESULT: even the corrected
-> (differentiable) physics loss does NOT help — neutral at low w, harmful at
-> high w (`results/phase5_fixed/before_after_8_4.md`); §8.5 metadata null;
-> §8.2/8.3 no physics advantage. DECISION: skip §8.2/8.3 fixed rerun. The C3
-> physics-advantage story is largely negative except §8.1's outlier-sensitive
-> edge → weight shifts to C4 (XAI, §8.6 — the LAST experiment, not yet built,
-> laptop). Then FINDINGS → Gate 5. Colab work is DONE.)
+> Last updated: **2026-06-14, session 3** (Phase 5: **ALL experiments §8.1–8.6
+> DONE.** C3 physics-advantage is a complete, decisive NEGATIVE — incl. the
+> §8.4 before/after fixed-loss rerun (physics neutral-to-harmful) AND the §8.2
+> low-data fixed test (physics HURTS at 10%: 91.11 vs 93.60 vanilla, one seed
+> crashed — `results/phase5_dataeff_fixed/before_after_8_2.md`); §8.5 null;
+> §8.3 split/architecture. C4 (XAI §8.6) modest POSITIVE: physics training →
+> more physics-aligned attributions + better calibration, same backbone.
+> Thesis: physics is an interpretability lever, not an accuracy lever.
+> **NEXT: write `results/FINDINGS.md` → owner ratifies → Gate 5** (merge
+> p5/physics-loss-fix + p5/physics-exp → main). Colab work DONE.)
 
 ---
 
@@ -210,7 +212,7 @@ and the owner reviews the fix design.
 | Prereg | Experiment | Compute | Status |
 |---|---|---|---|
 | §8.1 | Noise robustness: all 24 frozen checkpoints × SNR-20/10/5 | laptop | **DONE 24/24, summary written** (`results/noise_robustness/summary.{md,json,png}`). Headline: family mean degradation clean→5dB: **physics 8.51 vs vanilla 15.54** (prereg rule favors physics) — BUT outlier-sensitive: attention_cnn's collapse (Δ50.6) drags the vanilla mean; excluding it vanilla≈6.8 beats physics. Most robust single model is VANILLA resnet18 (Δ1.70, still 94.4% at 5 dB); clean-data co-champion cnn_lstm is noise-fragile (Δ12.7). pc_cnn Δ4.99 (best physics). Full honest read → FINDINGS.md at Gate 5; remember pc_cnn here is physics-OFF (§8.0) — §8.4's w>0 arms at 5 dB are the real physics-noise test. One incident en route (I4) |
-| §8.2 | Data efficiency: pc_cnn(w=0.3) & resnet18 × {10,25,50,100}% × 3 seeds | Colab | **BEFORE (inert) 21/21**: dead even — 10%: 93.55±0.61 vs 93.60±0.96; 25%: 94.99 vs 94.71; 50%: 95.48 vs 95.37. **FIXED-loss rerun QUEUED** (owner decision 2026-06-14): low-data is the canonical regime where physics priors should help, and §8.4 only tested FULL data — so the fixed pc_cnn arm is re-run here once, pre-registered. `--only data_efficiency` on fix branch → Drive `results_phase5_dataeff_fixed/`. NB: closure bug recorded fraction=1.0 (true frac in path; fixed `9e3c3b8`) |
+| §8.2 | Data efficiency: pc_cnn(w=0.3) & resnet18 × {10,25,50,100}% × 3 seeds | Colab | **DONE — before + FIXED 21/21** (`results/phase5_dataeff_fixed/`, note `before_after_8_2.md`, sha d39c219). The low-data physics test (the steelman regime): fixed physics loss does NOT help and HURTS at 10% — pc_cnn 91.11±3.29 (seeds 91.9/87.5/93.9, one crashed) vs vanilla 93.60 and inert 93.55; 25/50/100% within noise. Prereg rule: physics wins 0/3 → **hypothesis REJECTED**. C3 now a complete decisive negative |
 | §8.3 | Severity-OOD: both directions (train low→test severe; train high→test incipient) | Colab | **DATA IN 12/12** (partial download). PRELIMINARY (architecture): dir A (→severe) pc_cnn 96.87±0.46 vs resnet18 97.37±0.09 (vanilla ahead); dir B (→incipient, hard) pc_cnn 79.80±4.09 vs resnet18 73.43±4.03 (pc_cnn backbone +6.4). Split → physics-as-such not demonstrated |
 | §8.4 | Physics-weight ablation w∈{0.1,0.3,1.0} (+Phase-4 as w=0), eval clean+5 dB | Colab | **DONE before+after 9/9** (`results/phase5_fixed/`, full analysis `results/phase5_fixed/before_after_8_4.md`). BEFORE inert (all w identical). AFTER fix: w now matters but **hypothesis REJECTED** — clean flat ~96.0; 5dB neutral at low w (92.5/92.2 vs 91.0, within ±5-6 noise) and HARMFUL at high w (w=1.0→83.1, seed1 collapsed 71.7). More physics weight → worse/unstable noise robustness. **DECISION (revised 2026-06-14): run §8.2 low-data with the fixed loss** (one principled test — low-data is the strongest-theory physics regime, untested by §8.4's full-data sweep; run once, report whatever); skip §8.3. McNemar deferred to FINDINGS (needs checkpoint re-eval) |
 | §8.5 | hybrid_pinn with TRUE per-record metadata (rpm/load/viscosity from v2; mapping documented in script header) vs Phase-4 constant-defaults | Colab | **DONE 3/3 — HONEST NEGATIVE**: true-metadata 89.76 mean (89.96/90.11/89.20) vs Phase-4 blind 90.04 → no improvement (prereg expected ≥+2). FINAL (unaffected by the loss fix; uses forward-path metadata) |
