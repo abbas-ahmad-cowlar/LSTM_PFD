@@ -11,6 +11,16 @@
 >
 > ⚠️ **Scope:** all data is physics-based **synthetic** (no real-world
 > validation). Results characterise models *on this synthetic benchmark*.
+>
+> 🛠️ **Status (2026-06-14): under remediation.** An independent external audit
+> ([audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md](audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md))
+> found the project's *physics-informed-model* evidence invalid (wrong-bearing-type
+> physics, an inert loss, window-level statistics, mislabeled rows). The
+> **synthetic dataset and benchmark survive as a classification benchmark**
+> (pending relabel + record-level statistics); the **physics-model claims do
+> not**. The "headline findings" below are **superseded** — read
+> [results/FINDINGS.md](results/FINDINGS.md) §0 and [PROJECT_STATE.md](PROJECT_STATE.md)
+> for the live state and the 5-step remediation.
 
 ## What this is
 
@@ -21,21 +31,29 @@ nets, and physics-informed models on them under a **frozen protocol**
 ([experiments/PROTOCOL.md](experiments/PROTOCOL.md)). The journal-bearing focus is
 deliberate — public datasets (CWRU, Paderborn) are almost all *rolling-element*.
 
-## Headline findings (Phase 5 — see [results/FINDINGS.md](results/FINDINGS.md))
+## Status of findings (Phase 5 — UNDER REVISION, see [results/FINDINGS.md](results/FINDINGS.md) §0)
 
-- **Physics-informed learning gives no accuracy advantage** on this clean
-  synthetic data — tested across noise, data-efficiency, severity-OOD, a
-  physics-weight ablation, and operating-condition metadata. At 10% data it even
-  *hurts*. A rigorous, pre-registered **negative result**.
-- The data-driven models already reach **~96%** — the generator embeds the fault
-  signatures cleanly, leaving little for a physics prior to add.
-- **But** physics-informed training (same backbone) yields a *modest*
-  **interpretability + calibration** gain: attributions align more with
-  characteristic fault frequencies, and lower ECE. Physics here is an
-  interpretability/trust lever, not an accuracy lever.
-- Methodological caution documented: a naive frequency-consistency physics loss
-  was silently **non-differentiable** until fixed (see
-  [experiments/PHYSICS_LOSS_DIAGNOSIS.md](experiments/PHYSICS_LOSS_DIAGNOSIS.md)).
+> The pre-audit Phase-5 synthesis claimed a rigorous negative on physics accuracy
+> plus an interpretability/calibration gain. The 2026-06-14 external audit
+> **suspended those claims** — several "physics" experiments were not valid tests
+> of physics. What can and cannot be said today:
+
+- **Supportable:** a balanced, leakage-checked, group-split **synthetic
+  journal-bearing classification benchmark**; strong vanilla models reach **~96%**
+  window accuracy on the clean test split.
+- **Not yet supportable (under remediation):** any physics-informed benefit —
+  accuracy, noise robustness, data-efficiency, severity-OOD, interpretability, or
+  calibration. The stored artifacts show **no physics accuracy advantage**, but
+  this is **not** a decisive negative about correctly-implemented journal-bearing
+  physics — that experiment has **not been run**: the "fixed" physics loss was
+  tonal-only (the ratified band-energy loss is not yet implemented), the
+  HybridPINN physics branch used **rolling-element** frequencies (wrong bearing
+  type), and all significance was computed at the window level (being recomputed
+  at the 528-record level).
+- **Methodological caution (still valid):** a naive frequency-consistency physics
+  loss was silently **non-differentiable** until fixed (see
+  [experiments/PHYSICS_LOSS_DIAGNOSIS.md](experiments/PHYSICS_LOSS_DIAGNOSIS.md));
+  the generic trainer loss path remains inert and is being quarantined.
 
 ## Fault taxonomy (11 journal-bearing classes)
 
@@ -71,20 +89,28 @@ deliberate — public datasets (CWRU, Paderborn) are almost all *rolling-element
 ## Performance
 
 Frozen benchmark ([experiments/PROTOCOL.md](experiments/PROTOCOL.md)), 11-class,
-1 s windows, 2,640 test windows, mean ± std over 3 seeds. Full table + stats +
-provenance: [results/benchmark/summary.md](results/benchmark/summary.md).
+1 s windows, mean ± std over 3 seeds. Accuracies below are **window-level and
+descriptive**; significance is **recomputed at the record level** (528 records,
+not 2,640 correlated windows) in
+[results/benchmark/summary_record_level.md](results/benchmark/summary_record_level.md).
+Full window-level table + provenance:
+[results/benchmark/summary.md](results/benchmark/summary.md).
 
-| Model | Test accuracy | Macro-F1 |
-| --- | --- | --- |
-| Voting ensemble (top-3) | **96.48%** | 0.964 |
-| ResNet18-1D | 96.14 ± 0.28% | 0.961 |
-| CNN-LSTM | 96.12 ± 0.16% | 0.961 |
-| PhysicsConstrainedCNN | 95.98 ± 0.36% | 0.960 |
-| RandomForest (36 features) | 94.61 ± 0.05% | 0.946 |
-| CNN1D | 91.94 ± 2.84% | 0.917 |
+| Model | Window accuracy | Macro-F1 | Note |
+| --- | --- | --- | --- |
+| Voting ensemble (top-3) | **96.48%** | 0.964 | single seed |
+| ResNet18-1D | 96.14 ± 0.28% | 0.961 | strongest vanilla |
+| CNN-LSTM | 96.12 ± 0.16% | 0.961 | |
+| PhysicsConstrainedCNN | 95.98 ± 0.36% | 0.960 | **CE-only — architecture row, physics loss OFF** |
+| RandomForest (36 features) | 94.61 ± 0.05% | 0.946 | classical bar |
+| CNN1D | 91.94 ± 2.84% | 0.917 | |
 
-Top-3 deep models are statistically tied (McNemar p > 0.2). Inference (ResNet18,
-CPU, 1 s window): **~13 ms** via ONNX FP32 — [results/deployment/appendix.md](results/deployment/appendix.md).
+The top vanilla models cluster near 96%. The "physics-labeled" rows
+(hybrid_pinn / multitask_pinn, ~90%) were **not** trained with valid physics
+(hybrid uses a rolling-element branch + constant metadata; multitask ran
+single-task) — they are **not** physics results. Record-level significance
+supersedes any window-level p-value. Inference (ResNet18, CPU, 1 s window):
+**~13 ms** via ONNX FP32 — [results/deployment/appendix.md](results/deployment/appendix.md).
 
 ## Quick start
 
@@ -94,7 +120,7 @@ cd LSTM_PFD
 python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 # exact maintainer env: pip install -r requirements.lock.txt  (Python 3.14 / torch 2.9.1+cpu)
-pytest -q   # expect ~240 passed, 6 deselected
+pytest -q   # expect 251 passed, 6 deselected
 ```
 
 Reproduce experiments: see `scripts/` (`run_benchmark.py`, `run_noise_robustness.py`,
@@ -128,5 +154,9 @@ packages/dashboard/  # experimental, frozen (Phase D)
 
 Synthetic data only — no real-bearing validation. Accuracy figures reflect
 learnability of the *generator's* signatures, not real-world performance. The
-physics-informed negative is bounded to the mechanisms implemented here (see
-[results/FINDINGS.md](results/FINDINGS.md) §4b).
+physics-informed experiments are **under remediation** (2026-06-14 external
+audit): no physics benefit may be claimed until the ratified band-energy loss is
+implemented, the HybridPINN physics branch is rebuilt on journal-bearing
+quantities, the inert generic loss is quarantined, and all statistics are
+recomputed at record level — see [results/FINDINGS.md](results/FINDINGS.md) §0 and
+[PROJECT_STATE.md](PROJECT_STATE.md).

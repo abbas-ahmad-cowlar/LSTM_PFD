@@ -17,12 +17,20 @@
 - Dataset v2 is sound **as a synthetic, internally consistent benchmark**:
   balanced, group-split by record, leakage-checked, intended signatures present
   (cavitation only weakly so — qualify any cavitation claim).
-- The benchmark accuracies are plausible **as classification results** — but
-  several labels and **all** significance claims are **not yet sound**:
-  `physics_constrained_cnn` was trained **CE-only** (relabel as architecture /
-  CE-only), `multitask_pinn` was **not** trained multitask, and statistics were
-  computed on **2,640 correlated windows** rather than **528 records** (must be
-  recomputed at record level, cluster-bootstrap).
+- The benchmark accuracies are plausible **as classification results**; the rows
+  are now **relabeled** (Step 3, done): `physics_constrained_cnn` = **CE-only /
+  architecture** (physics loss OFF), `multitask_pinn` = **single-task**,
+  `hybrid_pinn` = **rolling-element branch + constant metadata** — none is a
+  physics result (`results/benchmark/summary.md` banner). Significance has been
+  **recomputed at the
+  528-record level** (cluster-bootstrap, Step 2 —
+  `results/benchmark/summary_record_level.md`), superseding the window-level
+  p-values (which used 2,640 correlated windows). Direction is unchanged:
+  soft-voting the 5 windows/record pushes the benchmark **near-ceiling**
+  (RandomForest 98.74%, top deep ~99%, CE-only pc_cnn 98.99%) and **no row shows
+  a physics advantage** — the best vanilla (cnn_lstm) and the CE-only pc_cnn tie
+  to the record (gap +0.00 pts, McNemar p=1). High-variance rows (cnn1d,
+  attention_cnn) carry one collapsed seed (±4.3 std), now shown with consistent CIs.
 - The **stored artifacts show no physics accuracy advantage.** This is **NOT** a
   definitive negative about correctly-implemented journal-bearing
   physics-informed learning — **that experiment has not been run.** The §8.4/§8.2
@@ -38,12 +46,16 @@ or "decisive" negative; family-level noise robustness; any window-level
 significance.
 
 **Remediation sequence (endorsed by the external auditor):** (1) reconcile docs
-to this corrected blast radius [done in this revision]; (2) recompute all
-statistics at **record level**; (3) quarantine/relabel invalid rows (CE-only
-pc_cnn, non-multitask multitask_pinn, rolling-element HybridPINN, inert
-`PhysicalConstraintLoss`/`PINNTrainer`); (4) implement + gradient-test the
-ratified **band-energy** loss; (5) only then rerun physics-forward experiments.
-Then this memo is rewritten and **re-ratified**.
+to this corrected blast radius [done — incl. README]; (2) recompute all
+statistics at **record level** [**DONE 2026-06-14** —
+`results/benchmark/summary_record_level.md`,
+`scripts/aggregate_benchmark_record_level.py`]; (3) quarantine/relabel invalid
+rows [**DONE 2026-06-14** — summary relabeled + banner; quarantine docstrings on
+inert `PhysicalConstraintLoss`/`PINNTrainer`/`PINNEvaluator`, rolling-element
+HybridPINN branch + `BearingDynamics`; stale `pinn_ablation.py` blocked;
+`tests/test_physics_quarantine.py` pins it]; (4) implement + gradient-test the
+ratified **band-energy** loss [**NEXT, owner-gated**]; (5) only then rerun
+physics-forward experiments. Then this memo is rewritten and **re-ratified**.
 
 ---
 
