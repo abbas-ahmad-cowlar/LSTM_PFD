@@ -5,7 +5,9 @@
 > paper may and may not make. **Synthetic-only study — no real-world validation,
 > stated everywhere.**
 >
-> Status: DRAFT for owner ratification. Date: 2026-06-14.
+> Status: **RATIFIED — Syed Abbas Ahmad, 2026-06-14** ("I ratify the
+> results/FINDINGS.md and we can now continue to next steps."). The claims list
+> in §3–4 is frozen; §5 open items are presentation polish for Phase 6/7.
 
 ## 1. One-paragraph verdict
 
