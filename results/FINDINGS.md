@@ -54,8 +54,13 @@ rows [**DONE 2026-06-14** — summary relabeled + banner; quarantine docstrings 
 inert `PhysicalConstraintLoss`/`PINNTrainer`/`PINNEvaluator`, rolling-element
 HybridPINN branch + `BearingDynamics`; stale `pinn_ablation.py` blocked;
 `tests/test_physics_quarantine.py` pins it]; (4) implement + gradient-test the
-ratified **band-energy** loss [**NEXT, owner-gated**]; (5) only then rerun
-physics-forward experiments. Then this memo is rewritten and **re-ratified**.
+ratified **band-energy** loss [**DONE 2026-06-14** — `compute_physics_loss`
+rewritten to band-energy consistency (per-sample rpm; tonal+broadband+mixed;
+differentiable, smoke-verified active); `tests/test_physics_band_energy_loss.py`;
+PROTOCOL §8.0-quater]; (5) rerun the physics-forward experiments with the
+band-energy loss + record-level stats [**NEXT, GPU/Colab** —
+`experiments/COLAB_PHASE5_RERUN_RUNBOOK.md`]. Then this memo is rewritten and
+**re-ratified**.
 
 ---
 

@@ -16,12 +16,14 @@
 > invalid (wrong-bearing-type physics, an inert loss, window-level statistics,
 > mislabeled rows). We are mid-**remediation** on branch `p6/docs`. The
 > dataset/benchmark survive *as a synthetic classification benchmark*; the
-> physics-model claims do not. **Steps 1-3 of the 5-step remediation are DONE
-> (reconcile docs incl. README; record-level statistics; quarantine/relabel);
-> current step: Step 4 — implement + gradient-test the ratified band-energy loss
-> (OWNER-GATED).** Step 2 result: at the 528-record level the benchmark is
-> near-ceiling and no row shows a physics advantage
-> (`results/benchmark/summary_record_level.md`). Suite 254 passed, 6 deselected.
+> physics-model claims do not. **Steps 1-4 of the 5-step remediation are DONE
+> (reconcile docs incl. README; record-level statistics; quarantine/relabel;
+> band-energy loss implemented + gradient-tested + per-sample rpm wired);
+> current step: Step 5 — rerun the physics-forward experiments on GPU/Colab via
+> `experiments/COLAB_PHASE5_RERUN_RUNBOOK.md`, then rewrite + re-ratify FINDINGS.**
+> Step 2 result: at the 528-record level the benchmark is near-ceiling and no row
+> shows a physics advantage (`results/benchmark/summary_record_level.md`). Suite
+> 259 passed, 6 deselected. (Owner to confirm the band-energy concentration math.)
 
 ---
 
@@ -268,14 +270,26 @@ HybridPINN, record-level stats) **has not been run.** Do not call it "decisive."
    blocked (`run_ablation_study` raises) + run_all.py call site flagged.
    `tests/test_physics_quarantine.py` (3 tests) pins the inert loss + the stale
    script guard. Suite **254 passed, 6 deselected**.
-4. **Implement + gradient-test the band-energy loss — NEXT (owner-gated).**
-   Ratified formulation (PROTOCOL §7): use `get_expected_bands`, per-sample rpm,
-   handle empty-tonal classes; tests assert `requires_grad`, nonzero param grads,
-   and per-class (tonal/broadband/mixed) behavior. **Replace the Step-3 quarantine
-   guard test with its opposite when this lands.**
-5. **Only then rerun** physics-forward experiments (§8.4, §8.2 pc_cnn, §8.5 with
-   corrected HybridPINN if retained, §8.6a recompute) from a frozen manifest.
-   Then **rewrite + re-ratify FINDINGS**.
+4. **Implement + gradient-test the band-energy loss — DONE 2026-06-14.**
+   `PhysicsConstrainedCNN.compute_physics_loss` rewritten to band-energy
+   consistency: `concentration = (E_band/E_total)·(F/n_bins)` over journal-bearing
+   bands (tonal from PER-SAMPLE rpm + absolute broadband), penalty
+   `relu(1−concentration)`·softmax — differentiable, covers tonal+broadband+mixed,
+   healthy→0, no knob (PROTOCOL §7 §8.0-quater). Per-sample rpm wired into
+   §8.2/§8.3/§8.4 (`run_phase5_gpu.py` `ops=True`). Tests:
+   `tests/test_physics_band_energy_loss.py` (5 — grad-to-logits + per-class
+   tonal/broadband + per-sample rpm). Smoke: phys loss active + decreasing
+   (0.140→0.110). Suite **259 passed, 6 deselected**. (The generic
+   `FrequencyConsistencyLoss`/`PINNTrainer` stay quarantined — only the live
+   model-method loss was fixed; the Step-3 guard test still applies.) **Owner to
+   confirm the concentration-vs-flat-spectrum realization at the next gate.**
+5. **Rerun physics-forward experiments — NEXT (GPU/Colab).** From a frozen
+   manifest: §8.4 ablation, §8.2 pc_cnn data-efficiency, §8.3 severity-OOD
+   (all now with band-energy loss + per-sample rpm + record-level stats), §8.6a
+   XAI recompute (laptop), and §8.5 ONLY IF the HybridPINN physics branch is
+   first rebuilt on journal-bearing features (still rolling-element — separate
+   model task, fresh pre-reg, I4 checkpoint-compat check). Runbook:
+   `experiments/COLAB_PHASE5_RERUN_RUNBOOK.md`. Then **rewrite + re-ratify FINDINGS**.
 
 ### 5.4 Stored numbers so far (provisional, contaminated per §5.2 — for reference only)
 §8.2 fixed pc_cnn: hurts at 10% (91.11±3.29 vs vanilla 93.60), neutral 25/50/100.
