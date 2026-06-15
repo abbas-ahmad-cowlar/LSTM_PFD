@@ -103,6 +103,8 @@ results/*
 !results/**/*.md
 !results/**/*.png
 !results/**/*.csv
+# model checkpoints stay out of git (large; archive separately, e.g. D:\Libraries)
+results/**/*.pth
 outputs/
 mlruns/
 wandb/
