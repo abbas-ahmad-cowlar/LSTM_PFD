@@ -81,15 +81,23 @@ report it — do not run the experiments on wrong code.
 ```python
 # Cell 5 — point results at a NEW empty Drive folder (BEFORE the first run)
 %%bash
+cd /content/lstm-pfd
+# CRITICAL: the repo ships results/phase5/ ALREADY POPULATED with the old
+# inert-loss runs. It must be REMOVED first — otherwise `ln -sfn` creates the link
+# *inside* the existing folder (the I2 trap) and the queue sees the old metrics.json
+# and skips all 42 runs as "already complete" (writing nothing to Drive).
+rm -rf results/phase5
 mkdir -p /content/drive/MyDrive/lstm-pfd/results_phase5_bandenergy
-ln -sfn /content/drive/MyDrive/lstm-pfd/results_phase5_bandenergy /content/lstm-pfd/results/phase5
-ls -la /content/lstm-pfd/results/ | grep phase5
-find /content/drive/MyDrive/lstm-pfd/results_phase5_bandenergy -name metrics.json | wc -l
+ln -sfn /content/drive/MyDrive/lstm-pfd/results_phase5_bandenergy results/phase5
+ls -la results/ | grep phase5
+echo "metrics.json already visible to the queue (MUST be 0):"
+find results/phase5/ -name metrics.json | wc -l
 ```
-Expect: a line ending `phase5 -> /content/drive/MyDrive/lstm-pfd/results_phase5_bandenergy`,
-and the count line printing **0** (fresh start). If the `->` arrow is missing, STOP.
-(This is the `ln -sfn`-before-first-run step — it must run BEFORE Cell 7, or the
-queue writes to local disk and the results vanish on disconnect.)
+Expect: a line showing `phase5 -> /content/drive/MyDrive/lstm-pfd/results_phase5_bandenergy`
+(an **arrow** — results/phase5 is now a symlink, not a folder), and the count **0**.
+**If there is no arrow, or the count is not 0, STOP** — the queue would skip every
+run. (`rm -rf results/phase5` only removes the working-tree copy of the old runs;
+they remain in git history. On a resume it safely removes just the symlink.)
 
 ```python
 # Cell 6 — GPU smoke sanity (~3 min). Confirms the loss runs on the T4 before the real thing.
