@@ -16,14 +16,16 @@
 > invalid (wrong-bearing-type physics, an inert loss, window-level statistics,
 > mislabeled rows). We are mid-**remediation** on branch `p6/docs`. The
 > dataset/benchmark survive *as a synthetic classification benchmark*; the
-> physics-model claims do not. **Steps 1-4 of the 5-step remediation are DONE
-> (reconcile docs incl. README; record-level statistics; quarantine/relabel;
-> band-energy loss vs the frozen HEALTHY reference, per-sample rpm, owner-ratified);
-> current step: Step 5 — rerun the physics-forward experiments on GPU/Colab via
-> `experiments/COLAB_PHASE5_RERUN_RUNBOOK.md`, then rewrite + re-ratify FINDINGS.**
-> Step 2 result: at the 528-record level the benchmark is near-ceiling and no row
-> shows a physics advantage (`results/benchmark/summary_record_level.md`). Suite
-> 261 passed, 6 deselected.
+> physics-model claims do not. **Steps 1-4 DONE; Step 5 reruns DONE (window-level)
+> — current step: record-level confirmation + FINDINGS rewrite.** The band-energy
+> physics reruns (`results/phase5_bandenergy/`, `findings_bandenergy.md`) show, at
+> window level (3 seeds, pending record-level): no clean-accuracy gain, **but
+> strong stable noise robustness at high physics weight (§8.4 w=1.0: 0.51 pt drop
+> at 5 dB vs 4.99 CE-only / 1.70 vanilla)** and a **+5.6 severity-OOD-to-incipient
+> gain (§8.3 dir B)** — a promising reversal of the contaminated negative. NEXT:
+> record-level recompute + McNemar from the retained checkpoints, §8.6a XAI, then
+> rewrite/re-ratify FINDINGS. Step 2 result: benchmark near-ceiling, no physics
+> advantage on clean accuracy. Suite 261 passed, 6 deselected.
 
 ---
 
@@ -285,13 +287,20 @@ HybridPINN, record-level stats) **has not been run.** Do not call it "decisive."
    (`run_phase5_gpu.py ops=True`). `tests/test_physics_band_energy_loss.py` (6).
    Smoke: phys loss active + decreasing. Suite **261 passed, 6 deselected**. (Generic
    `FrequencyConsistencyLoss`/`PINNTrainer` stay quarantined.)
-5. **Rerun physics-forward experiments — NEXT (GPU/Colab).** From a frozen
-   manifest: §8.4 ablation, §8.2 pc_cnn data-efficiency, §8.3 severity-OOD
-   (all now with band-energy loss + per-sample rpm + record-level stats), §8.6a
-   XAI recompute (laptop), and §8.5 ONLY IF the HybridPINN physics branch is
-   first rebuilt on journal-bearing features (still rolling-element — separate
-   model task, fresh pre-reg, I4 checkpoint-compat check). Runbook:
-   `experiments/COLAB_PHASE5_RERUN_RUNBOOK.md`. Then **rewrite + re-ratify FINDINGS**.
+5. **Rerun physics-forward experiments — RERUNS DONE 2026-06-15 (window-level);
+   record-level confirmation + FINDINGS rewrite NEXT.** 42 runs on Colab T4 with
+   the band-energy loss + per-sample rpm (`results/phase5_bandenergy/`, code
+   @`ce344d1`; `findings_bandenergy.md`; checkpoints retained off-git).
+   **Window-level signal (3 seeds, NOT yet a claim):** clean ~96% flat (no gain,
+   expected); **§8.4 noise — at w=1.0 only 0.51 pt drop at 5 dB (96.15→95.64, all
+   seeds) vs 4.99 CE-only / 1.70 vanilla resnet18 → strong stable noise robustness**,
+   reversing the contaminated "harmful at w=1.0"; **§8.3 dir B (test incipient)
+   physics +5.6 (79.04 vs 73.43)**; §8.2 data-eff ~neutral (improved from "harmful
+   at 10%"). NEXT: **record-level recompute** of §8.2/§8.3/§8.4 from the retained
+   checkpoints + McNemar (confirm/retract the headline), **§8.6a XAI recompute**,
+   then **rewrite + re-ratify FINDINGS** (verdict may move from "no physics
+   advantage" to "no clean gain, real noise/OOD benefit" IF record-level holds).
+   §8.5 still excluded (HybridPINN rolling-element — separate rebuild).
 
 ### 5.4 Stored numbers so far (provisional, contaminated per §5.2 — for reference only)
 §8.2 fixed pc_cnn: hurts at 10% (91.11±3.29 vs vanilla 93.60), neutral 25/50/100.
