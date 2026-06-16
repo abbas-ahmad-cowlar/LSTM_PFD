@@ -48,10 +48,14 @@ from utils.constants import NUM_CLASSES  # noqa: E402
 
 WINDOW, FS = 20480, 20480
 DATA = PROJECT_ROOT / 'data/generated/dataset_v2.h5'
-# best-vanilla and best-physics checkpoints (override pc_cnn via --pc-cnn-ckpt)
-VANILLA_CKPT = PROJECT_ROOT / 'results/benchmark/deep/resnet18/seed0/best_model.pth'
-PCCNN_CKPT_DEFAULT = Path(r'D:\Libraries\results_phase5_fixed_full-20260613T221621Z-3-001'
-                          r'\results_phase5_fixed_full\pinn_ablation\w0.3\seed1\best_model.pth')
+# Best-vanilla and best-physics checkpoints — representative best-val seed (seed2),
+# matching the record-level surviving-result analysis. pc_cnn defaults to the
+# BAND-ENERGY w=1.0 model (the noise-robust arm). Both share the ResNet1D backbone
+# so any difference is physics-loss training, not architecture. Override via
+# --vanilla-ckpt / --pc-cnn-ckpt. (Old contaminated run used resnet seed0 / the
+# tonal-only pc_cnn w0.3 seed1 in D:\Libraries — superseded.)
+VANILLA_CKPT_DEFAULT = PROJECT_ROOT / 'results/benchmark/deep/resnet18/seed2/best_model.pth'
+PCCNN_CKPT_DEFAULT = PROJECT_ROOT / 'results/phase5_bandenergy/pinn_ablation/w1.0/seed2/best_model.pth'
 TOL = 0.15  # ±15% band half-width (matches the physics-loss tolerance)
 
 
@@ -232,6 +236,7 @@ def calibration(model, windows, win_idx, n_samples, device, batch=64):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--smoke', action='store_true')
+    ap.add_argument('--vanilla-ckpt', default=str(VANILLA_CKPT_DEFAULT))
     ap.add_argument('--pc-cnn-ckpt', default=str(PCCNN_CKPT_DEFAULT))
     args = ap.parse_args()
 
@@ -242,10 +247,11 @@ def main():
     sigdb = FaultSignatureDatabase()
 
     models = {}
-    if VANILLA_CKPT.exists():
-        models['resnet18_vanilla'] = load_model('resnet18', VANILLA_CKPT, device)
+    van = Path(args.vanilla_ckpt)
+    if van.exists():
+        models['resnet18_vanilla'] = load_model('resnet18', van, device)
     else:
-        print(f'WARN vanilla ckpt missing: {VANILLA_CKPT}')
+        print(f'WARN vanilla ckpt missing: {van}')
     pc = Path(args.pc_cnn_ckpt)
     if pc.exists():
         models['pc_cnn_physics'] = load_model('physics_constrained_cnn', pc, device)
@@ -263,7 +269,7 @@ def main():
 
     prov = {'git_sha': git_sha(), 'host': platform.node(), 'device': device,
             'data': DATA.name, 'finished_at': datetime.now(timezone.utc).isoformat(),
-            'vanilla_ckpt': str(VANILLA_CKPT), 'pc_cnn_ckpt': str(pc),
+            'vanilla_ckpt': str(van), 'pc_cnn_ckpt': str(pc),
             'per_class': per_class, 'ig_steps': steps, 'mc_samples': n_mc,
             'smoke': args.smoke}
 
