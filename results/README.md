@@ -19,13 +19,16 @@ checkpoints live at `D:\Libraries\` (see bottom).
 | `cnn1d_v1_baseline/` | history | Phase-1 first real artifact (86.48%) |
 | `cnn1d_v2_baseline/` | history | Phase-3 dataset-v2 baseline (90.53%) |
 
-**Headline (UNDER REVISION — see `FINDINGS.md` §0):** the physics-model evidence
-was suspended by the 2026-06-14 external audit. What stands: a synthetic
-classification benchmark, **near-ceiling at the record level**, with **no row
-showing a physics advantage** — and the "physics" rows were not valid physics
-(pc_cnn CE-only, hybrid rolling-element, multitask single-task). No physics
-benefit (accuracy / robustness / XAI / calibration) may be claimed pending
-remediation Steps 3–5.
+**Headline (DRAFT verdict — see `FINDINGS.md` §0, pending owner re-ratification):**
+the band-energy remediation is complete and record-level; two external audits
+reviewed it (the 2nd reproduced every number). What stands: a synthetic
+classification benchmark, **near-ceiling at the record level**, **no row showing a
+physics accuracy advantage**; plus **one** surviving physics positive — a **5 dB
+noise-robustness gain from the band-energy loss in a same-architecture ablation**
+(`phase5_bandenergy/summary_record_level.json`: McNemar 14–0, p=1.2e-4).
+Data-efficiency, severity-OOD, XAI alignment (§8.6a *reverses*), and calibration
+(a wash) did **not** survive. Frame as "the *implemented band-energy term* helped,"
+not "physics helps"; the benefit is not yet isolated from generic regularization.
 
 **Full checkpoint archives (off-repo, `D:\Libraries\`):**
 - `results_phase5-20260613T100807Z-3-001` — 45 inert runs + 45 ckpts (= `phase5/`)

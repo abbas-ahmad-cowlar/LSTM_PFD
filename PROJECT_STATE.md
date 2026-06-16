@@ -10,17 +10,20 @@
 > **Maintenance duty:** update this file at every phase gate and at the end of
 > every session. Keep it truthful and current; it is the single source of truth.
 >
-> **Last updated: 2026-06-16, session 8.** One-line status: Phase 5 merged to
+> **Last updated: 2026-06-17, session 8.** One-line status: Phase 5 merged to
 > `main` (Gate 5), **but** internal + TWO independent external audits found the
 > *physics-informed-model* evidence invalid (wrong-bearing-type physics, an inert
-> loss, window-level statistics, mislabeled rows). We are deep into a 5-step
-> **remediation** on branch `p6/docs`. **Steps 1–4 DONE; Step 5 reruns DONE; Step
-> 5a RECORD-LEVEL confirmation DONE + committed/pushed (`0696790`).** A SECOND
-> independent external audit (Codex, `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md`,
+> loss, window-level statistics, mislabeled rows). 5-step **remediation** on branch
+> `p6/docs` is essentially complete through **Step 5d (FINDINGS DRAFT)** — only the
+> **owner re-ratification + optional GPU controls** remain. **Steps 1–4 DONE; Step
+> 5 reruns DONE; 5a record-level DONE (`0696790`); 5b audit fixes F6+F10 DONE
+> (`a2e09d9`); 5c XAI/calibration recompute DONE (`2b534bf`); 5d FINDINGS draft +
+> README reconcile DONE (this commit, NOT ratified).** A SECOND independent external
+> audit (Codex, `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md`,
 > commissioned silently to keep us honest) reviewed the remediation and
 > **independently reproduced every record-level number from the retained
-> checkpoints** — it validates the surviving result and tightens how it must be
-> reported.
+> checkpoints** — it validates the surviving result and tightened how it is
+> reported (F6 estimator fix + F10 hard-block now done).
 > **The surviving finding (record-level, 528 records, owner not yet re-ratified):**
 > after the physics loss was finally implemented correctly (band-energy vs a
 > *frozen healthy-class reference*, per-sample rpm), the **noise-robustness result
@@ -30,11 +33,13 @@
 > mislabels as `mixed_wear_lube`). It also beats best vanilla resnet18 @5 dB but
 > **small/fragile/seed-sensitive** (6–0 p=0.031 on the best-val seed; flips to
 > p=0.0625 vs resnet's best-noise seed) → secondary to the same-arch ablation.
-> **Severity-OOD (§8.3) and data-efficiency (§8.2) did NOT survive** → demoted to
-> direction-only / neutral. **Known reporting bug to fix (audit Finding 6):** the
-> summary + findings_bandenergy.md mix a **seed-mean point gap (+3.85)** with a
-> **representative-seed bootstrap CI ([1.33,4.17])** — different estimands; must be
-> made consistent before the FINDINGS draft. Suite: **261 passed, 6 deselected.**
+> **Severity-OOD (§8.3), data-efficiency (§8.2), and now C4 XAI/calibration (§8.6,
+> recomputed 5c) did NOT survive** → neutral/negative. The F6 estimator mismatch
+> (seed-mean gap vs representative-seed CI) is **fixed** (`a2e09d9`): repseed gap
+> **+2.65 [1.33,4.17]** for w1.0-vs-CE-only, seed-mean +3.85 kept separate. **The
+> ONLY surviving physics positive is the same-architecture noise robustness;** it
+> is not yet isolated from generic regularization (F9 controls = owner/GPU
+> decision). Suite: **262 passed, 6 deselected.**
 
 ---
 
@@ -43,8 +48,9 @@
 **Read, in this order (do not skip):**
 1. This whole file.
 2. `results/FINDINGS.md` — **read §0 first; it overrides §1–§5** (which overclaim
-   and are kept only for provenance). §0 reflects the corrected, record-level
-   benchmark verdict; it does **not** yet include the band-energy rerun result.
+   and are kept only for provenance). §0 is the **2026-06-17 DRAFT verdict** (the
+   surviving noise result + all the negatives, record-level); **awaiting owner
+   re-ratification** — do not cite as ratified.
 3. `results/phase5_bandenergy/findings_bandenergy.md` — the band-energy rerun
    result (window-level; the promising noise/OOD signal). **This is the newest
    science.**
@@ -98,7 +104,8 @@
   Gate-5 Phase 5 @`bb67026`). Branch is ~10 commits ahead of session-5; all pushed
   to `origin/p6/docs`. **NOT merged to main.**
 - `$env:PYTHONIOENCODING='utf-8'; .\venv\Scripts\python.exe -m pytest -q`
-  → expect **261 passed, 6 deselected**.
+  → expect **262 passed, 6 deselected** (was 261; +1 from the F10 PINNTrainer
+  hard-block test).
 - **Record-level job: DONE.** `results/phase5_bandenergy/summary_record_level.json`
   exists (committed `0696790`); the recompute is finished and the verdict is in
   `findings_bandenergy.md`. The 2026-06-16 auditor independently re-ran
@@ -107,30 +114,32 @@
 - Never state a number without `(evidence: command → artifact)`. Verify by
   execution, not by reading.
 
-**Then do the work (current step): Step 5a is DONE; the adjusted Step-5 tail
-(post-2026-06-16-audit), owner-gated — do NOT start past the doc updates without
-his go:**
-1. **Fix the estimator mismatch (audit F6)** — `scripts/phase5_bandenergy_record_level.py`
-   + `findings_bandenergy.md` report a **seed-mean gap with a representative-seed
-   CI**. Make them one estimand: representative-seed gap (+2.65) with the
-   representative-seed CI [1.33,4.17] + McNemar (14–0, p=1.2e-4), OR seed-mean gap
-   (+3.85) with a seed-bootstrap CI. Verified by execution this session
-   (`logs/_audit_verify.py`). Small, laptop-only, no GPU.
-2. **Hard-block the inert generic physics path (audit F10/Rec5)** — make
-   `PINNTrainer(lambda_physics>0)` / `PhysicalConstraintLoss` raise `RuntimeError`
-   (not just warn) so no future user believes the inert loss is doing physics;
-   update `tests/test_physics_quarantine.py`. Small, laptop-only.
-3. **Recompute §8.6a XAI** against the corrected bands (laptop).
-4. **DRAFT (do NOT ratify) the FINDINGS rewrite** + reconcile README to the
-   surviving verdict (audit F12). Headline = the same-architecture ablation;
-   resnet edge secondary/near-ceiling; the loss is a *band-consistency regularizer*
-   not a diagnostic solver (F8); attribute to *the implemented band-energy term*,
-   not "physics priors in general" (F9). FINDINGS ratification is the OWNER GATE.
-5. **Owner decisions (GPU) — do not start without his go:** (a) controls to
-   isolate physics from generic high-weight regularization (entropy/logit reg,
-   random-band, permuted/wrong healthy-reference) — audit F9/Rec6; (b) more seeds
-   than n=3 — audit F13/Rec7. Both strengthen the causal claim but cost GPU; the
-   alternative is to narrow the wording and list them as future work.
+**Then do the work: Step 5a/5b/5c DONE; the only remaining work is OWNER-GATED.**
+- **5a record-level confirmation — DONE** (`0696790`; `summary_record_level.json`).
+- **5b audit fixes — DONE** (`a2e09d9`): F6 estimator consistency (record-level
+  script + `findings_bandenergy.md` now report repseed_gap with its own CI +
+  McNemar, separate from a labeled seed-mean gap) and F10 hard-block (the inert
+  `FrequencyConsistencyLoss`/`PhysicalConstraintLoss.forward` + `PINNTrainer(λ>0)`
+  now raise; `test_physics_quarantine.py` asserts it). Suite **262**.
+- **5c XAI/calibration recompute — DONE** (`2b534bf`): §8.6a/§8.6b recomputed vs
+  corrected bands + the w=1.0 checkpoint → **the C4 positive does NOT survive**
+  (8.6a tonal alignment reverses, vanilla 1.042 > physics 0.856 — but tonal-only,
+  blind to the lube/cavitation broadband classes; 8.6b a wash). `findings_8_6.md`.
+- **5d FINDINGS DRAFT + doc reconcile — DONE as a DRAFT** (this commit): `results/FINDINGS.md`
+  §0 rewritten to the surviving verdict; README + `results/README.md` reconciled
+  (audit F12). **NOT ratified — owner re-ratification is the gate.**
+
+**REMAINING (owner-gated — do NOT start without his go):**
+1. **Owner re-ratifies (or edits) FINDINGS** — the one surviving positive is the
+   same-architecture noise robustness; everything else is neutral/negative.
+2. **GPU decisions:** (a) **F9 controls** (entropy/logit reg, random-band,
+   permuted/wrong healthy-reference) to isolate physics from generic high-weight
+   regularization; (b) **F13** more than n=3 seeds. Or accept the narrowed wording
+   and list both as future work.
+3. **Band-aware §8.6a (laptop)** — recompute alignment with `get_expected_bands`
+   (incl. the 1–6 Hz lube / 1.4–2.6 kHz cavitation absolute bands) so the metric
+   can actually see the band-energy model's broadband mechanism (the tonal-only
+   metric cannot). The XAI analogue of the F9 question.
 Do not loosen wording (§6); no physics-benefit claim beyond the surviving
 record-level noise result; every number with an artifact path.
 

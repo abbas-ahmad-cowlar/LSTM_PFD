@@ -12,15 +12,18 @@
 > ⚠️ **Scope:** all data is physics-based **synthetic** (no real-world
 > validation). Results characterise models *on this synthetic benchmark*.
 >
-> 🛠️ **Status (2026-06-14): under remediation.** An independent external audit
-> ([audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md](audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md))
-> found the project's *physics-informed-model* evidence invalid (wrong-bearing-type
-> physics, an inert loss, window-level statistics, mislabeled rows). The
-> **synthetic dataset and benchmark survive as a classification benchmark**
-> (pending relabel + record-level statistics); the **physics-model claims do
-> not**. The "headline findings" below are **superseded** — read
-> [results/FINDINGS.md](results/FINDINGS.md) §0 and [PROJECT_STATE.md](PROJECT_STATE.md)
-> for the live state and the 5-step remediation.
+> 🛠️ **Status (2026-06-17): remediation complete; DRAFT verdict pending owner
+> re-ratification.** Two independent external audits
+> ([2026-06-14](audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md) opened the
+> blast radius; [2026-06-16](audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md)
+> reviewed the band-energy fix and **independently reproduced every record-level
+> number**). Net: the **synthetic dataset + benchmark stand as a classification
+> benchmark** (record-level near-ceiling, no row showing a physics accuracy
+> advantage), and **one** physics positive survives at record level — a **5 dB
+> noise-robustness gain from the corrected band-energy loss in a same-architecture
+> ablation**; clean-accuracy / data-efficiency / severity-OOD / interpretability /
+> calibration advantages do **not**. Read [results/FINDINGS.md](results/FINDINGS.md)
+> §0 (DRAFT) and [PROJECT_STATE.md](PROJECT_STATE.md) for the live state.
 
 ## What this is
 
@@ -31,29 +34,34 @@ nets, and physics-informed models on them under a **frozen protocol**
 ([experiments/PROTOCOL.md](experiments/PROTOCOL.md)). The journal-bearing focus is
 deliberate — public datasets (CWRU, Paderborn) are almost all *rolling-element*.
 
-## Status of findings (Phase 5 — UNDER REVISION, see [results/FINDINGS.md](results/FINDINGS.md) §0)
+## Status of findings (Phase 5/6 — DRAFT verdict, see [results/FINDINGS.md](results/FINDINGS.md) §0)
 
-> The pre-audit Phase-5 synthesis claimed a rigorous negative on physics accuracy
-> plus an interpretability/calibration gain. The 2026-06-14 external audit
-> **suspended those claims** — several "physics" experiments were not valid tests
-> of physics. What can and cannot be said today:
+> The band-energy physics remediation is complete and judged at the **record
+> level** (528 records); two independent external audits reviewed it (the second
+> reproduced every number). The synthesis in
+> [results/FINDINGS.md](results/FINDINGS.md) §0 is a **DRAFT awaiting owner
+> re-ratification.** What can and cannot be said today:
 
 - **Supportable:** a balanced, leakage-checked, group-split **synthetic
-  journal-bearing classification benchmark**; strong vanilla models reach **~96%**
-  window accuracy on the clean test split.
-- **Not yet supportable (under remediation):** any physics-informed benefit —
-  accuracy, noise robustness, data-efficiency, severity-OOD, interpretability, or
-  calibration. The stored artifacts show **no physics accuracy advantage**, but
-  this is **not** a decisive negative about correctly-implemented journal-bearing
-  physics — that experiment has **not been run**: the "fixed" physics loss was
-  tonal-only (the ratified band-energy loss is not yet implemented), the
-  HybridPINN physics branch used **rolling-element** frequencies (wrong bearing
-  type), and all significance was computed at the window level (being recomputed
-  at the 528-record level).
-- **Methodological caution (still valid):** a naive frequency-consistency physics
-  loss was silently **non-differentiable** until fixed (see
-  [experiments/PHYSICS_LOSS_DIAGNOSIS.md](experiments/PHYSICS_LOSS_DIAGNOSIS.md));
-  the generic trainer loss path remains inert and is being quarantined.
+  journal-bearing classification benchmark** (record-level near-ceiling; no row
+  shows a physics accuracy advantage); and **one** physics positive — a **5 dB
+  noise-robustness gain from the correctly-implemented PC-CNN band-energy loss at
+  high weight, in a same-architecture ablation** (record level, 528 records:
+  McNemar 14–0, p=1.2e-4; mechanism = noisy `lubrification` records rescued from a
+  `mixed_wear_lube` mislabel). Frame it as "the *implemented band-energy term*
+  helped," not "physics helps."
+- **Not supportable:** any physics advantage in **clean accuracy,
+  data-efficiency, severity-OOD, interpretability (§8.6a *reverses*), or
+  calibration (a wash)** — each was tested at record level and did **not** survive;
+  any "physics-informed learning helps" family claim; any real-bearing claim. The
+  vs-vanilla noise edge is significant but small/seed-sensitive (secondary to the
+  same-arch ablation), and the benefit is **not yet isolated** from generic
+  high-weight regularization (controls are future work).
+- **Methodological caution (a contribution):** the physics loss had five
+  successive defects (non-differentiable argmax → wrong bearing type → tonal-only
+  → flat baseline) that all passed a green suite; the corrected
+  band-energy-vs-healthy-reference loss is the fix, and the inert generic path is
+  now **hard-blocked** ([tests/test_physics_quarantine.py](tests/test_physics_quarantine.py)).
 
 ## Fault taxonomy (11 journal-bearing classes)
 
@@ -153,10 +161,13 @@ packages/dashboard/  # experimental, frozen (Phase D)
 ## Limitations
 
 Synthetic data only — no real-bearing validation. Accuracy figures reflect
-learnability of the *generator's* signatures, not real-world performance. The
-physics-informed experiments are **under remediation** (2026-06-14 external
-audit): no physics benefit may be claimed until the ratified band-energy loss is
-implemented, the HybridPINN physics branch is rebuilt on journal-bearing
-quantities, the inert generic loss is quarantined, and all statistics are
-recomputed at record level — see [results/FINDINGS.md](results/FINDINGS.md) §0 and
+learnability of the *generator's* signatures, not real-world performance. The one
+surviving physics positive — 5 dB noise robustness from the band-energy loss in a
+same-architecture ablation (§8.4) — is **synthetic-only, n=3 seeds, near-ceiling**,
+and **not yet isolated** from generic high-weight regularization (controls are
+future work); frame it as "the *implemented band-energy term* helped," not
+"physics helps." Clean-accuracy / data-efficiency / severity-OOD / interpretability
+/ calibration advantages were tested and did **not** survive; §8.5 HybridPINN stays
+excluded (rolling-element branch). The findings memo is a **DRAFT pending owner
+re-ratification** — see [results/FINDINGS.md](results/FINDINGS.md) §0 and
 [PROJECT_STATE.md](PROJECT_STATE.md).
