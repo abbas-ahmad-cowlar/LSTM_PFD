@@ -10,21 +10,31 @@
 > **Maintenance duty:** update this file at every phase gate and at the end of
 > every session. Keep it truthful and current; it is the single source of truth.
 >
-> **Last updated: 2026-06-16, session 7.** One-line status: Phase 5 merged to
-> `main` (Gate 5), **but** internal + independent external audits found the
+> **Last updated: 2026-06-16, session 8.** One-line status: Phase 5 merged to
+> `main` (Gate 5), **but** internal + TWO independent external audits found the
 > *physics-informed-model* evidence invalid (wrong-bearing-type physics, an inert
 > loss, window-level statistics, mislabeled rows). We are deep into a 5-step
-> **remediation** on branch `p6/docs`. **Steps 1–4 DONE; Step 5 reruns DONE
-> (window-level); a record-level recompute of those reruns is RUNNING right now**
-> (background python, PID-orphaned, writing `results/phase5_bandenergy/summary_record_level.json`).
-> **The big new thing:** after the physics loss was finally implemented correctly
-> (band-energy vs a *frozen healthy-class reference*, per-sample rpm), the reruns
-> show — at window level, 3 seeds, **not yet a claim** — **no clean-accuracy gain
-> BUT strong stable noise robustness at high physics weight (§8.4 w=1.0: 0.51 pt
-> drop at 5 dB vs 4.99 CE-only / 1.70 vanilla) and a +5.6 severity-OOD-to-incipient
-> gain (§8.3 dir B)**. This is a *promising reversal* of the earlier "no physics
-> advantage" negative — it must survive the record-level recompute + McNemar
-> before it becomes a finding. Suite: **261 passed, 6 deselected.**
+> **remediation** on branch `p6/docs`. **Steps 1–4 DONE; Step 5 reruns DONE; Step
+> 5a RECORD-LEVEL confirmation DONE + committed/pushed (`0696790`).** A SECOND
+> independent external audit (Codex, `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md`,
+> commissioned silently to keep us honest) reviewed the remediation and
+> **independently reproduced every record-level number from the retained
+> checkpoints** — it validates the surviving result and tightens how it must be
+> reported.
+> **The surviving finding (record-level, 528 records, owner not yet re-ratified):**
+> after the physics loss was finally implemented correctly (band-energy vs a
+> *frozen healthy-class reference*, per-sample rpm), the **noise-robustness result
+> SURVIVES and is significant** — pc_cnn w=1.0 degrades ~0 pt clean→5 dB vs the
+> same-architecture CE-only model's ~4 pt; **representative-seed McNemar 14–0,
+> p=1.2e-4** (mechanism: w=1.0 rescues 14 noisy `lubrification` records CE-only
+> mislabels as `mixed_wear_lube`). It also beats best vanilla resnet18 @5 dB but
+> **small/fragile/seed-sensitive** (6–0 p=0.031 on the best-val seed; flips to
+> p=0.0625 vs resnet's best-noise seed) → secondary to the same-arch ablation.
+> **Severity-OOD (§8.3) and data-efficiency (§8.2) did NOT survive** → demoted to
+> direction-only / neutral. **Known reporting bug to fix (audit Finding 6):** the
+> summary + findings_bandenergy.md mix a **seed-mean point gap (+3.85)** with a
+> **representative-seed bootstrap CI ([1.33,4.17])** — different estimands; must be
+> made consistent before the FINDINGS draft. Suite: **261 passed, 6 deselected.**
 
 ---
 
@@ -38,9 +48,16 @@
 3. `results/phase5_bandenergy/findings_bandenergy.md` — the band-energy rerun
    result (window-level; the promising noise/OOD signal). **This is the newest
    science.**
-4. `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md` — external auditor;
-   authority on the *corrected* blast radius.
-5. `audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md` — internal audit + remediation
+4. `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md` — first external auditor;
+   authority on the *corrected* blast radius (the contamination that opened P6).
+5. `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md` — **SECOND external
+   auditor (Codex), reviewing the remediation @`0696790`.** Reproduced every
+   record-level number from checkpoints; **validates the surviving noise result**,
+   flags the estimator mismatch (F6), the vs-resnet fragility (F5), the
+   regularization-confound on causal attribution (F9), stale top-level docs (F12),
+   and that the inert `PINNTrainer` path is still runtime-usable (F10). Authority
+   on what the remediation still owes before paper-ready.
+6. `audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md` — internal audit + remediation
    plan (§6 = expanded scope + endorsed sequence).
 6. `README.md` (reconciled overview), `experiments/PROTOCOL.md` (§7 amendments
    §8.0-bis…§8.0-quinquies + §8 pre-registrations), `docs/PHYSICS.md` (normative
@@ -82,19 +99,40 @@
   to `origin/p6/docs`. **NOT merged to main.**
 - `$env:PYTHONIOENCODING='utf-8'; .\venv\Scripts\python.exe -m pytest -q`
   → expect **261 passed, 6 deselected**.
-- **Check the running record-level job:** `Test-Path results/phase5_bandenergy/summary_record_level.json`.
-  If absent, it's still running (log `logs/phase5_be_recordlevel.log`; cache
-  `results/phase5_bandenergy/_record_cache/*.npy` climbing toward ~60). If it died,
-  re-run `python scripts/phase5_bandenergy_record_level.py` (resume-safe via cache).
+- **Record-level job: DONE.** `results/phase5_bandenergy/summary_record_level.json`
+  exists (committed `0696790`); the recompute is finished and the verdict is in
+  `findings_bandenergy.md`. The 2026-06-16 auditor independently re-ran
+  `scripts/phase5_bandenergy_record_level.py` and reproduced it. The
+  `_record_cache/*.npy` (~60 files) is now gitignored; keep it for re-verification.
 - Never state a number without `(evidence: command → artifact)`. Verify by
   execution, not by reading.
 
-**Then do the work (current step):** finish **Step 5** — (a) collect the
-record-level recompute when the job lands, confirm/retract the window-level
-noise/OOD signal with McNemar; (b) commit `scripts/phase5_bandenergy_record_level.py`
-+ the summary; (c) recompute **§8.6a XAI** against the corrected bands; (d) then
-**rewrite + re-ratify FINDINGS** with the owner. Do not loosen wording (§6); do
-not claim any physics benefit until the record-level numbers support it.
+**Then do the work (current step): Step 5a is DONE; the adjusted Step-5 tail
+(post-2026-06-16-audit), owner-gated — do NOT start past the doc updates without
+his go:**
+1. **Fix the estimator mismatch (audit F6)** — `scripts/phase5_bandenergy_record_level.py`
+   + `findings_bandenergy.md` report a **seed-mean gap with a representative-seed
+   CI**. Make them one estimand: representative-seed gap (+2.65) with the
+   representative-seed CI [1.33,4.17] + McNemar (14–0, p=1.2e-4), OR seed-mean gap
+   (+3.85) with a seed-bootstrap CI. Verified by execution this session
+   (`logs/_audit_verify.py`). Small, laptop-only, no GPU.
+2. **Hard-block the inert generic physics path (audit F10/Rec5)** — make
+   `PINNTrainer(lambda_physics>0)` / `PhysicalConstraintLoss` raise `RuntimeError`
+   (not just warn) so no future user believes the inert loss is doing physics;
+   update `tests/test_physics_quarantine.py`. Small, laptop-only.
+3. **Recompute §8.6a XAI** against the corrected bands (laptop).
+4. **DRAFT (do NOT ratify) the FINDINGS rewrite** + reconcile README to the
+   surviving verdict (audit F12). Headline = the same-architecture ablation;
+   resnet edge secondary/near-ceiling; the loss is a *band-consistency regularizer*
+   not a diagnostic solver (F8); attribute to *the implemented band-energy term*,
+   not "physics priors in general" (F9). FINDINGS ratification is the OWNER GATE.
+5. **Owner decisions (GPU) — do not start without his go:** (a) controls to
+   isolate physics from generic high-weight regularization (entropy/logit reg,
+   random-band, permuted/wrong healthy-reference) — audit F9/Rec6; (b) more seeds
+   than n=3 — audit F13/Rec7. Both strengthen the causal claim but cost GPU; the
+   alternative is to narrow the wording and list them as future work.
+Do not loosen wording (§6); no physics-benefit claim beyond the surviving
+record-level noise result; every number with an artifact path.
 
 ---
 
@@ -297,15 +335,22 @@ INT8 4× smaller but 10–15× slower (honest negative).
 4. **Band-energy loss + healthy reference** — **DONE** (§5.1 §8.0-quater/quinquies;
    `compute_physics_loss`, `healthy_reference.json`, aligned CI test,
    `test_physics_band_energy_loss.py`, per-sample rpm wiring).
-5. **Rerun physics-forward experiments** — **reruns DONE 2026-06-15 (window-level);
-   record-level recompute RUNNING; XAI + FINDINGS NEXT.** 42 runs (Colab T4, code
-   @`ce344d1`) in `results/phase5_bandenergy/{pinn_ablation,data_efficiency,severity_ood}`
-   (`findings_bandenergy.md`). Window-level result in §5.4. NOW:
-   (a) `scripts/phase5_bandenergy_record_level.py` is running → confirm/retract via
-   record-level acc + cluster-bootstrap + McNemar (w=0 vs w=1.0 @5dB; pc_cnn w=1.0
-   vs resnet18 @5dB; dir B); **commit the script + summary when done.**
-   (b) recompute **§8.6a XAI** against the corrected bands (laptop).
-   (c) **rewrite + re-ratify FINDINGS** with the owner. §8.5 excluded.
+5. **Rerun physics-forward experiments** — **reruns DONE; Step 5a record-level
+   confirmation DONE + committed (`0696790`); reviewed by the 2026-06-16 audit.**
+   42 runs (Colab T4, code @`ce344d1`) in `results/phase5_bandenergy/`.
+   `scripts/phase5_bandenergy_record_level.py` → `summary_record_level.json`
+   (528-record soft-vote, cluster-bootstrap + exact McNemar; sanity gate passed).
+   **VERDICT (record-level): NOISE robustness SURVIVES & is significant** (pc_cnn
+   w=1.0 vs same-arch CE-only: representative McNemar **14–0, p=1.2e-4**; mechanism
+   = 14 noisy `lubrification` records rescued from a `mixed_wear_lube` mislabel);
+   beats resnet18 @5 dB but **small/fragile/seed-sensitive** (6–0 p=0.031 best-val
+   seed → p=0.0625 vs resnet's best-noise seed); **severity-OOD (§8.3) + data-eff
+   (§8.2) do NOT survive** (demoted to direction-only/neutral). The second audit
+   reproduced all of this from checkpoints and validated it. **Adjusted tail (see
+   §0 "do the work"):** (5a✓) record-level done; (5b) fix estimator mismatch F6 +
+   hard-block inert `PINNTrainer` F10 (laptop); (5c) §8.6a XAI recompute (laptop);
+   (5d) DRAFT FINDINGS + reconcile README — OWNER GATE for ratification; (5e) owner
+   GPU decisions: regularization controls (F9) and >3 seeds (F13). §8.5 excluded.
 
 ### 5.4 Band-energy rerun numbers (window-level, 3 seeds — pending record-level)
 `results/phase5_bandenergy/findings_bandenergy.md` has the tables. Highlights:
@@ -373,6 +418,15 @@ at 10% (91.11 vs 93.60); §8.4 fixed harmful at w=1.0 5 dB (83.1); §8.5 89.76 v
 - **I10 (caching)** a result-cache key must include the eval SPLIT, not just
   checkpoint+record-count — clean and 5 dB collided this session; the sanity gate
   caught it. Cache keys must encode every axis that changes the output.
+- **I11 (statistics reporting — the 2026-06-16 audit, F6)** a point estimate and
+  its CI must be the SAME estimand. `phase5_bandenergy_record_level.py` reported a
+  **seed-mean gap (+3.85)** next to a **representative-best-val-seed bootstrap CI
+  ([1.33,4.17])** — two different quantities — and the prose in
+  `findings_bandenergy.md` (and the first Step-5a writeup) inherited the mismatch.
+  The McNemar p-values and the surviving result are unaffected, but the reporting
+  is wrong and must be made consistent before any FINDINGS draft. Always pair
+  representative-seed gaps with representative-seed CIs, seed-mean gaps with
+  seed-mean (cluster/seed-bootstrap) CIs.
 
 ## 8. Conventions (the honesty machinery)
 1. Only execution evidence counts; numbers trace to `results/` with SHA + host + seed.
@@ -393,7 +447,8 @@ at 10% (91.11 vs 93.60); §8.4 fixed harmful at w=1.0 5 dB (83.1); §8.5 89.76 v
 | **This handoff** | `PROJECT_STATE.md` |
 | Findings (read §0 first) | `results/FINDINGS.md` |
 | **Band-energy rerun findings (newest)** | `results/phase5_bandenergy/findings_bandenergy.md` |
-| External audit (authoritative on scope) | `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md` |
+| External audit #1 (blast radius) | `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md` |
+| **External audit #2 (remediation review, @`0696790`)** | `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md` |
 | Internal physics audit + plan | `audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md` |
 | Origin audit | `audit_reports/PROJECT_AUDIT_2026-06-11.md` |
 | Physics (normative) + CI | `docs/PHYSICS.md`, `tests/test_physics_signatures.py` |
