@@ -1,68 +1,127 @@
-# FINDINGS — Phase 5 synthesis (for owner ratification, Gate 5)
+# FINDINGS — Phase 5/6 synthesis (DRAFT for owner re-ratification, Gate 5)
 
-> Honest synthesis of every Phase-5 experiment. Every number traces to a
-> committed artifact under `results/`. This memo freezes the list of claims the
-> paper may and may not make. **Synthetic-only study — no real-world validation,
-> stated everywhere.**
+> Honest synthesis of every Phase-5 experiment plus the Phase-6 physics
+> remediation. Every number traces to a committed artifact under `results/`. This
+> memo freezes the list of claims the paper may and may not make. **Synthetic-only
+> study — no real-world validation, stated everywhere.**
 >
-> Status: **SUPERSEDED / UNDER REVISION — 2026-06-14, after independent external
-> audit** (`audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md`). The prior
-> owner ratification is **on hold**. The audit found the physics-model evidence
-> more broadly contaminated than this memo assumed. **§1–§4 below overclaimed and
-> are SUSPENDED pending remediation — read §0 first; it overrides them.**
+> Status: **DRAFT — 2026-06-17, AWAITING OWNER RE-RATIFICATION (not ratified).**
+> Reflects the corrected, **record-level**, **two-independent-audit-reviewed**
+> state after the band-energy remediation
+> (`audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md` opened the blast radius;
+> `...2026-06-16.md` reviewed the fix and **independently reproduced every
+> record-level number**). **§0 below is the current authoritative verdict; it
+> supersedes the 2026-06-14 interim correction it replaces AND the PRE-AUDIT §1–§5
+> (retained for provenance only).** The owner's sign-off is the gate — do not cite
+> as ratified.
 
-## 0. Post-audit correction (authoritative — overrides §1–§4)
+## 0. DRAFT verdict (2026-06-17) — authoritative, supersedes §1–§5
 
-**Supportable now (tightened wording — do not loosen):**
-- Dataset v2 is sound **as a synthetic, internally consistent benchmark**:
-  balanced, group-split by record, leakage-checked, intended signatures present
-  (cavitation only weakly so — qualify any cavitation claim).
-- The benchmark accuracies are plausible **as classification results**; the rows
-  are now **relabeled** (Step 3, done): `physics_constrained_cnn` = **CE-only /
-  architecture** (physics loss OFF), `multitask_pinn` = **single-task**,
-  `hybrid_pinn` = **rolling-element branch + constant metadata** — none is a
-  physics result (`results/benchmark/summary.md` banner). Significance has been
-  **recomputed at the
-  528-record level** (cluster-bootstrap, Step 2 —
-  `results/benchmark/summary_record_level.md`), superseding the window-level
-  p-values (which used 2,640 correlated windows). Direction is unchanged:
-  soft-voting the 5 windows/record pushes the benchmark **near-ceiling**
-  (RandomForest 98.74%, top deep ~99%, CE-only pc_cnn 98.99%) and **no row shows
-  a physics advantage** — the best vanilla (cnn_lstm) and the CE-only pc_cnn tie
-  to the record (gap +0.00 pts, McNemar p=1). High-variance rows (cnn1d,
-  attention_cnn) carry one collapsed seed (±4.3 std), now shown with consistent CIs.
-- The **stored artifacts show no physics accuracy advantage.** This is **NOT** a
-  definitive negative about correctly-implemented journal-bearing
-  physics-informed learning — **that experiment has not been run.** The §8.4/§8.2
-  "fixed" runs used an **incomplete tonal-only** loss (ratified band-energy not
-  yet implemented); §8.5 HybridPINN uses **rolling-element** (SKF 6205
-  BPFO/BPFI/BSF/FTF) features — wrong for journal-bearing data; §8.6/C4 (XAI
-  alignment + calibration) rests on the old broken-DB bands and incomplete-loss
-  checkpoints. All are **contaminated / not yet valid**.
+### One-paragraph verdict
+On a single synthetic journal-bearing dataset, a **correctly-wired PC-CNN
+band-energy consistency loss at high weight (w=1.0)** delivers a **real,
+record-level 5 dB noise-robustness improvement** over the **same architecture**
+trained cross-entropy-only — the one physics benefit in the study that survives
+record-level statistics and an independent reproduction. There is **no
+clean-accuracy gain** (a small near-ceiling clean trade-off), and **no
+statistically-supported data-efficiency, severity-OOD, interpretability, or
+calibration advantage** — each was tested and did **not** survive. The durable
+contributions are the physics-grounded **dataset/generator (C1)**, the frozen
+reproducible **benchmark (C2)**, the **narrow noise-robustness result (C3)** plus
+a methodological caution, and **deployment (C5)**. The result must be framed as
+"the *implemented band-energy term* helped," not "physics-informed learning
+helps" — see the wording limits below.
 
-**May NOT claim (yet):** any physics benefit — accuracy, noise robustness,
-data-efficiency, severity-OOD, interpretability, or calibration; a "rigorous"
-or "decisive" negative; family-level noise robustness; any window-level
-significance.
+### Supportable now — claims the paper MAY make (each artifact-linked)
+- **C1 — dataset/generator.** `data/generated/dataset_v2.h5`: 3,520 records, 11
+  journal-bearing classes, exact class×severity balance, record-level
+  leakage-checked splits, SNR-20/10/5 variants; generator CI-locked (34 spectral
+  tests). Cavitation only weakly expressed spectrally — qualify any cavitation
+  claim. (`results/dataset_v2_validation/`, `tests/test_physics_signatures.py`.)
+- **C2 — benchmark, as a CLASSIFICATION benchmark.** Pre-registered, 11 models,
+  3 seeds; significance at the **528-record level**
+  (`results/benchmark/summary_record_level.md`). Near-ceiling (RF 98.74, top deep
+  ~99, CE-only pc_cnn 98.99); **no row shows a physics accuracy advantage** (best
+  vanilla cnn_lstm ties CE-only pc_cnn, McNemar p=1). Rows honestly relabeled:
+  pc_cnn = CE-only/architecture, multitask = single-task, hybrid = rolling-element
+  + constant metadata.
+- **C3 — the one surviving physics positive: NOISE ROBUSTNESS (same-architecture
+  ablation).** Band-energy loss vs the frozen healthy reference, per-sample rpm
+  (`packages/core/models/pinn/physics_constrained_cnn.py`); record level
+  (`results/phase5_bandenergy/summary_record_level.json`): pc_cnn **w=1.0**
+  degrades **0.06 pt** clean→5 dB vs the identical-architecture CE-only model's
+  **4.29 pt**; representative best-val-seed **McNemar 14–0, p=1.2e-4, gap +2.65
+  pts [1.33, 4.17]**. Mechanism (independently verified, 2026-06-16 audit): the 14
+  rescued records are noisy `lubrification` that CE-only mislabels
+  `mixed_wear_lube`. Reverses the earlier contaminated "harmful at w=1.0 (83.1)".
+  Secondary, weaker: vs best vanilla resnet18 it is significant but
+  **small/fragile** (6–0, p=0.031, +1.14 [0.38, 2.08]; flips to p=0.0625 vs
+  resnet's best-noise seed) — report as secondary/near-ceiling.
+- **C5 — deployment.** ResNet18→ONNX FP32 ~13 ms/window CPU; INT8 4× smaller but
+  10–15× slower (honest negative). (`results/deployment/appendix.md`.)
+- **Methodological caution (a contribution in its own right).** A naive
+  frequency-consistency physics loss was silently non-differentiable (argmax);
+  even once differentiable it was wrong-bearing-type → tonal-only → flat-baseline
+  — five defects that all passed a green test suite. The corrected
+  band-energy-vs-healthy-reference loss is the fix; the inert generic path is now
+  hard-blocked (`tests/test_physics_quarantine.py`).
 
-**Remediation sequence (endorsed by the external auditor):** (1) reconcile docs
-to this corrected blast radius [done — incl. README]; (2) recompute all
-statistics at **record level** [**DONE 2026-06-14** —
-`results/benchmark/summary_record_level.md`,
-`scripts/aggregate_benchmark_record_level.py`]; (3) quarantine/relabel invalid
-rows [**DONE 2026-06-14** — summary relabeled + banner; quarantine docstrings on
-inert `PhysicalConstraintLoss`/`PINNTrainer`/`PINNEvaluator`, rolling-element
-HybridPINN branch + `BearingDynamics`; stale `pinn_ablation.py` blocked;
-`tests/test_physics_quarantine.py` pins it]; (4) implement + gradient-test the
-ratified **band-energy** loss [**DONE 2026-06-14** — `compute_physics_loss`
-rewritten to band-energy consistency judged vs the **frozen healthy-class
-reference** (owner-corrected from a flat baseline; per-sample rpm;
-tonal+broadband+mixed; differentiable); frozen `healthy_reference.json` + aligned
-CI test; before/after audit shows the flat baseline let healthy masquerade as
-lubrification/imbalance; PROTOCOL §8.0-quinquies]; (5) rerun the physics-forward experiments with the
-band-energy loss + record-level stats [**NEXT, GPU/Colab** —
-`experiments/COLAB_PHASE5_RERUN_RUNBOOK.md`]. Then this memo is rewritten and
-**re-ratified**.
+### What did NOT survive — may NOT be claimed
+- **Clean accuracy**: no physics advantage (record-level near-ceiling).
+- **Data-efficiency (§8.2)**: neutral — ahead non-overlapping at only 1 of 3
+  reduced fractions → fails the prereg rule; the old "harmful at 10%" is gone (now
+  tied). (`summary_record_level.json`.)
+- **Severity-OOD (§8.3)**: dir A tied at ceiling; dir B favors physics on the
+  point estimate but is **not significant** (McNemar p=0.39; representative gap CI
+  [−2.27, +8.33] spans zero). Direction-only. (`summary_record_level.json`.)
+- **Interpretability §8.6a**: **reverses** under the corrected DB + w=1.0
+  checkpoint — vanilla 1.042 > physics 0.856. The metric is **tonal-only and
+  excludes lubrification/cavitation** (the broadband classes, incl. the noise
+  mechanism), so this is "not more *tonally* aligned," not proof of less physics
+  attention — but as it stands it is **not** a positive.
+  (`results/xai_alignment/alignment.json`, `findings_8_6.md`.)
+- **Calibration §8.6b**: a wash — pc_cnn better clean ECE (0.018 vs 0.024), worse
+  at 5 dB (0.026 vs 0.022); both <0.03; single-seed.
+  (`results/uncertainty/calibration.json`.)
+- **§8.5 HybridPINN**: excluded — physics branch still rolling-element (SKF-6205);
+  not a journal-bearing physics test.
+- Any **"physics-informed learning helps"** family claim; any window-level
+  significance; any real-bearing claim.
+
+### Required wording limits (do not loosen)
+- Say "**the implemented PC-CNN band-energy consistency loss at w=1.0** improved
+  5 dB robustness in a **same-architecture ablation** on synthetic data" — NOT
+  "physics-informed learning improves robustness."
+- The loss is a **band-consistency regularizer**, not a mechanistic diagnostic
+  solver (`sain` has no bands → it cannot penalize a healthy prediction).
+- State: n=3 seeds; near-ceiling (small discordant counts); the vs-resnet edge is
+  secondary/seed-sensitive; the small clean trade-off (w=1.0 clean 98.61 vs
+  98.99–99.68 for lower weights); synthetic-only.
+- The benefit is attributable to **this implemented term**; it is **not isolated**
+  from generic high-weight regularization (no controls run yet — see below).
+
+### Open before paper-ready (owner decisions)
+1. **F9 controls (GPU)** — entropy/logit reg at matched strength, random-band,
+   permuted/wrong-class healthy-reference — to isolate physics from
+   "regularization at high weight." Without them the claim stays "the band-energy
+   term helped," not "physics helped."
+2. **F13 — more than n=3 seeds (GPU)** for stronger seed-level inference.
+3. **Band-aware §8.6a (laptop)** — recompute alignment with `get_expected_bands`
+   (incl. the 1–6 Hz lube / 1.4–2.6 kHz cavitation absolute bands) + a documented
+   control, to fairly test broadband attention (the tonal-only metric cannot).
+4. **§8.5 HybridPINN** — rebuild on journal-bearing features or leave excluded.
+5. **Provenance manifest** — one command/commit/dataset-hash/artifact per paper
+   table (audit Rec 8).
+
+### Remediation status (Phase 6)
+Steps 1–4 done (docs reconciled; record-level benchmark stats; quarantine/relabel;
+band-energy loss + frozen healthy reference + CI). Step 5: reruns done; **5a
+record-level confirmation done** (`summary_record_level.json`, `0696790`); **5b
+audit fixes done** (F6 estimator consistency, F10 inert-path hard-block,
+`a2e09d9`); **5c XAI/calibration recompute done** (`2b534bf`, this memo). Two
+independent external audits reviewed the work; the 2026-06-16 auditor reproduced
+every record-level number. **This memo is the DRAFT; owner re-ratification is the
+remaining gate.**
 
 ---
 
