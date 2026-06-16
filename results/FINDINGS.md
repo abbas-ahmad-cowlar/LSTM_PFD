@@ -74,14 +74,17 @@ helps" — see the wording limits below.
 - **Severity-OOD (§8.3)**: dir A tied at ceiling; dir B favors physics on the
   point estimate but is **not significant** (McNemar p=0.39; representative gap CI
   [−2.27, +8.33] spans zero). Direction-only. (`summary_record_level.json`.)
-- **Interpretability §8.6a**: **reverses** under the corrected DB + w=1.0
-  checkpoint — vanilla 1.042 > physics 0.856. The metric is **tonal-only and
-  excludes lubrification/cavitation** (the broadband classes, incl. the noise
-  mechanism), so this is "not more *tonally* aligned," not proof of less physics
-  attention — but as it stands it is **not** a positive.
-  (`results/xai_alignment/alignment.json`, `findings_8_6.md`.)
-- **Calibration §8.6b**: a wash — pc_cnn better clean ECE (0.018 vs 0.024), worse
-  at 5 dB (0.026 vs 0.022); both <0.03; single-seed.
+- **Interpretability §8.6a**: **reverses, and stays reversed band-aware.** Tonal:
+  vanilla 1.042 > physics 0.856. **Band-aware** (corrected bands incl. the
+  broadband lube/cavitation bands, physics-vs-vanilla head-to-head, no control):
+  vanilla in-band **0.146 > physics 0.099**; physics higher in only 2 of 10
+  classes; on `lubrification` (the noise-rescue class) **both models ≈0** (0.007 vs
+  0.002). IG attribution gives **no** support for a "physics-attention" mechanism —
+  not a positive in any form. (`results/xai_alignment/alignment.json` band_aware,
+  `findings_8_6.md`.)
+- **Calibration §8.6b**: a **wash / non-result** — the 5 dB ECE direction flips
+  between runs (MC-dropout is stochastic); only a modest clean-ECE edge for pc_cnn
+  is stable (single-seed, window-level). No calibration advantage.
   (`results/uncertainty/calibration.json`.)
 - **§8.5 HybridPINN**: excluded — physics branch still rolling-element (SKF-6205);
   not a journal-bearing physics test.
@@ -101,14 +104,16 @@ helps" — see the wording limits below.
   from generic high-weight regularization (no controls run yet — see below).
 
 ### Open before paper-ready (owner decisions)
-1. **F9 controls (GPU)** — entropy/logit reg at matched strength, random-band,
-   permuted/wrong-class healthy-reference — to isolate physics from
-   "regularization at high weight." Without them the claim stays "the band-energy
-   term helped," not "physics helped."
+1. **F9 controls (GPU) — now the ONLY remaining way to earn the word "physics."**
+   Entropy/logit reg at matched strength, random-band, permuted/wrong-class
+   healthy-reference — to isolate the noise benefit from "regularization at high
+   weight." The band-aware §8.6a (below, **done**) gave **no** XAI corroboration of a
+   physics-attention mechanism, so without these controls the claim must stay "the
+   band-energy term helped," not "physics helped."
 2. **F13 — more than n=3 seeds (GPU)** for stronger seed-level inference.
-3. **Band-aware §8.6a (laptop)** — recompute alignment with `get_expected_bands`
-   (incl. the 1–6 Hz lube / 1.4–2.6 kHz cavitation absolute bands) + a documented
-   control, to fairly test broadband attention (the tonal-only metric cannot).
+3. ~~Band-aware §8.6a~~ — **DONE** (negative): the band-aware recompute also has
+   vanilla ahead and shows both models ignore the lube band → no interpretability
+   benefit. No further XAI work needed unless a different mechanism probe is desired.
 4. **§8.5 HybridPINN** — rebuild on journal-bearing features or leave excluded.
 5. **Provenance manifest** — one command/commit/dataset-hash/artifact per paper
    table (audit Rec 8).

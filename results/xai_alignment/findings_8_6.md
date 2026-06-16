@@ -37,55 +37,77 @@ control) than the band-energy model (0.856, less in-band than control). The old
 0.849 > 0.716 in physics's favor does not reproduce once the DB is correct and the
 checkpoint is the validated one.
 
-**Decisive caveat — the metric is structurally blind to the physics model's
-mechanism.** `get_expected_frequencies` is **tonal-only**, so it **excludes
-`lubrification` (class 4) and `cavitation` (class 5)** entirely (no tonal
-signature → 0 of the 160 scored windows are from them; only classes 1,2,3,6,7,8,9,10
-are scored). But the band-energy loss operates on **absolute Hz bands** for exactly
-those broadband classes, and the surviving noise result is driven by **lubrification**
-(the 14 rescued records, §8.4). So this metric cannot see — and likely penalizes —
-the band the physics model actually learned to attend to. **This is "not more
-*tonally* aligned," NOT "attends less to physics."** A fair test needs a
-**band-aware** variant (`get_expected_bands`: tonal harmonics + the 1–6 Hz lube /
-1.4–2.6 kHz cavitation absolute bands) with a documented control — flagged as a
-methodology decision for the owner, not made unilaterally here.
+The tonal metric is **tonal-only** — it excludes `lubrification` and `cavitation`
+(no tonal signature → only classes 1,2,3,6,7,8,9,10 scored), i.e. it cannot see the
+broadband bands the band-energy loss operates on. To remove that blind spot we ran
+the **band-aware** variant below.
 
-Per-class in-band fraction is mixed (physics higher only for class 1; vanilla
-higher for 2,3,6,7,8,9,10) — consistent with the loss pushing attention toward
-broadband bands this tonal metric does not measure.
+#### 8.6a band-aware (corrected bands incl. broadband) — the rescue attempt FAILS
+
+In-band = fraction of IG-attribution energy in the class's **full corrected
+expected bands** (`get_expected_bands`: tonal harmonics ±6% **and** the absolute
+1–6 Hz lube / 1.4–2.6 kHz cavitation bands), so **all 10 non-healthy classes** are
+scored (n=200). The **physics-vs-vanilla comparison is on identical bands → no
+control band, no control-sensitivity caveat.**
+
+| model | band-aware in-band frac (n=200) |
+|---|---|
+| resnet18 (vanilla) | **0.1458** |
+| pc_cnn (band-energy w1.0) | **0.0991** |
+
+**Read (honest): the interpretability angle does NOT survive even band-aware.**
+Vanilla puts *more* attribution energy in the physics bands than the physics model
+(0.146 vs 0.099). Per-class, physics is higher in only **2 of 10** classes
+(desalignement +0.042, cavitation +0.018) and lower in the other 8. **The decisive
+one: `lubrification` — the exact class driving the §8.4 noise rescue — has vanilla
+0.007 vs physics 0.002**, i.e. **both models put essentially zero attribution in the
+1–6 Hz lube band, and physics even less.** So the noise-robustness benefit is **not**
+explained by the physics model attending to physics bands more; IG attribution gives
+**no** independent support for a "physics-attention" mechanism. (`mixed_wear_lube`
+−0.128 and `desequilibre` −0.165 are the largest vanilla-favoring gaps.)
 
 ### 8.6b — MC-dropout calibration (corrected; clean + 5 dB)
 
-MC-dropout 30 passes (dropout on, BatchNorm eval), 160-window stratified subsample.
+MC-dropout 30 passes (dropout on, BatchNorm eval), 200-window stratified subsample.
+**MC-dropout is stochastic (no fixed mask seed), so ECE varies run-to-run** — two
+runs of this same script gave, at 5 dB: pc_cnn 0.0258 then 0.0228; vanilla 0.0225
+then 0.0262. **The 5 dB direction flips between runs → the calibration comparison
+is within MC-dropout noise, i.e. a non-result.** Latest run:
 
 | model | clean acc | clean ECE | 5 dB acc | 5 dB ECE |
 |---|---|---|---|---|
-| resnet18 (vanilla) | 0.964 | 0.0241 | 0.964 | **0.0225** |
-| pc_cnn (band-energy w1.0) | 0.964 | **0.0182** | 0.959 | 0.0258 |
+| resnet18 (vanilla) | 0.964 | 0.0236 | 0.964 | 0.0262 |
+| pc_cnn (band-energy w1.0) | 0.964 | 0.0182 | 0.959 | 0.0228 |
 
-**Read (honest):** a **wash, not a physics win.** pc_cnn is better calibrated on
-**clean** (ECE 0.0182 vs 0.0241) but **worse at 5 dB** (0.0258 vs 0.0225) — the
-old "better calibrated, gap *widens* under noise" actually **inverts**. Both
-models are well-calibrated (ECE < 0.03). Single checkpoint each, window-level
-subsample → indicative only, not seed-averaged. The plain-eval accuracy sanity
-gate (both 0.964 clean) confirms the correct checkpoints loaded.
+**Read (honest):** a **wash / non-result.** Both models are well-calibrated
+(ECE < 0.03) and the only stable difference (clean ECE modestly lower for pc_cnn)
+is single-checkpoint, window-level, and not seed-averaged. The 5 dB direction is
+not reproducible across runs. **No calibration advantage may be claimed.** The
+plain-eval accuracy sanity gate (both 0.964 clean) confirms correct checkpoint load.
 
 ### Synthesis (feeds the FINDINGS rewrite / paper C4)
 
 C4 as previously framed (a modest interpretability + calibration positive) **does
-not survive the correction.** Corrected: tonal attribution alignment reverses
-(vanilla ahead), and calibration is a clean/5 dB wash. The defensible study now
-has **one** physics positive — the record-level **noise robustness** (§8.4,
-same-architecture ablation) — and **no** XAI/calibration advantage to claim. The
-honest framing is stronger for it: a single, well-supported result rather than a
-bundle of fragile ones.
+not survive the correction — in any form.** Corrected: tonal attribution alignment
+reverses (vanilla ahead), the **band-aware** variant (the rescue attempt, run here)
+**also** has vanilla ahead (0.146 vs 0.099) and shows *both* models ignore the lube
+band, and calibration is a run-to-run-noise wash. The defensible study has **one**
+physics positive — the record-level **noise robustness** (§8.4, same-architecture
+ablation) — and **no** XAI/calibration advantage to claim. The honest framing is
+stronger for it: a single, well-supported result rather than a bundle of fragile
+ones.
 
-**Open (owner decision):** a **band-aware** §8.6a recompute (including the lube /
-cavitation absolute bands) is the only way to fairly test whether the band-energy
-model attends *more* to its broadband targets; the tonal-only metric cannot. This
-is the XAI analogue of the F9 controls question — it would corroborate (or refute)
-the physics-content explanation of the noise result. Until run, **no XAI/calibration
-benefit may be claimed.**
+**Implication for the F9 / "is it physics?" question.** We hoped IG attribution
+would corroborate that the noise benefit comes from the model attending to physics
+bands. It does **not** — even band-aware, and even on `lubrification` (the rescue
+class), the physics model does not attend to its bands more than vanilla. So XAI
+provides **no** independent evidence that the noise result is "physics" rather than
+"a spectral regularizer that happened to harden the decision boundary." If the paper
+wants the word **physics**, the **F9 training controls** (entropy/random-band/
+permuted-reference) are now the **only** remaining way to establish it; otherwise the
+claim must stay "the implemented band-energy term improved noise robustness," with
+the mechanism left open. (Artifacts: `alignment.json` band_aware block,
+`scripts/run_xai_calibration.py`.)
 
 ---
 
