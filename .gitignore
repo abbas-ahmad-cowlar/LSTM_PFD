@@ -105,6 +105,8 @@ results/*
 !results/**/*.csv
 # model checkpoints stay out of git (large; archive separately, e.g. D:\Libraries)
 results/**/*.pth
+# derived record-level prediction cache (regenerable, resume-safe; ~14 MB of .npy)
+results/**/_record_cache/
 outputs/
 mlruns/
 wandb/

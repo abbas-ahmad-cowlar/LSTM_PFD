@@ -6,10 +6,15 @@
 > **per-sample rpm**. 42 runs, Colab T4, code @`ce344d1` (`p6/docs`). Replaces the
 > contaminated tonal-only/inert results in `results/phase5*`.
 >
-> **Status: WINDOW-LEVEL, 3 seeds — a promising signal, NOT yet a claim.** Per the
-> guardrails, no physics-benefit claim is made until these are recomputed at the
-> **record level** (528 records) with McNemar. The checkpoints are retained
-> (`results/phase5_bandenergy/**/best_model.pth`, off-git) for that recompute.
+> **Status: RECORD-LEVEL CONFIRMATION DONE (2026-06-16, P6 Step 5a).** The
+> window-level signal below was recomputed at the **record level** (528 records,
+> soft-vote per record, cluster-bootstrap + exact McNemar) →
+> `summary_record_level.json`. **Verdict (see the "Record-level verdict" section
+> below): the NOISE-ROBUSTNESS result survives and is statistically significant;
+> the severity-OOD and data-efficiency results do NOT survive as significant.**
+> The window-level tables in this section are retained as recorded; the
+> record-level numbers are authoritative for any claim. Checkpoints retained
+> (`results/phase5_bandenergy/**/best_model.pth`, off-git).
 
 ## Headline (window-level, mean ± std over 3 seeds)
 
@@ -65,6 +70,66 @@ neutral-to-harmful in every regime.
   loss *hurt* at 10%: 91.11 ± 3.29). At low data, band-energy is far more stable
   (std 0.37 vs 3.29) and ahead in the mid regime.
 
+## Record-level verdict (P6 Step 5a, 2026-06-16)
+
+Recompute: `scripts/phase5_bandenergy_record_level.py` → `summary_record_level.json`
+(soft-vote the 5 windows of each record; cluster-bootstrap CIs over 528 records;
+exact McNemar on the best-val seed). A sanity gate (window-level acc reproduces
+each run's recorded `metrics.json`) passed for every re-eval, or the script aborts.
+
+### §8.4 ablation + noise (record level)
+
+| w | clean | 5 dB | degr. |
+|---|---|---|---|
+| 0 (CE-only) | 98.99 ± 0.45 | 94.70 ± 3.08 | 4.29 |
+| 0.1 | 99.12 ± 0.09 | 94.13 ± 2.96 | 4.99 |
+| 0.3 | 99.68 ± 0.09 | 93.75 ± 3.95 | 5.93 |
+| **1.0** | 98.61 ± 0.62 | **98.55 ± 0.76** | **0.06** |
+| _resnet18 (vanilla)_ | _99.18 ± 0.09_ | _97.66 ± 1.30_ | _1.52_ |
+
+- **McNemar w=0 vs w=1.0 @5 dB: p = 1.2e-4**; gap **+3.85 pts, CI95 [1.33, 4.17]** (excludes 0).
+- **McNemar pc_cnn(w=1.0) vs resnet18 @5 dB: p = 0.031**; gap **+0.88 pts, CI95 [0.38, 2.08]** (excludes 0).
+
+### §8.2 data efficiency (record level, clean acc)
+
+| frac | pc_cnn (w0.3) | resnet18 | gap |
+|---|---|---|---|
+| 10% | 96.28 ± 1.39 | 96.28 ± 1.10 | 0.00 (tied) |
+| 25% | 98.48 ± 0.15 | 97.22 ± 0.62 | +1.26 (non-overlapping) |
+| 50% | 98.80 ± 0.79 | 98.80 ± 0.24 | 0.00 (tied) |
+| 100% | 99.49 ± 0.32 | 99.18 ± 0.09 | +0.31 |
+
+### §8.3 severity-OOD (record level)
+
+| direction | pc_cnn (w0.3) | resnet18 | McNemar | gap CI95 |
+|---|---|---|---|---|
+| A → severe | 100.00 ± 0.00 | 100.00 ± 0.00 | 1.0 | [0.00, 0.00] |
+| B → incipient | 82.58 ± 0.62 | 76.01 ± 3.41 | **0.388** | **[−2.27, +8.33]** |
+
+### Verdict — what survives at the record level
+
+- **NOISE ROBUSTNESS — SURVIVES (significant).** w=1.0 degrades **0.06 pt** vs the
+  identical-architecture CE-only model's **4.29 pt** (McNemar p=1.2e-4, gap
+  +3.85 [1.33, 4.17]). It also beats the best vanilla resnet18 at 5 dB, smaller
+  but significant (+0.88 [0.38, 2.08], p=0.031). This is the one defensible C3
+  positive: correctly-implemented journal-bearing physics at high weight earns a
+  **real noise-robustness benefit**, strongest as a same-architecture ablation.
+  It reverses the contaminated "harmful at w=1.0 (83.1)" negative.
+- **SEVERITY-OOD — DOES NOT SURVIVE as significant.** Dir A tied at the ceiling
+  (100%). Dir B's point gap grew (+6.57) and is low-variance, but McNemar p=0.39
+  and the bootstrap gap CI [−2.27, +8.33] **spans zero** (too few incipient
+  records to resolve the gap). Direction-only / suggestive; **not a claim.**
+- **DATA-EFFICIENCY — NEUTRAL, no win.** Ahead non-overlapping at only 1 of 3
+  reduced fractions (25%) → fails the prereg rule. The contaminated "hurts at 10%"
+  is gone (now exactly tied). No advantage, no harm.
+- **Caveat:** at the record level w=1.0's *clean* accuracy (98.61) is ~0.4–1 pt
+  below the lower weights (98.99–99.68) — so the "no clean cost" softens to a
+  marginal, near-ceiling clean cost traded for large noise robustness. State it.
+- **Soft-voting compressed** the cross-model margins toward the ceiling (vs-vanilla
+  noise gap 1.21→0.88; data-eff 10% edge → tie) and **widened the OOD CI through
+  zero** — but the within-architecture noise robustness is *stronger* at record
+  level (degradation 0.51→0.06).
+
 ## Was this expected?
 
 **Partly — and it shifts the story.** We expected no clean-accuracy gain (the
@@ -79,24 +144,28 @@ clean accuracy.
 
 ## What it does NOT yet establish (guardrails)
 
-- All numbers are **window-level**, **n=3 seeds**. The headline (§8.4 w=1.0 noise;
-  §8.3 dir B) **must be confirmed at the record level (528 records) with McNemar**
-  before any physics-benefit claim. Until then this is a *promising signal*.
+- The record-level recompute (above) is now **authoritative**. The only surviving
+  physics-benefit claim is **noise robustness** (§8.4). **Severity-OOD (§8.3) and
+  data-efficiency (§8.2) did NOT survive** as significant record-level results —
+  report direction-only / neutral, not as benefits.
 - §8.5 (HybridPINN) is **not** included — its physics branch is still
   rolling-element (quarantined). No multi-mechanism claim.
-- Single dataset, synthetic-only.
+- Single dataset, synthetic-only; n=3 seeds; the vs-vanilla 5 dB edge and the
+  surviving noise result are near-ceiling (the discordant-record count is small).
 
 ## Next steps
 
-1. **Record-level recompute** of §8.2/§8.3/§8.4 from the retained checkpoints
-   (per `scripts/aggregate_benchmark_record_level.py`'s method): per-record
-   soft-vote, cluster-bootstrap CIs, McNemar (w=0 vs w=1.0 at 5 dB; pc_cnn w=1.0 vs
-   resnet18 at 5 dB; dir B). This confirms or retracts the headline.
+1. **Record-level recompute** of §8.2/§8.3/§8.4 — **DONE 2026-06-16**
+   (`scripts/phase5_bandenergy_record_level.py` → `summary_record_level.json`;
+   soft-vote, cluster-bootstrap CIs, McNemar). Verdict in the section above.
 2. **§8.6a XAI recompute** against the corrected bands (does the w=1.0 model attend
-   to the characteristic frequency bands more?).
-3. **Rewrite + re-ratify FINDINGS** — if record-level holds, the verdict moves from
-   "no physics advantage" to "no clean-accuracy gain, but a real noise-robustness
-   and severity-OOD benefit from correctly-implemented journal-bearing physics."
+   to the characteristic frequency bands more?) — owner-gated, NEXT after sign-off.
+3. **Rewrite + re-ratify FINDINGS** (owner-gated) — the verdict moves from
+   "no physics advantage" to **"no clean-accuracy gain, but a real, statistically
+   significant NOISE-ROBUSTNESS benefit at high physics weight (strongest as a
+   same-architecture ablation) from correctly-implemented journal-bearing
+   physics"** — with severity-OOD and data-efficiency reported as direction-only /
+   neutral (they did not survive record-level significance).
 4. Optionally rebuild §8.5 HybridPINN on journal-bearing features (separate task).
 
 _Source runs: `results/phase5_bandenergy/{pinn_ablation,data_efficiency,severity_ood}/`
