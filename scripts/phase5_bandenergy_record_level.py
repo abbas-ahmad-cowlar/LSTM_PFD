@@ -107,6 +107,23 @@ def mcnemar_p(a_correct, b_correct):
     return 1.0 if b + c == 0 else float(binomtest(min(b, c), b + c, 0.5).pvalue)
 
 
+def mcnemar_full(a_correct, b_correct):
+    """(b, c, p): b = a-correct & b-wrong, c = a-wrong & b-correct, exact McNemar p.
+    Reporting b,c (the discordant counts) matters near ceiling — e.g. '14 to 0'."""
+    from scipy.stats import binomtest
+    b = int(np.sum(a_correct & ~b_correct))
+    c = int(np.sum(~a_correct & b_correct))
+    p = 1.0 if b + c == 0 else float(binomtest(min(b, c), b + c, 0.5).pvalue)
+    return b, c, p
+
+
+def repgap_pts(a_vec, b_vec):
+    """Representative-seed record-accuracy gap in points — the SAME estimand as
+    gap_ci() (a bootstrap of these very vectors) and mcnemar_full(). Audit
+    2026-06-16 Finding 6: never pair this with a seed-mean point gap."""
+    return round(100.0 * (a_vec.astype(float).mean() - b_vec.astype(float).mean()), 2)
+
+
 def metrics_for(run_dir: Path):
     return json.loads((run_dir / 'metrics.json').read_text())
 
@@ -153,7 +170,8 @@ def main():
             snr5_acc.append(acc(rp5, tg5))
             snr5_correct[rd] = (rp5.argmax(1) == tg5)
         rep = best_val_seed(dirs)
-        abl[w] = {'clean': clean_acc, 'snr5': snr5_acc, 'snr5_rep': snr5_correct[rep]}
+        abl[w] = {'clean': clean_acc, 'snr5': snr5_acc, 'snr5_rep': snr5_correct[rep],
+                  'rep_seed': rep.name}
         print(f'  w={w}: clean {np.mean(clean_acc):.2f}±{np.std(clean_acc):.2f} | '
               f'5dB {np.mean(snr5_acc):.2f}±{np.std(snr5_acc):.2f}')
 
@@ -171,16 +189,35 @@ def main():
         gb = g[idx_boot].mean(1) * 100
         return [float(np.percentile(gb, 2.5)), float(np.percentile(gb, 97.5))]
 
+    bw, cw, pw = mcnemar_full(abl[1.0]['snr5_rep'], abl[0.0]['snr5_rep'])      # w1 vs w0
+    br, cr, pr = mcnemar_full(abl[1.0]['snr5_rep'], rn5_correct[rn_rep])       # w1 vs resnet
     out['ablation_8_4'] = {
+        'estimand_note': ('FIXED per audit 2026-06-16 Finding 6. Paired stats '
+                          '(repseed_gap_pts, repseed_gap_ci95, mcnemar) are ALL the '
+                          'same estimand: the representative best-val seed, record '
+                          'level. seedmean_gap_pts is the descriptive seed-mean '
+                          'difference of per-seed record accuracies (no CI). Do not '
+                          'mix the two.'),
+        'representative_seed': {'pc_cnn_w1.0': abl[1.0]['rep_seed'],
+                                'pc_cnn_w0': abl[0.0]['rep_seed'],
+                                'resnet18': rn_rep.name},
         'table': {str(w): {'clean': [round(float(np.mean(v['clean'])), 2), round(float(np.std(v['clean'])), 2)],
                            'snr5': [round(float(np.mean(v['snr5'])), 2), round(float(np.std(v['snr5'])), 2)]}
                   for w, v in abl.items()},
-        'mcnemar_5dB_w0_vs_w1.0': mcnemar_p(abl[0.0]['snr5_rep'], abl[1.0]['snr5_rep']),
-        'gap_5dB_w1.0_minus_w0_pts': round(float(np.mean(abl[1.0]['snr5']) - np.mean(abl[0.0]['snr5'])), 2),
-        'gap_5dB_w1.0_minus_w0_ci95': gap_ci(abl[1.0]['snr5_rep'], abl[0.0]['snr5_rep']),
-        'mcnemar_5dB_pccnn_w1.0_vs_resnet18': mcnemar_p(abl[1.0]['snr5_rep'], rn5_correct[rn_rep]),
-        'gap_5dB_pccnn_w1.0_minus_resnet18_pts': round(float(np.mean(abl[1.0]['snr5']) - np.mean(rn5_acc)), 2),
-        'gap_5dB_pccnn_w1.0_minus_resnet18_ci95': gap_ci(abl[1.0]['snr5_rep'], rn5_correct[rn_rep]),
+        'w1.0_vs_w0_5dB': {
+            'repseed_gap_pts': repgap_pts(abl[1.0]['snr5_rep'], abl[0.0]['snr5_rep']),
+            'repseed_gap_ci95': gap_ci(abl[1.0]['snr5_rep'], abl[0.0]['snr5_rep']),
+            'mcnemar_p': pw,
+            'mcnemar_discordant_w1better_w0better': [bw, cw],
+            'seedmean_gap_pts': round(float(np.mean(abl[1.0]['snr5']) - np.mean(abl[0.0]['snr5'])), 2),
+        },
+        'w1.0_vs_resnet18_5dB': {
+            'repseed_gap_pts': repgap_pts(abl[1.0]['snr5_rep'], rn5_correct[rn_rep]),
+            'repseed_gap_ci95': gap_ci(abl[1.0]['snr5_rep'], rn5_correct[rn_rep]),
+            'mcnemar_p': pr,
+            'mcnemar_discordant_w1better_rnbetter': [br, cr],
+            'seedmean_gap_pts': round(float(np.mean(abl[1.0]['snr5']) - np.mean(rn5_acc)), 2),
+        },
         'resnet18_5dB': [round(float(np.mean(rn5_acc)), 2), round(float(np.std(rn5_acc)), 2)],
     }
 
@@ -230,9 +267,14 @@ def main():
             [BE / 'severity_ood' / 'resnet18_w0.0' / direction / f'seed{s}' for s in SEEDS])]
         g = (pc_rep.astype(float) - rn_rep_o.astype(float))
         so[(direction, 'mcnemar_pc_vs_rn')] = mcnemar_p(pc_rep, rn_rep_o)
+        so[(direction, 'repseed_gap_pts')] = repgap_pts(pc_rep, rn_rep_o)
         so[(direction, 'gap_ci95')] = [float(np.percentile(g[boot_o].mean(1) * 100, 2.5)),
                                        float(np.percentile(g[boot_o].mean(1) * 100, 97.5))]
     out['severity_ood_8_3'] = {f'{d}__{k}': v for (d, k), v in so.items()}
+    out['severity_ood_8_3']['estimand_note'] = (
+        'Per-model accuracies are seed-mean±std (descriptive). repseed_gap_pts, '
+        'gap_ci95 and mcnemar_pc_vs_rn are the representative best-val seed (same '
+        'estimand, audit 2026-06-16 F6). Dir B is non-significant either way (F7).')
 
     (BE / 'summary_record_level.json').write_text(json.dumps(out, indent=2), encoding='utf-8')
     print(f'\nWrote results/phase5_bandenergy/summary_record_level.json in {time.time()-t0:.0f}s')

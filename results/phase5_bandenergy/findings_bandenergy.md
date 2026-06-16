@@ -87,8 +87,18 @@ each run's recorded `metrics.json`) passed for every re-eval, or the script abor
 | **1.0** | 98.61 ± 0.62 | **98.55 ± 0.76** | **0.06** |
 | _resnet18 (vanilla)_ | _99.18 ± 0.09_ | _97.66 ± 1.30_ | _1.52_ |
 
-- **McNemar w=0 vs w=1.0 @5 dB: p = 1.2e-4**; gap **+3.85 pts, CI95 [1.33, 4.17]** (excludes 0).
-- **McNemar pc_cnn(w=1.0) vs resnet18 @5 dB: p = 0.031**; gap **+0.88 pts, CI95 [0.38, 2.08]** (excludes 0).
+- **w=1.0 vs CE-only (same architecture) @5 dB — McNemar 14–0, p = 1.2e-4.**
+  Representative best-val-seed gap **+2.65 pts, CI95 [1.33, 4.17]** (excludes 0).
+- **w=1.0 vs resnet18 @5 dB — McNemar 6–0, p = 0.031.** Representative gap
+  **+1.14 pts, CI95 [0.38, 2.08]** (excludes 0) — but **fragile/near-ceiling**: vs
+  resnet's best-*noise* seed it is 5–0, **p = 0.0625** (not significant). Secondary
+  to the same-architecture ablation.
+
+> **Estimand note (audit 2026-06-16 F6):** the paired gap, CI, and McNemar above
+> are all the **representative best-val seed** (one estimand). The **seed-mean**
+> gaps (w0: +3.85, resnet: +0.88) are descriptive only and must NOT be paired with
+> these representative-seed CIs. `summary_record_level.json` now reports both
+> separately (`repseed_gap_pts` / `seedmean_gap_pts`).
 
 ### §8.2 data efficiency (record level, clean acc)
 
@@ -109,16 +119,19 @@ each run's recorded `metrics.json`) passed for every re-eval, or the script abor
 ### Verdict — what survives at the record level
 
 - **NOISE ROBUSTNESS — SURVIVES (significant).** w=1.0 degrades **0.06 pt** vs the
-  identical-architecture CE-only model's **4.29 pt** (McNemar p=1.2e-4, gap
-  +3.85 [1.33, 4.17]). It also beats the best vanilla resnet18 at 5 dB, smaller
-  but significant (+0.88 [0.38, 2.08], p=0.031). This is the one defensible C3
-  positive: correctly-implemented journal-bearing physics at high weight earns a
-  **real noise-robustness benefit**, strongest as a same-architecture ablation.
-  It reverses the contaminated "harmful at w=1.0 (83.1)" negative.
+  identical-architecture CE-only model's **4.29 pt**. Representative best-val seed:
+  **McNemar 14–0, p=1.2e-4, gap +2.65 [1.33, 4.17]** (mechanism: w=1.0 rescues 14
+  noisy `lubrification` records CE-only mislabels `mixed_wear_lube`). This is the
+  one defensible C3 positive: correctly-implemented journal-bearing physics at high
+  weight earns a **real noise-robustness benefit**, strongest as a same-architecture
+  ablation; it reverses the contaminated "harmful at w=1.0 (83.1)" negative. vs the
+  best vanilla resnet18 it is significant but **small/fragile** (6–0, p=0.031, gap
+  +1.14 [0.38, 2.08]; flips to p=0.0625 vs resnet's best-noise seed) → secondary.
 - **SEVERITY-OOD — DOES NOT SURVIVE as significant.** Dir A tied at the ceiling
-  (100%). Dir B's point gap grew (+6.57) and is low-variance, but McNemar p=0.39
-  and the bootstrap gap CI [−2.27, +8.33] **spans zero** (too few incipient
-  records to resolve the gap). Direction-only / suggestive; **not a claim.**
+  (100%). Dir B favors physics (seed-mean 82.58 vs 76.01; representative-seed gap
+  +3.03) and is low-variance, but **McNemar p=0.39** and the representative gap CI
+  **[−2.27, +8.33] spans zero** (too few incipient records to resolve the gap).
+  Direction-only / suggestive; **not a claim.**
 - **DATA-EFFICIENCY — NEUTRAL, no win.** Ahead non-overlapping at only 1 of 3
   reduced fractions (25%) → fails the prereg rule. The contaminated "hurts at 10%"
   is gone (now exactly tied). No advantage, no harm.
@@ -139,8 +152,10 @@ kind of benefit physics priors are supposed to confer. The earlier "decisive
 negative across all regimes" now looks substantially like an artifact of the
 broken loss (inert → tonal-only → flat baseline). With the loss correctly
 implemented (band-energy vs the real healthy reference, per-sample rpm), physics
-earns its keep in the **noise** and **severity-OOD** regimes while staying free on
-clean accuracy.
+earns its keep in the **noise** regime (record-level significant, same-architecture
+ablation) while staying ~free on clean accuracy. The **severity-OOD** signal did
+**not** survive record-level significance (direction-only), and data-efficiency is
+neutral — see the record-level verdict above.
 
 ## What it does NOT yet establish (guardrails)
 
