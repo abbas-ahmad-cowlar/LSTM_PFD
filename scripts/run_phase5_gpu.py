@@ -238,13 +238,19 @@ def evaluate(model, model_key, loader, device, ops_aware=False):
 
 def train_run(run_dir: Path, model_key: str, seed: int, loaders: dict,
               physics_w: float, ops_aware: bool, max_epochs: int,
-              patience: int, extra_eval: dict, tags: dict):
+              patience: int, extra_eval: dict, tags: dict, scramble_perm=None):
     run_dir.mkdir(parents=True, exist_ok=True)
     ckpt_path = run_dir / 'best_model.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     set_seed(seed)
     model = create_model(model_key, num_classes=NUM_CLASSES).to(device)
+    # F9 control (PROTOCOL §8.7): scramble the per-class band targets. A plain
+    # attribute (not a parameter/buffer), so load_state_dict on resume leaves it
+    # set. None (default) = correct physics. The permutation is recorded in tags.
+    if scramble_perm is not None and hasattr(model, 'reference_permutation'):
+        model.reference_permutation = list(scramble_perm)
+        log.info("    F9 SCRAMBLE reference_permutation=%s", list(scramble_perm))
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     criterion = torch.nn.CrossEntropyLoss()
     scaler = torch.amp.GradScaler('cuda') if device == 'cuda' else None
@@ -312,10 +318,28 @@ def train_run(run_dir: Path, model_key: str, seed: int, loaders: dict,
 # Experiment queue assembly
 # --------------------------------------------------------------------------
 
+def scrambled_class_permutation(seed: int = 20260617) -> list:
+    """Fixed seeded DERANGEMENT of the fault classes (1..NUM_CLASSES-1) for the F9
+    control (PROTOCOL §8.7); class 0 ('sain', no bands) maps to itself. No fault
+    class maps to its own bands, so the band-energy loss keeps identical strength
+    and structure but judges every fault against WRONG physics. Deterministic and
+    recorded in each run's metrics.json for reproducibility."""
+    rng = np.random.default_rng(seed)
+    faults = np.arange(1, NUM_CLASSES)
+    while True:
+        p = rng.permutation(faults)
+        if np.all(p != faults):  # derangement: no class keeps its own bands
+            break
+    return [0] + [int(x) for x in p]
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--only', choices=['data_efficiency', 'severity_ood',
                                            'pinn_ablation', 'true_metadata'])
+    parser.add_argument('--control', choices=['f9_scramble'],
+                        help='run ONLY the F9 scrambled-reference control '
+                             '(pc_cnn w=1.0 x seeds, PROTOCOL §8.7)')
     parser.add_argument('--seeds', nargs='+', type=int, default=SEEDS)
     parser.add_argument('--smoke', action='store_true')
     args = parser.parse_args()
@@ -351,8 +375,28 @@ def main() -> None:
                                smoke=args.smoke),
         }
 
+    # F9 control (§8.7) — pc_cnn w=1.0 with SCRAMBLED per-class band targets.
+    # Same loss strength/structure as the validated §8.4 w=1.0 arm, wrong physics.
+    # Runs in isolation (--control f9_scramble); skips the §8.2–8.5 queue.
+    if args.control == 'f9_scramble':
+        perm = scrambled_class_permutation()
+        log.info("F9 control: scrambled class permutation = %s", perm)
+        full_idx = np.arange(len(tr_lab))
+        # write alongside the other band-energy runs (results/phase5_bandenergy),
+        # NOT results/phase5 — this control IS a band-energy (w=1.0) experiment.
+        be_root = (PROJECT_ROOT / 'results/phase5_bandenergy_smoke' if args.smoke
+                   else PROJECT_ROOT / 'results/phase5_bandenergy')
+        for seed in args.seeds:
+            rd = be_root / 'pinn_ablation_scramble' / 'w1.0' / f'seed{seed}'
+            queue.append((rd, lambda rd=rd, sd=seed, pm=perm: train_run(
+                rd, 'physics_constrained_cnn', sd, std_loaders(full_idx, ops=True),
+                1.0, False, max_epochs, patience,
+                {'test': test_loader, 'test_snr5': snr5_loader},
+                {'experiment': 'pinn_ablation_scramble', 'prereg': '§8.7',
+                 'reference_permutation': pm}, scramble_perm=pm)))
+
     # §8.2 data efficiency — pc_cnn(w=0.3) & resnet18 × fractions × seeds
-    if args.only in (None, 'data_efficiency'):
+    if args.control is None and args.only in (None, 'data_efficiency'):
         for model_key, w in [('physics_constrained_cnn', 0.3), ('resnet18', 0.0)]:
             for frac in FRACTIONS:
                 if frac == 1.0 and model_key == 'resnet18':
@@ -372,7 +416,7 @@ def main() -> None:
                          'fraction': fr})))
 
     # §8.3 severity OOD
-    if args.only in (None, 'severity_ood'):
+    if args.control is None and args.only in (None, 'severity_ood'):
         for model_key, w in [('physics_constrained_cnn', 0.3), ('resnet18', 0.0)]:
             for direction, (train_sevs, test_sevs) in SEVERITY_DIRECTIONS.items():
                 tr_idx = np.where(np.isin(tr_sev, train_sevs))[0]
@@ -391,7 +435,7 @@ def main() -> None:
                          'direction': dn})))
 
     # §8.4 PINN ablation — pc_cnn × w sweep (w=0 = Phase-4), eval clean + 5dB
-    if args.only in (None, 'pinn_ablation'):
+    if args.control is None and args.only in (None, 'pinn_ablation'):
         full_idx = np.arange(len(tr_lab))
         for w in ABLATION_W:
             for seed in args.seeds:
@@ -403,7 +447,7 @@ def main() -> None:
                     {'experiment': 'pinn_ablation', 'prereg': '§8.4'})))
 
     # §8.5 hybrid_pinn with TRUE per-record metadata
-    if args.only in (None, 'true_metadata'):
+    if args.control is None and args.only in (None, 'true_metadata'):
         full_idx = np.arange(len(tr_lab))
         ops_test = make_loader(te_sig, te_lab, te_ops, smoke=args.smoke)
         for seed in args.seeds:
@@ -415,7 +459,10 @@ def main() -> None:
 
     log.info("Queue: %d runs (%s)", len(queue), 'SMOKE' if args.smoke else 'FROZEN budget')
     for i, (rd, job) in enumerate(queue, 1):
-        rel = rd.relative_to(out_root)
+        try:
+            rel = rd.relative_to(out_root)
+        except ValueError:
+            rel = rd.relative_to(PROJECT_ROOT)  # control arm writes outside out_root
         if (rd / 'metrics.json').exists():
             log.info("[%d/%d] %s — complete, skip", i, len(queue), rel)
             continue

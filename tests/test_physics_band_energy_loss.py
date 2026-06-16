@@ -106,3 +106,27 @@ def test_per_sample_rpm_shifts_the_bands(model):
     assert l_3600 < 0.1
     assert l_5400 > 0.5
     assert l_3600 < l_5400
+
+
+def test_reference_permutation_scrambles_targets(model):
+    """F9 control (PROTOCOL §8.7): with a class remap, a class is judged against a
+    DIFFERENT class's bands. A 1X (60 Hz) tone is consistent with imbalance under
+    correct physics (low penalty) but NOT when imbalance is remapped to cavitation
+    (HF band, absent from the tone → high penalty). The loss stays differentiable.
+    Default (perm=None) is unchanged — asserted by every other test here."""
+    sig = tone(60.0)
+    assert model.reference_permutation is None
+    l_correct = loss_for_class(model, sig, I_IMBAL)
+    perm = list(range(len(NAMES)))
+    perm[I_IMBAL] = I_CAV  # imbalance now judged against cavitation's HF band
+    model.reference_permutation = perm
+    try:
+        logits = torch.zeros(1, len(NAMES), requires_grad=True)
+        loss, _ = model.compute_physics_loss(sig, logits, None)
+        assert loss.requires_grad and loss.grad_fn is not None
+        l_scrambled = loss_for_class(model, sig, I_IMBAL)
+    finally:
+        model.reference_permutation = None  # restore for the module-scoped fixture
+    assert l_correct < 0.1
+    assert l_scrambled > 0.5
+    assert l_scrambled > l_correct
