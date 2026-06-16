@@ -33,10 +33,10 @@ class FrequencyConsistencyLoss(nn.Module):
     not train physics, it silently does nothing. Verified by execution and by the
     external audit (Finding 5). DO NOT wire this into training. The differentiable
     replacement is the model-method loss in
-    `packages/core/models/pinn/physics_constrained_cnn.py` (softmax-weighted), and
-    the ratified **band-energy** loss is the Step-4 reimplementation. A guard test
-    (`tests/test_physics_quarantine.py`) pins the inert behavior so it cannot be
-    relied on unnoticed.
+    `packages/core/models/pinn/physics_constrained_cnn.py` (softmax-weighted /
+    band-energy, Step 4). HARD-BLOCKED after audit 2026-06-16 (Finding 10):
+    `forward()` now raises `RuntimeError` so it cannot be used unnoticed; the guard
+    test (`tests/test_physics_quarantine.py`) pins the raise.
 
     For a predicted fault class, we expect certain frequencies to be dominant
     in the vibration spectrum. This loss computes the mismatch between observed
@@ -84,7 +84,20 @@ class FrequencyConsistencyLoss(nn.Module):
 
         Returns:
             Frequency consistency loss (scalar)
+
+        HARD-BLOCKED (P6; audits 2026-06-14 Finding 5, 2026-06-16 Finding 10/Rec5):
+        raises instead of returning an inert, non-differentiable (argmax) tensor a
+        caller could mistake for working physics. Use the validated band-energy
+        loss ``PhysicsConstrainedCNN.compute_physics_loss``. The original argmax
+        body is retained below (unreachable) for reference / git provenance.
         """
+        raise RuntimeError(
+            "FrequencyConsistencyLoss is quarantined and hard-blocked: it is "
+            "non-differentiable (argmax over predictions) and contributes zero "
+            "gradient, so it does not train physics. Use the validated band-energy "
+            "loss PhysicsConstrainedCNN.compute_physics_loss instead."
+        )
+
         batch_size = signal.shape[0]
 
         # Get predicted classes
@@ -290,7 +303,8 @@ class PhysicalConstraintLoss(nn.Module):
     loss is `requires_grad=False, grad_fn=None` and contributes no gradient. Any
     training through `PINNTrainer` with this loss does NOT learn physics. Not used
     by any committed experiment (the benchmark trained pure CE; Phase-5 used the
-    model-method loss). Pinned inert by `tests/test_physics_quarantine.py`.
+    model-method loss). HARD-BLOCKED after audit 2026-06-16 (Finding 10):
+    `forward()` raises `RuntimeError`; pinned by `tests/test_physics_quarantine.py`.
 
     This is the main loss function for PINN training, combining:
     1. Frequency consistency
@@ -344,7 +358,19 @@ class PhysicalConstraintLoss(nn.Module):
         Returns:
             total_loss: Combined physics loss
             loss_dict: Dictionary of individual loss components
+
+        HARD-BLOCKED (P6; audits 2026-06-14 Finding 5, 2026-06-16 Finding 10/Rec5):
+        the combined loss inherits the inert ``FrequencyConsistencyLoss`` term
+        (zero gradient) and is used by no committed experiment. It raises rather
+        than return a no-grad tensor a future caller could trust. Use
+        ``PhysicsConstrainedCNN.compute_physics_loss``. Body retained (unreachable).
         """
+        raise RuntimeError(
+            "PhysicalConstraintLoss is quarantined and hard-blocked: its frequency "
+            "term is non-differentiable (zero gradient). Use the validated "
+            "band-energy loss PhysicsConstrainedCNN.compute_physics_loss instead."
+        )
+
         losses = {}
         total_loss = 0.0
 
