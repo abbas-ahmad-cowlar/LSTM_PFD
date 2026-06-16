@@ -1,12 +1,12 @@
 {
   "provenance": {
-    "git_sha": "0d2e3d8b84490066e2070a870ed7e2829d4e4c69",
+    "git_sha": "a2e09d96fba20b7b21d23603a76fe3b9aa2e1fb4",
     "host": "DESKTOP-M7RBFOO",
     "device": "cpu",
     "data": "dataset_v2.h5",
-    "finished_at": "2026-06-13T23:04:31.599315+00:00",
-    "vanilla_ckpt": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\benchmark\\deep\\resnet18\\seed0\\best_model.pth",
-    "pc_cnn_ckpt": "D:\\Libraries\\results_phase5_fixed_full-20260613T221621Z-3-001\\results_phase5_fixed_full\\pinn_ablation\\w0.3\\seed1\\best_model.pth",
+    "finished_at": "2026-06-16T19:27:20.707360+00:00",
+    "vanilla_ckpt": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\benchmark\\deep\\resnet18\\seed2\\best_model.pth",
+    "pc_cnn_ckpt": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\phase5_bandenergy\\pinn_ablation\\w1.0\\seed2\\best_model.pth",
     "per_class": 20,
     "ig_steps": 32,
     "mc_samples": 30,
@@ -14,33 +14,35 @@
   },
   "results": {
     "resnet18_vanilla": {
-      "mean_in_band_frac": 0.13172227144241333,
-      "mean_control_frac": 0.18407116830348969,
-      "specificity_ratio": 0.7156051397323608,
-      "n_windows": 140,
+      "mean_in_band_frac": 0.187477245926857,
+      "mean_control_frac": 0.1799279749393463,
+      "specificity_ratio": 1.041957139968872,
+      "n_windows": 160,
       "per_class_in_band": {
-        "1": 0.19124187529087067,
-        "2": 0.1068936213850975,
-        "3": 0.25362077355384827,
-        "4": 0.04922015592455864,
-        "5": 0.2098364382982254,
-        "6": 0.07186507433652878,
-        "7": 0.03937800973653793
+        "1": 0.11338146775960922,
+        "2": 0.19074711203575134,
+        "3": 0.14164075255393982,
+        "6": 0.08295373618602753,
+        "7": 0.04607002064585686,
+        "8": 0.42267879843711853,
+        "9": 0.3820309340953827,
+        "10": 0.12031509727239609
       }
     },
     "pc_cnn_physics": {
-      "mean_in_band_frac": 0.13583990931510925,
-      "mean_control_frac": 0.15992526710033417,
-      "specificity_ratio": 0.8493961691856384,
-      "n_windows": 140,
+      "mean_in_band_frac": 0.1258888840675354,
+      "mean_control_frac": 0.14702753722667694,
+      "specificity_ratio": 0.8562265634536743,
+      "n_windows": 160,
       "per_class_in_band": {
-        "1": 0.15710364282131195,
-        "2": 0.17106464505195618,
-        "3": 0.2328217476606369,
-        "4": 0.10476859658956528,
-        "5": 0.18571574985980988,
-        "6": 0.06989181041717529,
-        "7": 0.029513195157051086
+        "1": 0.156757190823555,
+        "2": 0.02573094330728054,
+        "3": 0.1062365397810936,
+        "6": 0.0583353266119957,
+        "7": 0.004336084704846144,
+        "8": 0.3539068102836609,
+        "9": 0.24936631321907043,
+        "10": 0.052441954612731934
       }
     }
   }
