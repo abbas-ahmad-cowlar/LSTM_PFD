@@ -129,17 +129,25 @@
   §0 rewritten to the surviving verdict; README + `results/README.md` reconciled
   (audit F12). **NOT ratified — owner re-ratification is the gate.**
 
-**REMAINING (owner-gated — do NOT start without his go):**
-1. **Owner re-ratifies (or edits) FINDINGS** — the one surviving positive is the
-   same-architecture noise robustness; everything else is neutral/negative.
-2. **GPU decisions:** (a) **F9 controls** (entropy/logit reg, random-band,
-   permuted/wrong healthy-reference) to isolate physics from generic high-weight
-   regularization; (b) **F13** more than n=3 seeds. Or accept the narrowed wording
-   and list both as future work.
-3. **Band-aware §8.6a (laptop)** — recompute alignment with `get_expected_bands`
-   (incl. the 1–6 Hz lube / 1.4–2.6 kHz cavitation absolute bands) so the metric
-   can actually see the band-energy model's broadband mechanism (the tonal-only
-   metric cannot). The XAI analogue of the F9 question.
+**Band-aware §8.6a — DONE (`e764c96`): interpretability dead in all forms** (vanilla
+0.146 > physics 0.099; lube class both ≈0). No XAI corroboration of "physics" → the
+F9 control is the only remaining way to earn the word.
+
+**F9 scrambled-reference control — PREPARED + verified, awaiting OWNER Colab run
+(`e1dbb66`).** Owner chose the one decisive control. Code: opt-in
+`reference_permutation` (model) + `run_phase5_gpu.py --control f9_scramble` (pc_cnn
+w=1.0 × 3 seeds, scrambled band targets, eval clean+5 dB → `results/phase5_bandenergy/pinn_ablation_scramble/`).
+Pre-registered PROTOCOL §8.7 (decision rule fixed). Runbook:
+`experiments/COLAB_F9_CONTROL_RUNBOOK.md`. CPU-smoke-verified; suite 263.
+
+**REMAINING (owner-gated):**
+1. **Owner runs the F9 control on Colab** (runbook above) → brings the 3 runs home →
+   **Claude runs the record-level comparison** (scramble-w1.0 vs CE-only vs
+   correct-w1.0 @5 dB, McNemar) → §8.7 verdict (physics-specific vs generic reg).
+2. **Owner re-ratifies (or edits) FINDINGS** — the one surviving positive is the
+   same-architecture noise robustness; the §8.7 verdict sets whether it may be
+   called "physics" or stays "the band-energy term helped."
+3. Optional: **F13** more seeds; **§8.5** HybridPINN rebuild; provenance manifest.
 Do not loosen wording (§6); no physics-benefit claim beyond the surviving
 record-level noise result; every number with an artifact path.
 
