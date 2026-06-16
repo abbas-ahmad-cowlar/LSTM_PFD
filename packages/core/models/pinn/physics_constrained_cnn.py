@@ -86,6 +86,14 @@ class PhysicsConstrainedCNN(BaseModel):
         # Tests may override this attribute with a synthetic reference.
         self.healthy_reference = load_healthy_reference()
 
+        # OPTIONAL F9 control (audit 2026-06-16 / PROTOCOL §8.7): a fixed class-index
+        # remap so each class is judged against a DIFFERENT class's expected bands +
+        # healthy reference — a "scrambled-physics" control with identical loss
+        # strength/structure but WRONG per-class targets. None (default) = correct
+        # physics, behaviour byte-identical to the validated loss. Set to a length-
+        # num_classes list (a derangement) only for the control arm.
+        self.reference_permutation: Optional[list] = None
+
         # ===== CNN BACKBONE =====
         if backbone == 'resnet18':
             self.backbone = ResNet1D(
@@ -213,9 +221,13 @@ class PhysicsConstrainedCNN(BaseModel):
             f_row = freqs.unsqueeze(0)        # [1, F]
 
             pen = torch.zeros(B, C, device=device)
+            perm = self.reference_permutation
             for c in range(C):
+                # F9 control: judge class c against class perm[c]'s bands+reference
+                # (scrambled physics). perm is None for the validated loss -> lc=c.
+                lc = c if perm is None else int(perm[c])
                 try:
-                    name = self.signature_db._name(c)
+                    name = self.signature_db._name(lc)
                     sig = self.signature_db.signatures[name]
                 except Exception:
                     continue
