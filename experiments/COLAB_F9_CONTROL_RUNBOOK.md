@@ -43,8 +43,9 @@ drive.mount('/content/drive')
 `dataset_v2.h5` lives in your Drive) before continuing.
 
 ## Cell 3 — sanity-check the control is wired (no training)
-```bash
-!python -c "
+**Paste as a normal Python cell** (NOT `!python -c "..."` — Jupyter's `!` shell
+escape mangles a multi-line quoted string):
+```python
 from packages.core.models.pinn.physics_constrained_cnn import PhysicsConstrainedCNN
 from scripts.run_phase5_gpu import scrambled_class_permutation
 m = PhysicsConstrainedCNN(backbone='cnn1d')
@@ -53,7 +54,6 @@ p = scrambled_class_permutation()
 print('scramble permutation:', p)
 assert p[0] == 0 and all(p[i] != i for i in range(1, 11)), 'NOT a derangement'
 print('derangement OK (no fault maps to its own bands)')
-"
 ```
 **Expect:** `default reference_permutation: None`, an 11-element permutation, and
 `derangement OK`. **STOP** if it errors.
@@ -83,15 +83,15 @@ Drive symlink). Clean test should land ~96%; the printed 5 dB number is *window-
 — the real verdict is the laptop record-level analysis (next).
 
 ## Cell 6 — verify + confirm outputs are on Drive
-```bash
-!python -c "
+**Paste as a normal Python cell** (the trailing `!ls` shell line works inside a
+Python cell because it is a single line):
+```python
 import json, glob
 for f in sorted(glob.glob('results/phase5_bandenergy/pinn_ablation_scramble/w1.0/seed*/metrics.json')):
     m = json.load(open(f))
     print(f.split('pinn_ablation_scramble/')[1], '|',
           'perm', m.get('reference_permutation'), '|',
-          {k: round(v['accuracy'],2) for k,v in m['evals'].items()})
-"
+          {k: round(v['accuracy'], 2) for k, v in m['evals'].items()})
 !ls -la /content/drive/MyDrive/lstm-pfd/f9_scramble/w1.0/seed*/best_model.pth
 ```
 **Expect:** 3 lines (seed0/1/2), each showing the recorded `reference_permutation`
