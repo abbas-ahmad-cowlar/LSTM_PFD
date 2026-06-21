@@ -10,20 +10,20 @@
 > **Maintenance duty:** update this file at every phase gate and at the end of
 > every session. Keep it truthful and current; it is the single source of truth.
 >
-> **Last updated: 2026-06-17, session 8.** One-line status: Phase 5 merged to
+> **Last updated: 2026-06-22, session 9.** One-line status: Phase 5 merged to
 > `main` (Gate 5), **but** internal + TWO independent external audits found the
 > *physics-informed-model* evidence invalid (wrong-bearing-type physics, an inert
-> loss, window-level statistics, mislabeled rows). 5-step **remediation** on branch
-> `p6/docs` is essentially complete through **Step 5d (FINDINGS DRAFT)** — only the
-> **owner re-ratification + optional GPU controls** remain. **Steps 1–4 DONE; Step
-> 5 reruns DONE; 5a record-level DONE (`0696790`); 5b audit fixes F6+F10 DONE
-> (`a2e09d9`); 5c XAI/calibration recompute DONE (`2b534bf`); 5d FINDINGS draft +
-> README reconcile DONE (this commit, NOT ratified).** A SECOND independent external
-> audit (Codex, `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md`,
-> commissioned silently to keep us honest) reviewed the remediation and
-> **independently reproduced every record-level number from the retained
-> checkpoints** — it validates the surviving result and tightened how it is
-> reported (F6 estimator fix + F10 hard-block now done).
+> loss, window-level statistics, mislabeled rows). The 5-step **remediation** on
+> `p6/docs` is **complete through Step 5f (F9 control)** — the **only** thing left is
+> **owner re-ratification of the FINDINGS draft, then merge to `main`.** Steps 1–4
+> DONE; Step 5 reruns DONE; 5a record-level (`0696790`); 5b F6+F10 (`a2e09d9`); 5c
+> XAI/calibration recompute (`2b534bf`); 5d FINDINGS draft + README reconcile
+> (`09b4a66`); 5e band-aware §8.6a + F9 control prep (`e764c96`/`e1dbb66`); **5f F9
+> scrambled-reference control RESULT (`cd56d75`): the noise benefit is GENERIC
+> high-weight regularization, NOT physics** (scrambled per-class targets reproduce
+> it; correct physics only adds cross-seed stability). A SECOND independent external
+> audit (Codex, `...2026-06-16.md`) reproduced every record-level number and tightened
+> the reporting (F6/F10 done).
 > **The surviving finding (record-level, 528 records, owner not yet re-ratified):**
 > after the physics loss was finally implemented correctly (band-energy vs a
 > *frozen healthy-class reference*, per-sample rpm), the **noise-robustness result
@@ -37,9 +37,11 @@
 > recomputed 5c) did NOT survive** → neutral/negative. The F6 estimator mismatch
 > (seed-mean gap vs representative-seed CI) is **fixed** (`a2e09d9`): repseed gap
 > **+2.65 [1.33,4.17]** for w1.0-vs-CE-only, seed-mean +3.85 kept separate. **The
-> ONLY surviving physics positive is the same-architecture noise robustness;** it
-> is not yet isolated from generic regularization (F9 controls = owner/GPU
-> decision). Suite: **262 passed, 6 deselected.**
+> ONLY surviving positive is the same-architecture noise robustness — and the §8.7
+> control (5f) showed it is GENERIC high-weight spectral regularization, NOT
+> physics-specific** (scramble degr 2.84 / std 5.31 vs correct 0.06 / std 0.76;
+> representative seed scramble≈correct, p=1). Claim "a spectral regularizer helped,"
+> not "physics." Suite: **263 passed, 6 deselected.**
 
 ---
 
@@ -133,23 +135,28 @@
 0.146 > physics 0.099; lube class both ≈0). No XAI corroboration of "physics" → the
 F9 control is the only remaining way to earn the word.
 
-**F9 scrambled-reference control — PREPARED + verified, awaiting OWNER Colab run
-(`e1dbb66`).** Owner chose the one decisive control. Code: opt-in
-`reference_permutation` (model) + `run_phase5_gpu.py --control f9_scramble` (pc_cnn
-w=1.0 × 3 seeds, scrambled band targets, eval clean+5 dB → `results/phase5_bandenergy/pinn_ablation_scramble/`).
-Pre-registered PROTOCOL §8.7 (decision rule fixed). Runbook:
-`experiments/COLAB_F9_CONTROL_RUNBOOK.md`. CPU-smoke-verified; suite 263.
+**F9 scrambled-reference control — DONE (`cd56d75`): the noise benefit is GENERIC
+regularization, NOT physics.** Owner ran it on Colab (3 seeds, git `70f623f`);
+results flattened from the I9 double-nest into `pinn_ablation_scramble/`. Record-level
+(`scripts/f9_scramble_record_level.py` → `f9_scramble_record_level.json`):
+degradation clean→5 dB = CE-only **4.29**, correct-w1.0 **0.06**, scramble-w1.0
+**2.84** (robust on 2/3 seeds, 1 collapses, std 5.31). Representative seed McNemar
+@5 dB: scramble vs CE-only **14–1 p=9.8e-4**, scramble vs correct **0–1 p=1.0**.
+**Verdict (§8.7 rule):** scrambling the physics does NOT destroy the robustness → a
+high-weight band-energy regularizer produces it with WRONG targets; correct physics
+only adds cross-seed stability. → **claim "a spectral-consistency regularizer
+helped," NOT "physics."** Confirms the FINDINGS draft's narrow wording.
 
-**REMAINING (owner-gated):**
-1. **Owner runs the F9 control on Colab** (runbook above) → brings the 3 runs home →
-   **Claude runs the record-level comparison** (scramble-w1.0 vs CE-only vs
-   correct-w1.0 @5 dB, McNemar) → §8.7 verdict (physics-specific vs generic reg).
-2. **Owner re-ratifies (or edits) FINDINGS** — the one surviving positive is the
-   same-architecture noise robustness; the §8.7 verdict sets whether it may be
-   called "physics" or stays "the band-energy term helped."
-3. Optional: **F13** more seeds; **§8.5** HybridPINN rebuild; provenance manifest.
-Do not loosen wording (§6); no physics-benefit claim beyond the surviving
-record-level noise result; every number with an artifact path.
+**REMAINING (owner-gated) — this is the LAST gate before merge:**
+1. **Owner re-ratifies (or edits) the FINDINGS DRAFT** (`results/FINDINGS.md` §0).
+   The §8.7 control settled the central question: the one surviving positive is a
+   **generic spectral-regularization** noise-robustness effect (not physics).
+2. After ratification: **merge `p6/docs` → `main`** (suite green, gate sign-off).
+3. Optional/future: **F13** more seeds (the scramble's seed-fragility makes this
+   more valuable); **§8.5** HybridPINN journal-bearing rebuild; provenance manifest;
+   then Phase 7 (paper).
+Do not loosen wording (§6); the noise benefit is a spectral regularizer, not
+physics (§8.7); every number with an artifact path.
 
 ---
 
