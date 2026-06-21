@@ -143,6 +143,48 @@ each run's recorded `metrics.json`) passed for every re-eval, or the script abor
   zero** — but the within-architecture noise robustness is *stronger* at record
   level (degradation 0.51→0.06).
 
+## F9 control — physics-specific or generic regularization? (§8.7, 2026-06-22)
+
+The surviving §8.4 w=1.0 noise result was tested against the pre-registered
+**scrambled-reference control** (PROTOCOL §8.7): the same band-energy loss at
+w=1.0, but each fault judged against a **different** fault's bands + healthy
+reference (fixed derangement `[0,10,5,9,6,2,8,4,7,1,3]`) — identical loss
+strength/structure, **wrong physics**. 3 seeds, Colab T4 @`70f623f`. Record-level
+recompute: `scripts/f9_scramble_record_level.py` → `f9_scramble_record_level.json`.
+
+| arm (record level, 528) | clean | 5 dB | degradation |
+|---|---|---|---|
+| w=0 CE-only | 98.99 ± 0.45 | 94.70 ± 3.08 | 4.29 |
+| **w=1.0 correct physics** | 98.61 ± 0.62 | **98.55 ± 0.76** | **0.06** |
+| **w=1.0 SCRAMBLED** | 98.42 ± 0.91 | **95.58 ± 5.31** | **2.84** |
+
+Representative best-val seed (seed2 all arms), exact McNemar @5 dB:
+- scramble vs CE-only: **14–1, p = 9.8e-4** (scramble significantly more robust than plain CE).
+- scramble vs correct-w1.0: **0–1, p = 1.0** (at the representative seed, indistinguishable from correct physics).
+
+### Verdict (§8.7 decision rule): LARGELY GENERIC REGULARIZATION — not physics-specific.
+
+Scrambling the per-class physics did **not** destroy the robustness: at the
+representative (best-val) seed the scrambled model is **as robust as correct
+physics** (0–1, p=1) and **beats CE-only** (14–1, p≈1e-3); 2 of its 3 seeds are
+robust. So a **high-weight band-energy regularizer produces the noise robustness
+even with the WRONG per-class targets** — the effect is **not specific to correct
+journal-bearing physics**.
+
+What correct physics *does* buy is **stability**: all 3 correct-physics seeds are
+robust (5 dB std **0.76**), whereas the scramble is **seed-fragile** (std **5.31** —
+one seed collapses ~13 pt), giving a seed-mean degradation of 2.84 vs correct's
+0.06. Correct per-class targets make the robustness *reliable*, but are not what
+*creates* it.
+
+**Consequence (the §8.7 rule mandates the conservative reading for an intermediate
+result):** the surviving benefit must be reported as **"a high-weight band-energy
+spectral-consistency regularizer improves 5 dB noise robustness in a
+same-architecture ablation"** — a **spectral-regularization** effect, **NOT**
+evidence that correct physics priors help (correct physics only improves cross-seed
+stability). This **confirms the FINDINGS draft's narrow wording**; the word
+"physics" may **not** be claimed for the noise result.
+
 ## Was this expected?
 
 **Partly — and it shifts the story.** We expected no clean-accuracy gain (the
