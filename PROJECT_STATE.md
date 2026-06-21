@@ -42,6 +42,12 @@
 > physics-specific** (scramble degr 2.84 / std 5.31 vs correct 0.06 / std 0.76;
 > representative seed scramble≈correct, p=1). Claim "a spectral regularizer helped,"
 > not "physics." Suite: **263 passed, 6 deselected.**
+> **IN PROGRESS (2026-06-22): a THIRD audit round** — two fresh independent auditors
+> (GPT-5.5 + a fresh-memory Opus 4.8) are auditing the repo on this PC to pressure-
+> test the whole narrative before ratification. Prior audit reports were deleted
+> (backed up) so they form their own view. Their reports →
+> `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md`. **Ratification +
+> merge wait on reading + reconciling both.**
 
 ---
 
@@ -53,24 +59,29 @@
    and are kept only for provenance). §0 is the **2026-06-17 DRAFT verdict** (the
    surviving noise result + all the negatives, record-level); **awaiting owner
    re-ratification** — do not cite as ratified.
-3. `results/phase5_bandenergy/findings_bandenergy.md` — the band-energy rerun
-   result (window-level; the promising noise/OOD signal). **This is the newest
-   science.**
-4. `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md` — first external auditor;
-   authority on the *corrected* blast radius (the contamination that opened P6).
-5. `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md` — **SECOND external
-   auditor (Codex), reviewing the remediation @`0696790`.** Reproduced every
-   record-level number from checkpoints; **validates the surviving noise result**,
-   flags the estimator mismatch (F6), the vs-resnet fragility (F5), the
-   regularization-confound on causal attribution (F9), stale top-level docs (F12),
-   and that the inert `PINNTrainer` path is still runtime-usable (F10). Authority
-   on what the remediation still owes before paper-ready.
-6. `audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md` — internal audit + remediation
-   plan (§6 = expanded scope + endorsed sequence).
+3. `results/phase5_bandenergy/findings_bandenergy.md` — the band-energy reruns,
+   their **record-level verdict**, and the **§8.7 F9 scrambled-reference control**
+   (the noise benefit is **generic spectral regularization, NOT physics**). **This
+   is the newest science.** Numbers: `results/phase5_bandenergy/summary_record_level.json`
+   (§8.2/8.3/8.4) and `results/phase5_bandenergy/f9_scramble_record_level.json` (§8.7).
+4. **Prior audit reports were REMOVED 2026-06-22** (`audit_reports/NOTE_prior_reports_removed.md`)
+   to keep a fresh pair of independent audits uncontaminated. Their findings are
+   already folded into §5 + the header above; full text recoverable from git history
+   and from `C:\Users\COWLAR\projects\_lstm_audit_backup_2026-06-22\` (outside the
+   repo). The removed set: origin audit (2026-06-11, found fabrications), internal
+   physics-loss audit (2026-06-14), and the two independent external science audits
+   (2026-06-14 opened the blast radius; 2026-06-16 Codex reproduced every
+   record-level number, validated the surviving noise result, flagged F5/F6/F9/F10/F12).
+5. **THIRD audit round IN PROGRESS (2026-06-22):** two fresh independent auditors —
+   **GPT-5.5** and a **fresh-memory Opus 4.8** — are auditing this repo on this PC
+   (prompts in `C:\Users\COWLAR\projects\_lstm_audit_prompts_2026-06-22\`). Reports
+   will land at `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md`. When
+   present, **read BOTH and reconcile** them against each other + the evidence
+   before any FINDINGS ratification.
 6. `README.md` (reconciled overview), `experiments/PROTOCOL.md` (§7 amendments
-   §8.0-bis…§8.0-quinquies + §8 pre-registrations), `docs/PHYSICS.md` (normative
-   physics — the ground truth the model-side physics MUST match),
-   `results/README.md` (results index), `CONVERGENCE_PLAN.md` (phase tracker).
+   §8.0-bis…§8.0-quinquies + **§8.7 F9 control** + §8 pre-registrations),
+   `docs/PHYSICS.md` (normative physics — the ground truth the model-side physics
+   MUST match), `results/README.md` (results index), `CONVERGENCE_PLAN.md` (tracker).
 
 **Then read these CODE files to understand the machinery (do NOT trust docstrings
 — verify by execution):**
@@ -147,12 +158,16 @@ high-weight band-energy regularizer produces it with WRONG targets; correct phys
 only adds cross-seed stability. → **claim "a spectral-consistency regularizer
 helped," NOT "physics."** Confirms the FINDINGS draft's narrow wording.
 
-**REMAINING (owner-gated) — this is the LAST gate before merge:**
-1. **Owner re-ratifies (or edits) the FINDINGS DRAFT** (`results/FINDINGS.md` §0).
+**REMAINING (owner-gated) — the LAST gates before merge:**
+1. **Collect the THIRD-round audits** (GPT-5.5 + fresh Opus, running 2026-06-22 →
+   `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md`). When both land,
+   **read + reconcile** them (agreements, divergences, anything they overturn) and
+   address any critical/major findings before ratifying.
+2. **Owner re-ratifies (or edits) the FINDINGS DRAFT** (`results/FINDINGS.md` §0).
    The §8.7 control settled the central question: the one surviving positive is a
    **generic spectral-regularization** noise-robustness effect (not physics).
-2. After ratification: **merge `p6/docs` → `main`** (suite green, gate sign-off).
-3. Optional/future: **F13** more seeds (the scramble's seed-fragility makes this
+3. After ratification: **merge `p6/docs` → `main`** (suite green, gate sign-off).
+4. Optional/future: **F13** more seeds (the scramble's seed-fragility makes this
    more valuable); **§8.5** HybridPINN journal-bearing rebuild; provenance manifest;
    then Phase 7 (paper).
 Do not loosen wording (§6); the noise benefit is a spectral regularizer, not
@@ -259,10 +274,11 @@ confirms,** C3 moves from "physics doesn't help" to "physics doesn't help clean
 accuracy but earns a real noise-robustness + OOD benefit." Until then it is a
 *promising signal*, not a claim.
 
-**Origin story:** the 2026-06-11 audit (`audit_reports/PROJECT_AUDIT_2026-06-11.md`)
-found fabricated results (a paper claiming 98.1% with zero experiments run),
-~130K LOC mostly unvalidated, a broken PINN, 45 failing tests. Prime rule: **only
-execution evidence counts.** Old code recoverable at tag `pre-convergence-2026-06`.
+**Origin story:** the 2026-06-11 audit (report removed 2026-06-22 with the others —
+see §0 item 4 for recovery) found fabricated results (a paper claiming 98.1% with
+zero experiments run), ~130K LOC mostly unvalidated, a broken PINN, 45 failing
+tests. Prime rule: **only execution evidence counts.** Old code recoverable at tag
+`pre-convergence-2026-06`.
 
 ## 4. History — Gates 0–4 PASSED, merged to `main`
 
@@ -462,8 +478,10 @@ at 10% (91.11 vs 93.60); §8.4 fixed harmful at w=1.0 5 dB (83.1); §8.5 89.76 v
 6. Anti-regrowth: fixed-size tiers; cut at the tag + `BACKLOG.md`.
 7. `results/`: small json/md/png/csv committed; **`*.pth` checkpoints + h5 out of
    git** (`.gitignore: results/**/*.pth`; DVC for the dataset; archives in `D:\Libraries`).
-8. External-audit discipline: neutral prompts (`audit_reports/INDEPENDENT_AUDIT_PROMPT.md`);
-   their reports are authoritative on scope.
+8. External-audit discipline: neutral, model-tailored prompts (current pair in
+   `C:\Users\COWLAR\projects\_lstm_audit_prompts_2026-06-22\`); their reports are
+   authoritative on scope. Prior reports are deleted before a new round so each
+   audit is uncontaminated (recoverable from git history + backup).
 
 ## 9. Key files map
 | What | Where |
@@ -471,17 +489,16 @@ at 10% (91.11 vs 93.60); §8.4 fixed harmful at w=1.0 5 dB (83.1); §8.5 89.76 v
 | **This handoff** | `PROJECT_STATE.md` |
 | Findings (read §0 first) | `results/FINDINGS.md` |
 | **Band-energy rerun findings (newest)** | `results/phase5_bandenergy/findings_bandenergy.md` |
-| External audit #1 (blast radius) | `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md` |
-| **External audit #2 (remediation review, @`0696790`)** | `audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md` |
-| Internal physics audit + plan | `audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md` |
-| Origin audit | `audit_reports/PROJECT_AUDIT_2026-06-11.md` |
+| Prior audits (4) — **REMOVED 2026-06-22**, in git history + backup | `audit_reports/NOTE_prior_reports_removed.md`; backup `C:\Users\COWLAR\projects\_lstm_audit_backup_2026-06-22\` |
+| **Third-round audits (running 2026-06-22)** | `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md` (pending); prompts in `C:\Users\COWLAR\projects\_lstm_audit_prompts_2026-06-22\` |
+| **§8.7 F9 scrambled-reference control** | `results/phase5_bandenergy/pinn_ablation_scramble/`, `f9_scramble_record_level.json`, `scripts/f9_scramble_record_level.py` |
 | Physics (normative) + CI | `docs/PHYSICS.md`, `tests/test_physics_signatures.py` |
 | Protocol (§8.0-bis…quinquies) | `experiments/PROTOCOL.md` |
 | Dataset v2 | `experiments/DATASET_V2.md`, `data/generated/dataset_v2.h5` (+DVC) |
 | **Frozen healthy reference** | `packages/core/models/physics/healthy_reference.json` |
 | Model-side physics | `packages/core/models/physics/{bearing_dynamics,fault_signatures}.py`, `.../pinn/{physics_constrained_cnn,hybrid_pinn,multitask_pinn}.py`, `.../training/{physics_loss_functions,pinn_trainer}.py` |
 | Benchmark results (window + record level) | `results/benchmark/summary.md`, `summary_record_level.md` |
-| **Band-energy reruns** | `results/phase5_bandenergy/{pinn_ablation,data_efficiency,severity_ood}/`, `summary_record_level.json` (being written) |
+| **Band-energy reruns + F9 control** | `results/phase5_bandenergy/{pinn_ablation,data_efficiency,severity_ood,pinn_ablation_scramble}/`, `summary_record_level.json`, `f9_scramble_record_level.json` |
 | Phase-5 (old, contaminated) | `results/phase5/`, `phase5_fixed/`, `phase5_dataeff_fixed/`, `noise_robustness/`, `xai_alignment/`, `uncertainty/` |
 | Scripts (new this remediation) | `scripts/{compute_healthy_reference,audit_physics_penalties,aggregate_benchmark_record_level,phase5_bandenergy_record_level}.py` |
 | Runners | `scripts/{run_benchmark,aggregate_benchmark,run_phase5_gpu,run_xai_calibration}.py` |
