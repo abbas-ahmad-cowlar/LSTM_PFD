@@ -18,19 +18,23 @@
 ## 0. DRAFT verdict (2026-06-17) — authoritative, supersedes §1–§5
 
 ### One-paragraph verdict
-On a single synthetic journal-bearing dataset, a **correctly-wired PC-CNN
-band-energy consistency loss at high weight (w=1.0)** delivers a **real,
-record-level 5 dB noise-robustness improvement** over the **same architecture**
-trained cross-entropy-only — the one physics benefit in the study that survives
-record-level statistics and an independent reproduction. There is **no
-clean-accuracy gain** (a small near-ceiling clean trade-off), and **no
-statistically-supported data-efficiency, severity-OOD, interpretability, or
+On a single synthetic journal-bearing dataset, a **PC-CNN band-energy
+consistency loss at high weight (w=1.0)** delivers a **real, record-level 5 dB
+noise-robustness improvement** over the **same architecture** trained
+cross-entropy-only — the one benefit in the study that survives record-level
+statistics and an independent reproduction. A pre-registered **scrambled-reference
+control (§8.7)** shows this benefit is a **generic high-weight spectral
+regularizer, NOT specific to correct physics**: shuffling the per-class band
+targets reproduces the robustness (correct physics only adds cross-seed stability).
+There is **no clean-accuracy gain** (a small near-ceiling clean trade-off), and
+**no statistically-supported data-efficiency, severity-OOD, interpretability, or
 calibration advantage** — each was tested and did **not** survive. The durable
 contributions are the physics-grounded **dataset/generator (C1)**, the frozen
-reproducible **benchmark (C2)**, the **narrow noise-robustness result (C3)** plus
-a methodological caution, and **deployment (C5)**. The result must be framed as
-"the *implemented band-energy term* helped," not "physics-informed learning
-helps" — see the wording limits below.
+reproducible **benchmark (C2)**, the **narrow spectral-regularization
+noise-robustness result (C3)** plus a methodological caution, and **deployment
+(C5)**. The result must be framed as "**a band-energy spectral-consistency
+regularizer** helped," **not** "physics-informed learning helps" — see the wording
+limits below.
 
 ### Supportable now — claims the paper MAY make (each artifact-linked)
 - **C1 — dataset/generator.** `data/generated/dataset_v2.h5`: 3,520 records, 11
@@ -57,6 +61,14 @@ helps" — see the wording limits below.
   Secondary, weaker: vs best vanilla resnet18 it is significant but
   **small/fragile** (6–0, p=0.031, +1.14 [0.38, 2.08]; flips to p=0.0625 vs
   resnet's best-noise seed) — report as secondary/near-ceiling.
+  **What the benefit IS (F9 control, §8.7, `f9_scramble_record_level.json`):** a
+  **scrambled-reference control** (w=1.0 band-energy loss with the per-class bands
+  shuffled — same strength, wrong physics) **reproduces** the robustness (at the
+  representative seed: 0–1 vs correct, p=1; 14–1 vs CE-only, p≈1e-3). So the effect
+  is a **high-weight spectral-consistency regularizer**, **not** specific to correct
+  journal-bearing physics. Correct physics only buys **cross-seed stability**
+  (correct 5 dB std 0.76 / degr 0.06; scramble std 5.31 / degr 2.84, one seed
+  collapses). **Claim it as a spectral regularizer, NOT as "physics."**
 - **C5 — deployment.** ResNet18→ONNX FP32 ~13 ms/window CPU; INT8 4× smaller but
   10–15× slower (honest negative). (`results/deployment/appendix.md`.)
 - **Methodological caution (a contribution in its own right).** A naive
@@ -100,17 +112,18 @@ helps" — see the wording limits below.
 - State: n=3 seeds; near-ceiling (small discordant counts); the vs-resnet edge is
   secondary/seed-sensitive; the small clean trade-off (w=1.0 clean 98.61 vs
   98.99–99.68 for lower weights); synthetic-only.
-- The benefit is attributable to **this implemented term**; it is **not isolated**
-  from generic high-weight regularization (no controls run yet — see below).
+- The benefit is a **generic high-weight spectral regularizer**, not physics — the
+  §8.7 scrambled-reference control reproduces it with WRONG per-class targets.
+  Correct physics only improves cross-seed stability. **Do not claim "physics."**
 
 ### Open before paper-ready (owner decisions)
-1. **F9 controls (GPU) — now the ONLY remaining way to earn the word "physics."**
-   Entropy/logit reg at matched strength, random-band, permuted/wrong-class
-   healthy-reference — to isolate the noise benefit from "regularization at high
-   weight." The band-aware §8.6a (below, **done**) gave **no** XAI corroboration of a
-   physics-attention mechanism, so without these controls the claim must stay "the
-   band-energy term helped," not "physics helped."
-2. **F13 — more than n=3 seeds (GPU)** for stronger seed-level inference.
+1. ~~F9 control~~ — **DONE** (§8.7, `f9_scramble_record_level.json`): the
+   scrambled-reference control **reproduces** the noise robustness with wrong
+   per-class targets → the benefit is **generic high-weight spectral
+   regularization, not physics-specific** (correct physics only adds cross-seed
+   stability). Verdict folded into the wording limits above. No "physics" claim.
+2. **F13 — more than n=3 seeds (GPU)** for stronger seed-level inference (the
+   scramble's seed-fragility, std 5.31, makes this more valuable than before).
 3. ~~Band-aware §8.6a~~ — **DONE** (negative): the band-aware recompute also has
    vanilla ahead and shows both models ignore the lube band → no interpretability
    benefit. No further XAI work needed unless a different mechanism probe is desired.
