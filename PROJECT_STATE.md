@@ -10,7 +10,7 @@
 > **Maintenance duty:** update this file at every phase gate and at the end of
 > every session. Keep it truthful and current; it is the single source of truth.
 >
-> **Last updated: 2026-06-22, session 9.** One-line status: Phase 5 merged to
+> **Last updated: 2026-06-23, session 10.** One-line status: Phase 5 merged to
 > `main` (Gate 5), **but** internal + TWO independent external audits found the
 > *physics-informed-model* evidence invalid (wrong-bearing-type physics, an inert
 > loss, window-level statistics, mislabeled rows). The 5-step **remediation** on
@@ -42,12 +42,27 @@
 > physics-specific** (scramble degr 2.84 / std 5.31 vs correct 0.06 / std 0.76;
 > representative seed scramble≈correct, p=1). Claim "a spectral regularizer helped,"
 > not "physics." Suite: **263 passed, 6 deselected.**
-> **IN PROGRESS (2026-06-22): a THIRD audit round** — two fresh independent auditors
-> (GPT-5.5 + a fresh-memory Opus 4.8) are auditing the repo on this PC to pressure-
-> test the whole narrative before ratification. Prior audit reports were deleted
-> (backed up) so they form their own view. Their reports →
-> `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md`. **Ratification +
-> merge wait on reading + reconciling both.**
+> **THIRD audit round COMPLETE + RECONCILED (2026-06-22, session 10):** both fresh
+> independent auditors (**GPT-5** + a **fresh-memory Opus 4.8**) delivered
+> `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md`. Both reproduced every
+> record-level/F9 number by execution (Opus also re-evaluated checkpoints from scratch
+> — caches byte-identical, max |Δprob|=0.0); both confirmed no leakage / live
+> differentiable physics loss with per-sample rpm / honest same-arch + conservative
+> representative-seed choice / genuinely pre-registered F9. **No critical findings;
+> the surviving verdict holds; conditionally publishable mid-tier with the EXISTING
+> wording limits.** Two actions taken this session: (a) **FINDINGS §0 §8.7 wording
+> tightened** (both auditors: "scramble reproduces robustness" → *at the
+> representative seed and 2 of 3 seeds*; seed-mean degr 2.84 is *intermediate*;
+> "generic" needs a matched-strength non-physics control; correct physics only *may*
+> add stability, n=3 not resolvable); (b) **`dataset_card.yaml` training_windows
+> fixed** (17600 was the all-splits total; train = 12320). **New finding — Opus F1:** a
+> stale fabricated paper (`config/docs/paper/main.tex` + `..._UNVALIDATED.pdf`:
+> CWRU/98.1%/expert-validated/rolling-element) the remediation missed; it still
+> carries its Gate-0 "UNVALIDATED — invented results" comment. **Owner decision
+> 2026-06-22: DEFER removal/rewrite to Phase 7** (tracked: FINDINGS open-item 7).
+> **Owner RATIFIED the tightened FINDINGS §0 on 2026-06-23 (Gate 5); `p6/docs` merged
+> to `main` at this gate (suite 263 green). Phase 6 docs convergence COMPLETE — next is
+> Phase 7 (paper + repro package); see FINDINGS open-items 2/6/7.**
 
 ---
 
@@ -72,12 +87,13 @@
    physics-loss audit (2026-06-14), and the two independent external science audits
    (2026-06-14 opened the blast radius; 2026-06-16 Codex reproduced every
    record-level number, validated the surviving noise result, flagged F5/F6/F9/F10/F12).
-5. **THIRD audit round IN PROGRESS (2026-06-22):** two fresh independent auditors —
-   **GPT-5.5** and a **fresh-memory Opus 4.8** — are auditing this repo on this PC
-   (prompts in `C:\Users\COWLAR\projects\_lstm_audit_prompts_2026-06-22\`). Reports
-   will land at `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md`. When
-   present, **read BOTH and reconcile** them against each other + the evidence
-   before any FINDINGS ratification.
+5. **THIRD audit round COMPLETE + reconciled (2026-06-22, session 10):** both
+   `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md` landed and are
+   reconciled. Both reproduced every record-level/F9 number by execution (Opus
+   re-evaluated checkpoints from scratch — caches byte-identical); **no critical
+   findings**; verdict unchanged. Outcomes folded into the header above + FINDINGS §0:
+   §8.7 wording tightened, `dataset_card.yaml` fixed, Opus F1 stale-paper deferred to
+   Phase 7 (FINDINGS open-item 7). **Read both reports** for the full reconciliation.
 6. `README.md` (reconciled overview), `experiments/PROTOCOL.md` (§7 amendments
    §8.0-bis…§8.0-quinquies + **§8.7 F9 control** + §8 pre-registrations),
    `docs/PHYSICS.md` (normative physics — the ground truth the model-side physics
@@ -158,18 +174,25 @@ high-weight band-energy regularizer produces it with WRONG targets; correct phys
 only adds cross-seed stability. → **claim "a spectral-consistency regularizer
 helped," NOT "physics."** Confirms the FINDINGS draft's narrow wording.
 
-**REMAINING (owner-gated) — the LAST gates before merge:**
-1. **Collect the THIRD-round audits** (GPT-5.5 + fresh Opus, running 2026-06-22 →
-   `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md`). When both land,
-   **read + reconcile** them (agreements, divergences, anything they overturn) and
-   address any critical/major findings before ratifying.
-2. **Owner re-ratifies (or edits) the FINDINGS DRAFT** (`results/FINDINGS.md` §0).
-   The §8.7 control settled the central question: the one surviving positive is a
-   **generic spectral-regularization** noise-robustness effect (not physics).
-3. After ratification: **merge `p6/docs` → `main`** (suite green, gate sign-off).
-4. Optional/future: **F13** more seeds (the scramble's seed-fragility makes this
-   more valuable); **§8.5** HybridPINN journal-bearing rebuild; provenance manifest;
-   then Phase 7 (paper).
+**GATE 5 — CLOSED (2026-06-23). All merge gates done:**
+1. ~~Collect + reconcile the THIRD-round audits~~ — **DONE (session 10):** both
+   `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md` landed, reproduced
+   everything by execution, **no critical findings**, verdict holds. FINDINGS §0 §8.7
+   wording tightened + `dataset_card.yaml` fixed per both auditors; Opus F1 stale paper
+   deferred to Phase 7.
+2. ~~Owner re-ratifies the FINDINGS~~ — **DONE 2026-06-23:** owner ratified the
+   audit-tightened `results/FINDINGS.md` §0 (Gate 5). The §8.7 control settled the
+   central question: the one surviving positive is **largely a generic
+   spectral-regularization** noise-robustness effect (the correct per-class mapping is
+   **not necessary**; full "generic" awaits a non-physics control) — **not physics**.
+3. ~~Merge `p6/docs` → `main`~~ — **DONE at this gate** (suite 263 green, owner
+   sign-off). Phase 6 docs convergence COMPLETE.
+4. NEXT — Phase 7 (paper + repro package), NOT merge blockers: **F13** more seeds (n≥10; the
+   scramble's seed-fragility makes this more valuable); a **matched-strength
+   non-physics regularizer control** (entropy/random bands) to fully earn "generic";
+   **remove/rewrite the stale fabricated paper** (`config/docs/paper/main.tex` +
+   `..._UNVALIDATED.pdf`, Opus F1 — owner deferred here); **§8.5** HybridPINN
+   journal-bearing rebuild; provenance manifest; then the paper.
 Do not loosen wording (§6); the noise benefit is a spectral regularizer, not
 physics (§8.7); every number with an artifact path.
 
