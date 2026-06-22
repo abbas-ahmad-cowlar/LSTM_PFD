@@ -605,6 +605,14 @@ each (✓ PROTOCOL §8) · FINDINGS.md ratified (⏳ owner). Then merge
 
 ## Phase 6 — Docs convergence & archive (2–3 days · laptop · branch `p6/docs`)
 
+> ⚠️ **2026-06-14 — INTERRUPTED for physics-loss remediation + external audit.**
+> While starting Phase 6, an audit found the model-side signature DB encoded the
+> wrong (rolling-element) physics. README/FINDINGS reconciled and the DB rebuilt
+> + CI-locked (Tiers A–B), but the loss reimplementation and contaminated reruns
+> (§8.4, §8.2 pc_cnn, §8.6a) are **PAUSED pending an independent external audit**
+> (`audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md`,
+> `audit_reports/INDEPENDENT_AUDIT_PROMPT.md`). Phase 6 docs work resumes after.
+
 **Objective**: ≤ 20 living docs, all true; everything else archived with provenance.
 **Prerequisites**: Gate 5 (docs must cite final numbers, so docs come after results).
 

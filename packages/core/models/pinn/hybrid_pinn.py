@@ -37,6 +37,20 @@ class HybridPINN(BaseModel):
     """
     Hybrid Physics-Informed Neural Network for bearing fault diagnosis.
 
+    ⚠ PHYSICS BRANCH USES WRONG BEARING TYPE — QUARANTINED for physics claims
+    (P6 remediation Step 3, 2026-06-14; external audit Finding 7). The physics
+    branch feeds rolling-element characteristic frequencies (FTF/BPFO/BPFI/BSF
+    from `BearingDynamics`, SKF-6205 ball-bearing geometry) into the model, but
+    this project's data is JOURNAL / hydrodynamic bearings — those pass-frequencies
+    are physically meaningless here. (Sommerfeld and Reynolds numbers in the same
+    branch ARE valid journal quantities.) Therefore the Phase-5 §8.5 "true
+    metadata" result is NOT a valid test of journal-bearing physics metadata and
+    is quarantined. Before any physics-informed claim, this branch must be rebuilt
+    on journal-bearing quantities (1X/2X/3X harmonics, oil-whirl sub-sync ratio,
+    low-freq lubrication band, cavitation HF band, wear broadband) and the
+    experiment rerun (PROJECT_STATE.md §5.3 Step 5). The architecture still runs
+    and classifies; only its "physics" interpretation is invalid.
+
     Combines:
     1. Data-driven features from CNN/ResNet (learns complex patterns)
     2. Physics-based features from bearing dynamics (ensures physical plausibility)
@@ -228,6 +242,10 @@ class HybridPINN(BaseModel):
         features_list.append(Re)
 
         # 3. Characteristic frequencies
+        # ⚠ ROLLING-ELEMENT frequencies (FTF/BPFO/BPFI/BSF) — wrong bearing type
+        # for this journal-bearing data (audit Finding 7; see class docstring).
+        # Quarantined for physics claims; must be replaced with journal-bearing
+        # quantities before §8.5 is rerun (PROJECT_STATE.md §5.3 Step 5).
         freqs = self.bearing_dynamics.characteristic_frequencies(rpm, return_torch=True)
         freq_values = torch.stack([
             freqs['FTF'].to(device),

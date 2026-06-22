@@ -48,10 +48,14 @@ from utils.constants import NUM_CLASSES  # noqa: E402
 
 WINDOW, FS = 20480, 20480
 DATA = PROJECT_ROOT / 'data/generated/dataset_v2.h5'
-# best-vanilla and best-physics checkpoints (override pc_cnn via --pc-cnn-ckpt)
-VANILLA_CKPT = PROJECT_ROOT / 'results/benchmark/deep/resnet18/seed0/best_model.pth'
-PCCNN_CKPT_DEFAULT = Path(r'D:\Libraries\results_phase5_fixed_full-20260613T221621Z-3-001'
-                          r'\results_phase5_fixed_full\pinn_ablation\w0.3\seed1\best_model.pth')
+# Best-vanilla and best-physics checkpoints — representative best-val seed (seed2),
+# matching the record-level surviving-result analysis. pc_cnn defaults to the
+# BAND-ENERGY w=1.0 model (the noise-robust arm). Both share the ResNet1D backbone
+# so any difference is physics-loss training, not architecture. Override via
+# --vanilla-ckpt / --pc-cnn-ckpt. (Old contaminated run used resnet seed0 / the
+# tonal-only pc_cnn w0.3 seed1 in D:\Libraries — superseded.)
+VANILLA_CKPT_DEFAULT = PROJECT_ROOT / 'results/benchmark/deep/resnet18/seed2/best_model.pth'
+PCCNN_CKPT_DEFAULT = PROJECT_ROOT / 'results/phase5_bandenergy/pinn_ablation/w1.0/seed2/best_model.pth'
 TOL = 0.15  # ±15% band half-width (matches the physics-loss tolerance)
 
 
@@ -99,38 +103,48 @@ def stratified_window_idx(windows, labels_per_window, per_class, seed=0):
 # 8.6a — attribution-energy alignment with physics frequency bands
 # --------------------------------------------------------------------------
 
-def band_energy(power, freqs_hz, centers, tol):
-    """Sum of spectral power within ±tol*center of each center frequency."""
-    if len(centers) == 0:
+def _energy_in_intervals(power, freqs_hz, intervals):
+    """Sum of spectral power inside any absolute (lo_hz, hi_hz) interval."""
+    if not intervals:
         return 0.0
     mask = np.zeros_like(power, dtype=bool)
-    for fc in centers:
-        if fc <= 0:
+    for lo, hi in intervals:
+        if hi <= 0:
             continue
-        mask |= np.abs(freqs_hz - fc) <= tol * fc
+        mask |= (freqs_hz >= lo) & (freqs_hz <= hi)
     return float(power[mask].sum())
 
 
+def _tonal_intervals(centers, tol):
+    """±tol relative-width bands around each tonal center frequency (Hz)."""
+    return [(fc * (1.0 - tol), fc * (1.0 + tol)) for fc in centers if fc > 0]
+
+
 def xai_alignment(model, windows, win_idx, rpm_per_window, sigdb, steps, device):
+    """One IG pass per window → two metrics from the same attribution spectrum:
+
+    - TONAL (legacy, comparable to the old §8.6a): fraction of attribution energy
+      in the class's tonal characteristic frequencies (±15%) vs an off-grid
+      control (×1.37); the within-model specificity ratio in/ctrl. EXCLUDES the
+      pure-broadband classes (lubrification, cavitation — no tonal signature).
+    - BAND-AWARE (corrected): fraction of attribution energy in the class's
+      corrected EXPECTED BANDS from `get_expected_bands` — tonal harmonics ±6% AND
+      the absolute Hz bands (1-6 Hz lube, 1.4-2.6 kHz cavitation, etc.) — so EVERY
+      non-healthy class is scored, including the broadband ones the tonal metric
+      cannot see. Reported as the raw in-band fraction; the physics-vs-vanilla
+      head-to-head is on IDENTICAL bands, so no control band is needed (the
+      control-sensitivity caveat does not apply to the direct comparison).
+    """
     ig = IntegratedGradientsExplainer(model, device=device)
     freqs_hz = np.fft.rfftfreq(WINDOW, d=1.0 / FS)
-    per_class_in, per_class_ctrl = defaultdict(list), defaultdict(list)
+    tonal_in, tonal_ctrl = defaultdict(list), defaultdict(list)
+    band_in = defaultdict(list)
     for i in win_idx:
         sig, label = windows[i]
         label = int(label)
-        if label == 0:  # 'sain' / healthy — no characteristic fault freqs
+        if label == 0:  # 'sain' / healthy — no characteristic bands
             continue
         rpm = float(rpm_per_window[i])
-        try:
-            expected = np.asarray(sigdb.get_expected_frequencies(label, rpm, top_k=5), dtype=float)
-            expected = expected[expected > 0]
-        except Exception:
-            continue
-        if expected.size == 0:
-            continue
-        # control bands: same count/width, shifted off the harmonic grid (×1.37)
-        control = expected * 1.37
-        control = control[control < FS / 2]
         sig_t = sig if torch.is_tensor(sig) else torch.as_tensor(sig, dtype=torch.float32)
         if sig_t.dim() == 1:
             sig_t = sig_t.unsqueeze(0)  # [1, T]
@@ -139,9 +153,25 @@ def xai_alignment(model, windows, win_idx, rpm_per_window, sigdb, steps, device)
         total = power.sum()
         if total <= 0:
             continue
-        per_class_in[label].append(band_energy(power, freqs_hz, expected, TOL) / total)
-        per_class_ctrl[label].append(band_energy(power, freqs_hz, control, TOL) / total)
-    return per_class_in, per_class_ctrl
+        # --- tonal (legacy) ---
+        try:
+            centers = np.asarray(sigdb.get_expected_frequencies(label, rpm, top_k=5), dtype=float)
+            centers = centers[centers > 0]
+        except Exception:
+            centers = np.array([])
+        if centers.size:
+            ctrl = centers * 1.37
+            ctrl = ctrl[ctrl < FS / 2]
+            tonal_in[label].append(_energy_in_intervals(power, freqs_hz, _tonal_intervals(centers, TOL)) / total)
+            tonal_ctrl[label].append(_energy_in_intervals(power, freqs_hz, _tonal_intervals(ctrl, TOL)) / total)
+        # --- band-aware (corrected bands incl. broadband) ---
+        try:
+            bands, _bb = sigdb.get_expected_bands(label, rpm)
+        except Exception:
+            bands = []
+        if bands:
+            band_in[label].append(_energy_in_intervals(power, freqs_hz, bands) / total)
+    return tonal_in, tonal_ctrl, band_in
 
 
 # --------------------------------------------------------------------------
@@ -232,6 +262,7 @@ def calibration(model, windows, win_idx, n_samples, device, batch=64):
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--smoke', action='store_true')
+    ap.add_argument('--vanilla-ckpt', default=str(VANILLA_CKPT_DEFAULT))
     ap.add_argument('--pc-cnn-ckpt', default=str(PCCNN_CKPT_DEFAULT))
     args = ap.parse_args()
 
@@ -242,10 +273,11 @@ def main():
     sigdb = FaultSignatureDatabase()
 
     models = {}
-    if VANILLA_CKPT.exists():
-        models['resnet18_vanilla'] = load_model('resnet18', VANILLA_CKPT, device)
+    van = Path(args.vanilla_ckpt)
+    if van.exists():
+        models['resnet18_vanilla'] = load_model('resnet18', van, device)
     else:
-        print(f'WARN vanilla ckpt missing: {VANILLA_CKPT}')
+        print(f'WARN vanilla ckpt missing: {van}')
     pc = Path(args.pc_cnn_ckpt)
     if pc.exists():
         models['pc_cnn_physics'] = load_model('physics_constrained_cnn', pc, device)
@@ -263,27 +295,37 @@ def main():
 
     prov = {'git_sha': git_sha(), 'host': platform.node(), 'device': device,
             'data': DATA.name, 'finished_at': datetime.now(timezone.utc).isoformat(),
-            'vanilla_ckpt': str(VANILLA_CKPT), 'pc_cnn_ckpt': str(pc),
+            'vanilla_ckpt': str(van), 'pc_cnn_ckpt': str(pc),
             'per_class': per_class, 'ig_steps': steps, 'mc_samples': n_mc,
             'smoke': args.smoke}
 
-    # ---- 8.6a XAI alignment ----
+    # ---- 8.6a XAI alignment (tonal legacy + band-aware corrected) ----
     print(f'[8.6a] XAI alignment on {len(xai_idx)} windows x {len(models)} models ...')
     xai = {}
     for name, model in models.items():
-        pin, pctrl = xai_alignment(model, win_c, xai_idx, rpm_per_win, sigdb, steps, device)
-        in_all = [v for vs in pin.values() for v in vs]
-        ctrl_all = [v for vs in pctrl.values() for v in vs]
+        tin, tctrl, bin_ = xai_alignment(model, win_c, xai_idx, rpm_per_win, sigdb, steps, device)
+        t_in = [v for vs in tin.values() for v in vs]
+        t_ctrl = [v for vs in tctrl.values() for v in vs]
+        b_in = [v for vs in bin_.values() for v in vs]
         xai[name] = {
-            'mean_in_band_frac': float(np.mean(in_all)) if in_all else None,
-            'mean_control_frac': float(np.mean(ctrl_all)) if ctrl_all else None,
-            'specificity_ratio': (float(np.mean(in_all) / np.mean(ctrl_all))
-                                  if in_all and np.mean(ctrl_all) > 0 else None),
-            'n_windows': len(in_all),
-            'per_class_in_band': {int(k): float(np.mean(v)) for k, v in pin.items()},
+            'tonal': {  # legacy, comparable to the old §8.6a (excludes broadband classes)
+                'mean_in_band_frac': float(np.mean(t_in)) if t_in else None,
+                'mean_control_frac': float(np.mean(t_ctrl)) if t_ctrl else None,
+                'specificity_ratio': (float(np.mean(t_in) / np.mean(t_ctrl))
+                                      if t_in and np.mean(t_ctrl) > 0 else None),
+                'n_windows': len(t_in),
+                'per_class_in_band': {int(k): float(np.mean(v)) for k, v in tin.items()},
+            },
+            'band_aware': {  # corrected bands incl. broadband; physics-vs-vanilla is control-free
+                'mean_in_band_frac': float(np.mean(b_in)) if b_in else None,
+                'n_windows': len(b_in),
+                'per_class_in_band': {int(k): float(np.mean(v)) for k, v in bin_.items()},
+            },
         }
-        print(f'  {name}: in-band {xai[name]["mean_in_band_frac"]}, '
-              f'control {xai[name]["mean_control_frac"]}, ratio {xai[name]["specificity_ratio"]}')
+        t, b = xai[name]['tonal'], xai[name]['band_aware']
+        print(f'  {name}: TONAL in/ctrl/ratio {t["mean_in_band_frac"]:.4f}/{t["mean_control_frac"]:.4f}/'
+              f'{t["specificity_ratio"]:.4f} (n={t["n_windows"]}) | '
+              f'BAND-AWARE in-band {b["mean_in_band_frac"]:.4f} (n={b["n_windows"]})')
 
     # ---- 8.6b calibration (clean + 5 dB) ----
     print(f'[8.6b] MC-dropout calibration (n={n_mc}) ...')

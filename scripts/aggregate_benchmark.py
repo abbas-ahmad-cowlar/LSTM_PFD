@@ -1,11 +1,19 @@
 """
 Ensemble row + benchmark aggregation — Phase 4 (P4.5 + P4.6).
 
+⚠ WINDOW-LEVEL — SIGNIFICANCE SUPERSEDED (P6 remediation Step 3, 2026-06-14).
+The McNemar/Wilcoxon tests here treat 2,640 correlated 1-s windows as independent;
+they are invalid (5 windows/record share fault, severity, operating point, noise —
+external audit Finding 12). Use `scripts/aggregate_benchmark_record_level.py`
+(528 records) for significance. The physics-labeled rows are NOT physics results
+(pc_cnn = CE-only, multitask = single-task, hybrid = rolling-element branch). This
+script is kept for provenance; its accuracy table remains valid as descriptive
+window-level classification accuracy.
+
 1. Soft-voting ensemble of the top-3 deep models by val accuracy
    (PROTOCOL.md §2), evaluated once on the clean test split.
-2. Aggregation across all tiers: mean ± std table, Wilcoxon (per-seed
-   accuracies, best-physics vs best-vanilla), McNemar (per-window paired
-   predictions of the top models), significance-annotated figure.
+2. Aggregation across all tiers: mean ± std table; window-level McNemar/Wilcoxon
+   (DESCRIPTIVE/SUPERSEDED), significance-annotated figure.
 
 Outputs: results/benchmark/ensemble/voting/metrics.json,
          results/benchmark/summary.{json,md,png}
@@ -43,6 +51,13 @@ MODEL_ORDER = ['random_forest', 'svm', 'gradient_boosting',
                'hybrid_pinn', 'physics_constrained_cnn', 'multitask_pinn',
                'voting_ensemble']
 PHYSICS_MODELS = {'hybrid_pinn', 'physics_constrained_cnn', 'multitask_pinn'}
+# Honest row annotations (P6 Step 3): these are NOT physics-informed results —
+# each kept its Phase-4 training reality. Do not group/cite them as "physics".
+ROW_NOTE = {
+    'physics_constrained_cnn': 'CE-only (architecture; physics loss OFF)',
+    'multitask_pinn': 'single-task (aux heads unused)',
+    'hybrid_pinn': 'rolling-element branch + constant metadata',
+}
 
 
 def git_sha() -> str:
@@ -199,7 +214,11 @@ def main() -> None:
     for x, y in dict.fromkeys(pairs):
         stats['mcnemar'][f'{x}_vs_{y}'] = mcnemar_p(correct[x], correct[y])
 
-    summary = {'table': table, 'statistics': stats,
+    summary = {'_status': 'WINDOW-LEVEL — significance superseded by '
+                          'summary_record_level.json (P6 Step 3, 2026-06-14); '
+                          'physics-labeled rows are NOT physics results '
+                          '(pc_cnn CE-only, multitask single-task, hybrid rolling-element)',
+               'table': table, 'statistics': stats,
                'classical_bar': table['random_forest']['mean_acc'],
                'generated_at': datetime.now(timezone.utc).isoformat(),
                'git_sha': git_sha()}
@@ -207,23 +226,37 @@ def main() -> None:
     (out / 'summary.json').write_text(json.dumps(summary, indent=2))
 
     # Markdown table
-    lines = ['# Benchmark Summary — Dataset v2, frozen protocol',
-             '', f'Generated {summary["generated_at"]} @ {git_sha()[:8]}', '',
-             '| Model | Test acc (mean ± std) | Macro-F1 | Seeds |',
-             '|---|---|---|---|']
+    lines = ['# Benchmark Summary — Dataset v2, frozen protocol (WINDOW-LEVEL)',
+             '',
+             '> ⚠ **SIGNIFICANCE SUPERSEDED (P6 remediation, 2026-06-14).** '
+             'Accuracies below are window-level descriptive numbers (2,640 '
+             'correlated windows). All significance (McNemar/Wilcoxon) is invalid '
+             'at the window level and is **superseded by record-level statistics** '
+             '— see `results/benchmark/summary_record_level.md` (528 independent '
+             'records). The annotated rows are **NOT physics-informed results** '
+             '(pc_cnn CE-only, multitask single-task, hybrid rolling-element branch '
+             '+ constant metadata; audit Findings 7-9). Do not cite them as physics.',
+             '',
+             f'Generated {summary["generated_at"]} @ {git_sha()[:8]}', '',
+             '| Model | Test acc (mean ± std) | Macro-F1 | Seeds | Note |',
+             '|---|---|---|---|---|']
     for m in MODEL_ORDER:
         if m not in table:
             continue
         t = table[m]
-        flag = ' **(physics)**' if m in PHYSICS_MODELS else ''
-        lines.append(f"| {m}{flag} | {t['mean_acc']:.2f} ± {t['std_acc']:.2f} | "
-                     f"{t['mean_f1']:.4f} | {t['seeds']} |")
-    lines += ['', f"Classical bar (RF): {summary['classical_bar']:.2f}%",
-              f"Best physics: {best_physics} | Best vanilla: {best_vanilla} | "
-              f"Wilcoxon p={wp:.3f} (n=3, see note)", 'McNemar (paired, exact):']
+        lines.append(f"| {m} | {t['mean_acc']:.2f} ± {t['std_acc']:.2f} | "
+                     f"{t['mean_f1']:.4f} | {t['seeds']} | {ROW_NOTE.get(m, '')} |")
+    lines += ['', f"Classical bar (RF): {summary['classical_bar']:.2f}%", '',
+              '## Window-level significance — SUPERSEDED (descriptive only)',
+              '',
+              f"Top deep by accuracy: {best_vanilla} (vanilla) vs {best_physics} "
+              f"(*{ROW_NOTE.get(best_physics, 'physics-labeled')}*); "
+              f"Wilcoxon p={wp:.3f} (n=3). **Use `summary_record_level.md` instead.**",
+              '',
+              'McNemar (paired, WINDOW-level — invalid, superseded):']
     for k, v in stats['mcnemar'].items():
         lines.append(f"- {k}: p = {v:.4g}")
-    (out / 'summary.md').write_text('\n'.join(lines))
+    (out / 'summary.md').write_text('\n'.join(lines), encoding='utf-8')
 
     # Figure
     import matplotlib

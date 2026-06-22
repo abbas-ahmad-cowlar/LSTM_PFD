@@ -89,7 +89,13 @@ def step_3_train_models(skip: bool = False):
 
 
 def step_4_ablation_study(quick: bool = False):
-    """Step 4: Run ablation study."""
+    """Step 4: Run ablation study.
+
+    ⚠ QUARANTINED (P6 Step 3, 2026-06-14): `run_ablation_study` now raises by design
+    (the stale script builds HybridPINN with non-existent args and trains CE-only).
+    The real §8.4 physics ablation is `scripts/run_phase5_gpu.py --only pinn_ablation`.
+    This Phase-7 reproducibility wiring must be repointed there when rebuilt (7.1).
+    """
     try:
         from scripts.research.pinn_ablation import run_ablation_study, ABLATION_CONFIGS, QUICK_CONFIGS
         
