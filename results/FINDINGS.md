@@ -1,21 +1,22 @@
-# FINDINGS — Phase 5/6 synthesis (DRAFT for owner re-ratification, Gate 5)
+# FINDINGS — Phase 5/6 synthesis (RATIFIED, Gate 5)
 
 > Honest synthesis of every Phase-5 experiment plus the Phase-6 physics
 > remediation. Every number traces to a committed artifact under `results/`. This
 > memo freezes the list of claims the paper may and may not make. **Synthetic-only
 > study — no real-world validation, stated everywhere.**
 >
-> Status: **DRAFT — 2026-06-17, AWAITING OWNER RE-RATIFICATION (not ratified).**
-> Reflects the corrected, **record-level**, **two-independent-audit-reviewed**
-> state after the band-energy remediation
-> (`audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md` opened the blast radius;
-> `...2026-06-16.md` reviewed the fix and **independently reproduced every
-> record-level number**). **§0 below is the current authoritative verdict; it
-> supersedes the 2026-06-14 interim correction it replaces AND the PRE-AUDIT §1–§5
-> (retained for provenance only).** The owner's sign-off is the gate — do not cite
-> as ratified.
+> Status: **RATIFIED — 2026-06-23 by owner Syed Abbas Ahmad (Gate 5).** Reflects the
+> corrected, **record-level**, **independently-audited** state after the band-energy
+> remediation, ratified following the **third independent-audit round** (2026-06-22,
+> GPT-5 + a fresh-memory Opus 4.8;
+> `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md`), which reproduced every
+> record-level / F9 number by execution (Opus also re-evaluated checkpoints from
+> scratch — caches byte-identical) and returned **no critical findings**. The §8.7
+> wording was tightened per both auditors before sign-off. **§0 below is the
+> authoritative, ratified verdict; it supersedes the PRE-AUDIT §1–§5 (retained for
+> provenance only).**
 
-## 0. DRAFT verdict (2026-06-17) — authoritative, supersedes §1–§5
+## 0. RATIFIED verdict (2026-06-23) — authoritative, supersedes §1–§5
 
 ### One-paragraph verdict
 On a single synthetic journal-bearing dataset, a **PC-CNN band-energy
@@ -23,9 +24,13 @@ consistency loss at high weight (w=1.0)** delivers a **real, record-level 5 dB
 noise-robustness improvement** over the **same architecture** trained
 cross-entropy-only — the one benefit in the study that survives record-level
 statistics and an independent reproduction. A pre-registered **scrambled-reference
-control (§8.7)** shows this benefit is a **generic high-weight spectral
-regularizer, NOT specific to correct physics**: shuffling the per-class band
-targets reproduces the robustness (correct physics only adds cross-seed stability).
+control (§8.7)** shows the **correct journal-bearing per-class mapping is NOT
+necessary** for this benefit — shuffling the per-class band targets reproduces the
+robustness *at the representative seed and in 2 of 3 seeds* (the seed-mean
+degradation, 2.84, is intermediate between CE-only's 4.29 and correct physics' 0.06).
+It is therefore **largely a generic high-weight spectral regularizer, not established
+as physics-specific**; correct physics *appears* to add cross-seed stability, but at
+n=3 this is not resolvable.
 There is **no clean-accuracy gain** (a small near-ceiling clean trade-off), and
 **no statistically-supported data-efficiency, severity-OOD, interpretability, or
 calibration advantage** — each was tested and did **not** survive. The durable
@@ -112,9 +117,13 @@ limits below.
 - State: n=3 seeds; near-ceiling (small discordant counts); the vs-resnet edge is
   secondary/seed-sensitive; the small clean trade-off (w=1.0 clean 98.61 vs
   98.99–99.68 for lower weights); synthetic-only.
-- The benefit is a **generic high-weight spectral regularizer**, not physics — the
-  §8.7 scrambled-reference control reproduces it with WRONG per-class targets.
-  Correct physics only improves cross-seed stability. **Do not claim "physics."**
+- The benefit is **largely a generic high-weight spectral regularizer, not
+  established as physics-specific** — the §8.7 control reproduces it with WRONG
+  per-class targets *at the representative seed and in 2 of 3 seeds* (the correct
+  per-class mapping is **not necessary**); the seed-mean degradation (2.84) is
+  intermediate. Correct physics *may* add cross-seed stability (n=3, not resolvable).
+  A matched-strength non-physics regularizer control is still needed to fully earn
+  the word "generic." **Do not claim "physics."**
 
 ### Open before paper-ready (owner decisions)
 1. ~~F9 control~~ — **DONE** (§8.7, `f9_scramble_record_level.json`): the
@@ -130,6 +139,16 @@ limits below.
 4. **§8.5 HybridPINN** — rebuild on journal-bearing features or leave excluded.
 5. **Provenance manifest** — one command/commit/dataset-hash/artifact per paper
    table (audit Rec 8).
+6. **Matched-strength non-physics regularizer control (2026-06-22 audits, F5/Rec3)**
+   — an entropy penalty and/or random non-physical bands at w=1.0, same budget. §8.7
+   shows the *correct* per-class mapping is not necessary; this control is what would
+   let the paper say *generic regularization* rather than only "not physics-specific."
+7. **Remove/rewrite the stale fabricated paper (2026-06-22 Opus audit, F1)** —
+   `config/docs/paper/main.tex` + `config/docs/reports/Final_Report_UNVALIDATED.pdf`
+   describe a non-existent study (CWRU data, 98.1%, expert-validated XAI,
+   rolling-element BPFO/BPFI physics). Owner decision 2026-06-22: **defer to Phase 7**
+   — the draft keeps its Gate-0 "UNVALIDATED — invented results" header until the real
+   paper is written from this memo. It must NOT survive into any submission.
 
 ### Remediation status (Phase 6)
 Steps 1–4 done (docs reconciled; record-level benchmark stats; quarantine/relabel;
@@ -138,8 +157,9 @@ record-level confirmation done** (`summary_record_level.json`, `0696790`); **5b
 audit fixes done** (F6 estimator consistency, F10 inert-path hard-block,
 `a2e09d9`); **5c XAI/calibration recompute done** (`2b534bf`, this memo). Two
 independent external audits reviewed the work; the 2026-06-16 auditor reproduced
-every record-level number. **This memo is the DRAFT; owner re-ratification is the
-remaining gate.**
+every record-level number. A **third independent-audit round** (2026-06-22, GPT-5 +
+fresh Opus) reproduced everything by execution with no critical findings. **This memo
+was RATIFIED by the owner on 2026-06-23 (Gate 5).**
 
 ---
 

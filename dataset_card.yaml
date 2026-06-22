@@ -29,7 +29,8 @@ size: 1.9 GB
 records: 3520            # 5 s records; 320 per class
 records_per_class: 320
 records_per_class_per_severity: 80
-training_windows: 17600  # 1 s non-overlapping windows (5 per record), via data.dataset.WindowedView
+training_windows: 12320  # train split only: 2464 records x 5 (1 s non-overlapping windows), via data.dataset.WindowedView
+total_windows: 17600     # all splits: 3520 records x 5
 classes: 11
 
 class_names:
