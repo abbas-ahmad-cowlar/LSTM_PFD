@@ -46,6 +46,17 @@ class PINNTrainer(BaseTrainer):
     """
     Trainer for Physics-Informed Neural Networks.
 
+    ⚠ PHYSICS PATH INERT — QUARANTINED + HARD-BLOCKED (P6 Step 3, 2026-06-14;
+    hardened after audit 2026-06-16 Finding 10/Rec5). This trainer's physics term
+    is `PhysicalConstraintLoss`, which is non-differentiable (argmax) → zero
+    gradient (audit Finding 5). Training through it does NOT learn physics, and it
+    produced no committed result (the benchmark used pure CE; Phase-5 used the
+    model-method loss in PhysicsConstrainedCNN). **Constructing this trainer with
+    `lambda_physics > 0` now raises `RuntimeError`** so the inert path cannot be
+    used unnoticed. Pass `lambda_physics=0` for the (valid) CE-only training path,
+    or use `PhysicsConstrainedCNN.compute_physics_loss` for physics-informed
+    training. The CE/classification path is unaffected.
+
     Extends BaseTrainer to support physics-based loss constraints.
     Compatible with both HybridPINN and PhysicsConstrainedCNN models.
 
@@ -92,6 +103,21 @@ class PINNTrainer(BaseTrainer):
         sample_rate: int = SAMPLING_RATE,
         metadata_keys: Optional[List[str]] = None,
     ):
+        # HARD-BLOCK the inert physics path (audit 2026-06-16 Finding 10/Rec5).
+        # The physics term is the non-differentiable PhysicalConstraintLoss (zero
+        # gradient) — training through it learns NO physics. Refuse to construct a
+        # physics-enabled trainer rather than let a future user believe it works.
+        # The CE-only path (lambda_physics=0) is unaffected and still valid.
+        if lambda_physics and lambda_physics > 0:
+            raise RuntimeError(
+                "PINNTrainer physics mode is quarantined and hard-blocked (P6; "
+                "audit 2026-06-16 Finding 10/Rec5): its physics term is the inert, "
+                "non-differentiable PhysicalConstraintLoss (zero gradient) — it does "
+                "NOT train physics. Pass lambda_physics=0 for the valid CE-only "
+                "path, or use the validated band-energy loss "
+                "PhysicsConstrainedCNN.compute_physics_loss for physics-informed "
+                "training."
+            )
         super().__init__(
             model=model,
             optimizer=optimizer,

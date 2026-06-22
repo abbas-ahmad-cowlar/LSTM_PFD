@@ -1,206 +1,173 @@
-# LSTM-PFD: Physics-Informed Fault Diagnosis
+# LSTM-PFD — Physics-grounded benchmark for journal-bearing fault diagnosis
 
-> LSTM-based bearing fault diagnosis with physics-informed neural networks, explainable AI, and an enterprise dashboard.
+> A physics-based **synthetic-data** research platform for **journal /
+> hydrodynamic bearing** fault diagnosis (11 classes), with a frozen,
+> pre-registered benchmark and a rigorous, honest study of whether
+> physics-informed learning helps.
+>
+> 🧭 **State & roadmap:** [PROJECT_STATE.md](PROJECT_STATE.md) ·
+> step plan [CONVERGENCE_PLAN.md](CONVERGENCE_PLAN.md) ·
+> **headline findings** [results/FINDINGS.md](results/FINDINGS.md)
+>
+> ⚠️ **Scope:** all data is physics-based **synthetic** (no real-world
+> validation). Results characterise models *on this synthetic benchmark*.
+>
+> 🛠️ **Status (2026-06-17): remediation complete; DRAFT verdict pending owner
+> re-ratification.** Two independent external audits
+> ([2026-06-14](audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md) opened the
+> blast radius; [2026-06-16](audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md)
+> reviewed the band-energy fix and **independently reproduced every record-level
+> number**). Net: the **synthetic dataset + benchmark stand as a classification
+> benchmark** (record-level near-ceiling, no row showing a physics accuracy
+> advantage), and **one** physics positive survives at record level — a **5 dB
+> noise-robustness gain from the corrected band-energy loss in a same-architecture
+> ablation**; clean-accuracy / data-efficiency / severity-OOD / interpretability /
+> calibration advantages do **not**. Read [results/FINDINGS.md](results/FINDINGS.md)
+> §0 (DRAFT) and [PROJECT_STATE.md](PROJECT_STATE.md) for the live state.
 
-## Overview
+## What this is
 
-> 🧭 **Current state & roadmap**: see [PROJECT_STATE.md](PROJECT_STATE.md) — the
-> living handoff document (big picture, progress, conventions, next steps),
-> updated at every phase gate. Step-level plan: [CONVERGENCE_PLAN.md](CONVERGENCE_PLAN.md).
+A reproducible pipeline that generates synthetic vibration signals for
+hydrodynamic-bearing faults from documented physics ([docs/PHYSICS.md](docs/PHYSICS.md),
+enforced by a 34-test spectral CI battery), then benchmarks classical ML, deep
+nets, and physics-informed models on them under a **frozen protocol**
+([experiments/PROTOCOL.md](experiments/PROTOCOL.md)). The journal-bearing focus is
+deliberate — public datasets (CWRU, Paderborn) are almost all *rolling-element*.
 
-**LSTM-PFD** is a research-grade bearing fault diagnosis system that progresses from classical machine learning to physics-informed deep learning. The project combines multiple model architectures — classical ML, CNNs, Transformers, Physics-Informed Neural Networks (PINNs), and ensembles — to classify 11 bearing fault types from vibration signals.
+## Status of findings (Phase 5/6 — DRAFT verdict, see [results/FINDINGS.md](results/FINDINGS.md) §0)
 
-The system includes a full-stack enterprise dashboard (Dash/Plotly) for no-code model training, experiment management, and explainable AI visualization, backed by a PostgreSQL database and Celery task queue.
+> The band-energy physics remediation is complete and judged at the **record
+> level** (528 records); two independent external audits reviewed it (the second
+> reproduced every number). The synthesis in
+> [results/FINDINGS.md](results/FINDINGS.md) §0 is a **DRAFT awaiting owner
+> re-ratification.** What can and cannot be said today:
 
-> ✅ **Performance benchmarks**: measured under a frozen protocol on synthetic
-> Dataset v2 (2026-06-12) — see [Performance](#performance) below and
-> [results/benchmark/summary.md](results/benchmark/summary.md). Synthetic-only;
-> no real-world validation yet.
+- **Supportable:** a balanced, leakage-checked, group-split **synthetic
+  journal-bearing classification benchmark** (record-level near-ceiling; no row
+  shows a physics accuracy advantage); and **one** physics positive — a **5 dB
+  noise-robustness gain from the correctly-implemented PC-CNN band-energy loss at
+  high weight, in a same-architecture ablation** (record level, 528 records:
+  McNemar 14–0, p=1.2e-4; mechanism = noisy `lubrification` records rescued from a
+  `mixed_wear_lube` mislabel). Frame it as "the *implemented band-energy term*
+  helped," not "physics helps."
+- **Not supportable:** any physics advantage in **clean accuracy,
+  data-efficiency, severity-OOD, interpretability (§8.6a *reverses*), or
+  calibration (a wash)** — each was tested at record level and did **not** survive;
+  any "physics-informed learning helps" family claim; any real-bearing claim. The
+  vs-vanilla noise edge is significant but small/seed-sensitive (secondary to the
+  same-arch ablation), and the benefit is **not yet isolated** from generic
+  high-weight regularization (controls are future work).
+- **Methodological caution (a contribution):** the physics loss had five
+  successive defects (non-differentiable argmax → wrong bearing type → tonal-only
+  → flat baseline) that all passed a green suite; the corrected
+  band-energy-vs-healthy-reference loss is the fix, and the inert generic path is
+  now **hard-blocked** ([tests/test_physics_quarantine.py](tests/test_physics_quarantine.py)).
 
-## Features
+## Fault taxonomy (11 journal-bearing classes)
 
-- **11 Fault Types** — Normal, Ball Fault, Inner Race, Outer Race, Combined, Imbalance, Misalignment, Oil Whirl, Cavitation, Looseness, Oil Deficiency
-- **Multiple Model Architectures** — SVM, Random Forest, XGBoost, 1D CNN, ResNet, EfficientNet, Transformers, PINNs, Ensembles (voting, stacking, mixture of experts)
-- **Explainable AI (XAI)** — SHAP, LIME, Integrated Gradients, Grad-CAM, attention visualization
-- **Physics-Informed Learning** — Domain constraints from bearing dynamics (energy conservation, momentum conservation)
-- **Enterprise Dashboard** — Web-based UI for data generation, training, experiment comparison, and XAI visualization
-- **Production Deployment** — Model quantization (INT8/FP16), ONNX export, Docker/Kubernetes deployment
-- **HDF5 Data Pipeline** — Efficient caching of MATLAB vibration data with configurable transforms
+| # | Key (FR) | Class |
+|---|---|---|
+| 0 | sain | Healthy |
+| 1 | desalignement | Misalignment |
+| 2 | desequilibre | Imbalance |
+| 3 | jeu | Bearing clearance |
+| 4 | lubrification | Lubrication issue |
+| 5 | cavitation | Cavitation |
+| 6 | usure | Wear |
+| 7 | oilwhirl | Oil whirl |
+| 8–10 | mixed_* | Misalign+Imbalance · Wear+Lube · Cavitation+Clearance |
 
-## Architecture
+## What's in the repo
 
-```mermaid
-graph TB
-    subgraph "Data Engineering"
-        A["MATLAB .mat Files"] --> B["HDF5 Cache"]
-        B --> C["DataLoader / Transforms"]
-        SG["Signal Generator<br/>(Physics Models)"] --> B
-    end
+- **Signal generator** (`data/signal_generation/`) — physics-grounded, CI-locked
+  (`tests/test_physics_signatures.py`); **Dataset v2** (`data/generated/`,
+  DVC-tracked): 3,520 records, stratified, leakage-checked, with SNR-20/10/5 test
+  variants.
+- **Models** (`packages/core/models/`) — classical (RandomForest/SVM/GradientBoosting),
+  deep (CNN1D, ResNet1D, CNN-LSTM, PatchTST, AttentionCNN), physics-informed
+  (PhysicsConstrainedCNN, HybridPINN, MultitaskPINN), and a voting ensemble.
+- **Experiments** (`scripts/`, `results/`) — frozen benchmark, noise robustness,
+  data-efficiency, severity-OOD, physics-weight ablation, XAI alignment,
+  MC-dropout calibration. Index: [results/README.md](results/README.md).
+- **Deployment** — ONNX export + latency appendix (`results/deployment/`).
+- **Dashboard** (`packages/dashboard/`) — ⚠️ **experimental, frozen**: it boots
+  but is unfinished and excluded from CI (Convergence Plan Phase D). The core
+  pipeline does not depend on it.
 
-    subgraph "Core ML Engine"
-        C --> D["Classical ML<br/>(SVM, RF, XGBoost)"]
-        C --> E["Deep Learning<br/>(CNN, ResNet, Transformer)"]
-        C --> F["PINN<br/>(Physics-Informed)"]
-        D & E & F --> G["Ensemble<br/>(Voting, Stacking, MoE)"]
-        G --> H["XAI<br/>(SHAP, LIME, IG)"]
-    end
+## Performance
 
-    subgraph "Dashboard Platform"
-        I["Dash/Plotly UI"] --> J["Callbacks"]
-        J --> K["Services Layer"]
-        K --> L["Celery Tasks"]
-        K --> M["PostgreSQL"]
-    end
+Frozen benchmark ([experiments/PROTOCOL.md](experiments/PROTOCOL.md)), 11-class,
+1 s windows, mean ± std over 3 seeds. Accuracies below are **window-level and
+descriptive**; significance is **recomputed at the record level** (528 records,
+not 2,640 correlated windows) in
+[results/benchmark/summary_record_level.md](results/benchmark/summary_record_level.md).
+Full window-level table + provenance:
+[results/benchmark/summary.md](results/benchmark/summary.md).
 
-    subgraph "Infrastructure"
-        N["Docker / K8s"]
-        O["ONNX / Quantization"]
-        G --> O --> N
-    end
-```
+| Model | Window accuracy | Macro-F1 | Note |
+| --- | --- | --- | --- |
+| Voting ensemble (top-3) | **96.48%** | 0.964 | single seed |
+| ResNet18-1D | 96.14 ± 0.28% | 0.961 | strongest vanilla |
+| CNN-LSTM | 96.12 ± 0.16% | 0.961 | |
+| PhysicsConstrainedCNN | 95.98 ± 0.36% | 0.960 | **CE-only — architecture row, physics loss OFF** |
+| RandomForest (36 features) | 94.61 ± 0.05% | 0.946 | classical bar |
+| CNN1D | 91.94 ± 2.84% | 0.917 | |
 
-## Quick Start
+The top vanilla models cluster near 96%. The "physics-labeled" rows
+(hybrid_pinn / multitask_pinn, ~90%) were **not** trained with valid physics
+(hybrid uses a rolling-element branch + constant metadata; multitask ran
+single-task) — they are **not** physics results. Record-level significance
+supersedes any window-level p-value. Inference (ResNet18, CPU, 1 s window):
+**~13 ms** via ONNX FP32 — [results/deployment/appendix.md](results/deployment/appendix.md).
 
-### Prerequisites
-
-- Python 3.8+ (3.10 recommended)
-- CUDA 11.8+ (optional, for GPU acceleration)
-- PostgreSQL (for dashboard features)
-
-### Installation
+## Quick start
 
 ```bash
 git clone https://github.com/abbas-ahmad-cowlar/LSTM_PFD.git
 cd LSTM_PFD
-python -m venv venv
-
-# Linux/Mac
-source venv/bin/activate
-# Windows
-venv\Scripts\activate
-
-# Install PyTorch (with CUDA)
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-
-# Install project dependencies
+python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-# For exact reproduction of the maintainers' environment:
-# pip install -r requirements.lock.txt  (Python 3.14 / torch 2.9.1+cpu)
+# exact maintainer env: pip install -r requirements.lock.txt  (Python 3.14 / torch 2.9.1+cpu)
+pytest -q   # expect 251 passed, 6 deselected
 ```
 
-### Verify Installation
+Reproduce experiments: see `scripts/` (`run_benchmark.py`, `run_noise_robustness.py`,
+`run_phase5_gpu.py`, `run_xai_calibration.py`) and the Colab runbook
+[experiments/COLAB_DATAEFF_RUNBOOK.md](experiments/COLAB_DATAEFF_RUNBOOK.md).
 
-```bash
-python -c "import torch; print(f'PyTorch {torch.__version__} | CUDA: {torch.cuda.is_available()}')"
-```
-
-### Run the Dashboard
-
-> ⚠️ **Dashboard status: experimental, frozen.** It boots and renders, but many
-> pages are unfinished and it is excluded from CI until its rehabilitation phase
-> (Convergence Plan Phase D). The core training/evaluation pipeline does not
-> depend on it. It has its own dependencies: `packages/dashboard/requirements.txt`.
-
-```bash
-cp .env.example .env
-# Edit .env: set DATABASE_URL, SECRET_KEY, JWT_SECRET_KEY (random hex, no
-# placeholder-looking strings — the config validator rejects them)
-cd packages/dashboard
-python app.py
-# Open http://localhost:8050
-```
-
-> 📖 **Full setup guide**: [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
-
-## Project Structure
+## Project structure
 
 ```
-LSTM_PFD/
-├── packages/
-│   ├── core/                  # Core ML Engine
-│   │   ├── models/            # Model architectures (IDB 1.1)
-│   │   ├── training/          # Training pipeline (IDB 1.2)
-│   │   ├── evaluation/        # Metrics & evaluation (IDB 1.3)
-│   │   ├── features/          # Feature extraction (IDB 1.4)
-│   │   └── explainability/    # XAI methods (IDB 1.5)
-│   ├── dashboard/             # Enterprise Dashboard (IDB 2.x)
-│   │   ├── layouts/           # UI layouts
-│   │   ├── components/        # UI components
-│   │   ├── services/          # Backend services
-│   │   ├── callbacks/         # Dash callbacks
-│   │   ├── tasks/             # Celery async tasks
-│   │   ├── database/          # DB operations
-│   │   └── models/            # SQLAlchemy models
-│   └── deployment/            # Deployment utilities (IDB 4.2)
-├── data/                      # Data engineering (IDB 3.x)
-├── config/                    # Configuration files (IDB 4.4)
-├── tests/                     # Test suite (IDB 4.3)
-├── deploy/                    # Deployment scripts (IDB 4.2)
-├── integration/               # Cross-module integration (IDB 6.0)
-├── utils/                     # Shared utilities (IDB 6.0)
-├── visualization/             # Research visualization (IDB 5.2)
-├── scripts/research/          # Research experiment scripts (IDB 5.1)
-└── docs/                      # Documentation hub
+packages/core/     # models, training, evaluation, features, explainability
+data/              # signal_generation/ (generator + physics) · generated/ (Dataset v2, DVC)
+experiments/       # PROTOCOL.md (frozen), DATASET_V2.md, runbooks, PHYSICS_LOSS_DIAGNOSIS.md
+scripts/           # benchmark / phase-5 / XAI / verification runners
+results/           # committed evidence (json/md/png) + FINDINGS.md + README index
+docs/              # PHYSICS.md (normative) · tests/ — incl. 34-test physics CI
+packages/dashboard/  # experimental, frozen (Phase D)
 ```
 
 ## Documentation
 
-| Resource                    | Location                                                           |
-| --------------------------- | ------------------------------------------------------------------ |
-| **Documentation Hub**       | [docs/index.md](docs/index.md)                                     |
-| **Architecture Overview**   | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                       |
-| **Getting Started**         | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)                 |
-| **Documentation Standards** | [docs/DOCUMENTATION_STANDARDS.md](docs/DOCUMENTATION_STANDARDS.md) |
-| **Contributing**            | [CONTRIBUTING.md](CONTRIBUTING.md)                                 |
+| Resource | Location |
+| --- | --- |
+| Physics (normative) | [docs/PHYSICS.md](docs/PHYSICS.md) |
+| Benchmark protocol (frozen) | [experiments/PROTOCOL.md](experiments/PROTOCOL.md) |
+| Dataset v2 design | [experiments/DATASET_V2.md](experiments/DATASET_V2.md) |
+| Phase-5 findings | [results/FINDINGS.md](results/FINDINGS.md) |
+| Results index | [results/README.md](results/README.md) |
+| Project state / plan | [PROJECT_STATE.md](PROJECT_STATE.md) · [CONVERGENCE_PLAN.md](CONVERGENCE_PLAN.md) |
 
-Each module has its own `README.md` and guide — see [docs/index.md](docs/index.md) for the full navigation map.
+## Limitations
 
-## Performance
-
-Measured under the frozen benchmark protocol ([experiments/PROTOCOL.md](experiments/PROTOCOL.md)):
-11-class fault diagnosis on synthetic Dataset v2 (1 s windows, 2,640 test windows,
-mean ± std over 3 seeds). Full table, statistics, and provenance:
-[results/benchmark/summary.md](results/benchmark/summary.md).
-
-| Model | Test accuracy | Macro-F1 |
-| --- | --- | --- |
-| Voting ensemble (top-3) | **96.48%** | 0.964 |
-| ResNet18-1D | 96.14 ± 0.28% | 0.961 |
-| CNN-LSTM | 96.12 ± 0.16% | 0.961 |
-| PhysicsConstrainedCNN | 95.98 ± 0.36% | 0.960 |
-| RandomForest (36 features) | 94.61 ± 0.05% | 0.946 |
-| CNN1D | 91.94 ± 2.84% | 0.917 |
-
-Top-3 deep models are statistically tied (McNemar p > 0.2). Inference (ResNet18,
-CPU, 1 s window): **~13 ms** via ONNX FP32 — see
-[results/deployment/appendix.md](results/deployment/appendix.md).
-
-> ⚠️ **Scope**: all results are on physics-based *synthetic* data
-> ([docs/PHYSICS.md](docs/PHYSICS.md)); no real-world validation has been
-> performed yet.
-
-## Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-```bash
-pip install -r requirements-test.txt
-pytest -v
-black . && isort . && flake8 .
-```
-
-## License
-
-MIT License
-
-## Citation
-
-```bibtex
-@software{lstm_pfd_2025,
-  author = {Syed Abbas Ahmad},
-  title = {LSTM-PFD: Physics-Informed Fault Diagnosis},
-  year = {2025},
-  url = {https://github.com/abbas-ahmad-cowlar/LSTM_PFD}
-}
-```
+Synthetic data only — no real-bearing validation. Accuracy figures reflect
+learnability of the *generator's* signatures, not real-world performance. The one
+surviving physics positive — 5 dB noise robustness from the band-energy loss in a
+same-architecture ablation (§8.4) — is **synthetic-only, n=3 seeds, near-ceiling**,
+and **not yet isolated** from generic high-weight regularization (controls are
+future work); frame it as "the *implemented band-energy term* helped," not
+"physics helps." Clean-accuracy / data-efficiency / severity-OOD / interpretability
+/ calibration advantages were tested and did **not** survive; §8.5 HybridPINN stays
+excluded (rolling-element branch). The findings memo is a **DRAFT pending owner
+re-ratification** — see [results/FINDINGS.md](results/FINDINGS.md) §0 and
+[PROJECT_STATE.md](PROJECT_STATE.md).

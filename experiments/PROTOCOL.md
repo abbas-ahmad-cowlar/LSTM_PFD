@@ -72,6 +72,10 @@
 
 | Date | Change | Reason | Affected runs |
 |---|---|---|---|
+| 2026-06-17 | **§8.7 — F9 scrambled-reference control (NEW; pre-registered below).** Adds an opt-in `PhysicsConstrainedCNN.reference_permutation` (a fixed seeded derangement; class 0 'sain' fixed) so each fault is judged against a DIFFERENT fault's expected bands + healthy reference — same band-energy loss strength/structure, WRONG physics — and a runner arm `scripts/run_phase5_gpu.py --control f9_scramble` (pc_cnn w=1.0 × seeds, eval clean + 5 dB, permutation recorded in each metrics.json). The validated loss is unchanged (`reference_permutation` defaults to `None`; byte-identical behaviour, pinned by `tests/test_physics_band_energy_loss.py::test_reference_permutation_scrambles_targets` and the full suite at 263). **Does NOT alter §8.2–§8.6**; it is an additive control to isolate the surviving §8.4 noise result from generic high-weight regularization. | External audit 2026-06-16 (F9/Rec6): the §8.4 noise benefit + the corrected/band-aware §8.6a XAI (no physics-band attention) do not establish the benefit is physics-specific vs a generic spectral regularizer. A scrambled-physics control is the decisive test. | NEW: `results/phase5_bandenergy/pinn_ablation_scramble/w1.0/seed{0,1,2}`. Owner-operated GPU (Colab); analysis vs the existing §8.4 w=0 / w=1.0 arms at record level. |
+| 2026-06-14 | **§8.0-quinquies — band-energy loss judged vs the FROZEN HEALTHY REFERENCE (owner correction; supersedes the flat-baseline realization in §8.0-quater).** The baseline a class's bands are compared against is no longer a flat/uniform spectrum but the **measured healthy-class energy fraction per band** — `scripts/compute_healthy_reference.py` → committed `packages/core/models/physics/healthy_reference.json` (1,120 train-healthy 1-s windows, full-window rfft, tonal bands rpm-matched per record). Per band: `pen_b = relu(1 − frac_b / H_ref[c][b])`, averaged over the class's bands; full-window FFT (1 Hz res) resolves the 1-6 Hz band. `tests/test_signature_db_consistency.py` recast to the **same** reference (each fault's own-class penalty < its penalty on healthy signals; 10/10 classes). Before/after audit (`scripts/audit_physics_penalties.py`): the flat baseline let HEALTHY signals masquerade as **lubrification** (penalty 0.000) and **imbalance** (0.198); the healthy reference corrects these to 0.326 / 0.573 while each fault keeps a low own-class penalty (<0.2). **Owner-ratified 2026-06-14** ("use the actual healthy-class spectral reference, not the flat/uniform spectrum"). | A flat baseline let healthy-shared energy (60 Hz EMI, low-frequency pink noise) masquerade as a fault signature — wrong for the low-frequency / band-overlap classes — and was inconsistent with the CI test, which already used the real healthy class. | Same reruns as §8.0-quater; the frozen `healthy_reference.json` is part of the rerun manifest. |
+| 2026-06-14 | **§8.0-quater — band-energy loss IMPLEMENTED (P6 Step 4).** `PhysicsConstrainedCNN.compute_physics_loss` rewritten from the tonal-only peak-distance interim to the ratified **band-energy consistency** loss. Per class *c*: `concentration_c = (E_band / E_total) · (F_bins / n_bins_c)` over the corrected journal-bearing bands (`FaultSignatureDatabase.get_signature` — tonal harmonics built from **per-sample rpm** + absolute broadband Hz bands); penalty `relu(1 − concentration_c)`, weighted by the softmax probability of *c*. Differentiable (loss → probs → logits → params; pinned by `tests/test_physics_band_energy_loss.py`, 5 tests); covers tonal **and** broadband **and** mixed classes; healthy → 0; no tunable knob (threshold = concentration 1, the flat/"healthy" spectrum level). **Per-sample rpm now wired** into §8.2/§8.3/§8.4 (`run_phase5_gpu.py` `std_loaders(..., ops=True)`). **NOTE for owner:** the *concentration-vs-flat-spectrum* realization of "less energy than the healthy baseline" goes slightly beyond the ratified one-liner — confirm at the next gate. Code: branch `p6/docs`. | Implements the formulation ratified 2026-06-14 (§8.0-ter); the tonal-only interim left broadband/mixed unconstrained (audit Finding 6). | Reruns (band-energy + record-level stats): §8.4, §8.2 pc_cnn, §8.3, §8.6a recompute. **Pre-registrations §8.2/§8.3/§8.4 unchanged** (same hypothesis/metric/decision rule; only the loss implementation + per-sample rpm changed). |
+| 2026-06-14 | **§8.0-ter — corrected physics & band-energy loss.** The signature DB (`fault_signatures.py`) was found to encode **rolling-element** fault frequencies (BPFO/BPFI/BSF/FTF) — wrong for journal bearings — with the 3 mixed classes unmapped (zero constraint). Rebuilt from PHYSICS.md §4 (journal-bearing, all 11 classes); added `tests/test_signature_db_consistency.py` locking DB↔generated-data. **Physics-loss formulation RATIFIED by Syed Abbas Ahmad, 2026-06-14:** *band-energy consistency* — penalize softmax probability on any class whose corrected expected bands carry less spectral energy than the healthy baseline in those bands (differentiable; covers tonal AND broadband; all 11 classes; no tunable knob). **Implementation + reruns PAUSED pending an independent external audit** (`audit_reports/INDEPENDENT_AUDIT_PROMPT.md`). | Audit `audit_reports/PHYSICS_LOSS_AUDIT_2026-06-14.md`: the loss constrained journal faults against rolling-element frequencies; mixed faults uncONSTRAINED. | Reruns AFTER audit clears: §8.4, §8.2 pc_cnn, §8.6a recompute. Benchmark/§8.1/§8.5/deployment proven independent → not re-run. |
 | 2026-06-13 | **§8.0-bis — differentiable physics loss.** `PhysicsConstrainedCNN.compute_physics_loss` corrected from a non-differentiable argmax-based term to a softmax-probability-weighted per-class frequency penalty (code: branch `p5/physics-loss-fix` @`167e714`; design: `experiments/PHYSICS_LOSS_DIAGNOSIS.md`). The §8.4 **pre-registration is unchanged** (same hypothesis/metric/decision rule, same w∈{0,0.1,0.3,1.0}, same seeds/budget); only the loss *implementation* is fixed, and §8.4 is **re-run** with it. Results kept side by side: inert "before" in `results_phase5/pinn_ablation`, fixed "after" in `results_phase5_fixed/pinn_ablation`; both reported as a before/after contrast. | The original loss had `requires_grad=False`/`grad_fn=None`, contributing zero gradient — proven by §8.4 `w=0.1`≡`w=0.3` byte-identical per seed. The weight was inert, so §8.4 measured nothing. The fix makes `w` affect training (verified: differing gradients). | Re-run: §8.4 `w∈{0.1,0.3,1.0}`×3. Optional: §8.2/8.3 pc_cnn arms. **Unaffected (NOT re-run):** Phase-4 benchmark, §8.1, §8.5 — none call `compute_physics_loss`. |
 
 ---
@@ -155,3 +159,37 @@
 - **8.6b**: MC-dropout (30 samples) on the same two checkpoints; ECE +
   reliability diagram + accuracy-vs-confidence rejection curve; hypothesis:
   physics model is better calibrated under noise (evaluated clean and 5 dB).
+
+### 8.7 F9 control — physics vs generic regularization (NEW) — pre-registered 2026-06-17
+- **Motivation**: the one surviving physics positive — §8.4, band-energy w=1.0
+  improves 5 dB noise robustness in a same-architecture ablation — does not, by
+  itself, establish the benefit is *physics-specific* rather than generic
+  regularization at high weight. The corrected + band-aware §8.6a XAI gave **no**
+  attribution evidence of physics-band attention (vanilla ahead; both models ignore
+  the lube band), so a **training control** is the remaining decisive test (audit
+  2026-06-16 F9/Rec6).
+- **Hypothesis**: if the benefit is **physics-specific**, scrambling the per-class
+  band targets (each fault judged against a *different* fault's bands + healthy
+  reference; fixed seeded derangement, 'sain' fixed) — identical loss
+  strength/structure, wrong physics — **destroys** the robustness (scrambled w=1.0
+  degrades at 5 dB like CE-only). If the benefit is **generic regularization**, the
+  scrambled model **retains** the robustness (degrades like correct w=1.0).
+- **Procedure**: `physics_constrained_cnn` (ResNet1D backbone) × w=1.0 × seeds
+  {0,1,2}, frozen budget, per-sample rpm (`ops=True`),
+  `reference_permutation = scrambled_class_permutation()` (a derangement, recorded
+  in each `metrics.json`); eval clean + 5 dB. Compared against the **existing** §8.4
+  w=0 (CE-only) and w=1.0 (correct physics) arms — no retrain of those.
+  Command: `python scripts/run_phase5_gpu.py --control f9_scramble` (Colab T4).
+- **Metric**: record-level (528) 5 dB accuracy + clean→5 dB degradation;
+  representative best-val-seed exact McNemar (scramble-w1.0 vs CE-only, and
+  scramble-w1.0 vs correct-w1.0), same method as `phase5_bandenergy_record_level.py`.
+- **Decision rule (fixed BEFORE running)**:
+  - scramble degradation ≈ CE-only (large) **and** ≫ correct-w1.0 (≈0) →
+    **PHYSICS-SPECIFIC**: the paper may attribute the noise benefit to correct
+    physics (the right bands matter).
+  - scramble degradation ≈ correct-w1.0 (small/robust) → **GENERIC REGULARIZATION**:
+    narrow the claim to "the band-energy term (a spectral regularizer) improved
+    robustness"; report this as the honest finding.
+  - intermediate → report quantitatively; lean conservative (narrow wording).
+- **Guardrail**: additive only; the validated loss is unchanged
+  (`reference_permutation=None` default). n=3 seeds; single dataset; synthetic-only.

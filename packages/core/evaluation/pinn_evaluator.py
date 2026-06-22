@@ -36,6 +36,12 @@ class PINNEvaluator(ModelEvaluator):
     """
     Evaluator for Physics-Informed Neural Networks.
 
+    ⚠ PHYSICS-LOSS METRIC NON-AUTHORITATIVE — QUARANTINED (P6 Step 3, 2026-06-14).
+    `self.freq_loss_fn` is the inert `FrequencyConsistencyLoss` (non-differentiable;
+    audit Finding 5), so any "physics consistency" metric it reports is not a valid
+    learning signal. Not used by any committed experiment. Classification metrics
+    inherited from `ModelEvaluator` are unaffected.
+
     Extends base evaluator with physics-aware metrics and sample efficiency testing.
     """
 

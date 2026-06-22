@@ -8,7 +8,7 @@ checkpoints live at `D:\Libraries\` (see bottom).
 |---|---|---|
 | `FINDINGS.md` | — | Phase-5 synthesis + frozen claims list (owner-ratified at Gate 5) |
 | `dataset_v2_validation/` | C1 | dataset_v2.h5 validation (stratification, leakage, splits) |
-| `benchmark/` | C2 | frozen 11-model pre-registered benchmark (Phase 4) + deployment-feeding numbers |
+| `benchmark/` | C2 | frozen 11-model pre-registered benchmark (Phase 4). `summary.*` = window-level (superseded); **`summary_record_level.*` = record-level recompute, P6 Step 2** |
 | `deployment/` | C5 | ONNX export / latency / INT8 appendix |
 | `noise_robustness/` | C3 §8.1 | 24 frozen checkpoints × SNR-20/10/5 + degradation summary |
 | `phase5/` | C3 §8.2–8.5 | the 45 INERT-loss Colab runs (data-efficiency, severity-OOD, ablation-before, true-metadata) |
@@ -19,9 +19,16 @@ checkpoints live at `D:\Libraries\` (see bottom).
 | `cnn1d_v1_baseline/` | history | Phase-1 first real artifact (86.48%) |
 | `cnn1d_v2_baseline/` | history | Phase-3 dataset-v2 baseline (90.53%) |
 
-**Headline:** physics-informed learning gives no accuracy advantage on this
-clean synthetic data (C3 negative, all regimes) but a modest interpretability/
-calibration gain (C4). See `FINDINGS.md`.
+**Headline (DRAFT verdict — see `FINDINGS.md` §0, pending owner re-ratification):**
+the band-energy remediation is complete and record-level; two external audits
+reviewed it (the 2nd reproduced every number). What stands: a synthetic
+classification benchmark, **near-ceiling at the record level**, **no row showing a
+physics accuracy advantage**; plus **one** surviving physics positive — a **5 dB
+noise-robustness gain from the band-energy loss in a same-architecture ablation**
+(`phase5_bandenergy/summary_record_level.json`: McNemar 14–0, p=1.2e-4).
+Data-efficiency, severity-OOD, XAI alignment (§8.6a *reverses*), and calibration
+(a wash) did **not** survive. Frame as "the *implemented band-energy term* helped,"
+not "physics helps"; the benefit is not yet isolated from generic regularization.
 
 **Full checkpoint archives (off-repo, `D:\Libraries\`):**
 - `results_phase5-20260613T100807Z-3-001` — 45 inert runs + 45 ckpts (= `phase5/`)

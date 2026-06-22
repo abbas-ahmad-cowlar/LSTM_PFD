@@ -1,0 +1,85 @@
+{
+  "scope": "F9 scrambled-reference control vs CE-only and correct-physics w=1.0, record-level (528), 5 dB. PROTOCOL \u00a78.7.",
+  "arms": {
+    "w0_CEonly": {
+      "clean": [
+        98.99,
+        0.45
+      ],
+      "snr5": [
+        94.7,
+        3.08
+      ],
+      "snr5_per_seed": [
+        96.78,
+        90.34,
+        96.97
+      ],
+      "degradation_seedmean": 4.29,
+      "representative_seed": "seed2"
+    },
+    "w1.0_correct": {
+      "clean": [
+        98.61,
+        0.62
+      ],
+      "snr5": [
+        98.55,
+        0.76
+      ],
+      "snr5_per_seed": [
+        97.92,
+        98.11,
+        99.62
+      ],
+      "degradation_seedmean": 0.06,
+      "representative_seed": "seed2"
+    },
+    "w1.0_scramble": {
+      "clean": [
+        98.42,
+        0.91
+      ],
+      "snr5": [
+        95.58,
+        5.31
+      ],
+      "snr5_per_seed": [
+        88.07,
+        99.24,
+        99.43
+      ],
+      "degradation_seedmean": 2.84,
+      "representative_seed": "seed2"
+    }
+  },
+  "mcnemar_w1.0_scramble_vs_w0_CEonly_5dB": {
+    "discordant_a_better_b_better": [
+      14,
+      1
+    ],
+    "p": 0.0009765625,
+    "repseed_gap_pts": 2.46
+  },
+  "mcnemar_w1.0_scramble_vs_w1.0_correct_5dB": {
+    "discordant_a_better_b_better": [
+      0,
+      1
+    ],
+    "p": 1.0,
+    "repseed_gap_pts": -0.19
+  },
+  "decision_inputs": {
+    "degradation_seedmean": {
+      "CEonly": 4.29,
+      "correct_w1.0": 0.06,
+      "scramble_w1.0": 2.84
+    },
+    "scramble_snr5_per_seed": [
+      88.07,
+      99.24,
+      99.43
+    ],
+    "note": "Apply \u00a78.7 rule to these + the McNemar; mind the scramble seed variance."
+  }
+}
