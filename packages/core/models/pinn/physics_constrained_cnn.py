@@ -94,6 +94,17 @@ class PhysicsConstrainedCNN(BaseModel):
         # num_classes list (a derangement) only for the control arm.
         self.reference_permutation: Optional[list] = None
 
+        # OPTIONAL §8.8 control (random-band, NON-physics): when set, the loss judges
+        # each class against RANDOM non-fault bands (matched in count + width to its
+        # real bands, provably non-overlapping with any real characteristic band) vs a
+        # frozen RANDOM-band healthy reference, instead of the real signature DB +
+        # healthy reference. None (default) = validated physics loss, byte-identical.
+        # Mutually exclusive with reference_permutation. Set both together for the arm:
+        #   random_signature: {class_name: FaultSignature(tonal=..., bands_hz=...)}
+        #   random_reference: {class_name: {'tonal': [H_rand...], 'bands_hz': [...]}}
+        self.random_signature: Optional[dict] = None
+        self.random_reference: Optional[dict] = None
+
         # ===== CNN BACKBONE =====
         if backbone == 'resnet18':
             self.backbone = ResNet1D(
@@ -186,7 +197,8 @@ class PhysicsConstrainedCNN(BaseModel):
             loss_dict: components (band_energy_consistency, mean_penalty)
         """
         ref = self.healthy_reference
-        if ref is None:
+        use_random = self.random_signature is not None  # §8.8 random-band control
+        if ref is None and not use_random:
             raise RuntimeError(
                 "band-energy physics loss requires the frozen healthy reference; "
                 "run scripts/compute_healthy_reference.py to generate "
@@ -223,17 +235,26 @@ class PhysicsConstrainedCNN(BaseModel):
             pen = torch.zeros(B, C, device=device)
             perm = self.reference_permutation
             for c in range(C):
-                # F9 control: judge class c against class perm[c]'s bands+reference
-                # (scrambled physics). perm is None for the validated loss -> lc=c.
-                lc = c if perm is None else int(perm[c])
-                try:
-                    name = self.signature_db._name(lc)
-                    sig = self.signature_db.signatures[name]
-                except Exception:
-                    continue
-                rc = ref.get(name)
-                if rc is None:
-                    continue
+                if use_random:
+                    # §8.8 control: random non-fault bands + random-band healthy
+                    # reference (no class remap; non-physical bands, matched shape).
+                    name = self.signature_db._name(c)
+                    sig = self.random_signature.get(name)
+                    rc = (self.random_reference or {}).get(name)
+                    if sig is None or rc is None:
+                        continue
+                else:
+                    # F9 control: judge class c against class perm[c]'s bands+reference
+                    # (scrambled physics). perm is None for the validated loss -> lc=c.
+                    lc = c if perm is None else int(perm[c])
+                    try:
+                        name = self.signature_db._name(lc)
+                        sig = self.signature_db.signatures[name]
+                    except Exception:
+                        continue
+                    rc = ref.get(name)
+                    if rc is None:
+                        continue
                 terms = []
                 # tonal harmonics (rpm-matched), each vs its frozen healthy ref
                 for (m, hw), href in zip(sig.tonal, rc.get('tonal', [])):

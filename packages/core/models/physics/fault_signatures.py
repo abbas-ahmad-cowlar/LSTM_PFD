@@ -158,6 +158,41 @@ def load_healthy_reference(path: Optional[str] = None) -> Optional[dict]:
     return ref
 
 
+# --- frozen RANDOM-band reference (§8.8 non-physics control) --------------------
+_RANDOM_REFERENCE_PATH = Path(__file__).with_name('random_reference.json')
+
+
+def load_random_reference(path: Optional[str] = None):
+    """Frozen RANDOM-band control reference (§8.8, pre-registered 2026-06-23).
+
+    The §8.8 control judges each class against RANDOM non-fault bands (matched in
+    count + width to its real bands, provably non-overlapping with any real
+    characteristic band) vs the energy a HEALTHY bearing carries there — identical
+    loss form to the validated physics loss, non-physical band locations. Tests
+    whether ANY high-weight spectral-band regularizer reproduces the noise
+    robustness (the §8.7 scramble showed *wrong real* bands do; this tests *random*
+    bands). Generate with ``scripts/compute_random_reference.py``.
+
+    Returns ``(random_signatures, random_reference)`` or ``(None, None)`` if absent:
+      - ``random_signatures``: ``{name: FaultSignature(tonal=..., bands_hz=...)}``
+      - ``random_reference``:  ``{name: {'tonal': [H_rand...], 'bands_hz': [...]}}``
+    """
+    p = Path(path) if path else _RANDOM_REFERENCE_PATH
+    if not p.exists():
+        return None, None
+    data = json.loads(p.read_text(encoding='utf-8'))
+    layout = data['band_layout']
+    signatures = {
+        name: FaultSignature(
+            name,
+            tonal=[tuple(t) for t in bl.get('tonal', [])],
+            bands_hz=[tuple(b) for b in bl.get('bands_hz', [])],
+        )
+        for name, bl in layout.items()
+    }
+    return signatures, data['per_class']
+
+
 # --- module-level convenience API (kept stable for package __init__ + callers) ---
 default_database = FaultSignatureDatabase()
 
