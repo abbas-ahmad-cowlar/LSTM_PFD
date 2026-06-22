@@ -238,7 +238,8 @@ def evaluate(model, model_key, loader, device, ops_aware=False):
 
 def train_run(run_dir: Path, model_key: str, seed: int, loaders: dict,
               physics_w: float, ops_aware: bool, max_epochs: int,
-              patience: int, extra_eval: dict, tags: dict, scramble_perm=None):
+              patience: int, extra_eval: dict, tags: dict, scramble_perm=None,
+              random_signature=None, random_reference=None):
     run_dir.mkdir(parents=True, exist_ok=True)
     ckpt_path = run_dir / 'best_model.pth'
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -251,6 +252,14 @@ def train_run(run_dir: Path, model_key: str, seed: int, loaders: dict,
     if scramble_perm is not None and hasattr(model, 'reference_permutation'):
         model.reference_permutation = list(scramble_perm)
         log.info("    F9 SCRAMBLE reference_permutation=%s", list(scramble_perm))
+    # §8.8 control (PROTOCOL §8.8): random non-fault bands + random-band reference.
+    # Plain attributes (like reference_permutation) -> survive load_state_dict on
+    # resume. None (default) = validated physics loss.
+    if random_signature is not None and hasattr(model, 'random_signature'):
+        model.random_signature = random_signature
+        model.random_reference = random_reference
+        log.info("    §8.8 RANDOM-BAND control active (%d classes with bands)",
+                 sum(1 for s in random_signature.values() if s.tonal or s.bands_hz))
     optimizer = torch.optim.Adam(model.parameters(), lr=LR)
     criterion = torch.nn.CrossEntropyLoss()
     scaler = torch.amp.GradScaler('cuda') if device == 'cuda' else None
@@ -337,11 +346,24 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--only', choices=['data_efficiency', 'severity_ood',
                                            'pinn_ablation', 'true_metadata'])
-    parser.add_argument('--control', choices=['f9_scramble'],
-                        help='run ONLY the F9 scrambled-reference control '
-                             '(pc_cnn w=1.0 x seeds, PROTOCOL §8.7)')
+    parser.add_argument('--control', choices=['f9_scramble', 'random_bands'],
+                        help='run ONLY a control arm in isolation: f9_scramble '
+                             '(scrambled real bands, PROTOCOL §8.7) or random_bands '
+                             '(random non-fault bands, PROTOCOL §8.8) — both pc_cnn '
+                             'w=1.0 x seeds')
     parser.add_argument('--seeds', nargs='+', type=int, default=SEEDS)
+    parser.add_argument('--weights', nargs='+', type=float, default=None,
+                        help='restrict the §8.4 pinn_ablation physics weights (e.g. '
+                             '0.0 1.0 for the §8.8 n=12 grid: CE-only + correct). '
+                             'Default = all of %s. w=0.0 = same-code-path CE-only.'
+                             % ABLATION_W)
     parser.add_argument('--smoke', action='store_true')
+    parser.add_argument('--out-root', default=None,
+                        help='write ALL arms (pinn_ablation + controls) under this '
+                             'repo-relative root instead of results/phase5 + '
+                             'results/phase5_bandenergy. Use a fresh dir for the '
+                             '§8.8 n=12 grid (e.g. results_p7_strengthen) so every '
+                             'arm is a single-commit, resume-safe queue in one folder.')
     args = parser.parse_args()
 
     (PROJECT_ROOT / 'logs').mkdir(exist_ok=True)
@@ -351,7 +373,12 @@ def main() -> None:
                                   logging.StreamHandler()])
     max_epochs = 2 if args.smoke else MAX_EPOCHS
     patience = 99 if args.smoke else PATIENCE
-    out_root = OUT.parent / (OUT.name + '_smoke') if args.smoke else OUT
+    if args.out_root:                       # §8.8: all arms in one fresh folder
+        out_root = be_root = PROJECT_ROOT / args.out_root
+    else:
+        out_root = OUT.parent / (OUT.name + '_smoke') if args.smoke else OUT
+        be_root = PROJECT_ROOT / ('results/phase5_bandenergy_smoke' if args.smoke
+                                  else 'results/phase5_bandenergy')
 
     log.info("Loading splits ...")
     tr_sig, tr_lab, tr_sev, tr_ops = load_split('train', with_metadata=True)
@@ -382,10 +409,8 @@ def main() -> None:
         perm = scrambled_class_permutation()
         log.info("F9 control: scrambled class permutation = %s", perm)
         full_idx = np.arange(len(tr_lab))
-        # write alongside the other band-energy runs (results/phase5_bandenergy),
-        # NOT results/phase5 — this control IS a band-energy (w=1.0) experiment.
-        be_root = (PROJECT_ROOT / 'results/phase5_bandenergy_smoke' if args.smoke
-                   else PROJECT_ROOT / 'results/phase5_bandenergy')
+        # write alongside the other band-energy runs (be_root, default
+        # results/phase5_bandenergy) — this control IS a band-energy (w=1.0) experiment.
         for seed in args.seeds:
             rd = be_root / 'pinn_ablation_scramble' / 'w1.0' / f'seed{seed}'
             queue.append((rd, lambda rd=rd, sd=seed, pm=perm: train_run(
@@ -394,6 +419,27 @@ def main() -> None:
                 {'test': test_loader, 'test_snr5': snr5_loader},
                 {'experiment': 'pinn_ablation_scramble', 'prereg': '§8.7',
                  'reference_permutation': pm}, scramble_perm=pm)))
+
+    # §8.8 control — pc_cnn w=1.0 with RANDOM non-fault bands + random-band reference.
+    # Matched-structure NON-PHYSICS control: same loss form/strength as §8.4 w=1.0,
+    # band locations provably non-physical. Runs in isolation (--control random_bands).
+    if args.control == 'random_bands':
+        from packages.core.models.physics.fault_signatures import load_random_reference
+        rand_sig, rand_ref = load_random_reference()
+        if rand_sig is None:
+            raise RuntimeError("random-band reference missing — run "
+                               "scripts/compute_random_reference.py first")
+        log.info("§8.8 control: %d distinct random bands loaded",
+                 sum(len(s.tonal) + len(s.bands_hz) for s in rand_sig.values()))
+        full_idx = np.arange(len(tr_lab))
+        for seed in args.seeds:
+            rd = be_root / 'pinn_ablation_random' / 'w1.0' / f'seed{seed}'
+            queue.append((rd, lambda rd=rd, sd=seed, rs=rand_sig, rr=rand_ref: train_run(
+                rd, 'physics_constrained_cnn', sd, std_loaders(full_idx, ops=True),
+                1.0, False, max_epochs, patience,
+                {'test': test_loader, 'test_snr5': snr5_loader},
+                {'experiment': 'pinn_ablation_random', 'prereg': '§8.8'},
+                random_signature=rs, random_reference=rr)))
 
     # §8.2 data efficiency — pc_cnn(w=0.3) & resnet18 × fractions × seeds
     if args.control is None and args.only in (None, 'data_efficiency'):
@@ -437,7 +483,7 @@ def main() -> None:
     # §8.4 PINN ablation — pc_cnn × w sweep (w=0 = Phase-4), eval clean + 5dB
     if args.control is None and args.only in (None, 'pinn_ablation'):
         full_idx = np.arange(len(tr_lab))
-        for w in ABLATION_W:
+        for w in (args.weights if args.weights is not None else ABLATION_W):
             for seed in args.seeds:
                 rd = out_root / 'pinn_ablation' / f'w{w}' / f'seed{seed}'
                 queue.append((rd, lambda rd=rd, sd=seed, ww=w: train_run(

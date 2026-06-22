@@ -193,3 +193,49 @@
   - intermediate → report quantitatively; lean conservative (narrow wording).
 - **Guardrail**: additive only; the validated loss is unchanged
   (`reference_permutation=None` default). n=3 seeds; single dataset; synthetic-only.
+
+### 8.8 Random-band control + n=12 seed extension — pre-registered 2026-06-23 (owner-ratified)
+- **Motivation**: §8.7 settled that the *correct per-class mapping* is not necessary
+  (scrambling REAL bands across classes reproduced the 5 dB robustness at the
+  representative seed). Two gaps remain before the surviving result can be called a
+  **generic spectral regularizer** (FINDINGS §0 + 2026-06-22 audits, Opus F5 /
+  GPT-5 Rec 3): (a) the controls used *real* fault bands (wrong-assigned) — a
+  control with **non-physical** bands is needed to show the band *locations* don't
+  matter at all; (b) inference is within-seed (n=3) — the seed-level claim needs
+  **n≥12**. The CE-only (w=0) arm was also borrowed from the Phase-4 benchmark at a
+  different commit (Opus F6 / GPT-5 Rec 4) — re-run it in this code path.
+- **Hypothesis**: if the benefit is a generic high-weight **spectral-band**
+  regularizer, judging each class against RANDOM non-fault bands (matched count +
+  width, provably non-overlapping with any real characteristic band) **reproduces**
+  the robustness (degrades at 5 dB like correct w=1.0). If it needs *real*
+  fault-frequency bands, the random-band arm degrades like CE-only.
+- **Arms** (all `physics_constrained_cnn`, ResNet1D backbone, frozen budget,
+  per-sample rpm `ops=True`, eval clean + 5 dB), **seeds 0–11**:
+  1. **CE-only (w=0)** — trained in this runner (same code path; supersedes the
+     borrowed Phase-4 checkpoint for this analysis). `--only pinn_ablation --weights 0.0`.
+  2. **Correct band-energy (w=1.0)** — `--only pinn_ablation --weights 1.0`.
+  3. **F9 scramble (w=1.0)** — `--control f9_scramble` (extends §8.7 to 12 seeds).
+  4. **Random-band (w=1.0)** — `--control random_bands`: random non-fault bands +
+     frozen `random_reference.json` (`scripts/compute_random_reference.py`, fixed RNG
+     seed 20260623, structure-preserving remap of the band vocabulary, non-overlap
+     asserted). Identical loss form `relu(1 − frac_b / H_rand[c][b])`, non-physical
+     bands.
+  Command (Colab T4): `--seeds 0 1 2 3 4 5 6 7 8 9 10 11` on each of the four;
+  existing seeds 0–2 of arms 2–3 are skipped (resume-safe).
+- **Metric**: record-level (528) clean→5 dB degradation per seed; **seed-level**
+  Wilcoxon signed-rank on paired per-seed degradation (each arm vs CE-only, n=12);
+  median degradation + count of robust seeds (degradation < τ). Within-seed McNemar
+  retained as a per-seed diagnostic only.
+- **Decision rule (fixed BEFORE running)**, with **τ = 1.0 pt**:
+  - **random-band ≈ correct** (both robust on ≥10/12 seeds, both Wilcoxon-significant
+    vs CE-only) → **GENERIC SPECTRAL REGULARIZER, earned**: even random bands
+    reproduce it; band locations don't matter. FINDINGS §0 wording stands, now with a
+    matched-strength non-physics control.
+  - **random-band ≈ CE-only** (not robust) while correct/scramble are → the effect
+    needs *real* fault-frequency bands → **narrow** to "a spectral-*fault*-band
+    regularizer" (still not correct physics, since scramble works). FINDINGS §0
+    updates.
+  - intermediate → report quantitatively; lean conservative.
+- **Guardrail**: additive only; the validated loss is unchanged
+  (`random_signature=None` default, byte-identical). Single dataset; synthetic-only;
+  the random reference is frozen (regenerate only with a re-pre-registration).
