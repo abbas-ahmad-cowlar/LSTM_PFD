@@ -1,307 +1,149 @@
-# FINDINGS — Phase 5/6 synthesis (RATIFIED, Gate 5)
+# FINDINGS — Phase 5/6/7 synthesis (RATIFIED)
 
-> Honest synthesis of every Phase-5 experiment plus the Phase-6 physics
-> remediation. Every number traces to a committed artifact under `results/`. This
-> memo freezes the list of claims the paper may and may not make. **Synthetic-only
-> study — no real-world validation, stated everywhere.**
+> Honest synthesis of every Phase-5 experiment, the Phase-6 physics remediation,
+> and the Phase-7 §8.8 n=12 strengthen grid. Every number traces to a committed
+> artifact under `results/`. This memo freezes the list of claims the paper may and
+> may not make. **Synthetic-only study — no real-world validation, stated everywhere.**
 >
-> Status: **RATIFIED — 2026-06-23 by owner Syed Abbas Ahmad (Gate 5).** Reflects the
-> corrected, **record-level**, **independently-audited** state after the band-energy
-> remediation, ratified following the **third independent-audit round** (2026-06-22,
-> GPT-5 + a fresh-memory Opus 4.8;
-> `audit_reports/INDEPENDENT_AUDIT_2026-06-22_{GPT5,OPUS}.md`), which reproduced every
-> record-level / F9 number by execution (Opus also re-evaluated checkpoints from
-> scratch — caches byte-identical) and returned **no critical findings**. The §8.7
-> wording was tightened per both auditors before sign-off. **§0 below is the
-> authoritative, ratified verdict; it supersedes the PRE-AUDIT §1–§5 (retained for
-> provenance only).**
+> Status: **RATIFIED — 2026-06-24 by owner Syed Abbas Ahmad.** The Gate-5 verdict
+> (ratified 2026-06-23) let one positive stand — a narrow 5 dB noise-robustness
+> benefit, then based on **n=3** seeds. A pre-registered **n=12 grid (§8.8,
+> `results/p7_strengthen/`)** plus a matched-strength **non-physics** control was then
+> run to stress-test it, and a **fourth independent-audit round** (2026-06-24, GPT-5 +
+> a fresh-memory Opus 4.8;
+> `audit_reports/INDEPENDENT_AUDIT_2026-06-24_{GPT5,CLAUDE}.md`) reproduced the result
+> by execution (Opus cache-free from all 48 checkpoints). **Outcome: the last positive
+> does NOT replicate at n=12.** §0 below is rewritten to the resulting **complete
+> negative**; it supersedes the prior §0 and the PRE-AUDIT §1–§5 (removed). Do not
+> cite as ratified until the owner re-ratifies.
 
-## 0. RATIFIED verdict (2026-06-23) — authoritative, supersedes §1–§5
+## 0. RATIFIED verdict (2026-06-24) — authoritative
 
 ### One-paragraph verdict
-On a single synthetic journal-bearing dataset, a **PC-CNN band-energy
-consistency loss at high weight (w=1.0)** delivers a **real, record-level 5 dB
-noise-robustness improvement** over the **same architecture** trained
-cross-entropy-only — the one benefit in the study that survives record-level
-statistics and an independent reproduction. A pre-registered **scrambled-reference
-control (§8.7)** shows the **correct journal-bearing per-class mapping is NOT
-necessary** for this benefit — shuffling the per-class band targets reproduces the
-robustness *at the representative seed and in 2 of 3 seeds* (the seed-mean
-degradation, 2.84, is intermediate between CE-only's 4.29 and correct physics' 0.06).
-It is therefore **largely a generic high-weight spectral regularizer, not established
-as physics-specific**; correct physics *appears* to add cross-seed stability, but at
-n=3 this is not resolvable.
-There is **no clean-accuracy gain** (a small near-ceiling clean trade-off), and
-**no statistically-supported data-efficiency, severity-OOD, interpretability, or
-calibration advantage** — each was tested and did **not** survive. The durable
+On a single synthetic journal-bearing dataset, **physics-informed learning provides
+no advantage over strong data-driven baselines on any axis tested** — clean accuracy,
+**noise robustness**, data-efficiency, severity-OOD, interpretability, and
+calibration were each tested at the record level and each **failed**. The last
+candidate positive (a 5 dB noise-robustness benefit that looked significant at n=3:
+the band-energy w=1.0 model degraded 0.06 pt vs cross-entropy-only's 4.29 pt) was
+stress-tested with a **pre-registered n=12 grid (§8.8)** that added a matched-strength
+**random non-fault-band** control and tripled the seeds. It **did not replicate**: at
+n=12 the correct-physics model degrades **3.47 pt** vs CE-only's **3.54 pt** —
+statistically indistinguishable (seed-level **Wilcoxon p=0.79**), no arm clears the
+pre-registered robustness bar, and the n=3 "win" is reproduced exactly by *this
+grid's own* first three seeds, then erased by the other nine. The durable
 contributions are the physics-grounded **dataset/generator (C1)**, the frozen
-reproducible **benchmark (C2)**, the **narrow spectral-regularization
-noise-robustness result (C3)** plus a methodological caution, and **deployment
-(C5)**. The result must be framed as "**a band-energy spectral-consistency
-regularizer** helped," **not** "physics-informed learning helps" — see the wording
-limits below.
+reproducible record-level **benchmark (C2)**, a **rigorous, complete NEGATIVE on
+physics-informed learning (C3)** with a **methodological caution**, and **deployment
+(C5)**. The paper must be framed as a **dataset + benchmark + negative result**; it
+may **not** claim any physics benefit — not even "a spectral regularizer helped."
 
 ### Supportable now — claims the paper MAY make (each artifact-linked)
 - **C1 — dataset/generator.** `data/generated/dataset_v2.h5`: 3,520 records, 11
   journal-bearing classes, exact class×severity balance, record-level
-  leakage-checked splits, SNR-20/10/5 variants; generator CI-locked (34 spectral
-  tests). Cavitation only weakly expressed spectrally — qualify any cavitation
-  claim. (`results/dataset_v2_validation/`, `tests/test_physics_signatures.py`.)
+  leakage-checked splits (independently re-verified leakage-free by content hash, both
+  fourth-round audits), SNR-20/10/5 variants; generator CI-locked (34 spectral tests).
+  Cavitation only weakly expressed spectrally — qualify any cavitation claim.
+  (`results/dataset_v2_validation/`, `tests/test_physics_signatures.py`.)
 - **C2 — benchmark, as a CLASSIFICATION benchmark.** Pre-registered, 11 models,
   3 seeds; significance at the **528-record level**
   (`results/benchmark/summary_record_level.md`). Near-ceiling (RF 98.74, top deep
-  ~99, CE-only pc_cnn 98.99); **no row shows a physics accuracy advantage** (best
-  vanilla cnn_lstm ties CE-only pc_cnn, McNemar p=1). Rows honestly relabeled:
-  pc_cnn = CE-only/architecture, multitask = single-task, hybrid = rolling-element
-  + constant metadata.
-- **C3 — the one surviving physics positive: NOISE ROBUSTNESS (same-architecture
-  ablation).** Band-energy loss vs the frozen healthy reference, per-sample rpm
-  (`packages/core/models/pinn/physics_constrained_cnn.py`); record level
-  (`results/phase5_bandenergy/summary_record_level.json`): pc_cnn **w=1.0**
-  degrades **0.06 pt** clean→5 dB vs the identical-architecture CE-only model's
-  **4.29 pt**; representative best-val-seed **McNemar 14–0, p=1.2e-4, gap +2.65
-  pts [1.33, 4.17]**. Mechanism (independently verified, 2026-06-16 audit): the 14
-  rescued records are noisy `lubrification` that CE-only mislabels
-  `mixed_wear_lube`. Reverses the earlier contaminated "harmful at w=1.0 (83.1)".
-  Secondary, weaker: vs best vanilla resnet18 it is significant but
-  **small/fragile** (6–0, p=0.031, +1.14 [0.38, 2.08]; flips to p=0.0625 vs
-  resnet's best-noise seed) — report as secondary/near-ceiling.
-  **What the benefit IS (F9 control, §8.7, `f9_scramble_record_level.json`):** a
-  **scrambled-reference control** (w=1.0 band-energy loss with the per-class bands
-  shuffled — same strength, wrong physics) **reproduces** the robustness (at the
-  representative seed: 0–1 vs correct, p=1; 14–1 vs CE-only, p≈1e-3). So the effect
-  is a **high-weight spectral-consistency regularizer**, **not** specific to correct
-  journal-bearing physics. Correct physics only buys **cross-seed stability**
-  (correct 5 dB std 0.76 / degr 0.06; scramble std 5.31 / degr 2.84, one seed
-  collapses). **Claim it as a spectral regularizer, NOT as "physics."**
+  cnn_lstm 99.43, CE-only pc_cnn 98.99); **no row shows a physics accuracy advantage**
+  (best vanilla cnn_lstm ties CE-only pc_cnn, gap +0.00, McNemar p=1). Rows honestly
+  relabeled: pc_cnn = CE-only/architecture (physics loss OFF), multitask = single-task,
+  hybrid = rolling-element + constant metadata.
+- **C3 — a rigorous, COMPLETE NEGATIVE on physics-informed learning.** Across every
+  regime physics is theorized to help, the implemented physics-informed mechanisms do
+  not beat data-driven baselines:
+  - **Noise robustness — does NOT survive (§8.8, n=12, `results/p7_strengthen/`).**
+    Record-level clean→5 dB degradation (528 records, soft-vote, 12 seeds): CE-only
+    **3.54±3.85** (robust 4/12), correct-physics w=1.0 **3.47±3.42** (5/12), scramble
+    **4.89±6.08** (7/12), random-band **2.15±3.34** (9/12) — all dominated by seed
+    variance. Pre-registered seed-level **Wilcoxon vs CE-only**: correct **p=0.79**,
+    scramble **p=0.75**, random **p=0.21** — all non-significant; **no arm** is robust
+    on ≥10/12 seeds. The earlier n=3 positive (0.06 vs 4.29, within-seed McNemar
+    14–0 p=1.2e-4) was a **seed artifact**: this grid's seeds {0,1,2} reproduce it
+    (CE 4.29 / correct 0.06), and seeds 3–11 erase it. The random *non-fault* control
+    is the **most** robust arm and correct physics the **weakest** of the three w=1.0
+    arms — so the data do not support "physics" or even "a spectral regularizer."
+  - **Clean accuracy** — no advantage (record-level near-ceiling; C2).
+  - **Data-efficiency (§8.2)** — neutral; ahead non-overlapping at only 1 of 3 reduced
+    fractions → fails the prereg rule. (`summary_record_level.json`.)
+  - **Severity-OOD (§8.3)** — dir A tied at ceiling; dir B favors physics on the point
+    estimate but McNemar p=0.39, gap CI [−2.27, +8.33] spans zero → direction-only.
+  - **Interpretability (§8.6a)** — reverses (vanilla in-band 0.146 > physics 0.099,
+    band-aware); IG gives no support for a physics-attention mechanism.
+  - **Calibration (§8.6b)** — a wash (5 dB ECE direction flips between MC-dropout runs).
+- **Methodological caution (a contribution in its own right) — two prongs.**
+  (a) **A "significant" n=3 result that dissolved at n=12** — a same-architecture
+  ablation with a within-seed McNemar of p=1.2e-4 became non-significant once the
+  seed, not the window, was used as the inferential unit and the count rose to 12. A
+  concrete warning about seed counts and estimands in PINN ablations. (b) **A physics
+  loss that passed a green test suite while being silently broken** — non-differentiable
+  (argmax) → wrong-bearing-type → tonal-only → flat-baseline, five defects in series.
+  The rigor that caught both (record-level statistics, pre-registered scrambled *and*
+  random-band controls, the inert-path hard-block `tests/test_physics_quarantine.py`)
+  is the transferable lesson.
 - **C5 — deployment.** ResNet18→ONNX FP32 ~13 ms/window CPU; INT8 4× smaller but
   10–15× slower (honest negative). (`results/deployment/appendix.md`.)
-- **Methodological caution (a contribution in its own right).** A naive
-  frequency-consistency physics loss was silently non-differentiable (argmax);
-  even once differentiable it was wrong-bearing-type → tonal-only → flat-baseline
-  — five defects that all passed a green test suite. The corrected
-  band-energy-vs-healthy-reference loss is the fix; the inert generic path is now
-  hard-blocked (`tests/test_physics_quarantine.py`).
 
 ### What did NOT survive — may NOT be claimed
-- **Clean accuracy**: no physics advantage (record-level near-ceiling).
-- **Data-efficiency (§8.2)**: neutral — ahead non-overlapping at only 1 of 3
-  reduced fractions → fails the prereg rule; the old "harmful at 10%" is gone (now
-  tied). (`summary_record_level.json`.)
-- **Severity-OOD (§8.3)**: dir A tied at ceiling; dir B favors physics on the
-  point estimate but is **not significant** (McNemar p=0.39; representative gap CI
-  [−2.27, +8.33] spans zero). Direction-only. (`summary_record_level.json`.)
-- **Interpretability §8.6a**: **reverses, and stays reversed band-aware.** Tonal:
-  vanilla 1.042 > physics 0.856. **Band-aware** (corrected bands incl. the
-  broadband lube/cavitation bands, physics-vs-vanilla head-to-head, no control):
-  vanilla in-band **0.146 > physics 0.099**; physics higher in only 2 of 10
-  classes; on `lubrification` (the noise-rescue class) **both models ≈0** (0.007 vs
-  0.002). IG attribution gives **no** support for a "physics-attention" mechanism —
-  not a positive in any form. (`results/xai_alignment/alignment.json` band_aware,
-  `findings_8_6.md`.)
-- **Calibration §8.6b**: a **wash / non-result** — the 5 dB ECE direction flips
-  between runs (MC-dropout is stochastic); only a modest clean-ECE edge for pc_cnn
-  is stable (single-seed, window-level). No calibration advantage.
-  (`results/uncertainty/calibration.json`.)
-- **§8.5 HybridPINN**: excluded — physics branch still rolling-element (SKF-6205);
-  not a journal-bearing physics test.
-- Any **"physics-informed learning helps"** family claim; any window-level
-  significance; any real-bearing claim.
+- **Noise robustness** — does not replicate at n=12 (§8.8 above). This was the last
+  candidate positive; it is now retired.
+- **Clean accuracy, data-efficiency, severity-OOD, interpretability, calibration** —
+  each tested, none survives (detail under C3).
+- **Any "a spectral regularizer helped" wording** — the n=12 grid kills even the
+  narrow Phase-6 framing (random non-fault bands are the most robust arm; correct
+  physics is the weakest w=1.0 arm; all n.s. vs CE-only).
+- **§8.5 HybridPINN** — excluded (physics branch still rolling-element; not a
+  journal-bearing physics test).
+- Any **"physics-informed learning helps"** family claim; any **window-level** or
+  **within-/representative-seed** significance as a headline; any real-bearing claim.
 
 ### Required wording limits (do not loosen)
-- Say "**the implemented PC-CNN band-energy consistency loss at w=1.0** improved
-  5 dB robustness in a **same-architecture ablation** on synthetic data" — NOT
-  "physics-informed learning improves robustness."
-- The loss is a **band-consistency regularizer**, not a mechanistic diagnostic
-  solver (`sain` has no bands → it cannot penalize a healthy prediction).
-- State: n=3 seeds; near-ceiling (small discordant counts); the vs-resnet edge is
-  secondary/seed-sensitive; the small clean trade-off (w=1.0 clean 98.61 vs
-  98.99–99.68 for lower weights); synthetic-only.
-- The benefit is **largely a generic high-weight spectral regularizer, not
-  established as physics-specific** — the §8.7 control reproduces it with WRONG
-  per-class targets *at the representative seed and in 2 of 3 seeds* (the correct
-  per-class mapping is **not necessary**); the seed-mean degradation (2.84) is
-  intermediate. Correct physics *may* add cross-seed stability (n=3, not resolvable).
-  A matched-strength non-physics regularizer control is still needed to fully earn
-  the word "generic." **Do not claim "physics."**
+- The study is a **complete negative**: "on this synthetic benchmark, the implemented
+  physics-informed mechanisms do not outperform data-driven baselines on any tested
+  axis; a promising n=3 noise-robustness result failed to replicate at n=12." Do
+  **not** claim a physics benefit of any kind, and do **not** claim "a spectral
+  regularizer helped."
+- The **inferential unit is the record (528)** for accuracy and the **seed** for
+  cross-run claims. **Never quote the within-seed McNemar (14–0, p=1.2e-4) as
+  evidence** — it is the confounded estimand; the seed-level Wilcoxon (n.s.) governs.
+- Report the **n=3→n=12 dissolution as the finding**, prominently, not as a footnote.
+- Synthetic-only; no real-rig validation; near-ceiling clean task.
 
-### Open before paper-ready (owner decisions)
-1. ~~F9 control~~ — **DONE** (§8.7, `f9_scramble_record_level.json`): the
-   scrambled-reference control **reproduces** the noise robustness with wrong
-   per-class targets → the benefit is **generic high-weight spectral
-   regularization, not physics-specific** (correct physics only adds cross-seed
-   stability). Verdict folded into the wording limits above. No "physics" claim.
-2. **F13 — more than n=3 seeds (GPU)** for stronger seed-level inference (the
-   scramble's seed-fragility, std 5.31, makes this more valuable than before).
-3. ~~Band-aware §8.6a~~ — **DONE** (negative): the band-aware recompute also has
-   vanilla ahead and shows both models ignore the lube band → no interpretability
-   benefit. No further XAI work needed unless a different mechanism probe is desired.
-4. **§8.5 HybridPINN** — rebuild on journal-bearing features or leave excluded.
-5. **Provenance manifest** — one command/commit/dataset-hash/artifact per paper
-   table (audit Rec 8).
-6. **Matched-strength non-physics regularizer control (2026-06-22 audits, F5/Rec3)**
-   — an entropy penalty and/or random non-physical bands at w=1.0, same budget. §8.7
-   shows the *correct* per-class mapping is not necessary; this control is what would
-   let the paper say *generic regularization* rather than only "not physics-specific."
-7. **Remove/rewrite the stale fabricated paper (2026-06-22 Opus audit, F1)** —
-   `config/docs/paper/main.tex` + `config/docs/reports/Final_Report_UNVALIDATED.pdf`
-   describe a non-existent study (CWRU data, 98.1%, expert-validated XAI,
-   rolling-element BPFO/BPFI physics). Owner decision 2026-06-22: **defer to Phase 7**
-   — the draft keeps its Gate-0 "UNVALIDATED — invented results" header until the real
-   paper is written from this memo. It must NOT survive into any submission.
+### Open before paper-ready (Phase 7 — submission tasks)
+1. **Remove/stub the stale fabricated paper** — `config/docs/paper/main.tex` +
+   `config/docs/reports/Final_Report_UNVALIDATED.pdf` (CWRU/98.1%/expert-validated/
+   rolling-element — a different, non-existent study). Both fourth-round audits: it
+   must not reach a referee. **Being done in Phase 7 (this docs pass).**
+2. **Reconcile the verdict docs** — README, `results/README.md`, `PROJECT_STATE.md`,
+   `results/phase5_bandenergy/findings_bandenergy.md` to the n=12 reality. (In progress.)
+3. **Externalize reproducibility (audit M1)** — pin a **content hash** of
+   `dataset_v2.h5`, archive the checkpoints (Zenodo); the chain command→commit→
+   dataset-hash→checkpoint→result must be closeable by a cold referee.
+4. **Provenance manifest** — one command/commit/dataset-hash/checkpoint/
+   random-reference-hash per paper table.
+5. **`ops_aware` field rename (audit M2)** — it records the *eval* flag; the *training*
+   loss did use per-sample rpm (independently confirmed, 2026-06-24 Opus). Rename /
+   add a `train_metadata_rpm_used` field so it cannot be misread.
+6. **Write the manuscript from scratch** from this §0 — dataset + benchmark + complete
+   negative + methodological caution; record-level tables only; synthetic-only.
 
-### Remediation status (Phase 6)
-Steps 1–4 done (docs reconciled; record-level benchmark stats; quarantine/relabel;
-band-energy loss + frozen healthy reference + CI). Step 5: reruns done; **5a
-record-level confirmation done** (`summary_record_level.json`, `0696790`); **5b
-audit fixes done** (F6 estimator consistency, F10 inert-path hard-block,
-`a2e09d9`); **5c XAI/calibration recompute done** (`2b534bf`, this memo). Two
-independent external audits reviewed the work; the 2026-06-16 auditor reproduced
-every record-level number. A **third independent-audit round** (2026-06-22, GPT-5 +
-fresh Opus) reproduced everything by execution with no critical findings. **This memo
-was RATIFIED by the owner on 2026-06-23 (Gate 5).**
+### Status (Phase 7)
+The §8.8 n=12 grid (`results/p7_strengthen/`, analysis
+`scripts/p7_strengthen_record_level.py`, pre-registered PROTOCOL §8.8) ran on Colab
+(48 runs, single commit `4a2063d`); record-level seed-level analysis committed
+(`0797258`). The **fourth independent-audit round** (GPT-5 + fresh Opus, 2026-06-24)
+reproduced every decisive number by execution — no critical findings — and both
+auditors' verdict is: **trustworthy; publishable only as a synthetic dataset + frozen
+benchmark + rigorous complete negative + methodological caution, not as any physics
+win.** **RATIFIED by the owner on 2026-06-24.** Next: merge to `main`, build the
+reproducibility package, write the manuscript from this §0.
 
 ---
 
-> ⚠️ The sections below (§1–§5) are the PRE-AUDIT draft, retained for provenance.
-> They overclaim per §0 and must not be cited until remediation completes.
-
-## 1. One-paragraph verdict (SUPERSEDED — see §0)
-
-On clean synthetic journal-bearing data, **physics-informed learning does not
-beat purely data-driven models on accuracy** — tested rigorously across noise,
-data-efficiency, severity-OOD, a physics-weight ablation, and operating-
-condition metadata, including the low-data regime where physics priors are
-*supposed* to help most (there it actively hurts). The data-driven CNN already
-captures the discriminative spectral structure the generator embeds. Physics
-training does, however, yield a **modest interpretability and calibration gain**
-(more physics-aligned attributions, lower ECE) at no accuracy cost. The durable
-contributions are the **physics-grounded dataset/generator (C1)**, the **frozen
-reproducible benchmark (C2)**, this **rigorous negative (C3)** plus a
-methodological caution, and the **interpretability result (C4)**.
-
-## 2. Results by contribution (all artifact-linked)
-
-### C1 — Dataset & generator (`results/dataset_v2_validation/`)
-`dataset_v2.h5`: 3,520 records, 320/class, 11 journal-bearing fault classes,
-exact 80/class/severity stratification, record-level leakage-checked splits,
-SNR-20/10/5 test variants. Generator is physics-normative (`docs/PHYSICS.md`),
-enforced by a 34-test spectral CI battery (`tests/test_physics_signatures.py`).
-
-### C2 — Frozen benchmark (`results/benchmark/summary.md`)
-Pre-registered protocol (Adam 1e-3, batch 64, ≤60 ep, patience 10, 3 seeds,
-test-touched-once). Headline (test acc %, 2,640 windows):
-voting_ensemble **96.48** · resnet18 96.14±0.28 · cnn_lstm 96.12±0.16 ·
-physics_constrained_cnn 95.98±0.36 (physics-OFF, see §8.0) · RandomForest
-94.61±0.05 · cnn1d 91.94±2.84 · multitask_pinn 90.28 · hybrid_pinn 90.04 ·
-patchtst 89.85 · attention_cnn 89.37 (1 seed collapsed).
-
-### C3 — Physics advantage: a complete, decisive NEGATIVE
-- **§8.1 Noise** (`results/noise_robustness/summary.md`): physics-family mean
-  degradation clean→5 dB 8.51 vs vanilla 15.54 — *but* outlier-driven
-  (attention_cnn Δ50.6 inflates the vanilla mean; excluding it, vanilla ≈6.8
-  beats physics). Most noise-robust single model is **vanilla resnet18**
-  (Δ1.70, still 94.4% at 5 dB). Verdict: no robust physics edge.
-- **§8.2 Data-efficiency** (`results/phase5_dataeff_fixed/before_after_8_2.md`):
-  fixed (differentiable) physics loss at 10% data → **91.11±3.29, worse** than
-  vanilla 93.60 and than its own inert version 93.55, one seed crashing to 87.5;
-  25/50/100% within noise. Prereg rule: physics wins **0/3** → REJECTED. Low
-  data — physics's best-case regime — is where it does the most harm.
-- **§8.3 Severity-OOD** (`results/phase5/severity_ood/`): train→test severe,
-  pc_cnn 96.87 vs resnet18 97.37 (vanilla ahead); train→test incipient, pc_cnn
-  79.80 vs 73.43 (pc_cnn backbone +6.4). Split, and an *architecture* effect
-  (physics was inert in these runs) — not a physics-as-such result.
-- **§8.4 Physics-weight ablation** (`results/phase5_fixed/before_after_8_4.md`):
-  before the fix the loss was inert (all w byte-identical); after the fix, clean
-  flat ~96, 5 dB neutral at low w (92.5 vs 91.0, within ±5–6 noise) and
-  **harmful at high w** (w=1.0 → 83.1, one seed 71.7). More physics weight →
-  worse, more unstable. REJECTED.
-- **§8.5 True metadata** (`results/phase5/true_metadata/`): hybrid_pinn with true
-  per-record rpm/load/viscosity → 89.76 vs Phase-4 blind 90.04. No gain. NULL.
-
-### Methodological finding (a paper contribution in its own right)
-`PhysicsConstrainedCNN.compute_physics_loss` was **silently non-differentiable**
-(routed through `argmax`; `requires_grad=False`), so the physics weight had zero
-training effect — undetectable without execution checks (proven by byte-identical
-w-sweep runs). Corrected to a softmax-weighted differentiable penalty
-(`experiments/PHYSICS_LOSS_DIAGNOSIS.md`, PROTOCOL §7 amendment); even corrected,
-no accuracy benefit. A common, easily-missed PINN pitfall.
-
-### C4 — Physics-consistent XAI & calibration (modest POSITIVE)
-(`results/xai_alignment/findings_8_6.md`; resnet18 and pc_cnn share the identical
-3.85M-param backbone, isolating the physics-loss effect.)
-- **8.6a**: physics model's IG attributions are more concentrated in PHYSICS.md
-  characteristic-frequency bands than the same-backbone vanilla model
-  (specificity ratio 0.849 vs 0.716). Physics training shifts *what the model
-  attends to* toward physical frequencies — even without an accuracy gain.
-- **8.6b**: physics model better calibrated (ECE clean 0.022 vs 0.028; 5 dB
-  0.018 vs 0.027); both reach 100% accuracy at 50% coverage (reject option).
-
-### C5 — Deployment (`results/deployment/appendix.md`)
-ResNet18→ONNX FP32 **13 ms/window CPU** (parity 1.5e-4); INT8 4× smaller but
-10–15× slower — honest negative (dynamic quant doesn't help conv nets).
-
-## 3. Claims the paper MAY make (frozen)
-1. A physics-grounded synthetic journal-bearing dataset + CI-enforced generator. [C1]
-2. A frozen, pre-registered, reproducible 11-model benchmark with honest stats. [C2]
-3. A rigorous, decisive negative: physics-informed learning does not improve
-   accuracy over data-driven baselines on clean synthetic journal-bearing data,
-   across all five tested regimes — including the low-data steelman. [C3]
-4. A methodological caution: a naive frequency-consistency physics loss can be
-   silently non-differentiable; corrected, it still does not help accuracy.
-5. A modest interpretability/calibration benefit from physics training, same
-   backbone (more physics-aligned attributions; lower ECE). [C4]
-6. Deployment characterization (ONNX latency; INT8 negative). [C5]
-
-## 4. Claims the paper may NOT make
-- That physics improves classification accuracy (false — rejected in every regime).
-- Any real-world / real-bearing performance claim (study is synthetic-only).
-- A strong/statistically-robust C4 claim *as-is* — see open items below.
-
-## 4b. Validity of the negative — physics self-consistency check (2026-06-14)
-
-Added after ratification (does not change the §3–4 claims — it *bounds* them).
-Run `scripts/verify_physics_consistency.py`: it compares the frequencies the
-physics loss expects (`FaultSignatureDatabase`, same source the loss uses)
-against the actual mean spectra of `dataset_v2` signals per class.
-
-- **Tonal faults** (imbalance 1X, misalignment 2X/3X, clearance, oil whirl
-  sub-sync ~0.45X): the expected characteristic frequencies ARE present as
-  dominant peaks in the data. The generator physics is **self-consistent** here
-  — the signatures a physics model could exploit genuinely exist.
-- **Broadband/impulsive faults** (cavitation, wear, lubrication): energy is
-  broadband/impulsive *by design* (e.g. cavitation kurtosis ≈ 6.8), so the
-  signature DB's **narrow expected-frequency list is a poor encoding** of these
-  signatures — the physics loss is looking for narrow peaks that physically
-  aren't narrow.
-- **Mixed faults** (3 classes): `get_expected_frequencies` has **no entry** and
-  the lookup fails → the physics loss contributed **zero** constraint for them.
-
-**Implication (honest bound on C3):** the generator is sound, but our physics-
-*loss* encoding is partial — good for tonal faults, crude for broadband, absent
-for mixed. So the loss-based negative is partly attributable to an incomplete
-encoding, NOT proof that *no* physics prior could ever help. The paper must
-state C3 as *"the physics-informed mechanisms we implemented, as formulated, do
-not improve accuracy"* — not a universal claim. Why the verdict is still robust:
-(a) the data-driven models already reach ~96% (little headroom); (b) physics
-actively HURT at 10% data (§8.2); (c) a second, independent mechanism
-(hybrid_pinn metadata, §8.5) was also null. A better physics encoding
-(broadband + mixed) is honest future work.
-
-## 5. Open items before paper-ready (carry into Phase 6/7)
-- Improve/disclose the physics-loss frequency encoding (broadband + mixed-fault
-  signatures) — see §4b; either fix-and-retest or report as a stated limitation.
-- Seed-average the §8.6 calibration ECE (currently single checkpoint each).
-- §8.6a: control-band sensitivity check (absolute fractions depend on it).
-- Generate figures from the JSONs: data-efficiency curve, reliability diagram,
-  reject curve, per-class alignment, noise-degradation curves.
-- §8.4 McNemar (w=0 vs best-w at 5 dB) via a quick checkpoint re-eval to capture
-  paired per-window predictions (not stored in metrics.json).
-
-## 6. Honest framing recommendation
-Strongest, most defensible framing is a **dataset + benchmark paper** that uses
-the benchmark to deliver a rigorous negative on physics-informed learning plus
-an interpretability finding — turning "synthetic-only" from a weakness into the
-contribution (a released tool). Venue tier: IEEE Access / Sensors / Measurement
-special issue / workshop / arXiv preprint — not a top mechanical-systems venue
-(synthetic-only ceiling).
+> §1–§5 (the PRE-AUDIT Phase-5 draft) were **removed 2026-06-24**: they overclaimed an
+> interpretability/calibration gain and framed C3 as a clean-data negative-with-a-
+> surviving-noise-positive, all superseded by §0. Recoverable from git history; must
+> not be cited.
