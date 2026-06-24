@@ -1,0 +1,21 @@
+% T1 -- record-level benchmark (11 models). Source:
+% results/benchmark/summary_record_level.md
+% [STUB: populated when Section 4 (Benchmark & protocol, C2) is drafted.]
+\begin{table}[t]
+  \centering
+  \caption{\textit{[TODO T1]} Record-level benchmark (528 records, soft-vote;
+    mean$\pm$std over 3 seeds). No model --- physics-informed or not --- shows an
+    accuracy advantage; the best vanilla deep model ties the CE-only PC-CNN
+    (gap $+0.00$, McNemar $p=1$). Physics-labeled rows are honestly relabeled
+    (PC-CNN $=$ CE-only/architecture, physics loss OFF; \texttt{hybrid} $=$
+    rolling-element branch $+$ constant metadata; \texttt{multitask} $=$
+    single-task).}
+  \label{tab:benchmark}
+  \begin{tabular}{lcc}
+    \toprule
+    Model & Record acc. (\%) & Note \\
+    \midrule
+    \textit{[TODO: 11 rows]} & --- & --- \\
+    \bottomrule
+  \end{tabular}
+\end{table}

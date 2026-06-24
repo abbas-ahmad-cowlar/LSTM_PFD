@@ -1,0 +1,228 @@
+%% A Synthetic Journal-Bearing Benchmark for Stress-Testing
+%% Physics-Informed Fault Diagnosis  (artifact: JBFD-11)
+%%
+%% Manuscript style: NeurIPS Datasets & Benchmarks / Evaluations.
+%% Build:  latexmk -pdf main.tex     (offline; self-contained neurips_2023.sty)
+%% arXiv categories: cs.LG (primary) + eess.SP (secondary); cross-list stat.ML.
+%%
+%% BINDING CLAIM BOUNDARIES (paper/OUTLINE.md S5; results/FINDINGS.md S0):
+%%   - NO "physics improves ..." wording of any kind (not even "a spectral
+%%     regularizer helped"). Complete negative on the TESTED methods only.
+%%   - Record-level (528) + seed-level estimands ONLY. The within-seed /
+%%     representative-seed McNemar (14--0, p=1.2e-4) is reported ONLY as the
+%%     cautionary confounded statistic, never as evidence of an effect.
+%%   - Synthetic-only, stated throughout. "will archive" until the Zenodo DOI.
+%%   - Every number traces to an artifact path under results/.
+
+\documentclass{article}
+
+% [preprint] = authors shown, no line numbers (arXiv). Switch to no-option for
+% an anonymous D&B submission, or [final] for camera-ready.
+\usepackage[preprint]{neurips_2023}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+
+\graphicspath{{figures/}}
+
+% Include a figure if its file exists, else a labelled placeholder box, so the
+% skeleton always compiles while figures are still being generated.
+\newcommand{\figfromfile}[1]{%
+  \IfFileExists{figures/#1}%
+    {\includegraphics[width=\linewidth]{#1}}%
+    {\fbox{\parbox[c][3.2cm][c]{0.98\linewidth}{\centering\itshape
+       figure placeholder --- \texttt{figures/#1} not yet generated}}}%
+}
+
+\title{A Synthetic Journal-Bearing Benchmark for Stress-Testing\\
+       Physics-Informed Fault Diagnosis}
+
+% Affiliation provisional (owner: PIEAS; currently with Cowlar Design Studio);
+% to be finalized before the arXiv posting. Anonymize only for a double-blind
+% D&B submission.
+\author{%
+  Syed Abbas Ahmad\thanks{Work conducted with Cowlar Design Studio.
+  Affiliation provisional; finalized before arXiv posting.}\\
+  Pakistan Institute of Engineering and Applied Sciences (PIEAS)\\
+  \texttt{bsso.cowlar@gmail.com}%
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Physics-informed neural networks are increasingly proposed for bearing fault
+diagnosis, but controlled, leakage-free evidence that physics priors actually
+\emph{help} is scarce --- and the journal/hydrodynamic-bearing regime, unlike
+the rolling-element datasets that dominate the literature (CWRU, Paderborn), has
+almost no public benchmarks. We release \textbf{JBFD-11}, a physics-grounded
+\textbf{synthetic} journal-bearing vibration dataset (11 fault classes,
+severity-stratified, record-level leakage-checked, with SNR-20/10/5 variants)
+from a generator whose spectral signatures are locked by a 34-test CI battery,
+together with a \textbf{frozen benchmark of 11 classical, deep, and
+physics-informed models, analyzed at the record level}. We use this controlled
+testbed to stress-test the physics-informed methods we implement --- a
+band-energy spectral-consistency loss judged against a frozen healthy-class
+reference, with per-sample operating conditions --- across the regimes where
+such priors are theorized to help: noise robustness, data-efficiency, severity
+out-of-distribution, interpretability, and calibration. On every axis,
+\textbf{the tested physics-informed methods show no statistically supported,
+seed-robust advantage} over strong data-driven baselines. We further document
+how readily an apparent benefit arises and then disappears under scrutiny: a
+promising $n{=}3$ analysis --- a highly significant \emph{representative-seed}
+McNemar result ($14$--$0$, $p=1.2\times10^{-4}$) --- \textbf{dissolves under a
+pre-registered $n{=}12$ \emph{seed-level} test} (Wilcoxon $p=0.79$); a
+pre-registered control that swaps the physics targets for \textbf{random
+non-fault frequency bands} has the lowest mean degradation numerically yet still
+fails the pre-registered robustness criterion. Our contribution is a reusable
+physics-grounded benchmark, a rigorous complete negative on the tested methods,
+and a concrete methodological caution about seed counts and estimands in
+physics-informed evaluation. We release the dataset, generator, and analysis
+code, and \textbf{will} archive the trained checkpoints and full reproducibility
+package on a public repository; every headline number was independently
+recomputed from the raw checkpoints by separate audit scripts.
+\emph{(Synthetic-only; no real-rig validation.)}
+\end{abstract}
+
+% =====================================================================
+\section{Introduction}
+\label{sec:intro}
+\textit{[TODO C-intro] The gap (journal-bearing data scarcity; physics-informed
+diagnosis proposed but under-evaluated~\citep{raissi2019pinn}); what a controlled
+synthetic testbed buys; contributions; the headline negative and the
+$n{=}3\!\rightarrow\!n{=}12$ hook (Fig.~\ref{fig:dissolution}). State
+synthetic-only here. Rolling-element benchmarks dominate the
+literature~\citep{smith2015cwru,lessmeier2016paderborn}.}
+
+% =====================================================================
+\section{Related work}
+\label{sec:related}
+\textit{[TODO] Vibration diagnosis (signal processing $\rightarrow$ deep
+learning); PINNs / physics-informed diagnosis~\citep{raissi2019pinn};
+synthetic vibration data; evaluation rigor, negative results, and
+reproducibility in ML.}
+
+% =====================================================================
+\section{Dataset \& generator [C1]}
+\label{sec:dataset}
+\textit{[TODO C1] Physics (docs/PHYSICS.md: 1X/2X/3X harmonics, sub-synchronous
+oil-whirl, low-frequency lube, cavitation HF bursts, wear broadband); 11
+classes; severity stratification; record-level group splits + leakage check;
+SNR variants; the 34-test spectral CI. Datasheet (Table~\ref{tab:datasheet}).
+Limitations: synthetic; cavitation weakly expressed.}
+
+\begin{figure}[t]
+  \centering
+  \figfromfile{F3_dataset_overview.pdf}
+  \caption{\textit{[TODO caption F3]} JBFD-11 signature map: the 11 classes
+    against their characteristic vibration signatures at the nominal shaft speed
+    $\Omega_0=60$\,Hz, with the broadband/HF families distinguished. Source:
+    \texttt{docs/PHYSICS.md} \S4; \texttt{dataset\_card.yaml}.}
+  \label{fig:dataset}
+\end{figure}
+
+\input{tables/T4_datasheet.tex}
+
+% =====================================================================
+\section{Benchmark \& protocol [C2]}
+\label{sec:benchmark}
+\textit{[TODO C2] Frozen protocol (Adam 1e-3 / batch 64 / $\le$60 ep / patience
+10 / 3 seeds / test-touched-once); 11 models; why the record (528), not the
+window (2{,}640), is the inferential unit; near-ceiling results; no physics
+accuracy edge (best vanilla ties the CE-only PC-CNN, gap $+0.00$, McNemar
+$p=1$).}
+
+\input{tables/T1_benchmark.tex}
+
+% =====================================================================
+\section{Stress-testing the tested physics-informed methods [C3]}
+\label{sec:stress}
+\textit{[TODO C3] The implemented method: PC-CNN + band-energy-vs-healthy-
+reference consistency loss (per-sample rpm). The five regimes. The
+pre-registered \S8.8 $n{=}12$ grid (CE-only / correct / scramble / random-band
+$\times$ 12 seeds; Table~\ref{tab:grid}, Fig.~\ref{fig:spread}); the seed-level
+estimand + fixed decision rule; the result (no arm clears the bar). The other
+regimes (\S8.2 data-efficiency, \S8.3 severity-OOD, \S8.6a interpretability,
+\S8.6b calibration), each negative (Table~\ref{tab:regimes}).}
+
+\input{tables/T2_strengthen_grid.tex}
+\input{tables/T3_other_regimes.tex}
+
+\begin{figure}[t]
+  \centering
+  \figfromfile{F1_degradation_spread.pdf}
+  \caption{\textit{[TODO caption F1]} Per-seed clean$\rightarrow$5\,dB
+    record-level degradation (528 records, soft-vote) for the four \S8.8 arms,
+    $n{=}12$ seeds; the dashed line is the pre-registered robustness threshold
+    $\tau=1.0$\,pt. The spread that fooled $n{=}3$ is visible. Source:
+    \texttt{results/p7\_strengthen/p7\_strengthen\_record\_level.json}.}
+  \label{fig:spread}
+\end{figure}
+
+% =====================================================================
+\section{Methodological caution [C4]}
+\label{sec:caution}
+\textit{[TODO C4] The $n{=}3\!\rightarrow\!n{=}12$ dissolution
+(Fig.~\ref{fig:dissolution}): a within-seed McNemar of $14$--$0$
+($p=1.2\times10^{-4}$) at the representative seed becomes a seed-level Wilcoxon
+$p=0.79$ at $n{=}12$; the random non-fault-band control is the most robust arm.
+The broken-loss saga (five defects, all passing a green suite).
+Recommendations: seed as the inferential unit; pre-register the estimand;
+scrambled + matched-strength non-physics controls.}
+
+\begin{figure}[t]
+  \centering
+  \figfromfile{F2_n3_to_n12_dissolution.pdf}
+  \caption{\textit{[TODO caption F2 --- HEADLINE]} The apparent
+    noise-robustness benefit is a seed artifact. \emph{Left}: at $n{=}3$ (seeds
+    0--2) the correct-physics arm appears far more robust than CE-only.
+    \emph{Right}: the same comparison under the pre-registered $n{=}12$
+    seed-level test is a null (Wilcoxon $p=0.79$). Same data, same code path;
+    the gap dissolves as seeds grow. Source:
+    \texttt{results/p7\_strengthen/p7\_strengthen\_record\_level.json}.}
+  \label{fig:dissolution}
+\end{figure}
+
+% =====================================================================
+\section{Reproducibility [C5]}
+\label{sec:repro}
+\textit{[TODO C5] results/PROVENANCE\_MANIFEST.md; content hashes; the Zenodo
+checkpoint archive (DOI pending --- ``will archive''); the independent
+from-checkpoint reproduction (audit\_reports/$\ldots$2026-06-24$\ldots$);
+hosting / license (CC-BY-4.0) / maintenance plan; D\&B reproducibility
+checklist.}
+
+% =====================================================================
+\section{Limitations \& scope}
+\label{sec:limitations}
+\textit{[TODO] The section reviewers will read: synthetic-only / no real rig;
+near-ceiling clean task; single dataset; the negative is about the \emph{methods
+we implemented and tested}, not a claim that no physics prior could ever help.}
+
+% =====================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+\textit{[TODO]}
+
+% =====================================================================
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+% =====================================================================
+\appendix
+\section{Deployment}
+\label{app:deployment}
+\textit{[TODO C5-appendix] ResNet18 $\rightarrow$ ONNX FP32 $\approx$13\,ms/window
+CPU; INT8 4$\times$ smaller but 10--15$\times$ slower (honest negative). Source:
+\texttt{results/deployment/appendix.md}.}
+
+\end{document}
