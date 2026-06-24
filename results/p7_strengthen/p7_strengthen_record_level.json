@@ -1,0 +1,235 @@
+{
+  "scope": "\u00a78.8 strengthen grid: record-level (528) + SEED-LEVEL (n=12). Clean->5dB degradation per seed; Wilcoxon signed-rank vs CE-only; robust-seed count (degr < tau=1.0). PROTOCOL \u00a78.8.",
+  "tau_robust_pt": 1.0,
+  "arms": {
+    "w0_CEonly": {
+      "clean_seedmean": [
+        99.12,
+        0.62
+      ],
+      "snr5_seedmean": [
+        95.58,
+        4.14
+      ],
+      "degradation_seedmean": 3.54,
+      "degradation_median": 2.46,
+      "degradation_per_seed": [
+        1.89,
+        8.33,
+        2.65,
+        3.22,
+        2.27,
+        0.0,
+        0.0,
+        2.65,
+        11.17,
+        10.04,
+        0.0,
+        0.19
+      ],
+      "snr5_per_seed": [
+        96.78,
+        90.34,
+        96.97,
+        94.32,
+        97.54,
+        99.05,
+        99.62,
+        96.78,
+        87.5,
+        89.02,
+        99.62,
+        99.43
+      ],
+      "robust_seed_count_tau1.0": 4,
+      "representative_seed": "seed2"
+    },
+    "w1.0_correct": {
+      "clean_seedmean": [
+        98.72,
+        0.77
+      ],
+      "snr5_seedmean": [
+        95.25,
+        3.72
+      ],
+      "degradation_seedmean": 3.47,
+      "degradation_median": 2.84,
+      "degradation_per_seed": [
+        0.0,
+        0.38,
+        -0.19,
+        4.92,
+        3.41,
+        9.66,
+        0.57,
+        2.27,
+        7.2,
+        4.73,
+        8.71,
+        0.0
+      ],
+      "snr5_per_seed": [
+        97.92,
+        98.11,
+        99.62,
+        92.99,
+        96.02,
+        87.69,
+        97.35,
+        97.35,
+        92.05,
+        94.51,
+        89.77,
+        99.62
+      ],
+      "robust_seed_count_tau1.0": 5,
+      "representative_seed": "seed2"
+    },
+    "w1.0_scramble": {
+      "clean_seedmean": [
+        98.45,
+        0.97
+      ],
+      "snr5_seedmean": [
+        93.56,
+        6.64
+      ],
+      "degradation_seedmean": 4.89,
+      "degradation_median": 0.47,
+      "degradation_per_seed": [
+        9.09,
+        -0.38,
+        -0.19,
+        0.57,
+        10.61,
+        10.8,
+        -0.57,
+        17.23,
+        0.38,
+        -0.19,
+        0.38,
+        10.98
+      ],
+      "snr5_per_seed": [
+        88.07,
+        99.24,
+        99.43,
+        97.92,
+        89.02,
+        86.36,
+        98.86,
+        80.87,
+        99.24,
+        98.67,
+        99.24,
+        85.8
+      ],
+      "robust_seed_count_tau1.0": 7,
+      "representative_seed": "seed2"
+    },
+    "w1.0_random": {
+      "clean_seedmean": [
+        98.78,
+        0.64
+      ],
+      "snr5_seedmean": [
+        96.64,
+        3.31
+      ],
+      "degradation_seedmean": 2.15,
+      "degradation_median": 0.38,
+      "degradation_per_seed": [
+        8.71,
+        0.76,
+        -0.19,
+        0.38,
+        0.19,
+        0.0,
+        -0.38,
+        0.19,
+        0.95,
+        8.33,
+        6.44,
+        0.38
+      ],
+      "snr5_per_seed": [
+        89.96,
+        97.73,
+        99.62,
+        97.92,
+        99.24,
+        99.43,
+        98.3,
+        97.73,
+        96.97,
+        90.72,
+        92.8,
+        99.24
+      ],
+      "robust_seed_count_tau1.0": 9,
+      "representative_seed": "seed2"
+    }
+  },
+  "wilcoxon_vs_CEonly": {
+    "w1.0_correct": {
+      "median_paired_degr_reduction_pts": 0.28,
+      "mean_paired_degr_reduction_pts": 0.06,
+      "p_two_sided": 0.791015625,
+      "p_one_sided_more_robust": 0.3955078125,
+      "n_seeds_more_robust_than_CEonly": 7
+    },
+    "w1.0_scramble": {
+      "median_paired_degr_reduction_pts": 0.09,
+      "mean_paired_degr_reduction_pts": -1.36,
+      "p_two_sided": 0.75048828125,
+      "p_one_sided_more_robust": 0.641845703125,
+      "n_seeds_more_robust_than_CEonly": 6
+    },
+    "w1.0_random": {
+      "median_paired_degr_reduction_pts": 1.89,
+      "mean_paired_degr_reduction_pts": 1.39,
+      "p_two_sided": 0.2060546875,
+      "p_one_sided_more_robust": 0.10302734375,
+      "n_seeds_more_robust_than_CEonly": 8
+    }
+  },
+  "repseed_mcnemar_vs_CEonly_5dB": {
+    "w1.0_correct": {
+      "discordant_arm_better_ce_better": [
+        14,
+        0
+      ],
+      "p": 0.0001220703125,
+      "repseed_gap_pts": 2.65
+    },
+    "w1.0_scramble": {
+      "discordant_arm_better_ce_better": [
+        14,
+        1
+      ],
+      "p": 0.0009765625,
+      "repseed_gap_pts": 2.46
+    },
+    "w1.0_random": {
+      "discordant_arm_better_ce_better": [
+        14,
+        0
+      ],
+      "p": 0.0001220703125,
+      "repseed_gap_pts": 2.65
+    }
+  },
+  "decision": {
+    "rule": "PROTOCOL \u00a78.8; tau=1.0pt; robust = degr<tau on >=10/12 seeds AND Wilcoxon p<0.05 vs CE-only.",
+    "robust_seed_counts": {
+      "w0_CEonly": 4,
+      "w1.0_correct": 5,
+      "w1.0_scramble": 7,
+      "w1.0_random": 9
+    },
+    "correct_meets_robust_bar": false,
+    "random_meets_robust_bar": false,
+    "verdict": "NEITHER arm is robust at n=12 (robust-seed counts below 10/12 and/or Wilcoxon n.s.): the n=3 noise-robustness benefit does NOT replicate at n=12 \u2014 it was seed-fragile. Report conservative."
+  }
+}
