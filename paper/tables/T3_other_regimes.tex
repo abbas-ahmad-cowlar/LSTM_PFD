@@ -1,18 +1,35 @@
-% T3 -- the other regimes at a glance (each negative, record-level). Sources:
+% T3 -- the other four regimes at a glance (each negative, record-level). Sources:
 % results/phase5_bandenergy/summary_record_level.json (8.2 data-eff, 8.3 OOD);
 % results/xai_alignment/alignment.json (8.6a); results/uncertainty/calibration.json (8.6b)
-% [STUB: populated when Section 5 (Stress-testing, C3) is drafted.]
 \begin{table}[t]
   \centering
-  \caption{\textit{[TODO T3]} The other stress-test regimes, each record-level
-    and each negative: data-efficiency (\S8.2), severity-OOD (\S8.3),
-    interpretability (\S8.6a), calibration (\S8.6b).}
+  \caption{The other four stress-test regimes, each record-level and each
+    negative. ``Verdict'' is against each regime's pre-registered or stated
+    criterion; none yields a statistically supported, seed-robust advantage for
+    the tested method.}
   \label{tab:regimes}
-  \begin{tabular}{lll}
+  \begin{tabular}{p{0.20\linewidth}p{0.52\linewidth}p{0.18\linewidth}}
     \toprule
-    Regime & Result & Verdict \\
+    Regime & Record-level result & Verdict \\
     \midrule
-    \textit{[TODO: 4 rows]} & --- & negative \\
+    Data-efficiency (\S8.2) &
+      PC-CNN ahead of \texttt{resnet18} with non-overlapping $\pm1$\,std at 1 of
+      3 reduced fractions ($\ge$2 required); tied at 10\%, 50\% &
+      negative (neutral) \\
+    \addlinespace
+    Severity-OOD (\S8.3) &
+      dir.\ A ceiling tie ($100$/$100$); dir.\ B $82.58$ vs $76.01$ but McNemar
+      $p=0.39$, gap CI $[-2.27,+8.33]$ spans 0 &
+      negative (direction-only) \\
+    \addlinespace
+    Interpretability (\S8.6a) &
+      band-aware in-band IG fraction reverses: vanilla $0.146 >$ physics
+      $0.099$; $\approx$0 for both on \texttt{lubrification} &
+      negative (reverses) \\
+    \addlinespace
+    Calibration (\S8.6b) &
+      both ECE $<0.03$; 5\,dB ECE direction flips between MC-dropout runs &
+      negative (wash) \\
     \bottomrule
   \end{tabular}
 \end{table}

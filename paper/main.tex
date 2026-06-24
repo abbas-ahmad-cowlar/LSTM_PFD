@@ -46,14 +46,12 @@
 \title{A Synthetic Journal-Bearing Benchmark for Stress-Testing\\
        Physics-Informed Fault Diagnosis}
 
-% Affiliation provisional (owner: PIEAS; currently with Cowlar Design Studio);
-% to be finalized before the arXiv posting. Anonymize only for a double-blind
-% D&B submission.
+% Byline provisional; owner to finalize before the arXiv posting. Anonymize only
+% for a double-blind D&B submission.
 \author{%
-  Syed Abbas Ahmad\thanks{Work conducted with Cowlar Design Studio.
-  Affiliation provisional; finalized before arXiv posting.}\\
+  Syed Abbas Ahmad\\
   Pakistan Institute of Engineering and Applied Sciences (PIEAS)\\
-  \texttt{bsso.cowlar@gmail.com}%
+  \texttt{syedabbasahmad6@gmail.com}%
 }
 
 \begin{document}
@@ -262,51 +260,156 @@ stress-test of \S\ref{sec:stress}.
 % =====================================================================
 \section{Stress-testing the tested physics-informed methods [C3]}
 \label{sec:stress}
-\textit{[TODO C3] The implemented method: PC-CNN + band-energy-vs-healthy-
-reference consistency loss (per-sample rpm). The five regimes. The
-pre-registered \S8.8 $n{=}12$ grid (CE-only / correct / scramble / random-band
-$\times$ 12 seeds; Table~\ref{tab:grid}, Fig.~\ref{fig:spread}); the seed-level
-estimand + fixed decision rule; the result (no arm clears the bar). The other
-regimes (\S8.2 data-efficiency, \S8.3 severity-OOD, \S8.6a interpretability,
-\S8.6b calibration), each negative (Table~\ref{tab:regimes}).}
+\paragraph{The tested method.}
+The physics-informed method we test is a physics-constrained CNN
+(\texttt{physics\_constrained\_cnn}, PC-CNN): a ResNet1D backbone whose physics
+enters through an additive loss term weighted by $w$. The term is a
+\emph{band-energy spectral-consistency} loss judged against a \emph{frozen
+healthy-class reference}. For each class $c$ and each of its expected frequency
+bands $b$ --- journal-bearing tonal harmonics built from the \emph{per-sample}
+shaft speed plus absolute broadband bands (\texttt{docs/PHYSICS.md}\,\S4) --- the
+band penalty is $\mathrm{pen}_b = \mathrm{relu}\!\left(1 - \mathrm{frac}_b /
+H_{\mathrm{ref}}[c][b]\right)$, where $\mathrm{frac}_b$ is the signal's energy
+fraction in band $b$ and $H_{\mathrm{ref}}$ is the measured healthy-class
+per-band energy fraction (\texttt{healthy\_reference.json}, computed from
+1{,}120 training healthy windows). Per-class penalties are averaged over the
+class's bands and weighted by the softmax probability of $c$. The loss is
+differentiable and unit-tested, and the per-sample operating conditions are
+wired into training. We stress-test this one method across the five regimes
+where physics priors are theorized to help: noise robustness, data-efficiency,
+severity out-of-distribution, interpretability, and calibration.
+
+\paragraph{The pre-registered $n{=}12$ grid (centerpiece).}
+Noise robustness is the regime where a candidate positive last survived, so we
+designed a pre-registered grid to stress-test it. The protocol --- four arms,
+the seed-level estimand, and the decision rule --- was committed
+(\texttt{experiments/PROTOCOL.md}\,\S8.8, git \texttt{4a2063d})
+\emph{before} the runs; all 48 \texttt{metrics.json} carry that commit and
+finished after it. All four arms share the same PC-CNN architecture, budget, and
+dataset, at 12 seeds: (i)~\textbf{CE-only} ($w{=}0$), retrained in the same code
+path; (ii)~\textbf{correct} band-energy ($w{=}1.0$), the validated loss;
+(iii)~\textbf{scramble} ($w{=}1.0$), each fault judged against a \emph{different}
+fault's real bands (a fixed seeded derangement) --- same loss strength, wrong
+assignment; and (iv)~\textbf{random-band} ($w{=}1.0$), each class judged against
+\emph{random non-fault} bands of matched count and width, provably
+non-overlapping with any real characteristic band (frozen
+\texttt{random\_reference.json}) --- a matched-strength \emph{non-physics}
+control. The estimand is the paired per-seed clean$\rightarrow$5\,dB
+record-level degradation, tested by a seed-level Wilcoxon signed-rank against
+CE-only; the fixed decision rule sets $\tau=1.0$\,pt and calls an arm
+``robust'' only if its degradation is below $\tau$ on $\ge$10/12 seeds
+\emph{and} its Wilcoxon $p<0.05$.
 
 \input{tables/T2_strengthen_grid.tex}
-\input{tables/T3_other_regimes.tex}
+
+\paragraph{Result: the candidate positive does not replicate.}
+At $n{=}12$ no arm clears the bar (Table~\ref{tab:grid},
+Fig.~\ref{fig:spread}). Correct physics degrades $3.47\pm3.42$\,pt versus
+CE-only's $3.54\pm3.85$ --- statistically indistinguishable (seed-level Wilcoxon
+$p=0.79$) --- and is robust on only 5/12 seeds; scramble is $4.89$\,pt
+($p=0.75$, 7/12) and random-band is $2.15$\,pt ($p=0.21$, 9/12). Every arm is
+dominated by seed variance, and the direction of the (non-significant) effects
+is itself telling: the \emph{non-physical} random-band control has the lowest
+mean degradation and the most robust seeds, while \emph{correct} physics is the
+weakest of the three $w{=}1.0$ arms. The data therefore support neither a
+physics-specific benefit nor a generic spectral-regularizer benefit; the
+candidate positive was seed-fragile (\S\ref{sec:caution}).
 
 \begin{figure}[t]
   \centering
   \figfromfile{F1_degradation_spread.pdf}
-  \caption{\textit{[TODO caption F1]} Per-seed clean$\rightarrow$5\,dB
-    record-level degradation (528 records, soft-vote) for the four \S8.8 arms,
-    $n{=}12$ seeds; the dashed line is the pre-registered robustness threshold
-    $\tau=1.0$\,pt. The spread that fooled $n{=}3$ is visible. Source:
+  \caption{Per-seed clean$\rightarrow$5\,dB record-level degradation (528
+    records, soft-vote) for the four pre-registered \S8.8 arms at $n{=}12$
+    seeds; horizontal bars are seed-means and the dashed line is the
+    pre-registered robustness threshold $\tau=1.0$\,pt. No arm is robust on
+    $\ge$10/12 seeds, and the non-physical random-band control is the most
+    robust; the seed variance that produced an apparent $n{=}3$ benefit is
+    visible. Source:
     \texttt{results/p7\_strengthen/p7\_strengthen\_record\_level.json}.}
   \label{fig:spread}
 \end{figure}
 
+\paragraph{The other four regimes are each negative.}
+Across the remaining regimes the tested method shows no advantage either, all at
+the record level (Table~\ref{tab:regimes}). \emph{Data-efficiency} (\S8.2):
+PC-CNN exceeds the best vanilla model (\texttt{resnet18}) with non-overlapping
+$\pm1$\,std at only 1 of 3 reduced training fractions --- failing the
+pre-registered rule of $\ge$2 of 3 --- and ties at 10\% and 50\%.
+\emph{Severity-OOD} (\S8.3): training on low severity and testing on severe ties
+at ceiling (both $100\%$); the harder reverse direction favours PC-CNN on the
+point estimate ($82.58$ vs $76.01$) but with McNemar $p=0.39$ and a gap CI of
+$[-2.27,+8.33]$ spanning zero --- direction-only, not a positive.
+\emph{Interpretability} (\S8.6a): the integrated-gradients attribution fraction
+in the physics bands \emph{reverses} --- the vanilla model places more energy
+in-band ($0.146$) than the physics model ($0.099$), and on
+\texttt{lubrification} both place essentially zero --- giving no evidence of a
+physics-attention mechanism. \emph{Calibration} (\S8.6b): both models are
+well-calibrated (ECE $<0.03$) and the 5\,dB ECE direction flips between
+MC-dropout runs --- a wash. In sum, the implemented band-energy
+spectral-consistency method shows no statistically supported, seed-robust
+advantage on any tested axis; this negative is bounded to that method (one
+family), not a claim about physics priors in general
+(\S\ref{sec:limitations}).
+
+\input{tables/T3_other_regimes.tex}
+
 % =====================================================================
 \section{Methodological caution [C4]}
 \label{sec:caution}
-\textit{[TODO C4] The $n{=}3\!\rightarrow\!n{=}12$ dissolution
-(Fig.~\ref{fig:dissolution}): a within-seed McNemar of $14$--$0$
-($p=1.2\times10^{-4}$) at the representative seed becomes a seed-level Wilcoxon
-$p=0.79$ at $n{=}12$; the random non-fault-band control is the most robust arm.
-The broken-loss saga (five defects, all passing a green suite).
-Recommendations: seed as the inferential unit; pre-register the estimand;
-scrambled + matched-strength non-physics controls.}
+\paragraph{An effect significant at $n{=}3$ dissolves at $n{=}12$.}
+The clearest lesson of this study is how readily an apparent physics benefit
+arises and then disappears under a stricter estimand
+(Fig.~\ref{fig:dissolution}). The same $n{=}12$ grid above reproduces the
+earlier $n{=}3$ ``win'' exactly on its first three seeds --- seeds
+$\{0,1,2\}$ give CE-only degradation $4.29$\,pt versus correct physics
+$0.06$\,pt --- and the remaining nine seeds erase it, leaving the seed-level
+null ($3.54$ vs $3.47$\,pt, Wilcoxon $p=0.79$). The within-seed
+(representative-seed) McNemar that made the $n{=}3$ result look decisive
+($14$--$0$, $p=1.2\times10^{-4}$) is the \emph{confounded} statistic: it
+conditions on a single seed --- the one where every arm happens to be robust ---
+and treats the five windows per record as independent. We report it only as the
+statistic that fooled the $n{=}3$ analysis, never as evidence of an effect; the
+pre-registered seed-level test governs.
 
 \begin{figure}[t]
   \centering
   \figfromfile{F2_n3_to_n12_dissolution.pdf}
-  \caption{\textit{[TODO caption F2 --- HEADLINE]} The apparent
-    noise-robustness benefit is a seed artifact. \emph{Left}: at $n{=}3$ (seeds
-    0--2) the correct-physics arm appears far more robust than CE-only.
-    \emph{Right}: the same comparison under the pre-registered $n{=}12$
-    seed-level test is a null (Wilcoxon $p=0.79$). Same data, same code path;
-    the gap dissolves as seeds grow. Source:
+  \caption{\textbf{Headline.} The apparent noise-robustness benefit is a seed
+    artifact. \emph{Left}: at $n{=}3$ (the grid's seeds 0--2) the
+    correct-physics arm appears far more robust than CE-only (mean degradation
+    $0.06$ vs $4.29$\,pt). \emph{Right}: the same comparison under the
+    pre-registered $n{=}12$ seed-level test is a null ($3.47$ vs $3.54$\,pt,
+    Wilcoxon $p=0.79$). Same data, same code path; the apparent gap dissolves as
+    seeds grow. The within-seed McNemar is shown nowhere as evidence. Source:
     \texttt{results/p7\_strengthen/p7\_strengthen\_record\_level.json}.}
   \label{fig:dissolution}
 \end{figure}
+
+\paragraph{A physics loss can pass a green test suite while silently broken.}
+The corrected loss above was reached only after five successive defects, each of
+which passed a green test suite. In order: (1)~the physics term was never
+invoked by the benchmark training loop, so the ``physics'' model was trained
+CE-only; (2)~once invoked, it was non-differentiable (an \texttt{argmax} gave
+zero gradient, making the weight inert --- a byte-identical weight sweep);
+(3)~the signature database encoded \emph{rolling-element} fault frequencies
+(BPFO/BPFI), the wrong bearing type, with the mixed classes unmapped;
+(4)~rebuilt for journal bearings, it judged band energy against a \emph{flat}
+spectrum, letting shared healthy energy masquerade as a fault; and
+(5)~corrected to judge against the frozen healthy-class reference. A model named
+\texttt{physics\_*} proves nothing: tests must assert gradient flow,
+database-to-data consistency, and the correct baseline --- not merely that the
+code runs.
+
+\paragraph{Recommendations.}
+For physics-informed evaluations of this kind we recommend: (i)~use the
+\emph{seed} as the inferential unit, not the window, and report enough seeds to
+estimate seed variance; (ii)~\emph{pre-register} the seed-level estimand and the
+decision rule before running; and (iii)~include both a \emph{scrambled}-physics
+control and a \emph{matched-strength non-physics} control (here, random
+non-fault bands) so that an apparent effect can be separated from any
+regularizer of equal strength. In this study the matched-strength non-physics
+control was decisive: it was the most robust arm, ruling out even a generic
+spectral-regularizer reading.
 
 % =====================================================================
 \section{Reproducibility [C5]}
