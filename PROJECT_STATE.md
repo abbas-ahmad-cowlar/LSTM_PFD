@@ -51,10 +51,24 @@ the next gate, when the manuscript draft is ready).
   pinned + `results/PROVENANCE_MANIFEST.md` written (`f82e46c`). **The ONE remaining
   repro item is the OWNER's: upload the ~2.1 GB of `*.pth` checkpoints to Zenodo and
   drop the DOI into the manifest** (`<TBD>` placeholder is there).
-- ◐ **Step 4 — manuscript (IN PROGRESS):** outline + abstract drafted in
-  **Datasets-&-Benchmarks / Evaluations style** at **`paper/OUTLINE.md`** (awaiting
-  owner review of the framing, then write full sections from `results/FINDINGS.md`
-  §0; record-level + seed-level tables only; synthetic-only).
+- ◐ **Step 4 — manuscript (IN PROGRESS):**
+  - ✅ **Framing LOCKED** in `paper/OUTLINE.md` (strict Evaluations & Datasets style):
+    title, abstract, contribution bullets, full section outline, **claim boundaries**,
+    table/figure list. Reviewed by both auditors (approve-with-revisions) and the
+    surgical-honesty fixes applied (`e3b8da2`): the n=3 result is a *representative-seed*
+    McNemar that dissolves under the *pre-registered n=12 seed-level* test (NOT
+    "seed-level significant at n=3"); random bands = lowest mean degr numerically but
+    fail the bar; claim = "no statistically-supported, seed-robust advantage";
+    "independently recomputed from checkpoints by audit scripts" (not "external
+    auditors"); release wording conditional until Zenodo; "pre-registered" reserved for
+    §8.8. **Decisions:** Title = *"A Synthetic Journal-Bearing Benchmark for
+    Stress-Testing Physics-Informed Fault Diagnosis"*; artifact name = **JBFD-11**;
+    deployment (C5) = appendix only.
+  - **NEXT = draft the full sections** from `results/FINDINGS.md` §0 + `paper/OUTLINE.md`:
+    a NeurIPS-style LaTeX skeleton, section by section; record-level + seed-level tables
+    only; synthetic-only; **no "physics improves" wording**. Still-open (fill while
+    drafting, not blockers): author/affiliation, arXiv categories (cs.LG + eess.SP),
+    LaTeX template choice.
 - **Step 5 — venue (decided):** **arXiv first → a PHM / trustworthy-ML-evaluation
   workshop**, written in strict D&B/Evaluations style; **NeurIPS ED / KDD D&B 2027**
   as the upgrade target (the 2026 D&B deadline has passed); **IEEE Access** only as a
