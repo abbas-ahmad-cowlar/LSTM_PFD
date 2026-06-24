@@ -25,12 +25,17 @@
 \usepackage[hidelinks]{hyperref}  % no coloured/boxed link borders (arXiv-ready)
 \usepackage{url}
 \usepackage{booktabs}
+\usepackage{array}        % ragged-right p{} columns (avoids tight-column hyphenation)
 \usepackage{amsfonts}
 \usepackage{amsmath}
 \usepackage{nicefrac}
 \usepackage{microtype}
 \usepackage{graphicx}
 \usepackage{xcolor}
+
+% Absorb sub-point overfulls into existing glue (no visible looseness) instead of
+% leaving a hairline overfull box.
+\setlength{\emergencystretch}{3pt}
 
 \graphicspath{{figures/}}
 
@@ -134,12 +139,12 @@ judged against a frozen healthy-class reference --- across the five regimes wher
 such priors are theorized to help. The result is a \emph{complete negative}: on
 this benchmark, the tested methods show no statistically supported, seed-robust
 advantage on any axis. The last candidate positive, a 5\,dB noise-robustness
-benefit, illustrates the study's methodological point: it was highly significant
-in a representative-seed $n{=}3$ analysis and \emph{dissolved} under a
-pre-registered $n{=}12$ seed-level test (Fig.~\ref{fig:dissolution}), where it is
-statistically indistinguishable from a cross-entropy baseline; a matched-strength
-non-physics control even had numerically lower mean degradation, though it too
-failed the pre-registered bar.
+benefit, illustrates the study's methodological point: it rested on a highly
+significant representative-seed record-level McNemar statistic, but
+\emph{dissolved} under a pre-registered $n{=}12$ seed-level test
+(Fig.~\ref{fig:dissolution}), where it is statistically indistinguishable from a
+cross-entropy baseline; a matched-strength non-physics control even had
+numerically lower mean degradation, though it too failed the pre-registered bar.
 
 \paragraph{Contributions.}
 \begin{itemize}\setlength{\itemsep}{1pt}
@@ -186,9 +191,10 @@ Physics-informed neural networks incorporate governing-equation or domain
 knowledge into training, originally for solving differential
 equations~\citep{raissi2019pinn} and increasingly as priors or auxiliary losses
 for diagnosis and prognostics. The band-energy spectral-consistency loss we test
-belongs to this family. Our contribution is not a new prior but a controlled,
-pre-registered evaluation of whether such a prior helps under matched conditions
---- the question that ad-hoc comparisons on confounded real datasets leave open.
+belongs to this family. Our contribution is not a new prior but a controlled
+evaluation --- including a pre-registered $n{=}12$ seed-level noise-robustness
+grid --- of whether such a prior helps under matched conditions, the question
+that ad-hoc comparisons on confounded real datasets leave open.
 
 \paragraph{Evaluation rigor and reproducibility.}
 Several threads in the broader ML literature inform our methodology: attribution
@@ -352,8 +358,8 @@ stress-test of \S\ref{sec:stress}.
 \section{Stress-testing the tested physics-informed methods [C3]}
 \label{sec:stress}
 \paragraph{The tested method.}
-The physics-informed method we test is a physics-constrained CNN
-(\code{physics_constrained_cnn}, PC-CNN): a ResNet1D backbone whose physics
+The physics-informed method we test is a physics-constrained CNN (PC-CNN;
+\code{physics_constrained_cnn} in the release): a ResNet1D backbone whose physics
 enters through an additive loss term weighted by $w$. The term is a
 \emph{band-energy spectral-consistency} loss judged against a \emph{frozen
 healthy-class reference}. For each class $c$ and each of its expected frequency
