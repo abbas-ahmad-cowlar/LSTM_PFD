@@ -9,7 +9,7 @@
 > **Maintenance duty:** update this file at every gate and at the end of every
 > session. Keep it truthful and current; it is the single source of truth.
 >
-> **Last updated: 2026-06-24, session 11.**
+> **Last updated: 2026-06-25, session 12.**
 
 ## Current status — THE PROJECT IS A COMPLETE NEGATIVE (Phase 7 → submission)
 
@@ -51,7 +51,7 @@ the next gate, when the manuscript draft is ready).
   pinned + `results/PROVENANCE_MANIFEST.md` written (`f82e46c`). **The ONE remaining
   repro item is the OWNER's: upload the ~2.1 GB of `*.pth` checkpoints to Zenodo and
   drop the DOI into the manifest** (`<TBD>` placeholder is there).
-- ◐ **Step 4 — manuscript (IN PROGRESS):**
+- ◐ **Step 4 — manuscript (FULL FIRST DRAFT COMPLETE — finalizing):**
   - ✅ **Framing LOCKED** in `paper/OUTLINE.md` (strict Evaluations & Datasets style):
     title, abstract, contribution bullets, full section outline, **claim boundaries**,
     table/figure list. Reviewed by both auditors (approve-with-revisions) and the
@@ -64,11 +64,29 @@ the next gate, when the manuscript draft is ready).
     §8.8. **Decisions:** Title = *"A Synthetic Journal-Bearing Benchmark for
     Stress-Testing Physics-Informed Fault Diagnosis"*; artifact name = **JBFD-11**;
     deployment (C5) = appendix only.
-  - **NEXT = draft the full sections** from `results/FINDINGS.md` §0 + `paper/OUTLINE.md`:
-    a NeurIPS-style LaTeX skeleton, section by section; record-level + seed-level tables
-    only; synthetic-only; **no "physics improves" wording**. Still-open (fill while
-    drafting, not blockers): author/affiliation, arXiv categories (cs.LG + eess.SP),
-    LaTeX template choice.
+  - ✅ **Full first draft DONE** (2026-06-25, session 12) on `p7/submission`: a
+    self-contained NeurIPS-style build under `paper/` (`neurips_2023.sty` +
+    `main.tex` + `tables/T1–T4` + `references.bib`) plus `scripts/make_paper_figures.py`
+    (F1 per-seed spread, F2 the n=3→n=12 dissolution [headline], F3 signature map — all
+    generated from the result JSONs). All 9 sections + Appendix A (deployment) drafted
+    section-by-section against FINDINGS §0, owner-reviewed chunk by chunk; every number
+    traced to an artifact. Builds clean: `latexmk -pdf` → **10 pp, 0 overfull/underfull,
+    no undefined refs**; all 6 citations real/verified. Guardrails held throughout (no
+    "physics improves"; record-level 528 + seed-level only; within-/representative-seed
+    McNemar reported only as the cautionary statistic; synthetic-only; release
+    conditional). Byline = "Syed Abbas Ahmad, PIEAS" (full form, NO Cowlar note), email
+    `syedabbasahmad6@gmail.com`; `[preprint]` mode; arXiv cs.LG + eess.SP; hidelinks.
+    Commit trail: `707595f` skeleton → `ac43b45` C1/C2 → `eb590ec` C3/C4 → `a0d59c3`
+    review fixes → `f6df4fb` C5+limitations → `e3e4a28` intro+conclusion → `021dabc`
+    related-work+appendix → `e94d61f` honesty fixes + box-clean polish.
+  - **Open before preprint (not draft blockers):** (a) **owner decision** — the
+    pre-registrations are labelled by their PROTOCOL §-numbers (§8.2/§8.3/§8.6/§8.8),
+    which visually collide with the paper's own §8 (Limitations); recommend prefixing
+    "protocol §8.x". (b) **owner** — finalize byline; Zenodo checkpoint upload → drop DOI
+    into §7 + `PROVENANCE_MANIFEST.md` (release wording stays conditional until then);
+    verify `references.bib` DOIs/pages before camera-ready. (c) optionally expand §2
+    citations (verified only). (d) **merge `p7/submission` → `main`** at a gate — HELD
+    for owner sign-off.
 - **Step 5 — venue (decided):** **arXiv first → a PHM / trustworthy-ML-evaluation
   workshop**, written in strict D&B/Evaluations style; **NeurIPS ED / KDD D&B 2027**
   as the upgrade target (the 2026 D&B deadline has passed); **IEEE Access** only as a
