@@ -1,11 +1,11 @@
-# FINDINGS — Phase 5/6/7 synthesis (DRAFT for owner re-ratification)
+# FINDINGS — Phase 5/6/7 synthesis (RATIFIED)
 
 > Honest synthesis of every Phase-5 experiment, the Phase-6 physics remediation,
 > and the Phase-7 §8.8 n=12 strengthen grid. Every number traces to a committed
 > artifact under `results/`. This memo freezes the list of claims the paper may and
 > may not make. **Synthetic-only study — no real-world validation, stated everywhere.**
 >
-> Status: **DRAFT — 2026-06-24, AWAITING OWNER RE-RATIFICATION.** The Gate-5 verdict
+> Status: **RATIFIED — 2026-06-24 by owner Syed Abbas Ahmad.** The Gate-5 verdict
 > (ratified 2026-06-23) let one positive stand — a narrow 5 dB noise-robustness
 > benefit, then based on **n=3** seeds. A pre-registered **n=12 grid (§8.8,
 > `results/p7_strengthen/`)** plus a matched-strength **non-physics** control was then
@@ -17,7 +17,7 @@
 > negative**; it supersedes the prior §0 and the PRE-AUDIT §1–§5 (removed). Do not
 > cite as ratified until the owner re-ratifies.
 
-## 0. DRAFT verdict (2026-06-24) — authoritative once ratified
+## 0. RATIFIED verdict (2026-06-24) — authoritative
 
 ### One-paragraph verdict
 On a single synthetic journal-bearing dataset, **physics-informed learning provides
@@ -138,7 +138,8 @@ The §8.8 n=12 grid (`results/p7_strengthen/`, analysis
 reproduced every decisive number by execution — no critical findings — and both
 auditors' verdict is: **trustworthy; publishable only as a synthetic dataset + frozen
 benchmark + rigorous complete negative + methodological caution, not as any physics
-win.** This memo is the DRAFT reflecting that; **owner re-ratification is the gate.**
+win.** **RATIFIED by the owner on 2026-06-24.** Next: merge to `main`, build the
+reproducibility package, write the manuscript from this §0.
 
 ---
 
