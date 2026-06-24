@@ -37,29 +37,30 @@ real-rig validation. Ratified verdict: **`results/FINDINGS.md` §0 (RATIFIED
 agree on this framing (the fourth, 2026-06-24, did a cache-free from-checkpoint
 recompute).
 
-**Branch: `main`** (Phase 7 merged here at this gate; `p7/strengthen` is the working
-branch). Suite **268 passed, 6 deselected**. **The science has CONVERGED — STOP adding
-experiments.** Remaining work is writing + packaging, not science.
+**Current working branch: `p7/submission`** (off `main` @`dea92ae`; the Phase-7
+science is merged to `main`). Suite **268 passed, 6 deselected**. **The science has
+CONVERGED — STOP adding experiments.** Remaining work is writing the manuscript +
+the owner's Zenodo upload. `p7/submission` is **not yet merged to `main`** (merge at
+the next gate, when the manuscript draft is ready).
 
-### What's next (Phase 7 → submission), in order
-1. ~~Owner re-ratifies FINDINGS §0~~ **DONE 2026-06-24**; ~~merge `p7/strengthen`→`main`~~ (this gate).
-2. **Repo cleanup:** ~~prune the `config/docs/` pre-convergence relic tree~~ **DONE
-   2026-06-24** — removed the whole **dead/broken MkDocs site** (91 files + the
-   orphaned `mkdocs.yml`: not CI-deployed, broken nav, "Production-Ready Platform"
-   overclaim; recoverable from git). **Still pending:** rename the misleading
-   `ops_aware` metrics field (it is the **eval** flag; training **did** use per-sample
-   rpm — confirmed by the 2026-06-24 Opus audit). On branch `p7/submission`.
-3. **Reproducibility package (audit M1):** pin a **content hash** of
-   `data/generated/dataset_v2.h5`; archive the 48 §8.8 checkpoints + the
-   Phase-5/benchmark checkpoints to **Zenodo**; a **provenance manifest** (command /
-   commit / dataset-hash / checkpoint / random-reference-hash per paper table).
-4. **Write the manuscript from scratch** off FINDINGS §0 — dataset + benchmark +
-   complete negative + methodological caution; **record-level tables only**;
-   synthetic-only. Title shape: *"A Synthetic Journal-Bearing Benchmark for
-   Stress-Testing Physics-Informed Fault Diagnosis."*
-5. **Choose venue:** a datasets-&-benchmarks track (NeurIPS/ICML) / IEEE Access /
-   *Sensors* / *Measurement* / a PHM workshop. **Not** a top mechanical-systems or
-   top-ML venue (synthetic-only, negative headline).
+### What's next (Phase 7 → submission)
+- ✅ **Step 1 — FINDINGS ratified + merged** (`dea92ae`).
+- ✅ **Step 2 — repo cleanup:** dead MkDocs site removed (`5031a8a`); `ops_aware`
+  renamed → `eval_ops_aware` + `train_metadata_rpm_used` (`928e689`, audit M2).
+- ✅ **Step 3 — reproducibility package (audit M1):** dataset/reference SHA-256
+  pinned + `results/PROVENANCE_MANIFEST.md` written (`f82e46c`). **The ONE remaining
+  repro item is the OWNER's: upload the ~2.1 GB of `*.pth` checkpoints to Zenodo and
+  drop the DOI into the manifest** (`<TBD>` placeholder is there).
+- ◐ **Step 4 — manuscript (IN PROGRESS):** outline + abstract drafted in
+  **Datasets-&-Benchmarks / Evaluations style** at **`paper/OUTLINE.md`** (awaiting
+  owner review of the framing, then write full sections from `results/FINDINGS.md`
+  §0; record-level + seed-level tables only; synthetic-only).
+- **Step 5 — venue (decided):** **arXiv first → a PHM / trustworthy-ML-evaluation
+  workshop**, written in strict D&B/Evaluations style; **NeurIPS ED / KDD D&B 2027**
+  as the upgrade target (the 2026 D&B deadline has passed); **IEEE Access** only as a
+  later fallback if real-rig data is ever added. NOT a top mechanical-systems / top-ML
+  venue (synthetic-only, negative headline). Owner gathered both auditors' venue
+  advice (2026-06-24); they converge on this.
 
 ---
 
@@ -76,12 +77,16 @@ experiments.** Remaining work is writing + packaging, not science.
    findings): `audit_reports/INDEPENDENT_AUDIT_2026-06-24_{GPT5,CLAUDE}.md`. (Earlier
    rounds were removed before each new round; recoverable from git history +
    `C:\Users\COWLAR\projects\_lstm_audit_backup_2026-06-*\`.)
-5. `README.md`, `results/README.md`, `experiments/PROTOCOL.md`, `docs/PHYSICS.md`
+5. **The submission work-in-progress:** `paper/OUTLINE.md` (manuscript outline +
+   abstract, D&B/Evaluations style — the active writing task) and
+   `results/PROVENANCE_MANIFEST.md` (repro chain + content hashes; Zenodo DOI = TBD).
+6. `README.md`, `results/README.md`, `experiments/PROTOCOL.md`, `docs/PHYSICS.md`
    (normative generator physics). `CONVERGENCE_PLAN.md` lags — **trust FINDINGS §0 +
    this file** over it.
 
 **Verify live state (verify by execution — do NOT trust docstrings):**
-- `git branch --show-current` → `main`.
+- `git branch --show-current` → **`p7/submission`** (the active branch; `main`
+  @`dea92ae` has the merged Phase-7 science).
 - `$env:PYTHONIOENCODING='utf-8'; .\venv\Scripts\python.exe -m pytest -q` → **268
   passed, 6 deselected**.
 - Reproduce the headline negative: `.\venv\Scripts\python.exe scripts\p7_strengthen_record_level.py`
