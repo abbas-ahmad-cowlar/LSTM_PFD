@@ -19,11 +19,13 @@
 > reviewed the band-energy fix and **independently reproduced every record-level
 > number**). Net: the **synthetic dataset + benchmark stand as a classification
 > benchmark** (record-level near-ceiling, no row showing a physics accuracy
-> advantage), and **one** physics positive survives at record level — a **5 dB
-> noise-robustness gain from the corrected band-energy loss in a same-architecture
-> ablation**; clean-accuracy / data-efficiency / severity-OOD / interpretability /
-> calibration advantages do **not**. Read [results/FINDINGS.md](results/FINDINGS.md)
-> §0 (DRAFT) and [PROJECT_STATE.md](PROJECT_STATE.md) for the live state.
+> advantage), and **no physics positive survives**: the last candidate — a 5 dB
+> noise-robustness benefit that looked significant at n=3 — **did not replicate** in
+> a pre-registered **n=12** grid with a non-physics control (§8.8): correct physics
+> ties cross-entropy-only (Wilcoxon p=0.79). The study is a **rigorous complete
+> negative** on physics-informed learning. Read
+> [results/FINDINGS.md](results/FINDINGS.md) §0 (DRAFT) and
+> [PROJECT_STATE.md](PROJECT_STATE.md) for the live state.
 
 ## What this is
 
@@ -44,19 +46,21 @@ deliberate — public datasets (CWRU, Paderborn) are almost all *rolling-element
 
 - **Supportable:** a balanced, leakage-checked, group-split **synthetic
   journal-bearing classification benchmark** (record-level near-ceiling; no row
-  shows a physics accuracy advantage); and **one** physics positive — a **5 dB
-  noise-robustness gain from the correctly-implemented PC-CNN band-energy loss at
-  high weight, in a same-architecture ablation** (record level, 528 records:
-  McNemar 14–0, p=1.2e-4; mechanism = noisy `lubrification` records rescued from a
-  `mixed_wear_lube` mislabel). Frame it as "the *implemented band-energy term*
-  helped," not "physics helps."
-- **Not supportable:** any physics advantage in **clean accuracy,
+  shows a physics accuracy advantage), and a **rigorous, complete NEGATIVE** on
+  physics-informed learning — across noise, clean accuracy, data-efficiency,
+  severity-OOD, interpretability, and calibration, the implemented physics
+  mechanisms give no advantage.
+- **Not supportable:** any physics advantage in **noise robustness, clean accuracy,
   data-efficiency, severity-OOD, interpretability (§8.6a *reverses*), or
-  calibration (a wash)** — each was tested at record level and did **not** survive;
-  any "physics-informed learning helps" family claim; any real-bearing claim. The
-  vs-vanilla noise edge is significant but small/seed-sensitive (secondary to the
-  same-arch ablation), and the benefit is **not yet isolated** from generic
-  high-weight regularization (controls are future work).
+  calibration (a wash)** — each tested at record level, none survived. The last
+  candidate (5 dB noise robustness) **did not replicate at n=12**: a pre-registered
+  grid (§8.8, `results/p7_strengthen/`) with a matched-strength non-physics control
+  shows correct physics tied with CE-only (degr 3.47 vs 3.54, seed-level Wilcoxon
+  **p=0.79**; the random non-fault-band arm is actually the most robust, correct
+  physics the weakest of the three w=1.0 arms; no arm robust ≥10/12 seeds). The
+  earlier n=3 "win" (McNemar 14–0, p=1.2e-4) was a **seed artifact** — never quote
+  the within-seed McNemar as evidence. No "physics-informed learning helps" claim;
+  no real-bearing claim.
 - **Methodological caution (a contribution):** the physics loss had five
   successive defects (non-differentiable argmax → wrong bearing type → tonal-only
   → flat baseline) that all passed a green suite; the corrected
@@ -161,13 +165,15 @@ packages/dashboard/  # experimental, frozen (Phase D)
 ## Limitations
 
 Synthetic data only — no real-bearing validation. Accuracy figures reflect
-learnability of the *generator's* signatures, not real-world performance. The one
-surviving physics positive — 5 dB noise robustness from the band-energy loss in a
-same-architecture ablation (§8.4) — is **synthetic-only, n=3 seeds, near-ceiling**,
-and **not yet isolated** from generic high-weight regularization (controls are
-future work); frame it as "the *implemented band-energy term* helped," not
-"physics helps." Clean-accuracy / data-efficiency / severity-OOD / interpretability
-/ calibration advantages were tested and did **not** survive; §8.5 HybridPINN stays
-excluded (rolling-element branch). The findings memo is a **DRAFT pending owner
-re-ratification** — see [results/FINDINGS.md](results/FINDINGS.md) §0 and
+learnability of the *generator's* signatures, not real-world performance.
+**Physics-informed learning showed no advantage on any axis tested** — clean
+accuracy, noise robustness, data-efficiency, severity-OOD, interpretability, and
+calibration were each tested at the record level and each came back **negative**.
+The last candidate positive (a 5 dB noise-robustness benefit that looked significant
+at **n=3**) **did not replicate** in a pre-registered **n=12** grid that added a
+matched-strength non-physics control (§8.8, `results/p7_strengthen/`): at n=12 the
+correct-physics model ties cross-entropy-only (degr 3.47 vs 3.54, seed-level Wilcoxon
+**p=0.79**; no arm robust). §8.5 HybridPINN stays excluded (rolling-element branch).
+The findings memo is a **DRAFT pending owner re-ratification** to this
+**complete-negative** verdict — see [results/FINDINGS.md](results/FINDINGS.md) §0 and
 [PROJECT_STATE.md](PROJECT_STATE.md).

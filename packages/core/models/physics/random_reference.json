@@ -1,0 +1,237 @@
+{
+  "_doc": "Frozen RANDOM-band control reference (\u00a78.8 non-physics control). Per class, RANDOM non-fault bands matched in count + width to the real bands (tonal in Omega-multiplier space, absolute in Hz), provably non-overlapping with ANY real characteristic band, plus the mean fraction of total 1-s-window energy HEALTHY training signals carry in each random band. Drives the \u00a78.8 random-band arm: relu(1 - frac_b / H_rand[c][b]) -- identical loss form to the validated physics loss, non-physical band locations.",
+  "_provenance": {
+    "generated_at": "2026-06-22T20:30:19.438113+00:00",
+    "git_sha": "d16af5a5dfcdfe8f0ba79210da5b8b8a4b8480a4",
+    "dataset": "dataset_v2.h5",
+    "split": "train",
+    "healthy_class": "sain",
+    "n_healthy_windows": 1120,
+    "fs": 20480,
+    "window": 20480,
+    "n_fft": 20480,
+    "rng_seed": 20260623,
+    "rpm_range": [
+      3240.0,
+      3960.0
+    ],
+    "non_overlap_verified": true,
+    "source": "scripts/compute_random_reference.py"
+  },
+  "band_layout": {
+    "sain": {
+      "tonal": [],
+      "bands_hz": []
+    },
+    "desalignement": {
+      "tonal": [
+        [
+          5.4998,
+          0.06
+        ],
+        [
+          3.4942,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "desequilibre": {
+      "tonal": [
+        [
+          2.497,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "jeu": {
+      "tonal": [
+        [
+          7.9975,
+          0.12
+        ],
+        [
+          2.497,
+          0.06
+        ],
+        [
+          5.4998,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "lubrification": {
+      "tonal": [],
+      "bands_hz": [
+        [
+          9473.14,
+          9478.14
+        ]
+      ]
+    },
+    "cavitation": {
+      "tonal": [],
+      "bands_hz": [
+        [
+          7145.98,
+          8345.98
+        ]
+      ]
+    },
+    "usure": {
+      "tonal": [
+        [
+          2.497,
+          0.06
+        ],
+        [
+          5.4998,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "oilwhirl": {
+      "tonal": [
+        [
+          7.9975,
+          0.12
+        ]
+      ],
+      "bands_hz": []
+    },
+    "mixed_misalign_imbalance": {
+      "tonal": [
+        [
+          2.497,
+          0.06
+        ],
+        [
+          5.4998,
+          0.06
+        ],
+        [
+          3.4942,
+          0.06
+        ]
+      ],
+      "bands_hz": []
+    },
+    "mixed_wear_lube": {
+      "tonal": [
+        [
+          2.497,
+          0.06
+        ],
+        [
+          5.4998,
+          0.06
+        ]
+      ],
+      "bands_hz": [
+        [
+          9473.14,
+          9478.14
+        ]
+      ]
+    },
+    "mixed_cavit_jeu": {
+      "tonal": [
+        [
+          7.9975,
+          0.12
+        ],
+        [
+          2.497,
+          0.06
+        ]
+      ],
+      "bands_hz": [
+        [
+          7145.98,
+          8345.98
+        ]
+      ]
+    }
+  },
+  "per_class": {
+    "sain": {
+      "tonal": [],
+      "bands_hz": []
+    },
+    "desalignement": {
+      "tonal": [
+        0.0016713347576894323,
+        0.0010712526887735813
+      ],
+      "bands_hz": []
+    },
+    "desequilibre": {
+      "tonal": [
+        0.0007936759035081715
+      ],
+      "bands_hz": []
+    },
+    "jeu": {
+      "tonal": [
+        0.004856515855655223,
+        0.0007936759035081715,
+        0.0016713347576894323
+      ],
+      "bands_hz": []
+    },
+    "lubrification": {
+      "tonal": [],
+      "bands_hz": [
+        0.00020409408739031473
+      ]
+    },
+    "cavitation": {
+      "tonal": [],
+      "bands_hz": [
+        0.05036886159338922
+      ]
+    },
+    "usure": {
+      "tonal": [
+        0.0007936759035081715,
+        0.0016713347576894323
+      ],
+      "bands_hz": []
+    },
+    "oilwhirl": {
+      "tonal": [
+        0.004856515855655223
+      ],
+      "bands_hz": []
+    },
+    "mixed_misalign_imbalance": {
+      "tonal": [
+        0.0007936759035081715,
+        0.0016713347576894323,
+        0.0010712526887735813
+      ],
+      "bands_hz": []
+    },
+    "mixed_wear_lube": {
+      "tonal": [
+        0.0007936759035081715,
+        0.0016713347576894323
+      ],
+      "bands_hz": [
+        0.00020409408739031473
+      ]
+    },
+    "mixed_cavit_jeu": {
+      "tonal": [
+        0.004856515855655223,
+        0.0007936759035081715
+      ],
+      "bands_hz": [
+        0.05036886159338922
+      ]
+    }
+  }
+}
