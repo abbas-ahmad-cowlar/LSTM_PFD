@@ -8,7 +8,7 @@
 %% BINDING CLAIM BOUNDARIES (paper/OUTLINE.md S5; results/FINDINGS.md S0):
 %%   - NO "physics improves ..." wording of any kind (not even "a spectral
 %%     regularizer helped"). Complete negative on the TESTED methods only.
-%%   - Record-level (528) + seed-level estimands ONLY. The within-seed /
+%%   - Record-level (528) + seed-level estimands ONLY. The record-level
 %%     representative-seed McNemar (14--0, p=1.2e-4) is reported ONLY as the
 %%     cautionary confounded statistic, never as evidence of an effect.
 %%   - Synthetic-only, stated throughout. "will archive" until the Zenodo DOI.
@@ -22,7 +22,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{hyperref}
+\usepackage[hidelinks]{hyperref}  % no coloured/boxed link borders (arXiv-ready)
 \usepackage{url}
 \usepackage{booktabs}
 \usepackage{amsfonts}
@@ -33,6 +33,14 @@
 \usepackage{xcolor}
 
 \graphicspath{{figures/}}
+
+% Breakable monospace for long identifiers / file paths, so they wrap instead of
+% spilling past the margin (avoids overfull boxes). Pass arguments with literal
+% underscores, e.g. \code{physics_constrained_cnn}.
+\urlstyle{tt}
+\def\UrlBreaks{\do\/\do\_\do\.\do\-\do\:}
+\Urlmuskip=0mu plus 1mu\relax
+\newcommand{\code}[1]{\nolinkurl{#1}}
 
 % Include a figure if its file exists, else a labelled placeholder box, so the
 % skeleton always compiles while figures are still being generated.
@@ -60,7 +68,8 @@
 \begin{abstract}
 Physics-informed neural networks are increasingly proposed for bearing fault
 diagnosis, but controlled, leakage-free evidence that physics priors actually
-\emph{help} is scarce --- and the journal/hydrodynamic-bearing regime, unlike
+\emph{help} is scarce --- and the journal/\allowbreak hydrodynamic-bearing
+regime, unlike
 the rolling-element datasets that dominate the literature (CWRU, Paderborn), has
 almost no public benchmarks. We release \textbf{JBFD-11}, a physics-grounded
 \textbf{synthetic} journal-bearing vibration dataset (11 fault classes,
@@ -166,7 +175,7 @@ cavitation-specific reading.
 \end{figure}
 
 \paragraph{Severity, operating conditions, and physics couplings.}
-Faults are stratified into four non-overlapping severity levels (incipient
+Faults are stratified into four disjoint severity levels (incipient
 $0.20$--$0.45$, mild $0.45$--$0.70$, moderate $0.70$--$0.90$, severe
 $0.90$--$1.00$) with exactly 80 records per class per level; 30\% of records
 carry a linearly progressing severity envelope. Operating conditions are sampled
@@ -262,22 +271,25 @@ stress-test of \S\ref{sec:stress}.
 \label{sec:stress}
 \paragraph{The tested method.}
 The physics-informed method we test is a physics-constrained CNN
-(\texttt{physics\_constrained\_cnn}, PC-CNN): a ResNet1D backbone whose physics
+(\code{physics_constrained_cnn}, PC-CNN): a ResNet1D backbone whose physics
 enters through an additive loss term weighted by $w$. The term is a
 \emph{band-energy spectral-consistency} loss judged against a \emph{frozen
 healthy-class reference}. For each class $c$ and each of its expected frequency
 bands $b$ --- journal-bearing tonal harmonics built from the \emph{per-sample}
-shaft speed plus absolute broadband bands (\texttt{docs/PHYSICS.md}\,\S4) --- the
-band penalty is $\mathrm{pen}_b = \mathrm{relu}\!\left(1 - \mathrm{frac}_b /
-H_{\mathrm{ref}}[c][b]\right)$, where $\mathrm{frac}_b$ is the signal's energy
-fraction in band $b$ and $H_{\mathrm{ref}}$ is the measured healthy-class
-per-band energy fraction (\texttt{healthy\_reference.json}, computed from
-1{,}120 training healthy windows). Per-class penalties are averaged over the
-class's bands and weighted by the softmax probability of $c$. The loss is
-differentiable and unit-tested, and the per-sample operating conditions are
-wired into training. We stress-test this one method across the five regimes
-where physics priors are theorized to help: noise robustness, data-efficiency,
-severity out-of-distribution, interpretability, and calibration.
+shaft speed plus absolute broadband bands (\code{docs/PHYSICS.md}, \S4) --- the
+band penalty is
+\begin{equation}
+  \mathrm{pen}_b \;=\; \mathrm{relu}\!\left(1 - \frac{\mathrm{frac}_b}{H_{\mathrm{ref}}[c][b]}\right),
+\end{equation}
+where $\mathrm{frac}_b$ is the signal's energy fraction in band $b$ and
+$H_{\mathrm{ref}}$ is the measured healthy-class per-band energy fraction
+(\code{healthy_reference.json}, from 1{,}120 training healthy windows).
+Per-class penalties are averaged over the class's bands and weighted by the
+softmax probability of $c$. The loss is differentiable and unit-tested, and the
+per-sample operating conditions are wired into training. We stress-test this one
+method across the five regimes where physics priors are theorized to help: noise
+robustness, data-efficiency, severity out-of-distribution, interpretability, and
+calibration.
 
 \paragraph{The pre-registered $n{=}12$ grid (centerpiece).}
 Noise robustness is the regime where a candidate positive last survived, so we
@@ -310,8 +322,8 @@ $p=0.79$) --- and is robust on only 5/12 seeds; scramble is $4.89$\,pt
 ($p=0.75$, 7/12) and random-band is $2.15$\,pt ($p=0.21$, 9/12). Every arm is
 dominated by seed variance, and the direction of the (non-significant) effects
 is itself telling: the \emph{non-physical} random-band control has the lowest
-mean degradation and the most robust seeds, while \emph{correct} physics is the
-weakest of the three $w{=}1.0$ arms. The data therefore support neither a
+mean degradation and the highest robust-seed count, while \emph{correct} physics
+is the weakest of the three $w{=}1.0$ arms. The data therefore support neither a
 physics-specific benefit nor a generic spectral-regularizer benefit; the
 candidate positive was seed-fragile (\S\ref{sec:caution}).
 
@@ -322,10 +334,11 @@ candidate positive was seed-fragile (\S\ref{sec:caution}).
     records, soft-vote) for the four pre-registered \S8.8 arms at $n{=}12$
     seeds; horizontal bars are seed-means and the dashed line is the
     pre-registered robustness threshold $\tau=1.0$\,pt. No arm is robust on
-    $\ge$10/12 seeds, and the non-physical random-band control is the most
-    robust; the seed variance that produced an apparent $n{=}3$ benefit is
-    visible. Source:
-    \texttt{results/p7\_strengthen/p7\_strengthen\_record\_level.json}.}
+    $\ge$10/12 seeds; the non-physical random-band control has the lowest mean
+    degradation and the highest robust-seed count numerically, but still fails
+    the pre-registered robustness criterion. The seed variance that produced an
+    apparent $n{=}3$ benefit is visible. Source:
+    \code{results/p7_strengthen/p7_strengthen_record_level.json}.}
   \label{fig:spread}
 \end{figure}
 
@@ -356,20 +369,19 @@ family), not a claim about physics priors in general
 % =====================================================================
 \section{Methodological caution [C4]}
 \label{sec:caution}
-\paragraph{An effect significant at $n{=}3$ dissolves at $n{=}12$.}
+\paragraph{A representative-seed $n{=}3$ signal dissolves at $n{=}12$.}
 The clearest lesson of this study is how readily an apparent physics benefit
 arises and then disappears under a stricter estimand
 (Fig.~\ref{fig:dissolution}). The same $n{=}12$ grid above reproduces the
 earlier $n{=}3$ ``win'' exactly on its first three seeds --- seeds
 $\{0,1,2\}$ give CE-only degradation $4.29$\,pt versus correct physics
 $0.06$\,pt --- and the remaining nine seeds erase it, leaving the seed-level
-null ($3.54$ vs $3.47$\,pt, Wilcoxon $p=0.79$). The within-seed
-(representative-seed) McNemar that made the $n{=}3$ result look decisive
+null ($3.54$ vs $3.47$\,pt, Wilcoxon $p=0.79$). The record-level
+representative-seed McNemar that made the $n{=}3$ result look decisive
 ($14$--$0$, $p=1.2\times10^{-4}$) is the \emph{confounded} statistic: it
-conditions on a single seed --- the one where every arm happens to be robust ---
-and treats the five windows per record as independent. We report it only as the
-statistic that fooled the $n{=}3$ analysis, never as evidence of an effect; the
-pre-registered seed-level test governs.
+conditions on a single representative seed and cannot estimate cross-seed
+variance. We report it only as the statistic that fooled the $n{=}3$ analysis,
+never as evidence of an effect; the pre-registered seed-level test governs.
 
 \begin{figure}[t]
   \centering
@@ -380,8 +392,8 @@ pre-registered seed-level test governs.
     $0.06$ vs $4.29$\,pt). \emph{Right}: the same comparison under the
     pre-registered $n{=}12$ seed-level test is a null ($3.47$ vs $3.54$\,pt,
     Wilcoxon $p=0.79$). Same data, same code path; the apparent gap dissolves as
-    seeds grow. The within-seed McNemar is shown nowhere as evidence. Source:
-    \texttt{results/p7\_strengthen/p7\_strengthen\_record\_level.json}.}
+    seeds grow. The representative-seed McNemar is shown nowhere as evidence.
+    Source: \code{results/p7_strengthen/p7_strengthen_record_level.json}.}
   \label{fig:dissolution}
 \end{figure}
 
@@ -407,18 +419,17 @@ estimate seed variance; (ii)~\emph{pre-register} the seed-level estimand and the
 decision rule before running; and (iii)~include both a \emph{scrambled}-physics
 control and a \emph{matched-strength non-physics} control (here, random
 non-fault bands) so that an apparent effect can be separated from any
-regularizer of equal strength. In this study the matched-strength non-physics
-control was decisive: it was the most robust arm, ruling out even a generic
-spectral-regularizer reading.
+regularizer of equal strength. Because even the numerically best non-physics
+control failed the pre-registered bar, the grid supports neither a
+physics-specific nor a generic spectral-regularizer benefit.
 
 % =====================================================================
 \section{Reproducibility [C5]}
 \label{sec:repro}
-\textit{[TODO C5] results/PROVENANCE\_MANIFEST.md; content hashes; the Zenodo
-checkpoint archive (DOI pending --- ``will archive''); the independent
-from-checkpoint reproduction (audit\_reports/$\ldots$2026-06-24$\ldots$);
-hosting / license (CC-BY-4.0) / maintenance plan; D\&B reproducibility
-checklist.}
+\textit{[TODO C5] \code{results/PROVENANCE_MANIFEST.md}; content hashes; the
+Zenodo checkpoint archive (DOI pending --- ``will archive''); the independent
+from-checkpoint reproduction (\code{audit_reports/...2026-06-24...}); hosting /
+license (CC-BY-4.0) / maintenance plan; D\&B reproducibility checklist.}
 
 % =====================================================================
 \section{Limitations \& scope}
