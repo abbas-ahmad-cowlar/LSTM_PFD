@@ -114,32 +114,148 @@ reproducibility in ML.}
 % =====================================================================
 \section{Dataset \& generator [C1]}
 \label{sec:dataset}
-\textit{[TODO C1] Physics (docs/PHYSICS.md: 1X/2X/3X harmonics, sub-synchronous
-oil-whirl, low-frequency lube, cavitation HF bursts, wear broadband); 11
-classes; severity stratification; record-level group splits + leakage check;
-SNR variants; the 34-test spectral CI. Datasheet (Table~\ref{tab:datasheet}).
-Limitations: synthetic; cavitation weakly expressed.}
+
+\paragraph{Motivation and scope.}
+JBFD-11 is a physics-grounded \emph{synthetic} vibration dataset for
+hydrodynamic journal-bearing fault diagnosis. Unlike rolling-element bearings,
+for which public benchmarks are abundant (CWRU~\citep{smith2015cwru},
+Paderborn~\citep{lessmeier2016paderborn}), journal/hydrodynamic bearings have
+almost no openly available labelled fault data, yet they fail through distinct
+mechanisms with distinct vibration signatures. We therefore generate a
+controlled testbed in which the ground-truth fault, its severity, and the
+operating conditions are known exactly, so that an evaluation can isolate
+\emph{whether a physics prior helps} rather than confounding it with
+uncontrolled field variability. The dataset is synthetic throughout; we make no
+claim of real-rig fidelity (\S\ref{sec:limitations}).
+
+\paragraph{Signal model.}
+Each record is generated as $x(t) = n_{\mathrm{base}}(t) + \sum_\ell
+\mathrm{noise}_\ell(t) + s_{\mathrm{fault}}(t)$, sampled at $f_s=20{,}480$\,Hz
+for $5$\,s ($102{,}400$ samples) at a nominal shaft speed $\Omega_0=60$\,Hz
+($3{,}600$\,RPM). A machine floor $n_{\mathrm{base}}$ and a seven-layer noise
+model (measurement, mains EMI, pink $1/f$, thermal drift, ADC quantization,
+calibration drift, sporadic impulses, and an occasional aliasing artifact) are
+added to a per-class fault signature $s_{\mathrm{fault}}$ scaled by severity and
+a transient envelope. Every equation is normative in \texttt{docs/PHYSICS.md}
+and locked by a 34-test spectral CI battery
+(\texttt{tests/test\_physics\_signatures.py}). The amplitude coefficients are
+engineering-plausible values rather than Reynolds-equation solutions: the
+\emph{frequency structure}, not absolute g-levels, carries the diagnostic
+content.
+
+\paragraph{Classes and signatures.}
+The taxonomy comprises eight single faults --- healthy (\texttt{sain}, noise
+floor only), misalignment (2X/3X harmonics), imbalance (1X growing with
+speed$^2$), clearance/looseness (sub-synchronous $0.43$--$0.48{\times}$ plus
+1X/2X), lubrication deficiency (2--5\,Hz stick-slip, amplitude $\propto 1/S$ in
+the Sommerfeld number $S$), cavitation (1.4--2.6\,kHz bursts), wear (broadband
+floor plus asperity harmonics), and oil whirl ($0.42$--$0.48{\times}$, amplitude
+$\propto 1/\sqrt{S}$) --- and three mixed faults that superpose constituents at
+reduced amplitude (Fig.~\ref{fig:dataset}). Each signature follows established
+vibration-analysis practice, cited per class in \texttt{docs/PHYSICS.md}\,\S4.
+Cavitation is only weakly expressed spectrally; we flag this and qualify any
+cavitation-specific reading.
 
 \begin{figure}[t]
   \centering
   \figfromfile{F3_dataset_overview.pdf}
-  \caption{\textit{[TODO caption F3]} JBFD-11 signature map: the 11 classes
-    against their characteristic vibration signatures at the nominal shaft speed
-    $\Omega_0=60$\,Hz, with the broadband/HF families distinguished. Source:
-    \texttt{docs/PHYSICS.md} \S4; \texttt{dataset\_card.yaml}.}
+  \caption{JBFD-11 signature map: the 11 classes against their characteristic
+    vibration signatures at the nominal shaft speed $\Omega_0=60$\,Hz, with the
+    tonal/shaft-order and broadband/HF families distinguished. Frequencies shown
+    are nominal centres for visualization; the normative equations are in
+    \texttt{docs/PHYSICS.md}\,\S4.}
   \label{fig:dataset}
 \end{figure}
+
+\paragraph{Severity, operating conditions, and physics couplings.}
+Faults are stratified into four non-overlapping severity levels (incipient
+$0.20$--$0.45$, mild $0.45$--$0.70$, moderate $0.70$--$0.90$, severe
+$0.90$--$1.00$) with exactly 80 records per class per level; 30\% of records
+carry a linearly progressing severity envelope. Operating conditions are sampled
+per record and stored in metadata: shaft speed $\Omega\in[54,66]$\,Hz
+($\pm 10\%$), load 30--100\% of rated, and temperature 40--80$^\circ$C, from
+which an oil viscosity $\mu(T)=\mu_{\mathrm{ref}}e^{-0.03(T-60)}$ and a
+Sommerfeld number
+$S=S_{\mathrm{base}}\,(\mu/\mu_{\mathrm{ref}})(\Omega/\Omega_0)/\mathrm{load}$
+(clipped to $[0.05,0.50]$) drive the lubrication and oil-whirl couplings. The
+recorded per-record conditions provide the per-sample operating-condition inputs
+used by the physics-informed method (\S\ref{sec:stress}).
+
+\paragraph{Windows, splits, and leakage control.}
+Records are split at the \emph{record} level ($70/15/15$), stratified by
+class$\times$severity, into $2{,}464 / 528 / 528$ records; training and
+evaluation use 1\,s windows ($20{,}480$ samples, five non-overlapping windows
+per record) cut at load time by a group-aware \texttt{WindowedView} that never
+crosses a record boundary, giving $12{,}320 / 2{,}640 / 2{,}640$ windows. Because
+all five windows of a record share its fault, severity, operating point, and
+noise realization, the windows are \emph{not} independent --- a fact that
+governs the statistical unit throughout (\S\ref{sec:benchmark}). Splits are
+leakage-checked by record hash at generation, and both independent audits
+re-verified zero cross-split overlap by content-hashing the released file. For
+noise-robustness evaluation the \emph{test} split is additionally exported at
+three SNR levels ($20/10/5$\,dB AWGN, calibrated to each record's clean RMS), so
+frozen checkpoints are evaluated across noise without retraining.
+
+\paragraph{Release and datasheet.}
+We release the generator, the dataset
+(\texttt{data/generated/dataset\_v2.h5}; SHA-256 pinned in
+\texttt{results/PROVENANCE\_MANIFEST.md}), and a datasheet following
+\citet{gebru2021datasheets} (Table~\ref{tab:datasheet}), under CC-BY-4.0.
+Generation is deterministic (global seed 42; per-record seed $42+i$).
+\S\ref{sec:repro} details the full reproducibility chain.
 
 \input{tables/T4_datasheet.tex}
 
 % =====================================================================
 \section{Benchmark \& protocol [C2]}
 \label{sec:benchmark}
-\textit{[TODO C2] Frozen protocol (Adam 1e-3 / batch 64 / $\le$60 ep / patience
-10 / 3 seeds / test-touched-once); 11 models; why the record (528), not the
-window (2{,}640), is the inferential unit; near-ceiling results; no physics
-accuracy edge (best vanilla ties the CE-only PC-CNN, gap $+0.00$, McNemar
-$p=1$).}
+
+\paragraph{Protocol (frozen in advance).}
+The benchmark task is 11-class fault classification on 1\,s windows. The
+protocol was frozen before running (\texttt{experiments/PROTOCOL.md}): every deep
+model is trained with an identical budget (Adam, $\mathrm{lr}=10^{-3}$; batch
+64; $\le$60 epochs; early stopping with patience 10 on validation accuracy; no
+learning-rate schedule; cross-entropy loss; no augmentation); model selection
+uses the validation split only; and the clean \texttt{test} split and its
+\texttt{test\_snr*} variants are each touched exactly once, after training. We
+evaluate eleven models: eight deep networks (\texttt{cnn1d},
+\texttt{attention\_cnn}, \texttt{cnn\_lstm}, \texttt{resnet18},
+\texttt{patchtst}, \texttt{hybrid\_pinn}, \texttt{physics\_constrained\_cnn},
+\texttt{multitask\_pinn}), three classical baselines (random forest, SVM,
+gradient boosting on a 36-feature extraction), and a soft-voting ensemble; each
+at three seeds.
+
+\paragraph{The record is the inferential unit.}
+The $2{,}640$ test windows derive from 528 records, five per record, and share
+within-record structure; treating them as independent overstates significance
+(an early error, caught by audit and corrected). We therefore aggregate each
+record by soft vote (mean class score over its five windows) and compute all
+statistics on the \textbf{528 records} as the independent unit. We report this
+both because it is the correct estimand here and because the same
+window-versus-record distinction recurs, at the seed level, in the stress-test
+(\S\ref{sec:stress}).
+
+\paragraph{Results: near-ceiling, no accuracy advantage.}
+At the record level the task is near-ceiling (Table~\ref{tab:benchmark}): the
+strongest classical baseline is random forest ($98.74\%$) and the strongest deep
+model is \texttt{cnn\_lstm} ($99.43\%$). No model --- physics-labelled or not ---
+shows an accuracy advantage. The best vanilla deep model (\texttt{cnn\_lstm},
+best-validation seed $99.62\%$) and the best physics-labelled model
+(\texttt{physics\_constrained\_cnn}, $99.62\%$) are tied: the paired gap is
+$+0.00$ points ($95\%$ CI $[+0.00,+0.00]$, cluster bootstrap by record) with an
+exact McNemar $p=1$.
+
+\paragraph{Honest relabelling.}
+The physics-labelled rows do not test physics-informed \emph{training}, and are
+labelled accordingly. \texttt{physics\_constrained\_cnn} here is CE-only: its
+physics term is a separate loss that the benchmark training loop never invokes,
+so the row is architecture-only with the physics loss OFF.
+\texttt{hybrid\_pinn} carries a rolling-element (not journal-bearing) physics
+branch plus constant metadata, and \texttt{multitask\_pinn} runs single-task
+with its auxiliary heads unused. The benchmark is thus a clean
+\emph{classification} benchmark on which physics architecture confers no
+accuracy edge; the actual test of physics-informed \emph{learning} is the
+stress-test of \S\ref{sec:stress}.
 
 \input{tables/T1_benchmark.tex}
 

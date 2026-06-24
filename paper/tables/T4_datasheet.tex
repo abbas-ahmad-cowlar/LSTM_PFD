@@ -1,17 +1,28 @@
-% T4 -- datasheet summary (classes x severities x splits x SNR variants; hashes).
-% Source: dataset_card.yaml; results/PROVENANCE_MANIFEST.md
-% [STUB: populated when Section 3 (Dataset & generator, C1) is drafted.]
+% T4 -- datasheet summary. Sources: dataset_card.yaml; experiments/DATASET_V2.md;
+% results/PROVENANCE_MANIFEST.md (content hashes).
 \begin{table}[t]
   \centering
-  \caption{\textit{[TODO T4]} JBFD-11 datasheet summary: 11 classes, 4 severity
-    levels, record-level leakage-checked splits (2{,}464 / 528 / 528), SNR
-    variants (clean, 20/10/5\,dB), and frozen-input content hashes.}
+  \caption{JBFD-11 datasheet summary (measured from the released file, not
+    aspirational). Full datasheet follows \citet{gebru2021datasheets}.}
   \label{tab:datasheet}
   \begin{tabular}{ll}
     \toprule
     Property & Value \\
     \midrule
-    \textit{[TODO: rows]} & --- \\
+    Classes & 11 journal-bearing faults (8 single + 3 mixed) \\
+    Records & 3{,}520 (320 / class; 80 / class / severity) \\
+    Severity levels & 4 (incipient, mild, moderate, severe) \\
+    Record length / rate & 5\,s @ 20{,}480\,Hz ($102{,}400$ samples); $\Omega_0=60$\,Hz \\
+    Windows & 1\,s ($20{,}480$ samples), 5 non-overlapping per record \\
+    Splits (records) & 2{,}464 / 528 / 528 (train / val / test), record-level \\
+    Splits (windows) & 12{,}320 / 2{,}640 / 2{,}640 \\
+    Split design & group-aware, stratified by class$\times$severity \\
+    Leakage & 0 cross-split record-hash overlap (audit-verified) \\
+    Operating conditions & speed $\pm10\%$, load 30--100\%, temp.\ 40--80$^\circ$C \\
+    Noise / SNR variants & 7-layer noise; test at clean, 20, 10, 5\,dB \\
+    Generator CI & 34 spectral-signature tests \\
+    License / seed & CC-BY-4.0; global seed 42 \\
+    Dataset SHA-256 & \texttt{f72ad35b\ldots afcee0} (full hash in manifest) \\
     \bottomrule
   \end{tabular}
 \end{table}
