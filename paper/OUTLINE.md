@@ -17,47 +17,52 @@
 
 ---
 
-## 1. Title options (pick one)
-1. **"A Synthetic Journal-Bearing Benchmark for Stress-Testing Physics-Informed Fault Diagnosis"**
-2. "When Physics-Informed Fault Diagnosis Does Not Help (Yet): A Controlled Synthetic Benchmark and a Seed-Robust Negative Result"
-3. "Stress-Testing Physics-Informed Learning on a CI-Locked Synthetic Journal-Bearing Benchmark: A Complete Negative"
+## 1. Title — SELECTED
+> **"A Synthetic Journal-Bearing Benchmark for Stress-Testing Physics-Informed Fault Diagnosis"**
 
-Artifact name (used throughout — pick one): **JB-Synth** · JBFD-11 · SynJB.
+(Alternatives considered, not used: "When Physics-Informed Fault Diagnosis Does Not
+Help (Yet): …"; "… A Complete Negative".)
+
+Artifact name — SELECTED: **JBFD-11** (clearer than JB-Synth / SynJB).
 
 ## 2. Abstract (full draft)
 Physics-informed neural networks are increasingly proposed for bearing fault
 diagnosis, but controlled, leakage-free evidence that physics priors actually *help*
 is scarce — and the journal/hydrodynamic-bearing regime, unlike the rolling-element
 datasets that dominate the literature (CWRU, Paderborn), has almost no public
-benchmarks. We release **[NAME]**, a physics-grounded **synthetic** journal-bearing
+benchmarks. We release **JBFD-11**, a physics-grounded **synthetic** journal-bearing
 vibration dataset (11 fault classes, severity-stratified, record-level
 leakage-checked, with SNR-20/10/5 variants) from a generator whose spectral
-signatures are locked by a 34-test CI battery, together with a **frozen,
-pre-registered, record-level benchmark** of 11 classical, deep, and physics-informed
-models. We use this controlled testbed to stress-test the physics-informed methods we
-implement — a band-energy spectral-consistency loss judged against a frozen
-healthy-class reference, with per-sample operating conditions — across the regimes
-where such priors are theorized to help: noise robustness, data-efficiency, severity
-out-of-distribution, interpretability, and calibration. On every axis, **the tested
-physics-informed methods show no advantage** over strong data-driven baselines. We
-further document how readily an apparent benefit arises and then disappears under
-scrutiny: a same-architecture 5 dB noise-robustness effect that is significant at n=3
-seeds (within-seed McNemar p=1.2e-4) **does not replicate at n=12** (seed-level
-Wilcoxon p=0.79), and a pre-registered control that swaps the physics targets for
-**random non-fault frequency bands** is the most robust arm. Our contribution is a
-reusable physics-grounded benchmark, a rigorous complete negative on the tested
-methods, and a concrete methodological caution about seed counts and estimands in
-physics-informed evaluation. We release the generator, content-hashed dataset,
-checkpoints, and analysis; every headline number was independently reproduced from
-raw checkpoints by external reviewers. *(Synthetic-only; no real-rig validation.)*
+signatures are locked by a 34-test CI battery, together with a **frozen benchmark of
+11 classical, deep, and physics-informed models, analyzed at the record level**. We
+use this controlled testbed to stress-test the physics-informed methods we implement
+— a band-energy spectral-consistency loss judged against a frozen healthy-class
+reference, with per-sample operating conditions — across the regimes where such priors
+are theorized to help: noise robustness, data-efficiency, severity out-of-distribution,
+interpretability, and calibration. On every axis, **the tested physics-informed
+methods show no statistically supported, seed-robust advantage** over strong
+data-driven baselines. We further document how readily an apparent benefit arises and
+then disappears under scrutiny: a promising n=3 analysis — a highly significant
+*representative-seed* McNemar result (14–0, p=1.2e-4) — **dissolves under a
+pre-registered n=12 *seed-level* test** (Wilcoxon p=0.79); a pre-registered control
+that swaps the physics targets for **random non-fault frequency bands** has the lowest
+mean degradation numerically yet still fails the pre-registered robustness criterion.
+Our contribution is a reusable physics-grounded benchmark, a rigorous complete
+negative on the tested methods, and a concrete methodological caution about seed
+counts and estimands in physics-informed evaluation. We release the dataset,
+generator, and analysis code, and **will** archive the trained checkpoints and full
+reproducibility package on a public repository; every headline number was
+independently recomputed from the raw checkpoints by separate audit scripts.
+*(Synthetic-only; no real-rig validation.)*
 
 ## 3. Contribution bullets
 - **A reusable, CI-locked synthetic journal-bearing dataset + generator** (11 classes,
   severity-stratified, record-level leakage-checked, SNR variants) — a controlled
   testbed for a regime with almost no public benchmarks. **[C1]**
-- **A frozen, pre-registered, record-level 11-model benchmark** with honest unit-of-
-  analysis (the 528-record, not the 2,640-window, level) on which no model — physics-
-  informed or not — shows an accuracy advantage. **[C2]**
+- **A frozen, record-level 11-model benchmark** (protocol fixed in advance; analyzed
+  at the 528-record, not the 2,640-window, level) on which no model — physics-informed
+  or not — shows an accuracy advantage. **[C2]**  *(Reserve the word "pre-registered"
+  for the §8.8 n=12 grid, whose decision rule was committed before the runs.)*
 - **A rigorous, complete negative**: across noise, data-efficiency, severity-OOD,
   interpretability, and calibration, the **physics-informed methods we implement and
   test** give no advantage over data-driven baselines. **[C3]**
@@ -65,9 +70,10 @@ raw checkpoints by external reviewers. *(Synthetic-only; no real-rig validation.
   significant at n=3 dissolves at n=12 under a pre-registered seed-level estimand and a
   matched-strength non-physics control; (ii) a physics loss can pass a green test suite
   while silently broken. **[C4-methodology]**
-- **A released, externally-reproduced artifact set** (generator, content-hashed
-  dataset, checkpoints, analysis, provenance manifest; independent from-checkpoint
-  reproduction). **[C5-repro]**
+- **A reproducible, content-hashed artifact set** (generator, dataset, analysis,
+  provenance manifest; trained checkpoints to be archived publicly), with the headline
+  numbers **independently recomputed from the raw checkpoints by separate audit
+  scripts**. **[C5-repro]**
 
 ## 4. Section outline (E&D conventions)
 1. **Introduction** — the gap (journal-bearing data scarcity; physics-informed
@@ -142,8 +148,12 @@ raw checkpoints by external reviewers. *(Synthetic-only; no real-rig validation.
   gap vanishes as seeds grow).
 - **F3 — dataset/generator overview** (classes ↔ physical signatures ↔ severity).
 
-## 7. Open decisions for the owner (before full drafting)
-- Title (§1) + artifact name; author/affiliation; arXiv categories (cs.LG + eess.SP).
-- Whether to include the deployment (C5) ONNX-latency appendix (minor, applied).
-- Format/template: a NeurIPS-style LaTeX class (serves arXiv + workshop + a 2027 D&B
-  resubmission).
+## 7. Decisions
+- ~~Title + artifact name~~ — **DECIDED:** Title 1 + **JBFD-11**.
+- ~~Deployment (C5)~~ — **DECIDED (review):** keep out of the main paper; **appendix
+  at most**.
+- **Still open:** author/affiliation; arXiv categories (cs.LG + eess.SP); LaTeX
+  template (a NeurIPS-style class serves arXiv + a workshop + a 2027 D&B resubmission).
+- **Encoding:** this file is clean UTF-8 (`—`, `§`, `→`, `–`); any `â†`/`Â§` you see is
+  a copy-paste artifact, not in the source. The manuscript is LaTeX, where these become
+  `\textemdash`, `\S`, `\rightarrow`, etc. — no raw Unicode in the `.tex`.
