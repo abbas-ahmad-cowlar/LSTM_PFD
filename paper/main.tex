@@ -103,12 +103,67 @@ recomputed from the raw checkpoints by separate audit scripts.
 % =====================================================================
 \section{Introduction}
 \label{sec:intro}
-\textit{[TODO C-intro] The gap (journal-bearing data scarcity; physics-informed
-diagnosis proposed but under-evaluated~\citep{raissi2019pinn}); what a controlled
-synthetic testbed buys; contributions; the headline negative and the
-$n{=}3\!\rightarrow\!n{=}12$ hook (Fig.~\ref{fig:dissolution}). State
-synthetic-only here. Rolling-element benchmarks dominate the
-literature~\citep{smith2015cwru,lessmeier2016paderborn}.}
+Bearing faults are a leading cause of rotating-machinery failure, and
+data-driven diagnosis from vibration signals is now standard practice. Two gaps
+motivate this work. First, the public benchmarks that underpin the field are
+almost entirely \emph{rolling-element} (CWRU~\citep{smith2015cwru},
+Paderborn~\citep{lessmeier2016paderborn}); \emph{journal} (hydrodynamic)
+bearings --- which fail through different mechanisms, such as oil whirl,
+lubrication breakdown, and cavitation, with correspondingly different vibration
+signatures --- have almost no openly available labelled fault data. Second,
+physics-informed neural networks are increasingly proposed for fault
+diagnosis~\citep{raissi2019pinn}, yet controlled, leakage-free evidence that a
+physics prior actually \emph{improves} diagnosis --- rather than merely matching
+a strong data-driven baseline --- is scarce, partly because real datasets
+confound a prior's effect with uncontrolled operating and measurement
+variability.
+
+A physics-grounded \emph{synthetic} benchmark addresses both gaps at once.
+Because the generator fixes the ground-truth fault, its severity, and the
+operating conditions, an evaluation can isolate the contribution of a physics
+prior under matched conditions, with leakage controlled by construction. The
+cost is external validity --- synthetic signals are not a real rig --- which we
+state plainly and treat as the central limitation (\S\ref{sec:limitations}).
+
+We release \textbf{JBFD-11}, a CI-locked synthetic journal-bearing dataset (11
+fault classes, severity-stratified, record-level leakage-checked, with SNR
+variants) together with a \emph{frozen}, record-level benchmark of 11 classical,
+deep, and physics-informed models. We then use this testbed to stress-test the
+physics-informed methods we implement --- a band-energy spectral-consistency loss
+judged against a frozen healthy-class reference --- across the five regimes where
+such priors are theorized to help. The result is a \emph{complete negative}: on
+this benchmark, the tested methods show no statistically supported, seed-robust
+advantage on any axis. The last candidate positive, a 5\,dB noise-robustness
+benefit, illustrates the study's methodological point: it was highly significant
+in a representative-seed $n{=}3$ analysis and \emph{dissolved} under a
+pre-registered $n{=}12$ seed-level test (Fig.~\ref{fig:dissolution}), where it is
+statistically indistinguishable from a cross-entropy baseline and weaker than a
+matched-strength non-physics control.
+
+\paragraph{Contributions.}
+\begin{itemize}\setlength{\itemsep}{1pt}
+  \item \textbf{[C1]} A reusable, CI-locked synthetic journal-bearing dataset and
+    generator (11 classes, severity-stratified, record-level leakage-checked, SNR
+    variants) --- a controlled testbed for a regime with almost no public
+    benchmarks (\S\ref{sec:dataset}).
+  \item \textbf{[C2]} A frozen, record-level 11-model benchmark on which no model,
+    physics-informed or not, shows an accuracy advantage (\S\ref{sec:benchmark}).
+  \item \textbf{[C3]} A rigorous, complete negative on the tested
+    physics-informed methods: across noise, data-efficiency, severity-OOD,
+    interpretability, and calibration, none gives a statistically supported,
+    seed-robust advantage over data-driven baselines (\S\ref{sec:stress}).
+  \item \textbf{[C4]} A methodological caution: an effect significant in a
+    representative-seed $n{=}3$ analysis that dissolves at $n{=}12$ under a
+    pre-registered seed-level estimand and a matched-strength non-physics
+    control, and a physics loss that passed a green test suite while silently
+    broken (\S\ref{sec:caution}).
+  \item \textbf{[C5]} A content-hashed, independently re-verified reproducibility
+    package; the trained checkpoints will be archived publicly
+    (\S\ref{sec:repro}).
+\end{itemize}
+Throughout, the study is synthetic-only, every estimand is record-level (528) or
+seed-level, and the negative is bounded to the methods we implement and test ---
+not a claim that no physics prior could ever help.
 
 % =====================================================================
 \section{Related work}
@@ -497,7 +552,21 @@ are qualified.
 % =====================================================================
 \section{Conclusion}
 \label{sec:conclusion}
-\textit{[TODO]}
+We introduced JBFD-11, a physics-grounded synthetic journal-bearing dataset and
+a frozen, record-level benchmark, and used them to stress-test a band-energy
+physics-informed method across five regimes. On this controlled testbed the
+tested method shows no statistically supported, seed-robust advantage over strong
+data-driven baselines on any axis, and the one candidate positive dissolved once
+the seed --- not the window or a single representative seed --- was made the
+inferential unit at $n{=}12$. We report this as a negative result and a
+methodological caution, not as evidence against physics priors in general: the
+finding is bounded to the implemented methods on a single synthetic dataset. The
+lasting contributions are the reusable benchmark and the evaluation discipline it
+makes concrete --- record-level and seed-level estimands, pre-registered decision
+rules, and matched-strength non-physics controls --- which we hope are useful for
+assessing physics-informed diagnosis as real journal-bearing data become
+available. We release the dataset, generator, and analysis code, and will archive
+the trained checkpoints and full reproducibility package publicly.
 
 % =====================================================================
 \bibliographystyle{plainnat}
