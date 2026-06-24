@@ -10,6 +10,36 @@
 > **Maintenance duty:** update this file at every phase gate and at the end of
 > every session. Keep it truthful and current; it is the single source of truth.
 >
+> ## ⚠️ LATEST (2026-06-24, session 11) — THE PROJECT IS NOW A COMPLETE NEGATIVE
+> **Read this before the rest of the file (below is older Phase-5/6 narrative).**
+> Phase 7 ("strengthen-then-write") ran the pre-registered **§8.8 n=12 grid**
+> (`results/p7_strengthen/`, PROTOCOL §8.8, branch `p7/strengthen`) to stress-test
+> the one positive Gate 5 had let stand (a 5 dB noise-robustness benefit, then n=3).
+> **Result: it does NOT replicate at n=12.** Record-level seed-level (528 records,
+> 12 seeds, `scripts/p7_strengthen_record_level.py`, commit `0797258`): correct
+> physics degr **3.47** ≈ CE-only **3.54**, seed-level **Wilcoxon p=0.79**; scramble
+> p=0.75, random-band p=0.21 — all n.s.; **no arm robust on ≥10/12 seeds**. The n=3
+> "win" (0.06 vs 4.29, McNemar 14–0 p=1.2e-4) was a **seed artifact** (this grid's
+> own seeds {0,1,2} reproduce it; seeds 3–11 erase it). The random *non-fault*-band
+> arm is the **most** robust and correct physics the **weakest** w=1.0 arm → not even
+> "a spectral regularizer helped." **A FOURTH independent-audit round (2026-06-24,
+> GPT-5 + fresh Opus; `audit_reports/INDEPENDENT_AUDIT_2026-06-24_{GPT5,CLAUDE}.md`)
+> reproduced everything cache-free, no critical findings, and both verdicts:
+> trustworthy; publishable as a synthetic dataset + frozen benchmark + rigorous
+> COMPLETE NEGATIVE + methodological caution — NOT any physics win.** `results/FINDINGS.md`
+> §0 was **rewritten to the complete negative (DRAFT 2026-06-24, awaiting owner
+> re-ratification)**; README / results/README / findings_bandenergy reconciled; the
+> stale fabricated `config/docs/paper/main.tex` + `Final_Report_UNVALIDATED.pdf`
+> **removed/stubbed**. **NEXT (Phase 7 → submission):** owner re-ratifies FINDINGS §0
+> → merge `p7/strengthen`→`main` → repro package (dataset hash + Zenodo checkpoints +
+> provenance manifest) → write the manuscript from scratch (dataset+benchmark+negative)
+> → choose venue (datasets-&-benchmarks track / IEEE Access / Sensors / Measurement /
+> PHM workshop). **Do NOT reintroduce any physics-benefit or "spectral regularizer"
+> wording; never quote the within-seed McNemar as evidence (the seed-level Wilcoxon
+> governs).** STOP adding experiments — the science has converged.
+>
+> ---
+>
 > **Last updated: 2026-06-23, session 10.** One-line status: Phase 5 merged to
 > `main` (Gate 5), **but** internal + TWO independent external audits found the
 > *physics-informed-model* evidence invalid (wrong-bearing-type physics, an inert

@@ -20,15 +20,17 @@ checkpoints live at `D:\Libraries\` (see bottom).
 | `cnn1d_v2_baseline/` | history | Phase-3 dataset-v2 baseline (90.53%) |
 
 **Headline (DRAFT verdict — see `FINDINGS.md` §0, pending owner re-ratification):**
-the band-energy remediation is complete and record-level; two external audits
-reviewed it (the 2nd reproduced every number). What stands: a synthetic
-classification benchmark, **near-ceiling at the record level**, **no row showing a
-physics accuracy advantage**; plus **one** surviving physics positive — a **5 dB
-noise-robustness gain from the band-energy loss in a same-architecture ablation**
-(`phase5_bandenergy/summary_record_level.json`: McNemar 14–0, p=1.2e-4).
-Data-efficiency, severity-OOD, XAI alignment (§8.6a *reverses*), and calibration
-(a wash) did **not** survive. Frame as "the *implemented band-energy term* helped,"
-not "physics helps"; the benefit is not yet isolated from generic regularization.
+a synthetic classification benchmark, **near-ceiling at the record level**, **no row
+showing a physics accuracy advantage**, and a **rigorous, complete NEGATIVE** on
+physics-informed learning. The last candidate positive — a 5 dB noise-robustness
+benefit that looked significant at **n=3** — **did not replicate** in a
+pre-registered **n=12** grid (§8.8, `p7_strengthen/`,
+`p7_strengthen_record_level.json`) that added a matched-strength non-physics control:
+correct physics ties CE-only (degr 3.47 vs 3.54, seed-level **Wilcoxon p=0.79**; the
+random non-fault-band arm is the most robust; no arm robust ≥10/12). The n=3 McNemar
+14–0 (p=1.2e-4) was a **seed artifact**. Clean accuracy, data-efficiency,
+severity-OOD, XAI alignment (§8.6a *reverses*), and calibration (a wash) also did
+**not** survive. No "physics helps" claim of any kind.
 
 **Full checkpoint archives (off-repo, `D:\Libraries\`):**
 - `results_phase5-20260613T100807Z-3-001` — 45 inert runs + 45 ckpts (= `phase5/`)
