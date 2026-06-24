@@ -116,9 +116,11 @@ may **not** claim any physics benefit — not even "a spectral regularizer helpe
 1. **Remove/stub the stale fabricated paper** — `config/docs/paper/main.tex` +
    `config/docs/reports/Final_Report_UNVALIDATED.pdf` (CWRU/98.1%/expert-validated/
    rolling-element — a different, non-existent study). Both fourth-round audits: it
-   must not reach a referee. **Being done in Phase 7 (this docs pass).**
-2. **Reconcile the verdict docs** — README, `results/README.md`, `PROJECT_STATE.md`,
-   `results/phase5_bandenergy/findings_bandenergy.md` to the n=12 reality. (In progress.)
+   must not reach a referee. **DONE 2026-06-24** — stubbed, then removed entirely with
+   the dead `config/docs/` MkDocs site (recoverable from git).
+2. ~~Reconcile the verdict docs~~ — **DONE 2026-06-24** (README, `results/README.md`,
+   `PROJECT_STATE.md`, `results/phase5_bandenergy/findings_bandenergy.md` reconciled to
+   the n=12 reality).
 3. **Externalize reproducibility (audit M1)** — pin a **content hash** of
    `dataset_v2.h5`, archive the checkpoints (Zenodo); the chain command→commit→
    dataset-hash→checkpoint→result must be closeable by a cold referee.

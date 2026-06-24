@@ -43,10 +43,12 @@ experiments.** Remaining work is writing + packaging, not science.
 
 ### What's next (Phase 7 → submission), in order
 1. ~~Owner re-ratifies FINDINGS §0~~ **DONE 2026-06-24**; ~~merge `p7/strengthen`→`main`~~ (this gate).
-2. **Repo cleanup:** prune the `config/docs/` pre-convergence relic tree (≈90 stale
-   files — IDB reports, the now-stubbed fabricated paper, MATLAB relics); rename the
-   misleading `ops_aware` metrics field (it is the **eval** flag; training **did** use
-   per-sample rpm — confirmed by the 2026-06-24 Opus audit).
+2. **Repo cleanup:** ~~prune the `config/docs/` pre-convergence relic tree~~ **DONE
+   2026-06-24** — removed the whole **dead/broken MkDocs site** (91 files + the
+   orphaned `mkdocs.yml`: not CI-deployed, broken nav, "Production-Ready Platform"
+   overclaim; recoverable from git). **Still pending:** rename the misleading
+   `ops_aware` metrics field (it is the **eval** flag; training **did** use per-sample
+   rpm — confirmed by the 2026-06-24 Opus audit). On branch `p7/submission`.
 3. **Reproducibility package (audit M1):** pin a **content hash** of
    `data/generated/dataset_v2.h5`; archive the 48 §8.8 checkpoints + the
    Phase-5/benchmark checkpoints to **Zenodo**; a **provenance manifest** (command /
