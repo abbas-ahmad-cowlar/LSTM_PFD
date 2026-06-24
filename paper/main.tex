@@ -137,8 +137,9 @@ advantage on any axis. The last candidate positive, a 5\,dB noise-robustness
 benefit, illustrates the study's methodological point: it was highly significant
 in a representative-seed $n{=}3$ analysis and \emph{dissolved} under a
 pre-registered $n{=}12$ seed-level test (Fig.~\ref{fig:dissolution}), where it is
-statistically indistinguishable from a cross-entropy baseline and weaker than a
-matched-strength non-physics control.
+statistically indistinguishable from a cross-entropy baseline; a matched-strength
+non-physics control even had numerically lower mean degradation, though it too
+failed the pre-registered bar.
 
 \paragraph{Contributions.}
 \begin{itemize}\setlength{\itemsep}{1pt}
@@ -152,8 +153,8 @@ matched-strength non-physics control.
     physics-informed methods: across noise, data-efficiency, severity-OOD,
     interpretability, and calibration, none gives a statistically supported,
     seed-robust advantage over data-driven baselines (\S\ref{sec:stress}).
-  \item \textbf{[C4]} A methodological caution: an effect significant in a
-    representative-seed $n{=}3$ analysis that dissolves at $n{=}12$ under a
+  \item \textbf{[C4]} A methodological caution: a representative-seed $n{=}3$
+    statistic that appeared significant but dissolves at $n{=}12$ under a
     pre-registered seed-level estimand and a matched-strength non-physics
     control, and a physics loss that passed a green test suite while silently
     broken (\S\ref{sec:caution}).
@@ -168,10 +169,36 @@ not a claim that no physics prior could ever help.
 % =====================================================================
 \section{Related work}
 \label{sec:related}
-\textit{[TODO] Vibration diagnosis (signal processing $\rightarrow$ deep
-learning); PINNs / physics-informed diagnosis~\citep{raissi2019pinn};
-synthetic vibration data; evaluation rigor, negative results, and
-reproducibility in ML.}
+% Citations are deliberately limited to verified, real references already in
+% references.bib; expand only with checked entries before camera-ready.
+\paragraph{Vibration-based bearing diagnosis.}
+Diagnosis from vibration signals has moved from hand-engineered spectral and
+statistical features to deep neural networks. The public benchmarks that anchor
+this progress are predominantly rolling-element: the Case Western Reserve
+University dataset~\citep{smith2015cwru} and the Paderborn
+dataset~\citep{lessmeier2016paderborn} are the de facto standards, and most
+reported gains are measured on them. Journal/hydrodynamic bearings, whose failure
+modes (oil whirl, lubrication breakdown, cavitation) differ from rolling-element
+spalling, lack a comparable open benchmark --- the gap JBFD-11 targets.
+
+\paragraph{Physics-informed learning.}
+Physics-informed neural networks incorporate governing-equation or domain
+knowledge into training, originally for solving differential
+equations~\citep{raissi2019pinn} and increasingly as priors or auxiliary losses
+for diagnosis and prognostics. The band-energy spectral-consistency loss we test
+belongs to this family. Our contribution is not a new prior but a controlled,
+pre-registered evaluation of whether such a prior helps under matched conditions
+--- the question that ad-hoc comparisons on confounded real datasets leave open.
+
+\paragraph{Evaluation rigor and reproducibility.}
+Several threads in the broader ML literature inform our methodology: attribution
+methods such as integrated gradients~\citep{sundararajan2017ig} for the
+interpretability axis; calibration measurement via expected calibration
+error~\citep{guo2017calibration}; and dataset documentation via
+datasheets~\citep{gebru2021datasheets}. To these we add a domain-specific
+discipline for physics-informed diagnosis: report seed-level estimands,
+pre-register the decision rule, and include matched-strength non-physics
+controls, so that a seed-fragile signal is not mistaken for a physics effect.
 
 % =====================================================================
 \section{Dataset \& generator [C1]}
@@ -576,8 +603,36 @@ the trained checkpoints and full reproducibility package publicly.
 \appendix
 \section{Deployment}
 \label{app:deployment}
-\textit{[TODO C5-appendix] ResNet18 $\rightarrow$ ONNX FP32 $\approx$13\,ms/window
-CPU; INT8 4$\times$ smaller but 10--15$\times$ slower (honest negative). Source:
-\texttt{results/deployment/appendix.md}.}
+For completeness we report a CPU deployment profile of the strongest single deep
+model (\code{resnet18}), exported to ONNX and dynamically quantized to INT8;
+latencies are median (p50) wall time per inference at three batch sizes of 1\,s
+windows (Table~\ref{tab:deploy}; source \code{results/deployment/appendix.md}).
+The export is numerically faithful: ONNX-vs-PyTorch parity is
+$\max|\Delta|=1.53\times10^{-4}$ and the INT8 model's argmax agrees with FP32 on
+$100\%$ of the profiled inputs. ONNX FP32 is the practical configuration
+(${\approx}12.9$\,ms per 1\,s window at batch~1, 15.4\,MB). Dynamic INT8
+quantization is an \emph{honest negative} on this CPU: it is ${\approx}3.9\times$
+smaller (15.4\,MB~$\rightarrow$~3.9\,MB) but ${\approx}15$--$17\times$
+\emph{slower} (e.g.\ $215.2$ vs $12.9$\,ms at batch~1), because the dynamically
+quantized integer kernels are not accelerated in this runtime. We report it to
+document the trade-off, not as a recommended configuration.
+
+\begin{table}[h]
+  \centering
+  \caption{CPU inference profile of \code{resnet18} (median latency per batch of
+    1\,s windows). INT8 is $\sim$4$\times$ smaller but $\sim$15--17$\times$ slower
+    here; ONNX FP32 is the practical choice. Source
+    \code{results/deployment/appendix.md}.}
+  \label{tab:deploy}
+  \begin{tabular}{lcccc}
+    \toprule
+    Backend & Size & $b{=}1$ & $b{=}8$ & $b{=}32$ \\
+    \midrule
+    Torch FP32 & ---      & 19.05\,ms  & 144.64\,ms  & 558.42\,ms \\
+    ONNX FP32  & 15.4\,MB & 12.92\,ms  & 101.06\,ms  & 417.96\,ms \\
+    ONNX INT8  & 3.9\,MB  & 215.18\,ms & 1564.94\,ms & 6136.14\,ms \\
+    \bottomrule
+  \end{tabular}
+\end{table}
 
 \end{document}
