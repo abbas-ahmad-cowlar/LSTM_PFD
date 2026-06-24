@@ -76,7 +76,7 @@ diagnosis, but controlled, leakage-free evidence that physics priors actually
 \emph{help} is scarce --- and the journal/\allowbreak hydrodynamic-bearing
 regime, unlike
 the rolling-element datasets that dominate the literature (CWRU, Paderborn), has
-almost no public benchmarks. We release \textbf{JBFD-11}, a physics-grounded
+few standardized, open fault benchmarks. We release \textbf{JBFD-11}, a physics-grounded
 \textbf{synthetic} journal-bearing vibration dataset (11 fault classes,
 severity-stratified, record-level leakage-checked, with SNR-20/10/5 variants)
 from a generator whose spectral signatures are locked by a 34-test CI battery,
@@ -115,7 +115,8 @@ almost entirely \emph{rolling-element} (CWRU~\citep{smith2015cwru},
 Paderborn~\citep{lessmeier2016paderborn}); \emph{journal} (hydrodynamic)
 bearings --- which fail through different mechanisms, such as oil whirl,
 lubrication breakdown, and cavitation, with correspondingly different vibration
-signatures --- have almost no openly available labelled fault data. Second,
+signatures --- have few standardized, open fault benchmarks by comparison.
+Second,
 physics-informed neural networks are increasingly proposed for fault
 diagnosis~\citep{raissi2019pinn}, yet controlled, leakage-free evidence that a
 physics prior actually \emph{improves} diagnosis --- rather than merely matching
@@ -150,7 +151,7 @@ numerically lower mean degradation, though it too failed the pre-registered bar.
 \begin{itemize}\setlength{\itemsep}{1pt}
   \item \textbf{[C1]} A reusable, CI-locked synthetic journal-bearing dataset and
     generator (11 classes, severity-stratified, record-level leakage-checked, SNR
-    variants) --- a controlled testbed for a regime with almost no public
+    variants) --- a controlled testbed for a regime with few open fault
     benchmarks (\S\ref{sec:dataset}).
   \item \textbf{[C2]} A frozen, record-level 11-model benchmark on which no model,
     physics-informed or not, shows an accuracy advantage (\S\ref{sec:benchmark}).
@@ -174,37 +175,63 @@ not a claim that no physics prior could ever help.
 % =====================================================================
 \section{Related work}
 \label{sec:related}
-% Citations are deliberately limited to verified, real references already in
-% references.bib; expand only with checked entries before camera-ready.
-\paragraph{Vibration-based bearing diagnosis.}
+% Citations are web-verified to exist (novelty scan, 2026-06-25); a few
+% bibliographic fields are flagged in references.bib for camera-ready check.
+\paragraph{Vibration-based and journal-bearing diagnosis.}
 Diagnosis from vibration signals has moved from hand-engineered spectral and
-statistical features to deep neural networks. The public benchmarks that anchor
-this progress are predominantly rolling-element: the Case Western Reserve
-University dataset~\citep{smith2015cwru} and the Paderborn
-dataset~\citep{lessmeier2016paderborn} are the de facto standards, and most
-reported gains are measured on them. Journal/hydrodynamic bearings, whose failure
+statistical features to deep neural networks, but the public benchmarks that
+anchor this progress are predominantly rolling-element --- the Case Western
+Reserve University~\citep{smith2015cwru} and Paderborn~\citep{lessmeier2016paderborn}
+datasets are the de facto standards. Journal/hydrodynamic bearings, whose failure
 modes (oil whirl, lubrication breakdown, cavitation) differ from rolling-element
-spalling, lack a comparable open benchmark --- the gap JBFD-11 targets.
+spalling, have received far less attention and have few standardized, open fault
+benchmarks by comparison, though machine-learning diagnosis for them does exist:
+\citet{gecgel2021journalbearing} train a deep network on \emph{simulated}
+journal-bearing vibration for wear diagnostics, and \citet{jeon2020fluidfilm}
+apply CNNs to fluid-film rotor-bearing diagnosis. Our work is closest to
+\citet{gecgel2021journalbearing} in using simulated journal-bearing signals, but
+differs in purpose: rather than demonstrating a diagnostic model, JBFD-11 is a
+released benchmark built to \emph{stress-test} physics-informed methods, and its
+headline is a negative.
 
-\paragraph{Physics-informed learning.}
-Physics-informed neural networks incorporate governing-equation or domain
+\paragraph{Synthetic and physics-informed bearing diagnosis.}
+Synthetic and digital-twin data are increasingly used where real fault recordings
+are costly or risky --- e.g.\ \citet{zeynivand2026digitaltwin} generate a
+digital-twin synthetic dataset for spindle (rolling-element) bearing faults ---
+but such datasets are typically built to \emph{train} diagnostic models, whereas
+we release a synthetic benchmark to \emph{evaluate} whether a physics prior
+helps. Physics-informed neural networks incorporate governing-equation or domain
 knowledge into training, originally for solving differential
-equations~\citep{raissi2019pinn} and increasingly as priors or auxiliary losses
-for diagnosis and prognostics. The band-energy spectral-consistency loss we test
-belongs to this family. Our contribution is not a new prior but a controlled
-evaluation --- including a pre-registered $n{=}12$ seed-level noise-robustness
-grid --- of whether such a prior helps under matched conditions, the question
-that ad-hoc comparisons on confounded real datasets leave open.
+equations~\citep{raissi2019pinn} and increasingly as priors for fault diagnosis,
+typically reporting \emph{positive} results: \citet{lu2023physicsinformed} weight
+features toward characteristic fault frequencies, and \citet{kim2024physicsinformed}
+fuse physics-informed time--frequency features for noise-robust diagnosis. The
+band-energy spectral-consistency loss we test belongs to this family. Our
+contribution is not a new prior but a controlled evaluation --- including a
+pre-registered $n{=}12$ seed-level noise-robustness grid --- of whether such a
+prior helps under matched conditions; in contrast to such positive reports on
+(largely rolling-element) data, on our synthetic journal-bearing benchmark the
+tested prior shows no advantage.
 
 \paragraph{Evaluation rigor and reproducibility.}
-Several threads in the broader ML literature inform our methodology: attribution
-methods such as integrated gradients~\citep{sundararajan2017ig} for the
-interpretability axis; calibration measurement via expected calibration
-error~\citep{guo2017calibration}; and dataset documentation via
-datasheets~\citep{gebru2021datasheets}. To these we add a domain-specific
-discipline for physics-informed diagnosis: report seed-level estimands,
-pre-register the decision rule, and include matched-strength non-physics
-controls, so that a seed-fragile signal is not mistaken for a physics effect.
+Several threads inform our methodology: attribution via integrated
+gradients~\citep{sundararajan2017ig} for the interpretability axis; calibration
+via expected calibration error~\citep{guo2017calibration}; dataset documentation
+via datasheets~\citep{gebru2021datasheets}; and, closest to our methodological
+caution, work on realistic evaluation and data leakage in bearing diagnosis ---
+\citet{vieira2025realistic} show that improper partitioning inflates metrics and
+that the number of unique training bearings governs robustness. To these we add a
+domain-specific discipline for physics-informed diagnosis: report seed-level
+estimands, pre-register the decision rule, and include matched-strength
+non-physics controls, so that a seed-fragile signal is not mistaken for a physics
+effect.
+
+\paragraph{Positioning.}
+To our knowledge, JBFD-11 is the first released synthetic journal-bearing
+benchmark designed specifically to stress-test physics-informed fault diagnosis
+with record-level and seed-level inference and matched non-physics controls. We
+make no broader claim of priority over synthetic bearing data or journal-bearing
+diagnosis in general (cf.\ the works above).
 
 % =====================================================================
 \section{Dataset \& generator [C1]}
@@ -214,8 +241,8 @@ controls, so that a seed-fragile signal is not mistaken for a physics effect.
 JBFD-11 is a physics-grounded \emph{synthetic} vibration dataset for
 hydrodynamic journal-bearing fault diagnosis. Unlike rolling-element bearings,
 for which public benchmarks are abundant (CWRU~\citep{smith2015cwru},
-Paderborn~\citep{lessmeier2016paderborn}), journal/hydrodynamic bearings have
-almost no openly available labelled fault data, yet they fail through distinct
+Paderborn~\citep{lessmeier2016paderborn}), journal/hydrodynamic bearings have few
+standardized, open fault benchmarks by comparison, yet they fail through distinct
 mechanisms with distinct vibration signatures. We therefore generate a
 controlled testbed in which the ground-truth fault, its severity, and the
 operating conditions are known exactly, so that an evaluation can isolate
