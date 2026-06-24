@@ -1,5 +1,17 @@
 # Phase-5 physics reruns — BAND-ENERGY loss vs the frozen healthy reference
 
+> ⚠️ **SUPERSEDED 2026-06-24 — the noise-robustness result in this doc was based on
+> n=3 seeds and does NOT replicate at n=12.** A pre-registered n=12 grid (PROTOCOL
+> §8.8, `results/p7_strengthen/`, analysis `scripts/p7_strengthen_record_level.py`)
+> with a matched-strength non-physics control shows correct physics tied with CE-only
+> (degr 3.47 vs 3.54, seed-level **Wilcoxon p=0.79**; no arm robust on ≥10/12 seeds).
+> This grid's own first three seeds reproduce the n=3 "win" below (4.29 vs 0.06), and
+> the other nine erase it. **The "NOISE-ROBUSTNESS survives" verdict here is retired**
+> — treat this whole doc as historical provenance for the n=3 analysis. Authoritative
+> verdict: `results/FINDINGS.md` §0 (complete negative). The §8.7 F9 control section
+> remains valid as far as it goes (wrong real bands reproduced the n=3 effect), but
+> the §8.8 random-band control + n=12 supersede it: the effect is not real at n=12.
+>
 > **What this is.** The §8.2/§8.3/§8.4 experiments rerun with the *corrected*
 > physics: journal-bearing signature DB, the differentiable **band-energy
 > `compute_physics_loss` judged against the frozen healthy-class reference**, and
