@@ -446,8 +446,8 @@ candidate positive was seed-fragile (\S\ref{sec:caution}).
   \centering
   \figfromfile{F1_degradation_spread.pdf}
   \caption{Per-seed clean$\rightarrow$5\,dB record-level degradation (528
-    records, soft-vote) for the four pre-registered \S8.8 arms at $n{=}12$
-    seeds; horizontal bars are seed-means and the dashed line is the
+    records, soft-vote) for the four pre-registered arms (protocol~\S8.8) at
+    $n{=}12$ seeds; horizontal bars are seed-means and the dashed line is the
     pre-registered robustness threshold $\tau=1.0$\,pt. No arm is robust on
     $\ge$10/12 seeds; the non-physical random-band control has the lowest mean
     degradation and the highest robust-seed count numerically, but still fails
@@ -459,19 +459,19 @@ candidate positive was seed-fragile (\S\ref{sec:caution}).
 
 \paragraph{The other four regimes are each negative.}
 Across the remaining regimes the tested method shows no advantage either, all at
-the record level (Table~\ref{tab:regimes}). \emph{Data-efficiency} (\S8.2):
+the record level (Table~\ref{tab:regimes}). \emph{Data-efficiency} (protocol~\S8.2):
 PC-CNN exceeds the best vanilla model (\texttt{resnet18}) with non-overlapping
 $\pm1$\,std at only 1 of 3 reduced training fractions --- failing the
 pre-registered rule of $\ge$2 of 3 --- and ties at 10\% and 50\%.
-\emph{Severity-OOD} (\S8.3): training on low severity and testing on severe ties
-at ceiling (both $100\%$); the harder reverse direction favours PC-CNN on the
-point estimate ($82.58$ vs $76.01$) but with McNemar $p=0.39$ and a gap CI of
-$[-2.27,+8.33]$ spanning zero --- direction-only, not a positive.
-\emph{Interpretability} (\S8.6a): the integrated-gradients attribution fraction
-in the physics bands \emph{reverses} --- the vanilla model places more energy
-in-band ($0.146$) than the physics model ($0.099$), and on
+\emph{Severity-OOD} (protocol~\S8.3): training on low severity and testing on
+severe ties at ceiling (both $100\%$); the harder reverse direction favours
+PC-CNN on the point estimate ($82.58$ vs $76.01$) but with McNemar $p=0.39$ and a
+gap CI of $[-2.27,+8.33]$ spanning zero --- direction-only, not a positive.
+\emph{Interpretability} (protocol~\S8.6a): the integrated-gradients attribution
+fraction in the physics bands \emph{reverses} --- the vanilla model places more
+energy in-band ($0.146$) than the physics model ($0.099$), and on
 \texttt{lubrification} both place essentially zero --- giving no evidence of a
-physics-attention mechanism. \emph{Calibration} (\S8.6b): both models are
+physics-attention mechanism. \emph{Calibration} (protocol~\S8.6b): both models are
 well-calibrated (ECE $<0.03$) and the 5\,dB ECE direction flips between
 MC-dropout runs --- a wash. In sum, the implemented band-energy
 spectral-consistency method shows no statistically supported, seed-robust
@@ -556,8 +556,9 @@ regenerate byte-identical from their seeded scripts.
 Training used a single Google Colab Tesla~T4 GPU under one frozen budget (Adam,
 $\mathrm{lr}=10^{-3}$; batch 64; $\le$60 epochs; patience 10; AMP); all analysis,
 evaluation, and record-/seed-level aggregation run CPU-only (Python~3.14,
-PyTorch~2.9, CPU). The headline \S8.8 grid is a single-commit experiment: all 48
-\code{metrics.json} carry the pre-registration commit \code{4a2063d}, the runner
+PyTorch~2.9, CPU). The headline grid (protocol~\S8.8) is a single-commit
+experiment: all 48 \code{metrics.json} carry the pre-registration commit
+\code{4a2063d}, the runner
 is \code{scripts/run_phase5_gpu.py}, and the seed-level analysis is
 \code{scripts/p7_strengthen_record_level.py}.
 
@@ -570,7 +571,7 @@ every reported number from those checkpoints and the hash-pinned dataset.
 \paragraph{Independent verification.}
 Every load-bearing number was independently recomputed from the raw checkpoints
 by two separate audit rounds (2026-06-24). One reran the maintainer analysis; the
-other re-evaluated all 48 \S8.8 checkpoints \emph{cache-free} with its own code,
+other re-evaluated all 48 grid checkpoints \emph{cache-free} with its own code,
 reproducing each per-seed degradation, robust-seed count, and seed-level Wilcoxon
 $p$ to the digit, with all 48 window-accuracy sanity gates passing. Both audits
 also re-verified the dataset's leakage-freedom by content hashing and confirmed
