@@ -9,7 +9,7 @@
 > **Maintenance duty:** update this file at every gate and at the end of every
 > session. Keep it truthful and current; it is the single source of truth.
 >
-> **Last updated: 2026-06-24, session 11.**
+> **Last updated: 2026-06-25, session 12.**
 
 ## Current status — THE PROJECT IS A COMPLETE NEGATIVE (Phase 7 → submission)
 
@@ -37,27 +37,72 @@ real-rig validation. Ratified verdict: **`results/FINDINGS.md` §0 (RATIFIED
 agree on this framing (the fourth, 2026-06-24, did a cache-free from-checkpoint
 recompute).
 
-**Branch: `main`** (Phase 7 merged here at this gate; `p7/strengthen` is the working
-branch). Suite **268 passed, 6 deselected**. **The science has CONVERGED — STOP adding
-experiments.** Remaining work is writing + packaging, not science.
+**Current working branch: `p7/submission`** (off `main` @`dea92ae`; the Phase-7
+science is merged to `main`). Suite **268 passed, 6 deselected**. **The science has
+CONVERGED — STOP adding experiments.** Remaining work is writing the manuscript +
+the owner's Zenodo upload. `p7/submission` is **not yet merged to `main`** (merge at
+the next gate, when the manuscript draft is ready).
 
-### What's next (Phase 7 → submission), in order
-1. ~~Owner re-ratifies FINDINGS §0~~ **DONE 2026-06-24**; ~~merge `p7/strengthen`→`main`~~ (this gate).
-2. **Repo cleanup:** prune the `config/docs/` pre-convergence relic tree (≈90 stale
-   files — IDB reports, the now-stubbed fabricated paper, MATLAB relics); rename the
-   misleading `ops_aware` metrics field (it is the **eval** flag; training **did** use
-   per-sample rpm — confirmed by the 2026-06-24 Opus audit).
-3. **Reproducibility package (audit M1):** pin a **content hash** of
-   `data/generated/dataset_v2.h5`; archive the 48 §8.8 checkpoints + the
-   Phase-5/benchmark checkpoints to **Zenodo**; a **provenance manifest** (command /
-   commit / dataset-hash / checkpoint / random-reference-hash per paper table).
-4. **Write the manuscript from scratch** off FINDINGS §0 — dataset + benchmark +
-   complete negative + methodological caution; **record-level tables only**;
-   synthetic-only. Title shape: *"A Synthetic Journal-Bearing Benchmark for
-   Stress-Testing Physics-Informed Fault Diagnosis."*
-5. **Choose venue:** a datasets-&-benchmarks track (NeurIPS/ICML) / IEEE Access /
-   *Sensors* / *Measurement* / a PHM workshop. **Not** a top mechanical-systems or
-   top-ML venue (synthetic-only, negative headline).
+### What's next (Phase 7 → submission)
+- ✅ **Step 1 — FINDINGS ratified + merged** (`dea92ae`).
+- ✅ **Step 2 — repo cleanup:** dead MkDocs site removed (`5031a8a`); `ops_aware`
+  renamed → `eval_ops_aware` + `train_metadata_rpm_used` (`928e689`, audit M2).
+- ✅ **Step 3 — reproducibility package (audit M1):** dataset/reference SHA-256
+  pinned + `results/PROVENANCE_MANIFEST.md` written (`f82e46c`). **The ONE remaining
+  repro item is the OWNER's: upload the ~2.1 GB of `*.pth` checkpoints to Zenodo and
+  drop the DOI into the manifest** (`<TBD>` placeholder is there).
+- ◐ **Step 4 — manuscript (FULL FIRST DRAFT COMPLETE — finalizing):**
+  - ✅ **Framing LOCKED** in `paper/OUTLINE.md` (strict Evaluations & Datasets style):
+    title, abstract, contribution bullets, full section outline, **claim boundaries**,
+    table/figure list. Reviewed by both auditors (approve-with-revisions) and the
+    surgical-honesty fixes applied (`e3b8da2`): the n=3 result is a *representative-seed*
+    McNemar that dissolves under the *pre-registered n=12 seed-level* test (NOT
+    "seed-level significant at n=3"); random bands = lowest mean degr numerically but
+    fail the bar; claim = "no statistically-supported, seed-robust advantage";
+    "independently recomputed from checkpoints by audit scripts" (not "external
+    auditors"); release wording conditional until Zenodo; "pre-registered" reserved for
+    §8.8. **Decisions:** Title = *"A Synthetic Journal-Bearing Benchmark for
+    Stress-Testing Physics-Informed Fault Diagnosis"*; artifact name = **JBFD-11**;
+    deployment (C5) = appendix only.
+  - ✅ **Full first draft DONE** (2026-06-25, session 12) on `p7/submission`: a
+    self-contained NeurIPS-style build under `paper/` (`neurips_2023.sty` +
+    `main.tex` + `tables/T1–T4` + `references.bib`) plus `scripts/make_paper_figures.py`
+    (F1 per-seed spread, F2 the n=3→n=12 dissolution [headline], F3 signature map — all
+    generated from the result JSONs). All 9 sections + Appendix A (deployment) drafted
+    section-by-section against FINDINGS §0, owner-reviewed chunk by chunk; every number
+    traced to an artifact. Builds clean: `latexmk -pdf` → **11 pp, box-clean (0
+    overfull/underfull), no undefined refs**; all 12 citations web-verified with DOIs.
+    Guardrails held throughout (no
+    "physics improves"; record-level 528 + seed-level only; within-/representative-seed
+    McNemar reported only as the cautionary statistic; synthetic-only; release
+    conditional). Byline = "Syed Abbas Ahmad, PIEAS" (full form, NO Cowlar note), email
+    `syedabbasahmad6@gmail.com`; `[preprint]` mode; arXiv cs.LG + eess.SP; hidelinks.
+    Commit trail: `707595f` skeleton → `ac43b45` C1/C2 → `eb590ec` C3/C4 → `a0d59c3`
+    review fixes → `f6df4fb` C5+limitations → `e3e4a28` intro+conclusion → `021dabc`
+    related-work+appendix → `e94d61f` honesty fixes + box-clean polish → `ed5c10e`
+    PROJECT_STATE → `d846c12` novelty pass → `0343a7f` pin citation DOIs + protocol-§.
+  - ✅ **Novelty pass DONE** (2026-06-25): owner-forwarded scan (GPT-5.5 + web-verified)
+    found NO exact duplicate but adjacent prior art. §2 now cites + distinguishes the
+    closest prior art **Gecgel et al. 2021** (ASME *J. Tribol.*, simulated journal-bearing
+    DL wear) plus Jeon 2020 / Zeynivand 2026 / Lu 2023 / Kim&Kim 2024 / Vieira 2025 — all
+    pinned with exact metadata + DOIs. **Claim boundary TIGHTENED:** do NOT claim "first
+    synthetic journal-bearing dataset"; the defensible claim = "first *released synthetic
+    journal-bearing benchmark designed specifically to stress-test physics-informed
+    diagnosis with record- and seed-level inference + matched non-physics controls*";
+    "almost no benchmarks" softened to "few standardized/open benchmarks." See
+    [[lstm-pfd-project-state]] memory. ✅ **Protocol-§ disambiguation DONE** (rendered
+    §8.x → "protocol §8.x" so they don't collide with the paper's §8 Limitations).
+  - **Open before preprint (owner-side, not draft blockers):** (a) finalize byline;
+    (b) Zenodo checkpoint upload → drop DOI into §7 + `PROVENANCE_MANIFEST.md` (release
+    wording stays conditional until then); (c) optional: add Oh 2016 / Jebur&Soud 2025 to
+    §2 if pinned metadata found. (d) **merge `p7/submission` → `main`** at a gate — HELD
+    for owner sign-off.
+- **Step 5 — venue (decided):** **arXiv first → a PHM / trustworthy-ML-evaluation
+  workshop**, written in strict D&B/Evaluations style; **NeurIPS ED / KDD D&B 2027**
+  as the upgrade target (the 2026 D&B deadline has passed); **IEEE Access** only as a
+  later fallback if real-rig data is ever added. NOT a top mechanical-systems / top-ML
+  venue (synthetic-only, negative headline). Owner gathered both auditors' venue
+  advice (2026-06-24); they converge on this.
 
 ---
 
@@ -74,12 +119,16 @@ experiments.** Remaining work is writing + packaging, not science.
    findings): `audit_reports/INDEPENDENT_AUDIT_2026-06-24_{GPT5,CLAUDE}.md`. (Earlier
    rounds were removed before each new round; recoverable from git history +
    `C:\Users\COWLAR\projects\_lstm_audit_backup_2026-06-*\`.)
-5. `README.md`, `results/README.md`, `experiments/PROTOCOL.md`, `docs/PHYSICS.md`
+5. **The submission work-in-progress:** `paper/OUTLINE.md` (manuscript outline +
+   abstract, D&B/Evaluations style — the active writing task) and
+   `results/PROVENANCE_MANIFEST.md` (repro chain + content hashes; Zenodo DOI = TBD).
+6. `README.md`, `results/README.md`, `experiments/PROTOCOL.md`, `docs/PHYSICS.md`
    (normative generator physics). `CONVERGENCE_PLAN.md` lags — **trust FINDINGS §0 +
    this file** over it.
 
 **Verify live state (verify by execution — do NOT trust docstrings):**
-- `git branch --show-current` → `main`.
+- `git branch --show-current` → **`p7/submission`** (the active branch; `main`
+  @`dea92ae` has the merged Phase-7 science).
 - `$env:PYTHONIOENCODING='utf-8'; .\venv\Scripts\python.exe -m pytest -q` → **268
   passed, 6 deselected**.
 - Reproduce the headline negative: `.\venv\Scripts\python.exe scripts\p7_strengthen_record_level.py`

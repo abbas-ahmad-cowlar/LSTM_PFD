@@ -216,12 +216,34 @@ test + test_snr5 forward passes, soft-votes 5 windows → 528-record predictions
 each fresh window-accuracy against the recorded `metrics.json`.
 
 ```
-<<RECOMPUTE_OUTPUT>>
+records: test=528 snr5=528  seeds=12
+
+  w0_CEonly     : clean 99.12±0.62 | 5dB 95.58±4.14 | degr mean 3.54 median 2.46 min 0.00 max 11.17 | robust 4/12
+                  degr/seed: [1.89, 8.33, 2.65, 3.22, 2.27, 0.0, 0.0, 2.65, 11.17, 10.04, 0.0, 0.19]
+  w1.0_correct  : clean 98.72±0.77 | 5dB 95.25±3.72 | degr mean 3.47 median 2.84 min -0.19 max 9.66 | robust 5/12
+                  degr/seed: [0.0, 0.38, -0.19, 4.92, 3.41, 9.66, 0.57, 2.27, 7.2, 4.73, 8.71, 0.0]
+  w1.0_scramble : clean 98.45±0.97 | 5dB 93.56±6.64 | degr mean 4.89 median 0.47 min -0.57 max 17.23 | robust 7/12
+                  degr/seed: [9.09, -0.38, -0.19, 0.57, 10.61, 10.8, -0.57, 17.23, 0.38, -0.19, 0.38, 10.98]
+  w1.0_random   : clean 98.78±0.64 | 5dB 96.64±3.31 | degr mean 2.15 median 0.38 min -0.38 max 8.71 | robust 9/12
+                  degr/seed: [8.71, 0.76, -0.19, 0.38, 0.19, 0.0, -0.38, 0.19, 0.95, 8.33, 6.44, 0.38]
+
+  SANITY GATE (window acc vs metrics.json, tol 0.2): ALL PASS
+
+  seed-level Wilcoxon signed-rank vs CE-only (paired per-seed degradation, n=12):
+    w1.0_correct  : median Δdegr +0.28 mean +0.06 | p(2-sided) 0.791  | p(more-robust) 0.3955 | 7/12 beat CE | robust 5/12
+    w1.0_scramble : median Δdegr +0.09 mean -1.36 | p(2-sided) 0.7505 | p(more-robust) 0.6418 | 6/12 beat CE | robust 7/12
+    w1.0_random   : median Δdegr +1.89 mean +1.39 | p(2-sided) 0.2061 | p(more-robust) 0.103  | 8/12 beat CE | robust 9/12
+
+  robust-seed counts (degr<1.0): w0_CEonly 4/12 | w1.0_correct 5/12 | w1.0_scramble 7/12 | w1.0_random 9/12
 ```
 
-Sanity anchor (verified before the full run): a fresh forward pass on CE-only seed0 gives
-window accuracy **95.606 %**, exactly equal to its `metrics.json` `test.accuracy` (95.606)
-— the checkpoint, the recorded metric, and my pipeline agree.
+**This is an exact, independent reproduction.** Every per-seed degradation, robust-seed
+count, and Wilcoxon p-value matches `results/p7_strengthen/p7_strengthen_record_level.json`
+to the digit (incl. scramble p=0.7505), computed cache-free from a fresh forward pass on
+all 48 `best_model.pth`. The **sanity gate passed for all 48** — i.e. each checkpoint's
+fresh window accuracy equals its recorded `metrics.json` value (anchor: CE-only seed0 =
+95.606 % = recorded 95.606). The maintainers' analysis script and JSON are faithful to the
+checkpoints, and the checkpoints are faithful to the recorded metrics.
 
 ---
 

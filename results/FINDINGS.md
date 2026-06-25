@@ -116,17 +116,20 @@ may **not** claim any physics benefit — not even "a spectral regularizer helpe
 1. **Remove/stub the stale fabricated paper** — `config/docs/paper/main.tex` +
    `config/docs/reports/Final_Report_UNVALIDATED.pdf` (CWRU/98.1%/expert-validated/
    rolling-element — a different, non-existent study). Both fourth-round audits: it
-   must not reach a referee. **Being done in Phase 7 (this docs pass).**
-2. **Reconcile the verdict docs** — README, `results/README.md`, `PROJECT_STATE.md`,
-   `results/phase5_bandenergy/findings_bandenergy.md` to the n=12 reality. (In progress.)
-3. **Externalize reproducibility (audit M1)** — pin a **content hash** of
-   `dataset_v2.h5`, archive the checkpoints (Zenodo); the chain command→commit→
-   dataset-hash→checkpoint→result must be closeable by a cold referee.
-4. **Provenance manifest** — one command/commit/dataset-hash/checkpoint/
-   random-reference-hash per paper table.
-5. **`ops_aware` field rename (audit M2)** — it records the *eval* flag; the *training*
-   loss did use per-sample rpm (independently confirmed, 2026-06-24 Opus). Rename /
-   add a `train_metadata_rpm_used` field so it cannot be misread.
+   must not reach a referee. **DONE 2026-06-24** — stubbed, then removed entirely with
+   the dead `config/docs/` MkDocs site (recoverable from git).
+2. ~~Reconcile the verdict docs~~ — **DONE 2026-06-24** (README, `results/README.md`,
+   `PROJECT_STATE.md`, `results/phase5_bandenergy/findings_bandenergy.md` reconciled to
+   the n=12 reality).
+3. **Externalize reproducibility (audit M1)** — dataset/reference **content hashes
+   pinned** + the chain documented in `results/PROVENANCE_MANIFEST.md` (**DONE
+   2026-06-24**); **PENDING: archive the checkpoints to Zenodo** (owner — needs the
+   account; ~2.1 GB of `*.pth`, gitignored) and drop the DOI into the manifest.
+4. ~~Provenance manifest~~ — **DONE 2026-06-24** (`results/PROVENANCE_MANIFEST.md`:
+   one row per result → command / commit / dataset-hash / checkpoint / ref-hash).
+5. ~~`ops_aware` field rename (audit M2)~~ — **DONE 2026-06-24** (`928e689`): the
+   runner now writes `eval_ops_aware` + `train_metadata_rpm_used`; the committed §8.8
+   metrics keep the old field (= the eval flag; training used per-sample rpm).
 6. **Write the manuscript from scratch** from this §0 — dataset + benchmark + complete
    negative + methodological caution; record-level tables only; synthetic-only.
 

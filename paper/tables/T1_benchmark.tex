@@ -1,0 +1,34 @@
+% T1 -- record-level benchmark (11 models). Source:
+% results/benchmark/summary_record_level.md  (every number traced there).
+\begin{table}[t]
+  \centering
+  \caption{Record-level benchmark (528 records, soft-vote over the 5 windows
+    per record; mean$\pm$std over 3 seeds). The task is near-ceiling and no
+    model --- physics-labelled or not --- shows an accuracy advantage: the best
+    vanilla deep model (\texttt{cnn\_lstm}) ties the CE-only
+    \texttt{physics\_constrained\_cnn} at the best-validation seed (gap $+0.00$,
+    exact McNemar $p=1$). Physics-labelled rows are honestly relabelled (see
+    text): \texttt{physics\_constrained\_cnn} $=$ CE-only / architecture
+    (physics loss OFF), \texttt{hybrid\_pinn} $=$ rolling-element branch $+$
+    constant metadata, \texttt{multitask\_pinn} $=$ single-task.}
+  \label{tab:benchmark}
+  \begin{tabular}{llc}
+    \toprule
+    Model & Record acc.\ (\%) & Note \\
+    \midrule
+    random\_forest          & $98.74 \pm 0.09$ & classical \\
+    svm                     & $97.73 \pm 0.00$ & classical \\
+    gradient\_boosting      & $97.92 \pm 0.15$ & classical \\
+    \midrule
+    cnn1d                   & $93.43 \pm 4.26$ & \\
+    attention\_cnn          & $93.94 \pm 4.27$ & \\
+    cnn\_lstm               & $\mathbf{99.43 \pm 0.15}$ & best vanilla deep \\
+    resnet18                & $99.18 \pm 0.09$ & \\
+    patchtst                & $90.40 \pm 0.47$ & \\
+    \midrule
+    physics\_constrained\_cnn & $98.99 \pm 0.45$ & physics-labelled: CE-only (loss OFF) \\
+    hybrid\_pinn            & $90.34 \pm 0.94$ & physics-labelled: rolling-element $+$ const.\ meta \\
+    multitask\_pinn         & $90.47 \pm 0.62$ & physics-labelled: single-task \\
+    \bottomrule
+  \end{tabular}
+\end{table}
