@@ -1,7 +1,7 @@
 """
 Record-level confirmation of the band-energy physics reruns (P6 Step 5).
 
-The §8.2/§8.3/§8.4 reruns in results/phase5_bandenergy/ are reported window-level.
+The §8.2/§8.3/§8.4 reruns in results/band_energy_reruns/ are reported window-level.
 Significance must be judged at the RECORD level (the independent unit is the 5-s
 record, not the 5 correlated 1-s windows — external audit Finding 12). This
 re-evaluates the retained checkpoints (no retraining), soft-votes the windows of
@@ -12,7 +12,7 @@ A SANITY GATE asserts the window-level accuracy from each re-eval reproduces the
 value recorded in that run's metrics.json (catches checkpoint-load / eval-set
 reconstruction bugs — the I4 lesson). Per-checkpoint record-probs are cached.
 
-Outputs: results/phase5_bandenergy/summary_record_level.{json,md}
+Outputs: results/band_energy_reruns/summary_record_level.{json,md}
 
 Usage: python scripts/phase5_bandenergy_record_level.py
 """
@@ -35,7 +35,7 @@ from packages.core.models.model_factory import create_model  # noqa: E402
 from utils.constants import NUM_CLASSES  # noqa: E402
 
 DATA = PROJECT_ROOT / 'data/generated/dataset_v2.h5'
-BE = PROJECT_ROOT / 'results/phase5_bandenergy'
+BE = PROJECT_ROOT / 'results/band_energy_reruns'
 BENCH = PROJECT_ROOT / 'results/benchmark/deep'
 CACHE = BE / '_record_cache'
 WINDOW = 20480
@@ -277,7 +277,7 @@ def main():
         'estimand, audit 2026-06-16 F6). Dir B is non-significant either way (F7).')
 
     (BE / 'summary_record_level.json').write_text(json.dumps(out, indent=2), encoding='utf-8')
-    print(f'\nWrote results/phase5_bandenergy/summary_record_level.json in {time.time()-t0:.0f}s')
+    print(f'\nWrote results/band_energy_reruns/summary_record_level.json in {time.time()-t0:.0f}s')
 
 
 if __name__ == '__main__':

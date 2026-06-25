@@ -1,6 +1,6 @@
 """§8.8 strengthen grid — record-level, SEED-LEVEL verdict (PROTOCOL §8.8).
 
-The n=12 grid (4 arms x 12 seeds, results/p7_strengthen/) recomputed at the RECORD
+The n=12 grid (4 arms x 12 seeds, results/noise_seed_robustness/) recomputed at the RECORD
 level (528 records, soft-vote), then judged at the SEED level — the pre-registered
 estimand that turns the old within-seed McNemar (n=3) into a real cross-seed result.
 
@@ -20,7 +20,7 @@ Pre-registered decision rule (§8.8, fixed BEFORE the run; tau = 1.0 pt):
 Primary estimand: Wilcoxon signed-rank on paired per-seed clean->5dB degradation,
 each arm vs CE-only (n=12); median degradation; robust-seed count (degr < tau).
 
-Output: results/p7_strengthen/p7_strengthen_record_level.json
+Output: results/noise_seed_robustness/noise_seed_robustness_record_level.json
 Usage:  python scripts/p7_strengthen_record_level.py
 """
 import json
@@ -39,7 +39,7 @@ from scripts.phase5_bandenergy_record_level import (  # noqa: E402
     metrics_for, ev_acc,
 )
 
-P7 = PROJECT_ROOT / 'results/p7_strengthen'
+P7 = PROJECT_ROOT / 'results/noise_seed_robustness'
 SEEDS = list(range(12))
 TAU = 1.0  # pre-registered "robust" threshold: clean->5dB record degradation < 1.0 pt
 
@@ -160,8 +160,8 @@ def main():
           ' | '.join(f'{k} {v}/12' for k, v in rob.items()))
     print(f'\n  VERDICT: {verdict}')
 
-    (P7 / 'p7_strengthen_record_level.json').write_text(json.dumps(out, indent=2), encoding='utf-8')
-    print(f'\n  wrote results/p7_strengthen/p7_strengthen_record_level.json in {time.time()-t0:.0f}s')
+    (P7 / 'noise_seed_robustness_record_level.json').write_text(json.dumps(out, indent=2), encoding='utf-8')
+    print(f'\n  wrote results/noise_seed_robustness/noise_seed_robustness_record_level.json in {time.time()-t0:.0f}s')
 
 
 if __name__ == '__main__':

@@ -10,7 +10,7 @@ Pre-registered decision rule (§8.7, fixed before the control ran):
   - scramble degradation ~ correct-w1.0 (small/robust)             -> GENERIC REG.
   - intermediate -> report quantitatively, lean conservative (narrow wording).
 
-Output: results/phase5_bandenergy/f9_scramble_record_level.json
+Output: results/band_energy_reruns/f9_scramble_record_level.json
 Usage:  python scripts/f9_scramble_record_level.py
 """
 import json
@@ -94,7 +94,7 @@ def main():
     }
     (BE / 'f9_scramble_record_level.json').write_text(json.dumps(out, indent=2), encoding='utf-8')
     print(f"\n  degradation (seed-mean): CE-only {d_ce} | correct-w1.0 {d_correct} | scramble-w1.0 {d_scr}")
-    print('  wrote results/phase5_bandenergy/f9_scramble_record_level.json')
+    print('  wrote results/band_energy_reruns/f9_scramble_record_level.json')
 
 
 if __name__ == '__main__':
