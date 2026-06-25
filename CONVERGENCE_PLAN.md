@@ -1,5 +1,16 @@
 # LSTM-PFD Convergence Plan v2 — Physics-First Rebuild
 
+> ⚠️ **SUPERSEDED / HISTORICAL (2026-06).** This is the original planning &
+> tracking document; its forward-looking framing (e.g. "where physics-informed
+> learning beats data-driven models", "regimes where PINNs shine") states the
+> project's *hypotheses going in* — **not its results**. The science has CONVERGED
+> to a **rigorous, complete NEGATIVE**: physics-informed learning gave **no**
+> advantage on any tested axis, and the one candidate positive dissolved at n=12.
+> **For the actual verdict and the binding claim list, read
+> [results/FINDINGS.md](results/FINDINGS.md) §0 (RATIFIED 2026-06-24) and
+> [PROJECT_STATE.md](PROJECT_STATE.md).** This plan is retained only as a
+> development record; its checkboxes/dates lag reality.
+
 > **Goal**: Converge this project from a sprawling, partially-fabricated "everything platform"
 > into a **lean, honest, physics-informed fault-diagnosis research project** that produces
 > real, publishable results — using the compute we actually have (CPU laptop overnight,

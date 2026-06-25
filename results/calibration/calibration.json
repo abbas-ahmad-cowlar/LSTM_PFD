@@ -6,7 +6,7 @@
     "data": "dataset_v2.h5",
     "finished_at": "2026-06-16T21:39:32.238378+00:00",
     "vanilla_ckpt": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\benchmark\\deep\\resnet18\\seed2\\best_model.pth",
-    "pc_cnn_ckpt": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\phase5_bandenergy\\pinn_ablation\\w1.0\\seed2\\best_model.pth",
+    "pc_cnn_ckpt": "C:\\Users\\COWLAR\\projects\\lstm-pfd\\results\\band_energy_reruns\\pinn_ablation\\w1.0\\seed2\\best_model.pth",
     "per_class": 20,
     "ig_steps": 32,
     "mc_samples": 30,
