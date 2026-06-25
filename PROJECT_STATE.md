@@ -70,22 +70,32 @@ the next gate, when the manuscript draft is ready).
     (F1 per-seed spread, F2 the n=3→n=12 dissolution [headline], F3 signature map — all
     generated from the result JSONs). All 9 sections + Appendix A (deployment) drafted
     section-by-section against FINDINGS §0, owner-reviewed chunk by chunk; every number
-    traced to an artifact. Builds clean: `latexmk -pdf` → **10 pp, 0 overfull/underfull,
-    no undefined refs**; all 6 citations real/verified. Guardrails held throughout (no
+    traced to an artifact. Builds clean: `latexmk -pdf` → **11 pp, box-clean (0
+    overfull/underfull), no undefined refs**; all 12 citations web-verified with DOIs.
+    Guardrails held throughout (no
     "physics improves"; record-level 528 + seed-level only; within-/representative-seed
     McNemar reported only as the cautionary statistic; synthetic-only; release
     conditional). Byline = "Syed Abbas Ahmad, PIEAS" (full form, NO Cowlar note), email
     `syedabbasahmad6@gmail.com`; `[preprint]` mode; arXiv cs.LG + eess.SP; hidelinks.
     Commit trail: `707595f` skeleton → `ac43b45` C1/C2 → `eb590ec` C3/C4 → `a0d59c3`
     review fixes → `f6df4fb` C5+limitations → `e3e4a28` intro+conclusion → `021dabc`
-    related-work+appendix → `e94d61f` honesty fixes + box-clean polish.
-  - **Open before preprint (not draft blockers):** (a) **owner decision** — the
-    pre-registrations are labelled by their PROTOCOL §-numbers (§8.2/§8.3/§8.6/§8.8),
-    which visually collide with the paper's own §8 (Limitations); recommend prefixing
-    "protocol §8.x". (b) **owner** — finalize byline; Zenodo checkpoint upload → drop DOI
-    into §7 + `PROVENANCE_MANIFEST.md` (release wording stays conditional until then);
-    verify `references.bib` DOIs/pages before camera-ready. (c) optionally expand §2
-    citations (verified only). (d) **merge `p7/submission` → `main`** at a gate — HELD
+    related-work+appendix → `e94d61f` honesty fixes + box-clean polish → `ed5c10e`
+    PROJECT_STATE → `d846c12` novelty pass → `0343a7f` pin citation DOIs + protocol-§.
+  - ✅ **Novelty pass DONE** (2026-06-25): owner-forwarded scan (GPT-5.5 + web-verified)
+    found NO exact duplicate but adjacent prior art. §2 now cites + distinguishes the
+    closest prior art **Gecgel et al. 2021** (ASME *J. Tribol.*, simulated journal-bearing
+    DL wear) plus Jeon 2020 / Zeynivand 2026 / Lu 2023 / Kim&Kim 2024 / Vieira 2025 — all
+    pinned with exact metadata + DOIs. **Claim boundary TIGHTENED:** do NOT claim "first
+    synthetic journal-bearing dataset"; the defensible claim = "first *released synthetic
+    journal-bearing benchmark designed specifically to stress-test physics-informed
+    diagnosis with record- and seed-level inference + matched non-physics controls*";
+    "almost no benchmarks" softened to "few standardized/open benchmarks." See
+    [[lstm-pfd-project-state]] memory. ✅ **Protocol-§ disambiguation DONE** (rendered
+    §8.x → "protocol §8.x" so they don't collide with the paper's §8 Limitations).
+  - **Open before preprint (owner-side, not draft blockers):** (a) finalize byline;
+    (b) Zenodo checkpoint upload → drop DOI into §7 + `PROVENANCE_MANIFEST.md` (release
+    wording stays conditional until then); (c) optional: add Oh 2016 / Jebur&Soud 2025 to
+    §2 if pinned metadata found. (d) **merge `p7/submission` → `main`** at a gate — HELD
     for owner sign-off.
 - **Step 5 — venue (decided):** **arXiv first → a PHM / trustworthy-ML-evaluation
   workshop**, written in strict D&B/Evaluations style; **NeurIPS ED / KDD D&B 2027**
