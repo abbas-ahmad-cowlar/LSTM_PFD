@@ -308,7 +308,15 @@ def train_run(run_dir: Path, model_key: str, seed: int, loaders: dict,
              for name, loader in extra_eval.items()}
     artifact = {
         'model': model_key, 'seed': seed, **tags,
-        'physics_weight': physics_w, 'ops_aware': ops_aware,
+        'physics_weight': physics_w,
+        # eval_ops_aware = EVAL-time metadata routing only (pc_cnn.forward() ignores
+        # metadata, so it is inert for the PC-CNN arms — do NOT read it as "physics
+        # off"). train_metadata_rpm_used records whether per-sample rpm actually
+        # entered the TRAINING loss (true iff a physics term was on). The §8.8 grid's
+        # committed metrics predate this rename and carry the old `ops_aware` field
+        # (= this eval flag); training there DID use per-sample rpm (2026-06-24 audit).
+        'eval_ops_aware': ops_aware,
+        'train_metadata_rpm_used': bool(physics_w > 0),
         'evals': evals, 'history': history,
         'provenance': {'budget': {'lr': LR, 'batch': BATCH,
                                   'max_epochs': max_epochs, 'patience': patience},

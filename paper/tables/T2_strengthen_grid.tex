@@ -1,0 +1,25 @@
+% T2 -- the pre-registered S8.8 n=12 grid (the headline). Source:
+% results/p7_strengthen/p7_strengthen_record_level.json  (every number traced).
+\begin{table}[t]
+  \centering
+  \caption{Pre-registered grid (protocol~\S8.8), $n{=}12$: per-arm clean$\rightarrow$5\,dB
+    record-level degradation (mean$\pm$std and median, pts), robust-seed count
+    (degradation $<\tau=1.0$\,pt), and the \emph{seed-level} Wilcoxon
+    signed-rank $p$ versus CE-only. No arm clears the pre-registered bar
+    ($\ge$10/12 robust \emph{and} $p<0.05$): correct physics is
+    indistinguishable from CE-only, and the non-physical random-band control is
+    numerically the most robust yet still fails. The $n{=}3$ positive does not
+    replicate. The representative-seed McNemar is deliberately \emph{not}
+    reported here as evidence (see \S\ref{sec:caution}).}
+  \label{tab:grid}
+  \begin{tabular}{lccccc}
+    \toprule
+    Arm & $w$ & degr (mean$\pm$std) & median & robust & Wilcoxon $p$ \\
+    \midrule
+    CE-only        & 0   & $3.54 \pm 3.85$ & 2.46 & 4/12 & --- (ref.) \\
+    correct        & 1.0 & $3.47 \pm 3.42$ & 2.84 & 5/12 & $0.79$ \\
+    scramble       & 1.0 & $4.89 \pm 6.08$ & 0.47 & 7/12 & $0.75$ \\
+    random-band    & 1.0 & $2.15 \pm 3.34$ & 0.38 & 9/12 & $0.21$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}

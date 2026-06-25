@@ -1,0 +1,12 @@
+# LaTeX build artifacts (latexmk). The compiling sources + generated figure
+# PDFs are committed; the built main.pdf and aux files are not.
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+main.pdf
