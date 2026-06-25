@@ -1,5 +1,10 @@
 # Manuscript framing (DRAFT for owner review) — Evaluations & Datasets style
 
+> ⚠️ **SUPERSEDED by the written manuscript** (`paper/main.tex`, full first
+> draft). This is the original framing/outline, retained for provenance; some
+> paths and section numbers here lag the paper (e.g. result dirs were later
+> renamed content-keyed).
+
 > **Scope of this doc:** the *framing skeleton only* — title options, abstract,
 > contribution bullets, section outline, **claim boundaries**, and the table/figure
 > list. **No full sections** until the owner signs off on the framing.
@@ -138,7 +143,7 @@ independently recomputed from the raw checkpoints by separate audit scripts.
 - **T1 — benchmark (record level).** 11 models, near-ceiling, no physics accuracy edge
   (best vanilla ties CE-only PC-CNN, McNemar p=1). [`results/benchmark/summary_record_level.md`]
 - **T2 — §8.8 n=12 grid.** Per-arm clean→5 dB degradation (mean/median), robust-seed
-  count, seed-level Wilcoxon vs CE-only. [`results/p7_strengthen/p7_strengthen_record_level.json`]
+  count, seed-level Wilcoxon vs CE-only. [`results/noise_seed_robustness/noise_seed_robustness_record_level.json`]
 - **T3 — the other regimes at a glance.** Data-eff §8.2 / severity-OOD §8.3 / XAI §8.6a
   / calibration §8.6b — each negative, record-level.
 - **T4 — datasheet summary** (classes × severities × splits × SNR variants; hashes).

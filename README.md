@@ -12,19 +12,18 @@
 > ⚠️ **Scope:** all data is physics-based **synthetic** (no real-world
 > validation). Results characterise models *on this synthetic benchmark*.
 >
-> 🛠️ **Status (2026-06-17): remediation complete; DRAFT verdict pending owner
-> re-ratification.** Two independent external audits
-> ([2026-06-14](audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-14.md) opened the
-> blast radius; [2026-06-16](audit_reports/INDEPENDENT_SCIENCE_AUDIT_2026-06-16.md)
-> reviewed the band-energy fix and **independently reproduced every record-level
-> number**). Net: the **synthetic dataset + benchmark stand as a classification
+> 🛠️ **Status (RATIFIED 2026-06-24): rigorous complete negative.** Four
+> independent audit rounds reviewed the work; the fourth (2026-06-24) reproduced
+> every record-level number **cache-free from the raw checkpoints**
+> ([audit_reports/](audit_reports/INDEPENDENT_AUDIT_2026-06-24_CLAUDE.md)). Net: the
+> **synthetic dataset + benchmark stand as a classification
 > benchmark** (record-level near-ceiling, no row showing a physics accuracy
 > advantage), and **no physics positive survives**: the last candidate — a 5 dB
 > noise-robustness benefit that looked significant at n=3 — **did not replicate** in
 > a pre-registered **n=12** grid with a non-physics control (§8.8): correct physics
 > ties cross-entropy-only (Wilcoxon p=0.79). The study is a **rigorous complete
 > negative** on physics-informed learning. Read
-> [results/FINDINGS.md](results/FINDINGS.md) §0 (DRAFT) and
+> [results/FINDINGS.md](results/FINDINGS.md) §0 (RATIFIED) and
 > [PROJECT_STATE.md](PROJECT_STATE.md) for the live state.
 
 ## What this is
@@ -36,13 +35,13 @@ nets, and physics-informed models on them under a **frozen protocol**
 ([experiments/PROTOCOL.md](experiments/PROTOCOL.md)). The journal-bearing focus is
 deliberate — public datasets (CWRU, Paderborn) are almost all *rolling-element*.
 
-## Status of findings (Phase 5/6 — DRAFT verdict, see [results/FINDINGS.md](results/FINDINGS.md) §0)
+## Status of findings (RATIFIED 2026-06-24 — see [results/FINDINGS.md](results/FINDINGS.md) §0)
 
 > The band-energy physics remediation is complete and judged at the **record
-> level** (528 records); two independent external audits reviewed it (the second
-> reproduced every number). The synthesis in
-> [results/FINDINGS.md](results/FINDINGS.md) §0 is a **DRAFT awaiting owner
-> re-ratification.** What can and cannot be said today:
+> level** (528 records); four independent audit rounds reviewed it (the fourth
+> reproduced every number cache-free from checkpoints). The synthesis in
+> [results/FINDINGS.md](results/FINDINGS.md) §0 is **RATIFIED (2026-06-24).**
+> What can and cannot be said:
 
 - **Supportable:** a balanced, leakage-checked, group-split **synthetic
   journal-bearing classification benchmark** (record-level near-ceiling; no row
@@ -132,7 +131,7 @@ cd LSTM_PFD
 python -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 # exact maintainer env: pip install -r requirements.lock.txt  (Python 3.14 / torch 2.9.1+cpu)
-pytest -q   # expect 251 passed, 6 deselected
+pytest -q   # expect 268 passed, 6 deselected
 ```
 
 Reproduce experiments: see `scripts/` (`run_benchmark.py`, `run_noise_robustness.py`,
@@ -174,6 +173,6 @@ at **n=3**) **did not replicate** in a pre-registered **n=12** grid that added a
 matched-strength non-physics control (§8.8, `results/noise_seed_robustness/`): at n=12 the
 correct-physics model ties cross-entropy-only (degr 3.47 vs 3.54, seed-level Wilcoxon
 **p=0.79**; no arm robust). §8.5 HybridPINN stays excluded (rolling-element branch).
-The findings memo is a **DRAFT pending owner re-ratification** to this
-**complete-negative** verdict — see [results/FINDINGS.md](results/FINDINGS.md) §0 and
+The findings memo is **RATIFIED (2026-06-24)** as this **complete-negative**
+verdict — see [results/FINDINGS.md](results/FINDINGS.md) §0 and
 [PROJECT_STATE.md](PROJECT_STATE.md).
