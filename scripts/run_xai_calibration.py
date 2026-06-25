@@ -17,7 +17,7 @@ Laptop/CPU. Pre-registered in PROTOCOL.md §8.6.
   Hypothesis: physics model better calibrated under noise.
 
 Outputs (json + md + png), provenance-stamped:
-  results/xai_alignment/   results/uncertainty/
+  results/interpretability/   results/calibration/
 
 Usage:
   python scripts/run_xai_calibration.py --smoke         # tiny, ~2 min
@@ -55,7 +55,7 @@ DATA = PROJECT_ROOT / 'data/generated/dataset_v2.h5'
 # --vanilla-ckpt / --pc-cnn-ckpt. (Old contaminated run used resnet seed0 / the
 # tonal-only pc_cnn w0.3 seed1 in D:\Libraries — superseded.)
 VANILLA_CKPT_DEFAULT = PROJECT_ROOT / 'results/benchmark/deep/resnet18/seed2/best_model.pth'
-PCCNN_CKPT_DEFAULT = PROJECT_ROOT / 'results/phase5_bandenergy/pinn_ablation/w1.0/seed2/best_model.pth'
+PCCNN_CKPT_DEFAULT = PROJECT_ROOT / 'results/band_energy_reruns/pinn_ablation/w1.0/seed2/best_model.pth'
 TOL = 0.15  # ±15% band half-width (matches the physics-loss tolerance)
 
 
@@ -344,8 +344,8 @@ def main():
 
     # ---- write artifacts ----
     suffix = '_smoke' if args.smoke else ''
-    xdir = PROJECT_ROOT / f'results/xai_alignment{suffix}'
-    udir = PROJECT_ROOT / f'results/uncertainty{suffix}'
+    xdir = PROJECT_ROOT / f'results/interpretability{suffix}'
+    udir = PROJECT_ROOT / f'results/calibration{suffix}'
     xdir.mkdir(parents=True, exist_ok=True); udir.mkdir(parents=True, exist_ok=True)
     (xdir / 'alignment.json').write_text(json.dumps({'provenance': prov, 'results': xai}, indent=2),
                                          encoding='utf-8')

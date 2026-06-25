@@ -54,7 +54,7 @@ deliberate — public datasets (CWRU, Paderborn) are almost all *rolling-element
   data-efficiency, severity-OOD, interpretability (§8.6a *reverses*), or
   calibration (a wash)** — each tested at record level, none survived. The last
   candidate (5 dB noise robustness) **did not replicate at n=12**: a pre-registered
-  grid (§8.8, `results/p7_strengthen/`) with a matched-strength non-physics control
+  grid (§8.8, `results/noise_seed_robustness/`) with a matched-strength non-physics control
   shows correct physics tied with CE-only (degr 3.47 vs 3.54, seed-level Wilcoxon
   **p=0.79**; the random non-fault-band arm is actually the most robust, correct
   physics the weakest of the three w=1.0 arms; no arm robust ≥10/12 seeds). The
@@ -171,7 +171,7 @@ accuracy, noise robustness, data-efficiency, severity-OOD, interpretability, and
 calibration were each tested at the record level and each came back **negative**.
 The last candidate positive (a 5 dB noise-robustness benefit that looked significant
 at **n=3**) **did not replicate** in a pre-registered **n=12** grid that added a
-matched-strength non-physics control (§8.8, `results/p7_strengthen/`): at n=12 the
+matched-strength non-physics control (§8.8, `results/noise_seed_robustness/`): at n=12 the
 correct-physics model ties cross-entropy-only (degr 3.47 vs 3.54, seed-level Wilcoxon
 **p=0.79**; no arm robust). §8.5 HybridPINN stays excluded (rolling-element branch).
 The findings memo is a **DRAFT pending owner re-ratification** to this

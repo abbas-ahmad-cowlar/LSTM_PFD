@@ -1,38 +1,39 @@
 # results/ — index (what each folder is)
 
 Every committed folder holds small evidence files (json/md/png). Model
-checkpoints (`*.pth`, ~45 MB each) are NOT in git; full archives with
-checkpoints live at `D:\Libraries\` (see bottom).
+checkpoints (`*.pth`, ~45 MB each) are NOT in git; for external reproducibility
+they will be deposited on Zenodo (see `PROVENANCE_MANIFEST.md`). Folder names are
+**content-keyed** — renamed from internal phase/process names in a 2026-06 repo
+tidy, and pre-remediation / superseded dirs were removed (recoverable from git
+history).
 
 | Folder | Contribution | What it is |
 |---|---|---|
-| `FINDINGS.md` | — | Phase-5 synthesis + frozen claims list (owner-ratified at Gate 5) |
-| `dataset_v2_validation/` | C1 | dataset_v2.h5 validation (stratification, leakage, splits) |
-| `benchmark/` | C2 | frozen 11-model pre-registered benchmark (Phase 4). `summary.*` = window-level (superseded); **`summary_record_level.*` = record-level recompute, P6 Step 2** |
+| `FINDINGS.md` | — | ratified synthesis + frozen claims list (owner-ratified §0) |
+| `PROVENANCE_MANIFEST.md` | — | reproduce chain: command → commit → dataset-hash → checkpoint → result |
+| `dataset_v2_validation/` | C1 | `dataset_v2.h5` validation (stratification, leakage, splits) |
+| `benchmark/` | C2 | frozen 11-model pre-registered benchmark; `summary_record_level.*` = the record-level table cited in the paper |
+| `noise_seed_robustness/` | C3 §8.8 | **the headline n=12 grid** (4 arms × 12 seeds; `noise_seed_robustness_record_level.json`) + 48 checkpoints |
+| `band_energy_reruns/` | C3 §8.2/§8.3 | band-energy reruns: data-efficiency (§8.2) + severity-OOD (§8.3), record-level. Also holds the superseded n=3 noise ablation (§8.4) + §8.7 F9 scramble, banner-marked in-file |
+| `interpretability/` | C3 §8.6a | IG attribution-vs-physics-band alignment + `findings_8_6.md` |
+| `calibration/` | C3 §8.6b | MC-dropout calibration (ECE, reliability, reject curve) |
 | `deployment/` | C5 | ONNX export / latency / INT8 appendix |
-| `noise_robustness/` | C3 §8.1 | 24 frozen checkpoints × SNR-20/10/5 + degradation summary |
-| `phase5/` | C3 §8.2–8.5 | the 45 INERT-loss Colab runs (data-efficiency, severity-OOD, ablation-before, true-metadata) |
-| `phase5_fixed/` | C3 §8.4 | 9 runs with the FIXED (differentiable) loss + `before_after_8_4.md` |
-| `phase5_dataeff_fixed/` | C3 §8.2 | 21 runs, fixed-loss low-data test + `before_after_8_2.md` |
-| `xai_alignment/` | C4 §8.6a | IG attribution-vs-physics-band alignment + `findings_8_6.md` |
-| `uncertainty/` | C4 §8.6b | MC-dropout calibration (ECE, reliability, reject curve) |
-| `cnn1d_v1_baseline/` | history | Phase-1 first real artifact (86.48%) |
-| `cnn1d_v2_baseline/` | history | Phase-3 dataset-v2 baseline (90.53%) |
 
-**Headline (DRAFT verdict — see `FINDINGS.md` §0, pending owner re-ratification):**
-a synthetic classification benchmark, **near-ceiling at the record level**, **no row
-showing a physics accuracy advantage**, and a **rigorous, complete NEGATIVE** on
-physics-informed learning. The last candidate positive — a 5 dB noise-robustness
-benefit that looked significant at **n=3** — **did not replicate** in a
-pre-registered **n=12** grid (§8.8, `p7_strengthen/`,
-`p7_strengthen_record_level.json`) that added a matched-strength non-physics control:
-correct physics ties CE-only (degr 3.47 vs 3.54, seed-level **Wilcoxon p=0.79**; the
-random non-fault-band arm is the most robust; no arm robust ≥10/12). The n=3 McNemar
-14–0 (p=1.2e-4) was a **seed artifact**. Clean accuracy, data-efficiency,
-severity-OOD, XAI alignment (§8.6a *reverses*), and calibration (a wash) also did
-**not** survive. No "physics helps" claim of any kind.
+**Headline (ratified — see `FINDINGS.md` §0):** a synthetic classification
+benchmark, **near-ceiling at the record level**, **no row showing a physics
+accuracy advantage**, and a **rigorous, complete NEGATIVE** on physics-informed
+learning. The last candidate positive — a 5 dB noise-robustness benefit that
+looked significant at **n=3** — **did not replicate** in the pre-registered
+**n=12** grid (§8.8, `noise_seed_robustness/`): correct physics ties CE-only
+(degr 3.47 vs 3.54, seed-level **Wilcoxon p=0.79**; the random non-fault-band arm
+has the lowest mean degradation numerically yet still fails the bar; no arm robust
+≥10/12). The n=3 McNemar 14–0 (p=1.2e-4) was a **seed artifact** (the confounded
+within-/representative-seed statistic; the seed-level Wilcoxon governs). Clean
+accuracy, data-efficiency, severity-OOD, XAI alignment (§8.6a *reverses*), and
+calibration (a wash) also did **not** survive. No "physics helps" claim of any
+kind.
 
-**Full checkpoint archives (off-repo, `D:\Libraries\`):**
-- `results_phase5-20260613T100807Z-3-001` — 45 inert runs + 45 ckpts (= `phase5/`)
-- `results_phase5_fixed_full-20260613T221621Z-3-001` — 9 fixed §8.4 runs + ckpts (= `phase5_fixed/`)
-- `results_phase5_dataeff_fixed` — 21 fixed §8.2 runs + ckpts (= `phase5_dataeff_fixed/`)
+**Removed in the 2026-06 repo tidy** (pre-remediation / superseded; recoverable
+from git history): `phase5/`, `phase5_fixed/`, `phase5_dataeff_fixed/`,
+`noise_robustness/`, `cnn1d_v1_baseline/`, `cnn1d_v2_baseline/`. Pre-remediation
+checkpoint archives remain off-repo at `D:\Libraries\`.

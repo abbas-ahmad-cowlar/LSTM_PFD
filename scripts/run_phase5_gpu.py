@@ -369,7 +369,7 @@ def main() -> None:
     parser.add_argument('--out-root', default=None,
                         help='write ALL arms (pinn_ablation + controls) under this '
                              'repo-relative root instead of results/phase5 + '
-                             'results/phase5_bandenergy. Use a fresh dir for the '
+                             'results/band_energy_reruns. Use a fresh dir for the '
                              '§8.8 n=12 grid (e.g. results_p7_strengthen) so every '
                              'arm is a single-commit, resume-safe queue in one folder.')
     args = parser.parse_args()
@@ -385,8 +385,8 @@ def main() -> None:
         out_root = be_root = PROJECT_ROOT / args.out_root
     else:
         out_root = OUT.parent / (OUT.name + '_smoke') if args.smoke else OUT
-        be_root = PROJECT_ROOT / ('results/phase5_bandenergy_smoke' if args.smoke
-                                  else 'results/phase5_bandenergy')
+        be_root = PROJECT_ROOT / ('results/band_energy_reruns_smoke' if args.smoke
+                                  else 'results/band_energy_reruns')
 
     log.info("Loading splits ...")
     tr_sig, tr_lab, tr_sev, tr_ops = load_split('train', with_metadata=True)
@@ -418,7 +418,7 @@ def main() -> None:
         log.info("F9 control: scrambled class permutation = %s", perm)
         full_idx = np.arange(len(tr_lab))
         # write alongside the other band-energy runs (be_root, default
-        # results/phase5_bandenergy) — this control IS a band-energy (w=1.0) experiment.
+        # results/band_energy_reruns) — this control IS a band-energy (w=1.0) experiment.
         for seed in args.seeds:
             rd = be_root / 'pinn_ablation_scramble' / 'w1.0' / f'seed{seed}'
             queue.append((rd, lambda rd=rd, sd=seed, pm=perm: train_run(

@@ -2,7 +2,7 @@
 
 Every data-bearing number is read from the committed result artifact, not
 hardcoded:
-  F1, F2 <- results/p7_strengthen/p7_strengthen_record_level.json  (the n=12 grid)
+  F1, F2 <- results/noise_seed_robustness/noise_seed_robustness_record_level.json  (the n=12 grid)
   F3      <- the docs/PHYSICS.md S4 class->signature map (mirrored below, cited)
 
 Run (laptop, CPU):
@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-GRID_JSON = ROOT / "results" / "p7_strengthen" / "p7_strengthen_record_level.json"
+GRID_JSON = ROOT / "results" / "noise_seed_robustness" / "noise_seed_robustness_record_level.json"
 OUTDIR = ROOT / "paper" / "figures"
 OUTDIR.mkdir(parents=True, exist_ok=True)
 
