@@ -8,7 +8,7 @@
 > Status: **RATIFIED — 2026-06-24 by owner Syed Abbas Ahmad.** The Gate-5 verdict
 > (ratified 2026-06-23) let one positive stand — a narrow 5 dB noise-robustness
 > benefit, then based on **n=3** seeds. A pre-registered **n=12 grid (§8.8,
-> `results/p7_strengthen/`)** plus a matched-strength **non-physics** control was then
+> `results/noise_seed_robustness/`)** plus a matched-strength **non-physics** control was then
 > run to stress-test it, and a **fourth independent-audit round** (2026-06-24, GPT-5 +
 > a fresh-memory Opus 4.8;
 > `audit_reports/INDEPENDENT_AUDIT_2026-06-24_{GPT5,CLAUDE}.md`) reproduced the result
@@ -55,7 +55,7 @@ may **not** claim any physics benefit — not even "a spectral regularizer helpe
 - **C3 — a rigorous, COMPLETE NEGATIVE on physics-informed learning.** Across every
   regime physics is theorized to help, the implemented physics-informed mechanisms do
   not beat data-driven baselines:
-  - **Noise robustness — does NOT survive (§8.8, n=12, `results/p7_strengthen/`).**
+  - **Noise robustness — does NOT survive (§8.8, n=12, `results/noise_seed_robustness/`).**
     Record-level clean→5 dB degradation (528 records, soft-vote, 12 seeds): CE-only
     **3.54±3.85** (robust 4/12), correct-physics w=1.0 **3.47±3.42** (5/12), scramble
     **4.89±6.08** (7/12), random-band **2.15±3.34** (9/12) — all dominated by seed
@@ -119,7 +119,7 @@ may **not** claim any physics benefit — not even "a spectral regularizer helpe
    must not reach a referee. **DONE 2026-06-24** — stubbed, then removed entirely with
    the dead `config/docs/` MkDocs site (recoverable from git).
 2. ~~Reconcile the verdict docs~~ — **DONE 2026-06-24** (README, `results/README.md`,
-   `PROJECT_STATE.md`, `results/phase5_bandenergy/findings_bandenergy.md` reconciled to
+   `PROJECT_STATE.md`, `results/band_energy_reruns/findings_bandenergy.md` reconciled to
    the n=12 reality).
 3. **Externalize reproducibility (audit M1)** — dataset/reference **content hashes
    pinned** + the chain documented in `results/PROVENANCE_MANIFEST.md` (**DONE
@@ -134,7 +134,7 @@ may **not** claim any physics benefit — not even "a spectral regularizer helpe
    negative + methodological caution; record-level tables only; synthetic-only.
 
 ### Status (Phase 7)
-The §8.8 n=12 grid (`results/p7_strengthen/`, analysis
+The §8.8 n=12 grid (`results/noise_seed_robustness/`, analysis
 `scripts/p7_strengthen_record_level.py`, pre-registered PROTOCOL §8.8) ran on Colab
 (48 runs, single commit `4a2063d`); record-level seed-level analysis committed
 (`0797258`). The **fourth independent-audit round** (GPT-5 + fresh Opus, 2026-06-24)

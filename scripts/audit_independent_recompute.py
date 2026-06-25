@@ -23,7 +23,7 @@ torch.set_num_threads(8)  # use all logical processors for this single process
 from packages.core.models.model_factory import create_model  # noqa: E402
 
 DATA = ROOT / 'data/generated/dataset_v2.h5'
-P7 = ROOT / 'results/p7_strengthen'
+P7 = ROOT / 'results/noise_seed_robustness'
 WINDOW = 20480
 SEEDS = list(range(12))
 TAU = 1.0
