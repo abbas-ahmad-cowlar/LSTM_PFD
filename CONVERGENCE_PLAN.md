@@ -585,11 +585,11 @@ to v2.1, and rerun affected experiments only, documented).
       `results/phase5_fixed/before_after_8_4.md`; `experiments/PHYSICS_LOSS_DIAGNOSIS.md`)*
 - [x] **5.5 Physics-consistent XAI** — done (pre-reg §8.6a). Same-backbone:
       physics model attributions more physics-band-aligned (ratio 0.849 vs 0.716).
-      Modest C4 positive. *(evidence: `results/xai_alignment/findings_8_6.md`;
+      Modest C4 positive. *(evidence: `results/interpretability/findings_8_6.md`;
       `scripts/run_xai_calibration.py`)*
 - [x] **5.6 Uncertainty & calibration** — done (pre-reg §8.6b). pc_cnn better
       calibrated (ECE 0.022/0.018 vs 0.028/0.027); 100% acc @50% coverage.
-      *(evidence: `results/uncertainty/calibration.json`)*
+      *(evidence: `results/calibration/calibration.json`)*
 - [x] **5.7 Findings memo** — drafted; **awaiting owner ratification**. *(evidence:
       `results/FINDINGS.md`)*
 

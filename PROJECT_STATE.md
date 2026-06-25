@@ -23,7 +23,7 @@ rounds, the verdict is settled and **ratified**:
 > accuracy, noise robustness, data-efficiency, severity-OOD, interpretability, or
 > calibration. The last candidate positive (a 5 dB noise-robustness benefit that
 > looked significant at **n=3**) was stress-tested with a pre-registered **n=12** grid
-> plus a matched-strength **non-physics** control (§8.8, `results/p7_strengthen/`) and
+> plus a matched-strength **non-physics** control (§8.8, `results/noise_seed_robustness/`) and
 > **did NOT replicate**: correct physics degrades **3.47** pt vs cross-entropy-only's
 > **3.54** pt (seed-level **Wilcoxon p=0.79**); no arm is robust on ≥10/12 seeds; the
 > n=3 "win" was a **seed artifact** (the same grid's seeds {0,1,2} reproduce it, the
@@ -112,7 +112,7 @@ the next gate, when the manuscript draft is ready).
 1. This whole file.
 2. **`results/FINDINGS.md` — §0 is the RATIFIED verdict (complete negative);** it is
    authoritative. (The pre-audit §1–§5 were removed as superseded.)
-3. The n=12 result that settled it: `results/p7_strengthen/p7_strengthen_record_level.json`
+3. The n=12 result that settled it: `results/noise_seed_robustness/noise_seed_robustness_record_level.json`
    + analysis `scripts/p7_strengthen_record_level.py`; pre-registration
    `experiments/PROTOCOL.md` §8.8.
 4. The **fourth audit round** (most relevant; both reproduced everything, no critical
@@ -193,7 +193,7 @@ double/triple-nest. Results come home by Drive download → verify counts + prov
 ### 2.4 Archives
 `D:\Libraries\` holds full result downloads WITH checkpoints (`.pth`, out of git) from
 Phase 5. The **§8.8 n=12 checkpoints** (48 × `best_model.pth`) live in-repo at
-`results/p7_strengthen/**` (gitignored via `results/**/*.pth`; ~2.1 GB on the laptop —
+`results/noise_seed_robustness/**` (gitignored via `results/**/*.pth`; ~2.1 GB on the laptop —
 **these must go to Zenodo for the repro package**). `results/` keeps json/md only.
 
 ## 3. The big picture (framing — complete negative)
@@ -269,14 +269,14 @@ None of it is a current claim; the only current verdict is FINDINGS §0.
   (`tests/test_physics_quarantine.py`); HybridPINN's rolling-element branch stays
   quarantined/excluded.
 - **Phase 6 reruns (n=3).** With the corrected loss, the §8.2/§8.3/§8.4 reruns
-  (`results/phase5_bandenergy/`, now **SUPERSEDED**) showed everything negative
+  (`results/band_energy_reruns/`, now **SUPERSEDED**) showed everything negative
   **except** a 5 dB noise-robustness benefit at w=1.0 that survived record-level n=3
   (McNemar 14–0, p=1.2e-4). A pre-registered **§8.7 scrambled-reference control** then
   showed even *wrong real* bands reproduced it → "not physics-specific, at best a
   spectral regularizer." Three audit rounds reproduced the n=3 numbers and ratified a
   narrowly-worded Gate-5 verdict (merged `d16af5a`).
 - **Phase 7 (n=12) killed it.** "Strengthen-then-write": a pre-registered **§8.8 n=12
-  grid** (`results/p7_strengthen/`, PROTOCOL §8.8) added a same-code-path CE-only arm
+  grid** (`results/noise_seed_robustness/`, PROTOCOL §8.8) added a same-code-path CE-only arm
   and a matched-structure **random non-fault-band** control, at 12 seeds. Result: no
   arm beats CE-only (Wilcoxon p ≥ 0.21 for all three w=1.0 arms; none robust ≥10/12);
   the random *non-fault* arm is the **most** robust and correct physics the **weakest**
@@ -337,7 +337,7 @@ None of it is a current claim; the only current verdict is FINDINGS §0.
 |---|---|
 | **This handoff** | `PROJECT_STATE.md` |
 | **RATIFIED verdict (read first)** | `results/FINDINGS.md` §0 (complete negative, 2026-06-24) |
-| **The decisive n=12 result** | `results/p7_strengthen/p7_strengthen_record_level.json`; analysis `scripts/p7_strengthen_record_level.py`; checkpoints `results/p7_strengthen/**` (gitignored) |
+| **The decisive n=12 result** | `results/noise_seed_robustness/noise_seed_robustness_record_level.json`; analysis `scripts/p7_strengthen_record_level.py`; checkpoints `results/noise_seed_robustness/**` (gitignored) |
 | **Pre-registration** | `experiments/PROTOCOL.md` §8.8 (n=12 grid + decision rule); §8.7 (F9 scramble, historical) |
 | **Fourth-round audits + auditor scripts** | `audit_reports/INDEPENDENT_AUDIT_2026-06-24_{GPT5,CLAUDE}.md`; `scripts/audit_{independent_recompute,verify_random_control}.py` |
 | Prior audits — removed before each round | `audit_reports/NOTE_prior_reports_removed.md`; backups `C:\Users\COWLAR\projects\_lstm_audit_backup_2026-06-{22,24}\` |
@@ -346,6 +346,6 @@ None of it is a current claim; the only current verdict is FINDINGS §0.
 | Generator physics (normative) + CI | `docs/PHYSICS.md`, `tests/test_physics_signatures.py` |
 | Model-side physics (tested → negative) | `packages/core/models/pinn/physics_constrained_cnn.py`; `packages/core/models/physics/{fault_signatures.py,healthy_reference.json,random_reference.json}` |
 | Runner | `scripts/run_phase5_gpu.py` (`--control {f9_scramble,random_bands}`, `--weights`, `--out-root`) |
-| **Historical / SUPERSEDED (provenance only — do NOT cite as current)** | `results/phase5_bandenergy/` (n=3 band-energy reruns + §8.7 F9 control, banner-marked SUPERSEDED); `results/phase5*/`, `results/{xai_alignment,uncertainty,noise_robustness}/` (pre-remediation / negative side-results) |
+| **Historical / SUPERSEDED (provenance only — do NOT cite as current)** | `results/band_energy_reruns/` holds the superseded n=3 band-energy noise (§8.4) + §8.7 F9 control, banner-marked in-file (its §8.2/§8.3 data-eff/OOD ARE current). The pre-remediation dirs `results/phase5*/`, `results/noise_robustness/`, `results/cnn1d_v{1,2}_baseline/` were **removed in the 2026-06 repo tidy** (recoverable from git history). `results/interpretability/` (§8.6a) and `results/calibration/` (§8.6b) are the renamed, current XAI/calibration negatives. |
 | Tests (physics) | `tests/test_{physics_signatures,signature_db_consistency,physics_band_energy_loss,physics_random_band_control,physics_quarantine}.py` |
 | Deferred / frozen | `BACKLOG.md` · dashboard `packages/dashboard/` |
