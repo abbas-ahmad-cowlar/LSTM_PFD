@@ -14,8 +14,7 @@
 > `audit_reports/INDEPENDENT_AUDIT_2026-06-24_{GPT5,CLAUDE}.md`) reproduced the result
 > by execution (Opus cache-free from all 48 checkpoints). **Outcome: the last positive
 > does NOT replicate at n=12.** §0 below is rewritten to the resulting **complete
-> negative**; it supersedes the prior §0 and the PRE-AUDIT §1–§5 (removed). Do not
-> cite as ratified until the owner re-ratifies.
+> negative**; it supersedes the prior §0 and the PRE-AUDIT §1–§5 (removed).
 
 ## 0. RATIFIED verdict (2026-06-24) — authoritative
 
@@ -130,8 +129,10 @@ may **not** claim any physics benefit — not even "a spectral regularizer helpe
 5. ~~`ops_aware` field rename (audit M2)~~ — **DONE 2026-06-24** (`928e689`): the
    runner now writes `eval_ops_aware` + `train_metadata_rpm_used`; the committed §8.8
    metrics keep the old field (= the eval flag; training used per-sample rpm).
-6. **Write the manuscript from scratch** from this §0 — dataset + benchmark + complete
-   negative + methodological caution; record-level tables only; synthetic-only.
+6. ~~Write the manuscript~~ — **DONE** (2026-06-25): full first draft in
+   `paper/main.tex` (self-contained NeurIPS-style build, ~11 pp box-clean, 12 DOI
+   citations); merged to `main` and pushed to public GitHub. Remaining paper work =
+   the Zenodo DOI + finalize §7/manifest release wording + byline + arXiv.
 
 ### Status (Phase 7)
 The §8.8 n=12 grid (`results/noise_seed_robustness/`, analysis
@@ -141,8 +142,13 @@ The §8.8 n=12 grid (`results/noise_seed_robustness/`, analysis
 reproduced every decisive number by execution — no critical findings — and both
 auditors' verdict is: **trustworthy; publishable only as a synthetic dataset + frozen
 benchmark + rigorous complete negative + methodological caution, not as any physics
-win.** **RATIFIED by the owner on 2026-06-24.** Next: merge to `main`, build the
-reproducibility package, write the manuscript from this §0.
+win.** **RATIFIED by the owner on 2026-06-24.** *(The commit SHAs cited in this §0
+predate the 2026-06-26 git-history rewrite and no longer resolve — see
+`PROJECT_STATE.md` §6.)* **Status 2026-06-26:** the manuscript full first draft is
+written, merged to `main`, and pushed to public GitHub; the reproducibility manifest
+is written. **Remaining:** the Zenodo checkpoint deposit → reserve a DOI → finalize
+paper §7 + `results/PROVENANCE_MANIFEST.md` (flip "will archive" → "archived, DOI …")
+→ finalize byline → arXiv (cs.LG + eess.SP).
 
 ---
 

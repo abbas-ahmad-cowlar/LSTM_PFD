@@ -1,6 +1,6 @@
 # Benchmark Protocol — Phase 4 (FROZEN upon ratification)
 
-> **Status**: Draft for owner ratification (Convergence Plan P4.1).
+> **Status**: RATIFIED & FROZEN — Syed Abbas Ahmad, 2026-06-12 (Convergence Plan P4.1). Deviations are dated §7 amendments, never silent edits.
 > Once ratified, this protocol is **frozen**: any deviation is a dated
 > amendment appended to §7 — never a silent edit. Runs that predate an
 > amendment are kept and marked.

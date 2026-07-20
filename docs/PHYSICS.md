@@ -1,6 +1,6 @@
 # Physics of the Synthetic Journal-Bearing Fault Simulator
 
-> **Status**: Draft for owner sign-off (Convergence Plan P3.1).
+> **Status**: Approved — owner sign-off by Syed Abbas Ahmad, 2026-06-11 (Convergence Plan P3.1). Normative; enforced by `tests/test_physics_signatures.py`.
 > **Scope**: Documents exactly what `data/signal_generation/` implements — every
 > equation below is traceable to code (file:function cited per section). Where a
 > coefficient is empirical rather than first-principles, it is flagged **[E]**
@@ -55,7 +55,7 @@ The factor multiplies the fault signature pointwise via `severity_curve(t)`.
 30% of signals carry **temporal evolution**: the curve grows linearly from s to
 min(1, s+0.3) across the record, simulating progressing degradation.
 The level label and initial factor are stored in metadata → this enables the
-severity-shift OOD experiments (Phase 5.2).
+severity-shift OOD experiments (§8.3; `results/band_energy_reruns/`).
 
 ## 3. Operating conditions & fluid-film physics
 

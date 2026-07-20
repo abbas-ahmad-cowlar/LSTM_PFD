@@ -1,6 +1,6 @@
 # Dataset v2 Design Note
 
-> **Status**: Proposal for owner ratification (Convergence Plan P3.3).
+> **Status**: RATIFIED — approved by Syed Abbas Ahmad 2026-06-11 (Convergence Plan P3.3); v2 generated and in production use (`data/generated/dataset_v2.h5`, 3,520 records). Design note retained for provenance.
 > Every Phase 4–5 experiment maps to a design feature here. Once ratified and
 > generated, the generator is **frozen** (Plan Part IV rule 8): changes bump
 > the version (v2.1) and trigger reruns of affected experiments only.
