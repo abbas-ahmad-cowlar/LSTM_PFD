@@ -16,6 +16,13 @@
 > `--out-root results_p7_strengthen` used at the time; the downloaded checkpoints
 > now live under `results/noise_seed_robustness/`. Dated audit reports under
 > `audit_reports/` keep the pre-tidy paths as snapshots.
+>
+> **Commit-SHA note (2026-06-26).** The per-result **code-commit SHAs** in the table
+> below (e.g. `e498deb`, `4a2063d`, `ce344d1`, `70f623f`, `928e689`) predate the
+> 2026-06-26 git-history rewrite (Claude co-author-trailer strip + fabricated-paper
+> purge), which reassigned every commit SHA — so they **no longer resolve**. Treat
+> them as historical labels; the current code is on `main`@`cf92673` (`git log`). The
+> frozen **input** SHA-256 hashes below are content hashes and are UNAFFECTED.
 
 ## Frozen inputs (content hashes — SHA-256)
 
