@@ -41,7 +41,10 @@ real-rig validation. Ratified verdict: **`results/FINDINGS.md` §0 (RATIFIED
 2026-06-24).** Science has **CONVERGED — STOP adding experiments.**
 
 **Where the work is now.**
-- **Branch: `main` @ `cf92673`** (verified 2026-06-26). Everything is merged to `main`:
+- **Branch: `main`** (verified 2026-06-26; get the *live* HEAD with
+  `git rev-parse --short HEAD` — do NOT trust a specific SHA cited in this file: a file
+  can't name its own commit, so any HEAD SHA here is ≥1 commit stale, and the 2026-06-26
+  rewrite changed every SHA). Everything is merged to `main`:
   the Phase-7 science, the JBFD-11 **manuscript** (was `p7/submission`), and the
   **repo tidy** (was `p7/repo-tidy`). `main` is **pushed to public GitHub**
   (`https://github.com/abbas-ahmad-cowlar/LSTM_PFD`). Suite **268 passed, 6 deselected**.
@@ -111,7 +114,8 @@ real-rig validation. Ratified verdict: **`results/FINDINGS.md` §0 (RATIFIED
    hypotheses, NOT results) — trust FINDINGS §0 + this file over it.
 
 **Verify live state (verify by execution — do NOT trust docstrings). Verified 2026-06-26:**
-- `git branch --show-current` → **`main`** (HEAD **`cf92673`**; in sync with `origin/main`).
+- `git branch --show-current` → **`main`**; `git rev-parse --short HEAD` gives the live
+  HEAD (should equal `origin/main`; do not expect a specific hardcoded SHA — see above).
 - `$env:PYTHONIOENCODING='utf-8'; .\venv\Scripts\python.exe -m pytest -q` → **268 passed, 6 deselected**.
 - `cd paper; latexmk -pdf main.tex` → **11 pp, 0 overfull/underfull, no undefined refs**.
 - Checkpoints present: `results/noise_seed_robustness/` **48** `*.pth`,
@@ -250,10 +254,10 @@ execution evidence counts.** Old code recoverable at tag `pre-convergence-2026-0
 | 5 Remediation (Phase 6) | physics loss fixed (band-energy vs frozen healthy ref); record-level stats; 3 audit rounds | suite 263; one n=3 noise positive left standing |
 | 7 Strengthen | pre-registered **§8.8 n=12 grid** + non-physics control → **positive did NOT replicate**; 4th audit confirms; complete negative ratified | suite 268; **complete negative** |
 | 7 Submission | manuscript full first draft (11 pp); novelty pass; merged to `main` | suite 268; box-clean |
-| 7 Tidy/publish | content-key rename; swift audit; push to public GitHub; history rewrite (§6) | suite 268; `main`@`cf92673` |
+| 7 Tidy/publish | content-key rename; swift audit; push to public GitHub; history rewrite (§6) | suite 268; `main` (public) |
 
 > **NOTE:** commit SHAs for these gates were all reassigned by the 2026-06-26 history
-> rewrite. Read the current trail with `git log --oneline` (current HEAD `cf92673`;
+> rewrite. Read the current trail with `git log --oneline` (get the live HEAD via `git rev-parse`;
 > the manuscript merge is `a2a4f78`, the tidy merge `067bae1`).
 
 **Phase-4 benchmark, record level** (`results/benchmark/summary_record_level.md`):
@@ -337,7 +341,7 @@ current claim; the only current verdict is FINDINGS §0.
 1. Only execution evidence counts; numbers trace to `results/` with SHA + host + seed.
 2. `CONVERGENCE_PLAN.md` is **SUPERSEDED/HISTORICAL** (banner-marked); FINDINGS §0 + this file are authoritative. Its checkboxes and "physics helps" framing are pre-outcome hypotheses.
 3. PROTOCOL frozen — dated §7 amendments; §8 pre-registrations before running. Do NOT silently rewrite a frozen amendment.
-4. Phase branches `pN/...` → `main` at gates. **Current: everything merged to `main` (HEAD `cf92673`); pushed to public GitHub.**
+4. Phase branches `pN/...` → `main` at gates. **Current: everything merged to `main`; pushed to public GitHub** (live HEAD via `git rev-parse --short HEAD`).
 5. Suite green before merge: `pytest -q` → **268 passed, 6 deselected** (dashboard frozen; 6 deselected).
 6. Anti-regrowth: fixed-size tiers; cut at the tag + `BACKLOG.md`.
 7. `results/`: small json/md/png committed; **`*.pth` checkpoints + h5 out of git** (`.gitignore: results/**/*.pth`; archives in `D:\Libraries` / Zenodo for the repro package).
